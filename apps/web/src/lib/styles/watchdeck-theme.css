@@ -1,0 +1,154 @@
+/*
+ * Genre: local-first market watchdeck
+ * Tone: dense, operational, and caution-first
+ * Anchor hue: acid-lime focus on near-black neutral surfaces
+ * Structural fingerprint: flat scan table with one contextual monitoring rail
+ */
+@font-face {
+  font-family: "Watchdeck Sans";
+  src:
+    local("IBM Plex Sans"),
+    local("Nimbus Sans Narrow"),
+    local("Arial Narrow"),
+    local("Yu Gothic UI"),
+    local("Hiragino Sans"),
+    local("DejaVu Sans"),
+    local("Liberation Sans"),
+    local("FreeSans"),
+    local("Noto Sans");
+  font-display: swap;
+  font-style: normal;
+  font-weight: 100 900;
+}
+
+:root {
+  color-scheme: dark;
+
+  --bg: #070908;
+  --bg-alt: #090c0d;
+  --surface: #0b1110;
+  --panel: rgba(13, 18, 18, 0.94);
+  --panel-solid: #0d1212;
+  --panel-strong: #121a18;
+  --panel-selected: #162216;
+  --line: #2b3a35;
+  --line-strong: #394034;
+  --text: #f3f5ed;
+  --muted: #8f9a91;
+  --subtle: #a4af98;
+  --focus: #d8ff38;
+  --primary: var(--focus);
+  --focus-on: #090c0d;
+  --up: #9beaa7;
+  --down: #ff9a8d;
+  --warning: #ffd191;
+  --warning-border: #e7b94b;
+  --quality-good: #74d680;
+  --quality-risk: #d66a7a;
+  --chip-line: #59614f;
+  --chip-neutral: #cbd3c0;
+
+  --chart-surface: #151813;
+  --chart-text: #cbd3c0;
+  --chart-grid: #252b22;
+  --chart-border: #394034;
+  --chart-up: #9beaa7;
+  --chart-down: #ff9a8d;
+  --chart-focus: #d8ff38;
+  --chart-volume-up: rgba(155, 234, 167, 0.45);
+  --chart-volume-down: rgba(255, 154, 141, 0.45);
+
+  --font-sans:
+    "Watchdeck Sans", "IPAPGothic", "IPA Pゴシック", "IBM Plex Sans", "Yu Gothic UI",
+    "Hiragino Sans", system-ui, sans-serif;
+  --type-title-xl-size: 44px;
+  --type-title-xl-weight: 800;
+  --type-title-xl-leading: 1;
+  --type-title-lg-size: 28px;
+  --type-title-lg-weight: 800;
+  --type-title-lg-leading: 1.05;
+  --type-heading-md-size: 16px;
+  --type-heading-md-weight: 800;
+  --type-heading-md-leading: 1.2;
+  --type-body-md-size: 14px;
+  --type-body-md-weight: 500;
+  --type-body-md-leading: 1.45;
+  --type-body-sm-size: 12px;
+  --type-body-sm-weight: 500;
+  --type-body-sm-leading: 1.35;
+  --type-label-caps-size: 11px;
+  --type-label-caps-weight: 600;
+  --type-label-caps-leading: 1.2;
+  --type-data-lg-size: 20px;
+  --type-data-lg-weight: 800;
+  --type-data-lg-leading: 1.1;
+  --type-data-md-size: 13px;
+  --type-data-md-weight: 750;
+  --type-data-md-leading: 1.2;
+  --tracking-default: 0;
+  --feature-tabular: "tnum" 1;
+
+  --radius-none: 0px;
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --space-xxs: 2px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-page: 12px;
+  --space-grid: 8px;
+  --row-height-desktop: 42px;
+  --row-height-mobile: 82px;
+
+  --control-height-dense: 34px;
+  --control-height-touch: 44px;
+  --control-height-primary-touch: 48px;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+:where(.terminal, .symbol-page) [data-single-line-action] {
+  white-space: nowrap;
+}
+
+:where(.terminal, .symbol-page)
+  :where(a[href], button, input, select, textarea, summary):focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus);
+  outline-offset: var(--focus-ring-offset);
+}
+
+@media (max-width: 48rem), (any-pointer: coarse) {
+  :where(.terminal, .symbol-page)
+    :where(
+      a[href],
+      button,
+      input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+      select,
+      textarea,
+      summary
+    ) {
+    min-width: var(--control-height-touch);
+    min-height: var(--control-height-touch);
+    box-sizing: border-box;
+  }
+
+  :where(.terminal, .symbol-page) label:has(input[type="checkbox"], input[type="radio"]) {
+    min-width: var(--control-height-touch);
+    min-height: var(--control-height-touch);
+    box-sizing: border-box;
+  }
+
+  .terminal .analysis-link {
+    min-height: var(--control-height-primary-touch);
+  }
+}

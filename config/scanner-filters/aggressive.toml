@@ -1,0 +1,81 @@
+name = "aggressive"
+display_name = "積極"
+version = 2
+
+[universe]
+product_type = "USDT-FUTURES"
+exclude_symbols = ["BTCUSDT", "ETHUSDT"]
+benchmark_symbol = "BTCUSDT"
+exclude_rwa = true
+min_24h_usdt_volume = 100000
+max_24h_usdt_volume = 20000000
+max_btc_volume_ratio_pct = 5.0
+
+[candles]
+granularity = "5m"
+min_required_bars = 1177
+exclude_open_candle = true
+bootstrap_days = 14
+
+[user_rule]
+price_74h_abs_pct = 4.0
+volume_74h_mode = "current_24h_vs_74h_ago_24h"
+volume_74h_min_increase_pct = 15.0
+
+[price_change]
+surge_5m_pct = 1.0
+surge_15m_pct = 2.0
+surge_1h_pct = 3.0
+surge_4h_pct = 5.0
+surge_24h_pct = 8.0
+surge_74h_pct = 10.0
+move_5m_pct = 0.3
+move_15m_pct = 0.7
+move_1h_pct = 1.2
+move_4h_pct = 2.0
+move_24h_pct = 4.0
+move_74h_pct = 4.0
+
+[volume]
+baseline_window_bars = 288
+min_volume_ratio = 1.2
+strong_volume_ratio = 3.0
+volume_leading_ratio = 2.0
+volume_ratio_floor_usdt = 1000
+
+[turnover]
+min_turnover_5m_usdt = 1000
+min_turnover_15m_usdt = 1000
+min_turnover_1h_usdt = 3000
+
+[roughness]
+warn_move_concentration_15m = 0.86
+avoid_move_concentration_15m = 0.92
+
+[data_quality]
+min_coverage_ratio = 0.98
+max_missing_bar_count = 2
+warn_zero_volume_bar_ratio = 0.15
+
+[btc_relative]
+linked_threshold_15m_pct = 0.5
+individual_threshold_15m_pct = 0.7
+individual_threshold_1h_pct = 1.2
+
+[funding]
+warn_abs_funding_rate_pct = 0.03
+avoid_abs_funding_rate_pct = 0.08
+
+[open_interest]
+change_lookback_minutes = 60
+increase_threshold_pct = 3.0
+decrease_threshold_pct = -3.0
+
+[category]
+max_risk_tags_for_watch = 1
+risk_tags_for_no_trade = 3
+min_attention_score_for_display = 30
+
+[ranking]
+exclude_no_trade_from_main_rankings = true
+top_n = 10

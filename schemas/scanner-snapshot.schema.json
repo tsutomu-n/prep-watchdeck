@@ -1,0 +1,604 @@
+{
+  "$defs": {
+    "Category": {
+      "enum": [
+        "WATCH",
+        "CAUTION",
+        "NO_TRADE",
+        "LOW_PRIORITY"
+      ],
+      "title": "Category",
+      "type": "string"
+    },
+    "ChartBarDTO": {
+      "properties": {
+        "ts": {
+          "title": "Ts",
+          "type": "integer"
+        },
+        "open": {
+          "title": "Open",
+          "type": "number"
+        },
+        "high": {
+          "title": "High",
+          "type": "number"
+        },
+        "low": {
+          "title": "Low",
+          "type": "number"
+        },
+        "close": {
+          "title": "Close",
+          "type": "number"
+        },
+        "quoteVolume": {
+          "title": "Quotevolume",
+          "type": "number"
+        }
+      },
+      "required": [
+        "ts",
+        "open",
+        "high",
+        "low",
+        "close",
+        "quoteVolume"
+      ],
+      "title": "ChartBarDTO",
+      "type": "object"
+    },
+    "DataQuality": {
+      "enum": [
+        "OK",
+        "STALE",
+        "MISSING",
+        "PARTIAL"
+      ],
+      "title": "DataQuality",
+      "type": "string"
+    },
+    "DataSource": {
+      "enum": [
+        "live",
+        "cache",
+        "fixture"
+      ],
+      "title": "DataSource",
+      "type": "string"
+    },
+    "ScannerRowDTO": {
+      "additionalProperties": true,
+      "properties": {
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "ts": {
+          "title": "Ts",
+          "type": "integer"
+        },
+        "lastPrice": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lastprice"
+        },
+        "analysisPrice": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Analysisprice"
+        },
+        "maxLeverage": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxleverage"
+        },
+        "minTradeUsdt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mintradeusdt"
+        },
+        "category": {
+          "$ref": "#/$defs/Category"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "direction": {
+          "default": "FLAT",
+          "title": "Direction",
+          "type": "string"
+        },
+        "attentionScore": {
+          "title": "Attentionscore",
+          "type": "number"
+        },
+        "changePctByTf": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Changepctbytf",
+          "type": "object"
+        },
+        "turnoverUsdtByTf": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Turnoverusdtbytf",
+          "type": "object"
+        },
+        "volumeRatioByTf": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "title": "Volumeratiobytf",
+          "type": "object"
+        },
+        "range24hHigh": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Range24Hhigh"
+        },
+        "range24hLow": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Range24Hlow"
+        },
+        "range24hPositionPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Range24Hpositionpct"
+        },
+        "range24hPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Range24Hpct"
+        },
+        "priceChange74hPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pricechange74Hpct"
+        },
+        "turnoverCurrent24hUsdt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turnovercurrent24Husdt"
+        },
+        "turnover24hEnding74hAgoUsdt": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turnover24Hending74Hagousdt"
+        },
+        "volumeChange74h24hPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volumechange74H24Hpct"
+        },
+        "userRule74hMatched": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Userrule74Hmatched"
+        },
+        "roughness15m": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Roughness15M"
+        },
+        "btcRelative15m": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Btcrelative15M"
+        },
+        "fundingBias": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fundingbias"
+        },
+        "openInterestState": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Openintereststate"
+        },
+        "dataQuality": {
+          "$ref": "#/$defs/DataQuality"
+        },
+        "coverageRatio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Coverageratio"
+        },
+        "missingBarCount": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Missingbarcount"
+        },
+        "zeroVolumeBarRatio": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Zerovolumebarratio"
+        },
+        "reasonCodes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasoncodes",
+          "type": "array"
+        },
+        "riskTagCodes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Risktagcodes",
+          "type": "array"
+        },
+        "display": {
+          "additionalProperties": true,
+          "title": "Display",
+          "type": "object"
+        },
+        "sparkline": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SparklineDTO"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "symbol",
+        "ts",
+        "category",
+        "label",
+        "attentionScore",
+        "changePctByTf",
+        "turnoverUsdtByTf",
+        "dataQuality",
+        "reasonCodes",
+        "riskTagCodes"
+      ],
+      "title": "ScannerRowDTO",
+      "type": "object"
+    },
+    "SnapshotSourceDTO": {
+      "additionalProperties": true,
+      "properties": {
+        "exchange": {
+          "title": "Exchange",
+          "type": "string"
+        },
+        "productType": {
+          "title": "Producttype",
+          "type": "string"
+        },
+        "templateName": {
+          "title": "Templatename",
+          "type": "string"
+        },
+        "dataSource": {
+          "$ref": "#/$defs/DataSource"
+        },
+        "isFallback": {
+          "default": false,
+          "title": "Isfallback",
+          "type": "boolean"
+        },
+        "fixtureSet": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fixtureset"
+        }
+      },
+      "required": [
+        "exchange",
+        "productType",
+        "templateName",
+        "dataSource"
+      ],
+      "title": "SnapshotSourceDTO",
+      "type": "object"
+    },
+    "SnapshotStatus": {
+      "enum": [
+        "OK",
+        "STALE",
+        "PARTIAL",
+        "ERROR"
+      ],
+      "title": "SnapshotStatus",
+      "type": "string"
+    },
+    "SparklineDTO": {
+      "properties": {
+        "tf": {
+          "title": "Tf",
+          "type": "string"
+        },
+        "points": {
+          "items": {
+            "type": "number"
+          },
+          "maxItems": 16,
+          "title": "Points",
+          "type": "array"
+        },
+        "bars": {
+          "items": {
+            "$ref": "#/$defs/ChartBarDTO"
+          },
+          "maxItems": 16,
+          "title": "Bars",
+          "type": "array"
+        },
+        "timeframes": {
+          "additionalProperties": {
+            "items": {
+              "$ref": "#/$defs/ChartBarDTO"
+            },
+            "maxItems": 16,
+            "type": "array"
+          },
+          "title": "Timeframes",
+          "type": "object"
+        }
+      },
+      "required": [
+        "tf",
+        "points"
+      ],
+      "title": "SparklineDTO",
+      "tsType": "{ tf?: string; points?: unknown[]; bars?: unknown[]; timeframes?: Record<string, unknown[]>; [key: string]: unknown }",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "engineVersion": {
+      "title": "Engineversion",
+      "type": "string"
+    },
+    "featureVersion": {
+      "title": "Featureversion",
+      "type": "string"
+    },
+    "rulesetVersion": {
+      "title": "Rulesetversion",
+      "type": "string"
+    },
+    "configHash": {
+      "title": "Confighash",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "generatedAt": {
+      "title": "Generatedat",
+      "type": "integer"
+    },
+    "dataAsOf": {
+      "title": "Dataasof",
+      "type": "integer"
+    },
+    "snapshotStatus": {
+      "$ref": "#/$defs/SnapshotStatus"
+    },
+    "source": {
+      "$ref": "#/$defs/SnapshotSourceDTO"
+    },
+    "summary": {
+      "additionalProperties": true,
+      "title": "Summary",
+      "type": "object"
+    },
+    "rankings": {
+      "additionalProperties": true,
+      "title": "Rankings",
+      "type": "object"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/ScannerRowDTO"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "engineVersion",
+    "featureVersion",
+    "rulesetVersion",
+    "configHash",
+    "runId",
+    "generatedAt",
+    "dataAsOf",
+    "snapshotStatus",
+    "source",
+    "summary",
+    "rankings",
+    "rows"
+  ],
+  "title": "PrepWatchdeck ScannerSnapshot",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://prep-watchdeck.local/schemas/scanner-snapshot.schema.json"
+}

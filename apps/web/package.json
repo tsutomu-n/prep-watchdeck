@@ -1,0 +1,36 @@
+{
+  "name": "prep-watchdeck-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "prepare": "svelte-kit sync || true",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "test:performance": "xvfb-run -a sh -c 'openbox >/tmp/prep-watchdeck-openbox.log 2>&1 & exec playwright test --config playwright.performance.config.ts'",
+    "test:soak": "xvfb-run -a sh -c 'openbox >/tmp/prep-watchdeck-soak-openbox.log 2>&1 & exec playwright test --config playwright.soak.config.ts'",
+    "generate:types": "json2ts --maxItems=-1 -i ../../schemas/scanner-snapshot.schema.json -o src/lib/generated/scanner-snapshot.d.ts"
+  },
+  "dependencies": {
+    "@sveltejs/adapter-auto": "^6.1.0",
+    "@sveltejs/kit": "^2.55.0",
+    "ajv": "^8.17.1",
+    "lightweight-charts": "^5.2.0",
+    "svelte": "^5.54.1",
+    "valibot": "^1.4.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.0",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
+    "@types/node": "^24.10.2",
+    "json-schema-to-typescript": "^15.0.4",
+    "svelte-check": "^4.3.4",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.16",
+    "vitest": "^4.0.15"
+  }
+}

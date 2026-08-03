@@ -1,0 +1,19 @@
+enabled = true
+
+benchmark_symbols = ["BTCUSDT", "ETHUSDT"]
+target_symbols = ["SOLUSDT"]
+
+target_order_notional_usd = 300.0
+min_required_1m_bars = 120
+stale_after_seconds = 180
+
+fast_half_life_bars = 5.0
+slow_half_life_bars = 30.0
+
+reason_pressure_threshold = 1.5
+early_activity_score = 35.0
+active_move_score = 65.0
+
+thin_turnover_notional_multiple = 20.0
+single_bar_concentration_threshold = 0.70
+funding_overheated_abs_rate = 0.001

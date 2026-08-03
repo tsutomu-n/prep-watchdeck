@@ -1,0 +1,75 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Tooling caches
+.venv/
+node_modules/
+.svelte-kit/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+coverage.xml
+.uv/
+test-results/
+playwright-report/
+
+# Secrets & local config
+.env
+.env.*
+!.env.example
+apis.json
+
+# Generated runtime data
+data/**
+!data/
+!data/.gitkeep
+
+out/**
+!out/
+!out/.gitkeep
+
+var/**
+!var/
+!var/snapshots/
+!var/snapshots/.gitkeep
+!var/past-notes/
+!var/past-notes/.gitkeep
+
+# Explicit local runtime artifacts under var/
+var/watchdeck.duckdb*
+var/scanner.lock
+var/test-past-notes/
+var/test-dashboard-view-settings/
+
+# Local-only artifacts
+.plan/
+.ai_memory/
+/HANDOFF.md
+/.codex/SP_STATE.md
+graphify-out/
+/docs/archive/
+/docs/local-archive/
+/mockups/
+
+# OS & editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+.ai-work/
+.design
+
+# Hypothesis local state
+.hypothesis/
