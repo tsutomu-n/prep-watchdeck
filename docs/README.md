@@ -41,7 +41,9 @@
 
 ## 実装・検証計画
 
-現在進行中の実装・検証計画はない。監視専用化の完了計画と検証証拠はRepo外Archiveへ退避し、
+- [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 74h Candidate条件、OI 60分変化、最小UI・テスト・初期runtime qualificationの進行中living plan。
+
+監視専用化の完了計画と過去検証証拠はRepo外Archiveへ退避し、
 現行仕様は`docs/current/`、有効な判断はADR 0007を正本とする。
 
 ## 正本の優先順位

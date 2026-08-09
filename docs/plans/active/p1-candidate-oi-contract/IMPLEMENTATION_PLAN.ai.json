@@ -1,0 +1,777 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-08-09T15:39:47+09:00",
+  "plan_id": "PLAN-P1-CANDIDATE-OI-001",
+  "revision": 2,
+  "target_repository": "tsutomu-n/prep-watchdeck",
+  "baseline_commit": "47839c33466f970f1c31d665df73e5d24ba77e6c",
+  "objective": "候補選定の74h複合条件とOI 60分変化について、設定・計算・ランキング・UI・runtimeの意味を一致させる。",
+  "broader_goal": "Bitget Public market dataだけを使うlocal-first監視専用watchdeckをコード完成候補かつ初期runtime適格へ進める。",
+  "plan_goal": "74h三値ANDをCandidateだけへ接続し、Watchlistの広い監視面を維持する。OIを5分bucket・24時間retentionで既存DuckDBへ保存しexact 60分前bucketから状態を算出し、欠損はUNKNOWN、UNKNOWNは無加点とする。最小UI/version/docs/testsを同期し、one-command startup、finite live、restart、reconnect、artifact semanticsの初期runtime qualificationまで完了する。",
+  "deliverables": [
+    "74h three-valued AND and reason codes",
+    "Candidate-only gate and candidateRule74h metadata",
+    "bounded OI sample store",
+    "exact 60m OI wiring and UNKNOWN no-score",
+    "minimal Candidate and Monitoring Rail UI",
+    "feature/ruleset version 3",
+    "focused tests/full gate/current docs/ADR/living plans",
+    "initial runtime qualification evidence"
+  ],
+  "acceptance_criteria": [
+    {
+      "id": "AC-P1-001",
+      "description": "74h component conditions use three-valued logic and composite is true only when both are true.",
+      "mandatory": true,
+      "verification_method": "parameterized long-horizon unit test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-002",
+      "description": "Single-condition matches, insufficient history and zero baseline never produce composite true.",
+      "mandatory": true,
+      "verification_method": "long-horizon unit test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-003",
+      "description": "Price and turnover match reasons are independently present in reasonCodes.",
+      "mandatory": true,
+      "verification_method": "DTO/provider unit test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-004",
+      "description": "Candidate rankings include only composite true rows while Watchlist rows and noTrade diagnostics remain available.",
+      "mandatory": true,
+      "verification_method": "ranking test and focused E2E",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-005",
+      "description": "OI samples are idempotently stored in 5-minute buckets and older than 24 hours are pruned.",
+      "mandatory": true,
+      "verification_method": "DuckDB store test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-006",
+      "description": "OI compares to the exact 60-minute target bucket and missing reference yields UNKNOWN.",
+      "mandatory": true,
+      "verification_method": "resolver and service snapshot test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-007",
+      "description": "UNKNOWN OI receives no positive Attention Score contribution.",
+      "mandatory": true,
+      "verification_method": "priority unit test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-008",
+      "description": "Candidate displays active thresholds and selected-symbol OI 60m state without a Watchlist column.",
+      "mandatory": true,
+      "verification_method": "focused E2E",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-009",
+      "description": "featureVersion and rulesetVersion are 3 while schemaVersion remains unchanged.",
+      "mandatory": true,
+      "verification_method": "snapshot unit test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-010",
+      "description": "Existing DB initialization is additive and rollback does not require dropping the new table.",
+      "mandatory": true,
+      "verification_method": "store migration test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-011",
+      "description": "Existing monitoring behavior passes the full local verification gate.",
+      "mandatory": true,
+      "verification_method": "bash scripts/verify-local.sh",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-012",
+      "description": "Current docs, ADR and living plans match final implementation and evidence.",
+      "mandatory": true,
+      "verification_method": "document and plan validation",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-P1-013",
+      "description": "Stale or invalid current ticker OI is not sampled or compared and produces UNKNOWN.",
+      "mandatory": true,
+      "verification_method": "OI/service snapshot test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-001",
+      "description": "One-command fixture startup renders the principal monitoring workflow and new semantics.",
+      "mandatory": true,
+      "verification_method": "runtime smoke",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-002",
+      "description": "Isolated finite live smoke succeeds without modifying production state.",
+      "mandatory": true,
+      "verification_method": "CLI and doctor evidence",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-003",
+      "description": "Runtime stores at least one valid OI sample and same-bucket writes are idempotent.",
+      "mandatory": true,
+      "verification_method": "runtime DB evidence",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-004",
+      "description": "Controlled restart reuses additive OI history and preserves monitoring state.",
+      "mandatory": true,
+      "verification_method": "restart evidence",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-005",
+      "description": "Reconnect, resubscribe and ticker/candle ingest recovery are proven by focused test.",
+      "mandatory": true,
+      "verification_method": "reconnect regression test",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-006",
+      "description": "Artifacts prove Candidate/Watchlist/null-history responsibility separation.",
+      "mandatory": true,
+      "verification_method": "fixture or live assertion",
+      "status": "not_verified",
+      "evidence": []
+    },
+    {
+      "id": "AC-RQ-007",
+      "description": "Final full gate and diff audit pass with no unresolved P0/P1.",
+      "mandatory": true,
+      "verification_method": "commands and final audit",
+      "status": "not_verified",
+      "evidence": []
+    }
+  ],
+  "non_goals": [
+    "VPI or Smart Rank redesign",
+    "Watchlist columns or full UI redesign",
+    "alerts/search/focus",
+    "new market data channels or private API",
+    "orders/execution/PnL/copy/bot",
+    "new production OSS or DB/framework replacement",
+    "natural 24-hour disconnect as blocking synchronous gate",
+    "push/PR/deploy"
+  ],
+  "deferred_work": [
+    "natural Bitget 24-hour disconnect observation",
+    "runtime OI UNKNOWN coverage measurement",
+    "fresh-state 74h history acquisition UX",
+    "P2 score contribution UI",
+    "multi-timeframe volume ratio",
+    "market-cap universe decision"
+  ],
+  "current_state": {
+    "product_boundary": "monitoring-only",
+    "current_74h_composite": "OR",
+    "intended_74h_composite": "three-valued AND",
+    "candidate_gate_wired": false,
+    "oi_lookback_minutes": 60,
+    "oi_history_wired": false,
+    "plan_status": "plan_only"
+  },
+  "scope_in": [
+    "74h semantics/reasons/candidate gate",
+    "OI local history and exact lookup",
+    "minimal UI/version/docs/tests",
+    "initial runtime qualification"
+  ],
+  "scope_out": [
+    "all non_goals"
+  ],
+  "facts": [
+    "baseline commit is the initial monitoring-only release",
+    "current 74h composite uses OR",
+    "Candidate rankings do not use the 74h composite",
+    "service snapshots do not provide previous OI to the scanner",
+    "current DTO already exposes long-horizon and OI state fields"
+  ],
+  "inferences": [
+    "Candidate-only gating preserves discovery breadth",
+    "5-minute OI buckets with 24-hour retention are sufficient and bounded",
+    "controlled reconnect tests are a practical mandatory gate while natural 24-hour disconnect remains operational observation"
+  ],
+  "assumptions": [
+    "volume means USDT quote turnover in this wave",
+    "Candidate means primary-rule matches and Watchlist means broad monitoring universe",
+    "holdingAmount remains the public OI source"
+  ],
+  "unknowns": [
+    "current HEAD drift",
+    "actual DuckDB service store path and API",
+    "existing OI history",
+    "repository plan schema/template",
+    "current reconnect test coverage",
+    "specific ticker freshness contract"
+  ],
+  "options": [
+    {
+      "id": "A",
+      "description": "Keep current behavior",
+      "selected": false
+    },
+    {
+      "id": "B",
+      "description": "Fix 74h AND and remove OI from score",
+      "selected": false
+    },
+    {
+      "id": "C",
+      "description": "Fix 74h AND, Candidate gate and local OI history",
+      "selected": true
+    },
+    {
+      "id": "D",
+      "description": "Backfill OI from external history API",
+      "selected": false
+    }
+  ],
+  "selected_option": "C",
+  "decision_rationale": "Closes confirmed P1 findings while preserving Public/local-first/single-writer boundaries and avoiding new external dependencies.",
+  "checkpoints": [
+    {
+      "id": "CP-001",
+      "status": "not_started",
+      "goal": "Establish baseline, repository contracts and synchronized living plans",
+      "work": [
+        "inspect git state and repository instructions",
+        "resolve actual store and tests",
+        "create dedicated local branch",
+        "sync both plans to current HEAD"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-012"
+      ],
+      "dependencies": [],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-002",
+      "status": "not_started",
+      "goal": "Add only the focused failing tests needed to fix the confirmed contracts",
+      "work": [
+        "reuse existing tests where sufficient",
+        "record intentional red failures"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-001",
+        "AC-P1-002",
+        "AC-P1-003",
+        "AC-P1-004",
+        "AC-P1-005",
+        "AC-P1-006",
+        "AC-P1-007",
+        "AC-P1-008",
+        "AC-P1-009",
+        "AC-P1-010",
+        "AC-P1-013"
+      ],
+      "dependencies": [
+        "CP-001"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-003",
+      "status": "not_started",
+      "goal": "Implement three-valued 74h AND semantics and reason codes",
+      "work": [
+        "update long-horizon feature",
+        "update DTO/provider reason codes",
+        "run focused tests"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-001",
+        "AC-P1-002",
+        "AC-P1-003"
+      ],
+      "dependencies": [
+        "CP-002"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-004",
+      "status": "not_started",
+      "goal": "Gate Candidate rankings only and publish active rule metadata",
+      "work": [
+        "separate all rows from candidate source",
+        "preserve Watchlist/Smart Rank/noTrade",
+        "publish validated summary metadata"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-004",
+        "AC-P1-008"
+      ],
+      "dependencies": [
+        "CP-003"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-005",
+      "status": "not_started",
+      "goal": "Add bounded additive OI sample storage",
+      "work": [
+        "resolve concrete service store",
+        "add table and bulk APIs",
+        "reuse lock/transaction",
+        "enforce 5m/24h contracts"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-005",
+        "AC-P1-010",
+        "AC-P1-013"
+      ],
+      "dependencies": [
+        "CP-002"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-006",
+      "status": "not_started",
+      "goal": "Wire exact 60-minute OI references into service snapshots and scoring",
+      "work": [
+        "validate current ticker freshness",
+        "bulk upsert/load/prune",
+        "pass previous map",
+        "make UNKNOWN contribution zero"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-006",
+        "AC-P1-007",
+        "AC-P1-013"
+      ],
+      "dependencies": [
+        "CP-005"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-007",
+      "status": "not_started",
+      "goal": "Expose minimal UI semantics and bump versions",
+      "work": [
+        "Candidate help from summary",
+        "OI state in Monitoring Rail",
+        "no Watchlist column",
+        "bump feature/ruleset"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-008",
+        "AC-P1-009"
+      ],
+      "dependencies": [
+        "CP-004",
+        "CP-006"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-008",
+      "status": "not_started",
+      "goal": "Reach focused green, synchronize docs and run full gate",
+      "work": [
+        "run focused green",
+        "update current docs and ADR",
+        "run full gate once",
+        "audit diff"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-P1-009",
+        "AC-P1-010",
+        "AC-P1-011",
+        "AC-P1-012",
+        "AC-P1-013"
+      ],
+      "dependencies": [
+        "CP-007"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-009",
+      "status": "not_started",
+      "goal": "Verify one-command fixture startup and isolated finite live smoke",
+      "work": [
+        "execute runtime qualification RQ-01/RQ-02",
+        "record URL/state/exit codes"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-RQ-001",
+        "AC-RQ-002"
+      ],
+      "dependencies": [
+        "CP-008"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-010",
+      "status": "not_started",
+      "goal": "Verify OI runtime storage and restart persistence",
+      "work": [
+        "store valid runtime sample",
+        "verify idempotency",
+        "restart with same state",
+        "verify monitoring state persistence"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-RQ-003",
+        "AC-RQ-004"
+      ],
+      "dependencies": [
+        "CP-009"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-011",
+      "status": "not_started",
+      "goal": "Verify reconnect path and artifact semantics",
+      "work": [
+        "run or add focused reconnect test",
+        "assert candidate/watchlist/null semantics"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-RQ-005",
+        "AC-RQ-006"
+      ],
+      "dependencies": [
+        "CP-010"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    },
+    {
+      "id": "CP-012",
+      "status": "not_started",
+      "goal": "Perform final audit and synchronize final result",
+      "work": [
+        "reuse full gate if source unchanged or rerun",
+        "inspect complete diff",
+        "sync plans and final result"
+      ],
+      "target_files": [
+        "Resolve exact paths from current repository; authoritative list in IMPLEMENTATION_PLAN.md and appendices/A_TARGET_FILE_MAP.md"
+      ],
+      "acceptance_criteria_ids": [
+        "AC-RQ-007"
+      ],
+      "dependencies": [
+        "CP-011"
+      ],
+      "completion_criteria": [
+        "Every linked mandatory acceptance criterion has reproducible evidence or an explicit recorded stop condition."
+      ],
+      "verification_method": [
+        "Commands and evidence defined in IMPLEMENTATION_PLAN.md and RUNTIME_QUALIFICATION.md"
+      ],
+      "expected_failure_modes": [
+        "scope expansion",
+        "plan/repository drift",
+        "unrelated regression",
+        "fabricated or incomplete evidence"
+      ],
+      "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
+      "evidence": []
+    }
+  ],
+  "critical_risks": [
+    "boolean fixed but unused",
+    "all rows filtered instead of Candidate only",
+    "None collapsed to false",
+    "fake nearest/latest OI used as 60m reference",
+    "stale OI sampled",
+    "unbounded or N+1 OI storage",
+    "UNKNOWN positive score",
+    "scope creep",
+    "runtime qualification claimed from inspection only"
+  ],
+  "stop_conditions": [
+    "repository contracts materially differ",
+    "OI source semantics unknown",
+    "existing reliable OI history makes new table duplicate",
+    "Candidate gate conflicts with explicit current product contract",
+    "baseline/regression failures cannot be separated",
+    "external write, secret or irreversible operation required"
+  ],
+  "progress": {
+    "status": "plan_only",
+    "completed_checkpoint_ids": []
+  },
+  "decision_log": [
+    {
+      "at": "2026-08-09T15:39:47+09:00",
+      "decision": "Revision 2 adds mandatory initial runtime qualification after P1 implementation.",
+      "reason": "P1 tests alone do not prove startup, state reuse, restart or reconnect behavior."
+    },
+    {
+      "at": "2026-08-08T14:21:08+09:00",
+      "decision": "Use Candidate-only 74h gating and preserve all Watchlist rows.",
+      "reason": "Enforces the primary rule without hiding broader monitoring context."
+    },
+    {
+      "at": "2026-08-08T14:21:08+09:00",
+      "decision": "Use 5-minute OI buckets, 24-hour retention and exact 60-minute lookup.",
+      "reason": "Bounded, restart-safe and fail-closed."
+    },
+    {
+      "at": "2026-08-09T15:39:47+09:00",
+      "decision": "Natural 24-hour disconnect is residual operational observation, not a blocking synchronous gate.",
+      "reason": "A deterministic reconnect regression test provides reproducible evidence without turning the implementation session into a 24-hour wait."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-01",
+      "severity": "P1",
+      "title": "74h composite uses OR instead of AND",
+      "status": "confirmed"
+    },
+    {
+      "id": "F-02",
+      "severity": "P1",
+      "title": "Candidate rankings do not use the 74h composite",
+      "status": "confirmed"
+    },
+    {
+      "id": "F-03",
+      "severity": "P1",
+      "title": "OI 60-minute lookback is not wired to service snapshots",
+      "status": "confirmed"
+    }
+  ],
+  "verification_evidence": [],
+  "current_checkpoint": "CP-001",
+  "next_action": "Inspect current repository and synchronize this plan to the actual HEAD before any implementation.",
+  "final_result": null,
+  "goal_gap": "All implementation and runtime qualification remain outstanding.",
+  "remaining_work": [
+    "CP-001",
+    "CP-002",
+    "CP-003",
+    "CP-004",
+    "CP-005",
+    "CP-006",
+    "CP-007",
+    "CP-008",
+    "CP-009",
+    "CP-010",
+    "CP-011",
+    "CP-012"
+  ]
+}
