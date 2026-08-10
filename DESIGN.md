@@ -1,9 +1,9 @@
 # Prep Watchdeck DESIGN.md
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-10T20:19:08+09:00`
-- 検証: `2026-08-10T20:19:08+09:00`
-- 文書更新作業時刻: `2026-08-10_20:19`
+- 更新: `2026-08-10T21:46:27+09:00`
+- 検証: `2026-08-10T21:46:27+09:00`
+- 文書更新作業時刻: `2026-08-10_21:46`
 - 状態: `現行`
 
 ---
@@ -17,7 +17,6 @@ colors:
   bgAlt: "#090C0D"
   surface: "#0B1110"
   panel: "#0D1212"
-  panelOverlay: "rgba(13, 18, 18, 0.94)"
   panelStrong: "#121A18"
   panelSelected: "#162216"
   text: "#F3F5ED"
@@ -123,7 +122,7 @@ components:
     rounded: "{rounded.none}"
     padding: "{spacing.md}"
   panel-overlay:
-    backgroundColor: "{colors.panelOverlay}"
+    backgroundColor: "{colors.panel}"
     textColor: "{colors.text}"
     rounded: "{rounded.none}"
     padding: "{spacing.md}"
@@ -156,7 +155,7 @@ components:
     rounded: "{rounded.none}"
     padding: "{spacing.xs}"
   button-primary:
-    backgroundColor: "{colors.focus}"
+    backgroundColor: "{colors.primary}"
     textColor: "{colors.focusOn}"
     rounded: "{rounded.none}"
     padding: "{spacing.sm}"
@@ -261,7 +260,7 @@ Desktop is the primary analysis surface. Mobile is for quick review, candidate c
 The palette uses a near-black green background, muted green-gray borders, off-white text, and one high-energy focus color.
 
 - **Background (`bg`, `bgAlt`)**: Full-page flat monitoring-terminal surfaces. They do not add decorative page texture.
-- **Panels (`surface`, `panel`, `panelOverlay`, `panelStrong`)**: Watchlists, charts, monitoring rails, annotation forms, and snapshot areas. `panel` is the opaque base. `panelOverlay` is only the same panel color at `94%` opacity for layered workspace surfaces; it is not a separate status color.
+- **Panels (`surface`, `panel`, `panelStrong`)**: Watchlists, charts, monitoring rails, annotation forms, and snapshot areas. `panel` is the DesignMD-compatible opaque base. Layered workspace surfaces use the same color at `94%` opacity through the runtime `--panel` token; this opacity treatment is not a separate status color.
 - **Text (`text`, `muted`, `subtle`)**: Main text, labels, captions, timestamps, and secondary explanations.
 - **Focus (`focus`, `primary`)**: Selected item, active timeframe, current attention target, or primary UI action only. `primary` is an alias of `focus`; do not use either as a generic success color.
 - **Up (`up`)**: Market upside movement, positive percentage movement, or upward sparkline semantics only.
@@ -458,7 +457,7 @@ Runtime chart token mapping is fixed as follows:
 
 The renderer reads these values through the semantic chart adapter. A missing or invalid chart color token fails closed with the token name; it must not silently fall back to library defaults. The chart container exists before asynchronous chart data arrives so a symbol without embedded bars can still initialize when the API response returns.
 
-The shared runtime `--panel-solid` token maps to `panel`, while `--panel` maps to `panelOverlay`. Components must not treat the translucent overlay as a new semantic color.
+The shared runtime `--panel-solid` token maps directly to `panel`, while `--panel` applies the same panel color at `94%` alpha. Components must not treat the translucent overlay as a new semantic color.
 
 ### Past Note
 
