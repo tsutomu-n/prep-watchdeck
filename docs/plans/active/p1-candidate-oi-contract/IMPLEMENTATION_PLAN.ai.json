@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-10T11:43:34+09:00",
+  "updated_at": "2026-08-10T11:59:58+09:00",
   "plan_id": "PLAN-P1-CANDIDATE-OI-001",
   "revision": 6,
   "target_repository": "tsutomu-n/prep-watchdeck",
@@ -924,6 +924,13 @@
       "working_directory": "/home/tn/projects/prep-watchdeck",
       "exit_code": 1,
       "result": "Detected malformed decision-log insertion and a pyrefly-only invalid-value test path; both were corrected before the passing final gate."
+    },
+    {
+      "checkpoint_id": "CP-012-POST-REVIEW-RUNTIME",
+      "command": "systemctl --user restart prep-watchdeck-service.service; systemctl --user restart prep-watchdeck-web.service; health/snapshot/UI/hash/process audits",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 0,
+      "result": "Service 3450385->3667379 and Web 3450397->3667390 active; dataAsOf 1786330200000->1786330500000; versions 3/3/schema 1; Candidate counts, OI 60m, Watchlist, Raw Sort, Smart Rank and VPI-Lite+ visible; state hashes unchanged; one DuckDB writer; no orphan process. Service stop exceeded 30 seconds and systemd used SIGKILL before a clean replacement started."
     }
   ],
   "current_checkpoint": "COMPLETE",
@@ -939,7 +946,11 @@
     "unresolved_p0_p1": 0,
     "scope_out_changes": 0,
     "full_gate": "PASS",
-    "remaining_work": []
+    "remaining_work": [],
+    "residual_risks": [
+      "Natural 24-hour WebSocket disconnect remains an operational observation; deterministic reconnect coverage passed.",
+      "The 2026-08-10 controlled service restart exceeded the user-unit 30-second stop timeout and systemd used SIGKILL; the replacement service was healthy with forward dataAsOf, unchanged sentinels, one writer and no orphan."
+    ]
   },
   "goal_gap": "none",
   "remaining_work": [],

@@ -1,8 +1,8 @@
 # P1 Candidate / OI 契約修正 実装計画
 
 - 作成: `2026-08-08T14:21:08+09:00`
-- 更新: `2026-08-10T11:43:34+09:00`
-- 検証: `2026-08-10T11:43:34+09:00`
+- 更新: `2026-08-10T11:59:58+09:00`
+- 検証: `2026-08-10T11:59:58+09:00`
 - 状態: `実装計画`
 
 ---
@@ -398,7 +398,9 @@ result=no whitespace errors
 - Scope外変更: `0`。依存追加、private API、Watchlist列、Raw Sort、Smart Rank algorithm、取引機能変更なし。
 - 未解決P0/P1: `0`。
 - Goal gap / remaining work: `none / 0`。
-- Residual risk: 自然な24時間WebSocket切断は同期gateで未観測。決定論的reconnect testをPASSし、運用観測だけを非blockingで残す。
+- Residual risk: 自然な24時間WebSocket切断は同期gateで未観測。決定論的reconnect testをPASSし、
+  運用観測だけを非blockingで残す。2026-08-10のcontrolled restartではservice停止が30秒以内に
+  完了せずsystemdがSIGKILLへ移行したが、再起動後の状態・data・single writerに破損はない。
 
 ## 13. PR review remediation（Revision 6）
 
@@ -415,3 +417,11 @@ result=no whitespace errors
 - 再実行したfocusedはscanner `87 passed`、Web E2E `21 passed`。最終
   `bash scripts/verify-local.sh`はexit 0（maintenance 81、scanner 227、Web unit 174、
   Playwright 56、Ruff/format/pyrefly/Svelte check/build PASS）。
+- commit `6fb5ce6`のrequired `verify`はPASS。2件のreview threadへ修正証拠を返信しresolveした。
+- user systemd unitsを使ったcontrolled restartはcommand exit 0。service PID
+  `3450385 -> 3667379`、Web PID `3450397 -> 3667390`、両unit active、`NRestarts=0`。
+- snapshotは`dataAsOf 1786330200000 -> 1786330500000`、schema `1`、feature/ruleset `3`、
+  Candidate AND条件/counts、OI 60分、Watchlist、Raw Sort、Smart Rank、VPI-Lite+を確認した。
+- Past NoteとDashboard settingsのhashは不変。DuckDB writerはPID `3667388`の1つでservice
+  cgroup内、app service workerも1つ、Web listenerもWeb cgroup内、orphanは0。
+- service stop timeout/SIGKILLは非blocking運用残余リスクとして保持する。
