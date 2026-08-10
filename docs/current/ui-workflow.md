@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-10T20:04:38+09:00`
-- 検証: `2026-08-10T20:04:38+09:00`
-- 文書更新作業: `2026-08-10_20:04`（Asia/Tokyo）
+- 更新: `2026-08-10T20:19:08+09:00`
+- 検証: `2026-08-10T20:19:08+09:00`
+- 文書更新作業: `2026-08-10_20:19`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -23,7 +23,7 @@ process状態の正本ではない。これらは実画面、state file、servic
 2. Candidateのtimeframeとrankingを確認する。ranking itemは個別分析への明示的なlinkである。
 3. Watchlistのカテゴリ、view、Raw Sortを使って確認対象を絞る。
 4. Watchlist rowを選択し、同じDashboard内のSelected detailを更新する。
-5. Selected detailで分類、理由、risk、24h range、VPI補助情報、Past Noteを確認する。
+5. Selected detailで分類、理由、risk、24h range、市場活動、Past Noteを確認する。
 6. より深く確認する時だけ、Selected detailの「個別分析を開く」linkからSymbol画面へ進む。
 7. Symbol画面のMonitoring Rail、chart、時間軸別データ、市場条件を確認する。
 8. 後日の監視に必要な時だけ、Past Noteを60日有効の銘柄annotationとして保存する。
@@ -86,9 +86,10 @@ filterやview変更で選択symbolが一時的に非表示になっても、別s
 Selected detailは「選択銘柄を保持中」を表示し、入力中の下書きを保持する。対象が再表示
 されるまでは保存不可であることも隠さず表示する。
 
-### VPI-Lite+ 実験表示
+### 市場活動（VPI-Lite+）
 
-Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Selected detail内へ実験表示を置く。
+Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Selected detail内へ市場活動を置く。
+利用者が最初に見る見出しは`市場活動`とし、技術名`VPI-Lite+`は小さく併記する。
 Dashboardの概要panelはBenchmark / Targetのstateとdata qualityだけを表示し、scoreを出さない。
 選択rowに一致する`row.display.vpiLitePlus`がある時だけ、選択銘柄の補助詳細としてscore、
 reason、risk、funding、open interest、data timestampを表示する。常に「実験中の補助指標で、
@@ -129,7 +130,7 @@ keyboard helpは「上下キーで銘柄を移動、EnterまたはSpaceで選択
 - 出来高増（`量増`）
 
 各chipは短縮labelを視覚表示し、`aria-label`には完全なlabelを持つ。さらにrow選択buttonの
-`aria-label`へ、分類、表示label、選択時間軸の変化と代金、15m量倍率、品質、注記、
+`aria-label`へ、分類、表示label、選択時間軸の変化と代金、15分量倍率、品質、注記、
 全signalの完全labelを連結する。色だけでsignalを区別しない。
 
 ### Hot価格のstale
@@ -323,7 +324,7 @@ Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で�
 74h条件の複合結果は`一致 / 未一致 / 判定不能`で表示する。VPI-Lite+のOI availabilityは
 別契約なので維持し、重複していた非VPIのraw open interest表示だけを置かない。
 
-`summary.volumeRatio15m`をvalidationできた場合だけ、`15m量倍率`へ
-`約24hの15m中央値比`のような基準説明を付ける。値は有限時に`3.4×`、欠損時に`—`とする。
+`summary.volumeRatio15m`をvalidationできた場合だけ、`15分量倍率`へ
+`直近約24h中央値比`のような基準説明を付ける。値は有限時に`3.4×`、欠損時に`—`とする。
 metadataが不正・欠損ならsample数や期間を推測せず、基準詳細を取得できないfallbackを表示する。
 Symbol時間軸boardでは15mだけ量倍率行を生成し、他timeframeではDOMを生成しない。

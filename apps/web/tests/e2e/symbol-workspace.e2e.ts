@@ -286,7 +286,7 @@ test("symbol support information is one flat divided workspace in workflow order
   await expect(workspace).toBeVisible();
   const timeframeBoard = symbolPage.getByRole("region", { name: "時間軸別データ" });
   await expect(timeframeBoard.locator("em")).toHaveCount(1);
-  await expect(timeframeBoard.getByText("15m量倍率 3.4×", { exact: true })).toBeVisible();
+  await expect(timeframeBoard.getByText("15分量倍率 3.4×", { exact: true })).toBeVisible();
 
   const topLevelOrder = await symbolPage.locator(":scope > *").evaluateAll((elements) =>
     elements.map(

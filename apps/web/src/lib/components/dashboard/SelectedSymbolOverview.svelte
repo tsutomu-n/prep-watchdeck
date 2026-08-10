@@ -103,7 +103,7 @@
 {/if}
 <dl class="stats">
   <div>
-    <dt title={volumeRatioHelp}>15m量倍率</dt>
+    <dt title={volumeRatioHelp}>15分量倍率</dt>
     <dd>{volumeRatioText}</dd>
     <small title={volumeRatioHelp}>{volumeRatioBaseline}</small>
   </div>

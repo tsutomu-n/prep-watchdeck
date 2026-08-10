@@ -77,7 +77,7 @@
     <div>
       <h2>候補の動き</h2>
       <p class="candidate-rule">{candidateRuleText}</p>
-      <p class="volume-baseline" title={volumeRatioHelp}>15m量倍率: {volumeRatioBaseline}</p>
+      <p class="volume-baseline" title={volumeRatioHelp}>15分量倍率: {volumeRatioBaseline}</p>
     </div>
     <div class="timeframe-strip" role="group" aria-label="時間軸">
       {#each timeframes as timeframe}

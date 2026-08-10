@@ -39,7 +39,7 @@
         <strong class={changeTone(item.change)}>{fmtCompact(item.change, "%")}</strong>
         <small>{fmtCompact(item.turnover)} USDT</small>
         {#if item.timeframe === "15m"}
-          <em>15m量倍率 {volumeRatioText(item.volumeRatio)}</em>
+          <em>15分量倍率 {volumeRatioText(item.volumeRatio)}</em>
         {/if}
       </a>
     {/each}

@@ -28,10 +28,11 @@
 </script>
 
 {#if items.length > 0}
-  <section class="vpi-panel" aria-label="VPI-Lite+ 実験表示">
+  <section class="vpi-panel" aria-label="市場活動（VPI-Lite+）">
     <header>
       <div>
-        <h3>VPI-Lite+ 実験表示</h3>
+        <h3>市場活動</h3>
+        <small class="technical-name">VPI-Lite+</small>
         <p>実験中の補助指標です。売買シグナルではありません。</p>
       </div>
       <span>Cold snapshot</span>
@@ -78,6 +79,13 @@
   h3 {
     font-size: var(--type-heading-md-size);
     line-height: var(--type-heading-md-leading);
+  }
+
+  .technical-name {
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 9px;
+    letter-spacing: 0.04em;
   }
 
   p,

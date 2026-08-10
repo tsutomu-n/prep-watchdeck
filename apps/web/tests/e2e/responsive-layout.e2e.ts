@@ -667,7 +667,7 @@ test("mobile candidate ranking keeps every symbol identity readable", async ({ p
         const candidateRanking = page.getByRole("region", { name: "15m ランキング" });
         const tabs = candidateRanking.getByRole("tab");
         await expect(tabs).toHaveCount(4);
-        for (const tabName of ["上昇", "下落", "売買代金", "15m量倍率"]) {
+        for (const tabName of ["上昇", "下落", "売買代金", "15分量倍率"]) {
           await candidateRanking.getByRole("tab", { name: tabName, exact: true }).click();
           const activePanel = candidateRanking.getByRole("tabpanel");
           await expect(activePanel.locator(`.rank-row > span[title="${longSymbol}"]`)).toBeVisible();
@@ -742,7 +742,7 @@ test("mobile candidate tabs use automatic roving activation", async ({ page }) =
   const ranking = page.getByRole("region", { name: "15m ランキング" });
   const up = ranking.getByRole("tab", { name: "上昇", exact: true });
   const down = ranking.getByRole("tab", { name: "下落", exact: true });
-  const ratio = ranking.getByRole("tab", { name: "15m量倍率", exact: true });
+  const ratio = ranking.getByRole("tab", { name: "15分量倍率", exact: true });
   await expect(up).toHaveAttribute("tabindex", "0");
   await up.focus();
   await up.press("ArrowRight");

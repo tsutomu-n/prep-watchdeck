@@ -62,7 +62,7 @@
         .join("、")}`,
       `${selectedTimeframe}変化 ${fmtCompact(row.changePctByTf?.[selectedTimeframe], "%")}`,
       `${selectedTimeframe}代金 ${fmtCompact(row.turnoverUsdtByTf?.[selectedTimeframe])}`,
-      `15m量倍率 ${volumeRatioText}`,
+      `15分量倍率 ${volumeRatioText}`,
       `品質 ${dataQualityLabel(row.dataQuality)}`,
       noteBadge ? `注記 ${noteBadge}` : null,
       signals.length > 0
@@ -119,7 +119,7 @@
         </span>
       {/if}
     </span>
-    <span class="volume-ratio" title={`15m量倍率 ${volumeRatioText}。${volumeRatioHelp}`}
+    <span class="volume-ratio" title={`15分量倍率 ${volumeRatioText}。${volumeRatioHelp}`}
       >{volumeRatioText}</span
     >
     {#each rankingTimeframes as timeframe, index}

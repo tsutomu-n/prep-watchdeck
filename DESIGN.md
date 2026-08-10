@@ -1,9 +1,9 @@
 # Prep Watchdeck DESIGN.md
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-10T20:04:38+09:00`
-- 検証: `2026-08-10T20:04:38+09:00`
-- 文書更新作業時刻: `2026-08-10_20:04`
+- 更新: `2026-08-10T20:19:08+09:00`
+- 検証: `2026-08-10T20:19:08+09:00`
+- 文書更新作業時刻: `2026-08-10_20:19`
 - 状態: `現行`
 
 ---
@@ -307,7 +307,7 @@ The layout should prioritize short eye travel and fast symbol triage.
 
 Dashboard source and focus order is fixed: Candidate Radar, Watchlist, selected-symbol detail, then corrected ranking (`補正順位`). Header and service state stay compact, while the Watchlist remains the main working area. At `85rem` and wider the selected detail may be placed in the right rail; that visual placement must not change source or keyboard order.
 
-VPI-Lite+ is an experimental Cold snapshot aid, not a trading signal. When the optional payload is valid, show Benchmark and Target states plus data quality in a compact Dashboard panel, without score. The numeric score, reasons, risks, funding state, and open-interest state belong only in the selected-symbol detail. Do not add VPI to Watchlist rows, ranking, sort, or Hot ticker updates. The experimental notice must remain visible, and VPI uses existing state and quality colors rather than introducing a new palette.
+VPI-Lite+ is an experimental Cold snapshot aid, not a trading signal. Its primary user-facing name is `市場活動`; keep `VPI-Lite+` as a small technical label. When the optional payload is valid, show Benchmark and Target states plus data quality in a compact Dashboard panel, without score. The numeric score, reasons, risks, funding state, and open-interest state belong only in the selected-symbol detail. Do not add VPI to Watchlist rows, ranking, sort, or Hot ticker updates. The experimental notice must remain visible, and VPI uses existing state and quality colors rather than introducing a new palette.
 
 At `560px` and narrower, the Dashboard source, service, and runtime boundary states form one compact three-cell strip. Each cell remains readable, source and service retain polite live status semantics, and system state colors remain separate from market direction.
 
@@ -338,7 +338,7 @@ Depth should be communicated through:
 
 Primary surfaces are Watchlist and chart. Context surfaces are selected detail and Monitoring Rail. Corrected ranking and supporting information are secondary. Express these levels through border strength, surface difference, and divider rhythm—not new colors, gradients, glow, larger radius, or repeated card shadows. Avoid glassmorphism, backdrop blur, neumorphism, and decorative depth effects that reduce data clarity.
 
-Quiet Market Instrument keeps market evidence readable without turning density into decoration. Use continuous surfaces, compact inline semantic text, neutral range tracks with a current-value marker, and explicit missing/stale states. `15m量倍率` means the current rolling 15-minute USDT turnover divided by the configured rolling 15-minute median baseline; show the validated approximate baseline span and do not infer it when metadata is missing or malformed.
+Quiet Market Instrument keeps market evidence readable without turning density into decoration. Use continuous surfaces, compact inline semantic text, neutral range tracks with a current-value marker, and explicit missing/stale states. `15分量倍率` means the current rolling 15-minute USDT turnover divided by the configured rolling 15-minute median baseline; show a validated baseline span such as `直近約24h中央値比` and do not infer it when metadata is missing or malformed.
 
 ## Shapes
 

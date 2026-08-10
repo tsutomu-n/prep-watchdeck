@@ -1,11 +1,11 @@
 {
   "planId": "PLAN-QUIET-MARKET-INSTRUMENT-001",
-  "revision": 2,
+  "revision": 3,
   "status": "pass_on_commit",
   "profile": "EXECPLAN",
   "risk": "MEDIUM",
   "branch": "ai/quiet-market-instrument-20260810-1943",
-  "parentHead": "2b5bfd5811bd1bbace829baa365fff332aaa2c46",
+  "parentHead": "aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1",
   "finalHead": "this-plan-containing-commit",
   "verifiedTree": "HEAD^{tree}; exact hash is recorded post-commit in .ai-work/state.md and final report",
   "currentCheckpoint": "complete",
@@ -24,11 +24,11 @@
     {"id":"AC-UI-003","status":"pass","evidence":"560/390/320 mobile tab visuals"},
     {"id":"AC-UI-004","status":"pass","evidence":"automatic roving activation E2E"},
     {"id":"AC-UI-005","status":"pass","evidence":"compact category unit and home E2E"},
-    {"id":"AC-UI-006","status":"pass","evidence":"provider metadata, helper, valid and fallback tests"},
-    {"id":"AC-UI-007","status":"pass","evidence":"symbol board has exactly one 15m ratio DOM row"},
+    {"id":"AC-UI-006","status":"pass","evidence":"provider metadata and helper tests; UI shows 15分量倍率 and 直近約24h中央値比 only for valid metadata"},
+    {"id":"AC-UI-007","status":"pass","evidence":"symbol board has exactly one 15分量倍率 DOM row"},
     {"id":"AC-UI-008","status":"pass","evidence":"corrected-ranking E2E and unchanged smart-rank.ts"},
     {"id":"AC-UI-009","status":"pass","evidence":"desktop/mobile inspector visual and workspace E2E"},
-    {"id":"AC-UI-010","status":"pass","evidence":"state-primary VPI; OI availability and Cold boundary tests"},
+    {"id":"AC-UI-010","status":"pass","evidence":"市場活動 is primary, VPI-Lite+ is a small technical label; state-primary display, OI availability, and Cold boundary tests"},
     {"id":"AC-UI-011","status":"pass","evidence":"full gate states and unchanged sentinels"},
     {"id":"AC-UI-012","status":"pass","evidence":"six viewports and responsive overflow E2E"},
     {"id":"AC-UI-013","status":"pass","evidence":"package and lock diff empty"},
@@ -36,7 +36,7 @@
     {"id":"AC-UI-015","status":"pass","evidence":"verify-local exit 0; pytest 236, web unit 183, E2E 59"},
     {"id":"AC-UI-016","status":"pass","evidence":"visual review and three-symbol task; no P0/P1"},
     {"id":"AC-UI-017","status":"pass","evidence":"DESIGN and current docs synchronized; doc tests 17 pass"},
-    {"id":"AC-UI-018","status":"pass_on_commit","evidence":"explicit selected staging and this plan-containing local commit"}
+    {"id":"AC-UI-018","status":"pass_on_commit","evidence":"explicit selected staging and this follow-up plan-containing local commit"}
   ],
   "checkpoints": [
     {"id":"CP-001","status":"completed"},{"id":"CP-002","status":"completed"},
@@ -52,6 +52,8 @@
     {"command":"bun run test -- volume-ratio-meta labels smart-rank; bun run check; bun run build","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"19 unit passed; check and build passed"},
     {"command":"bun run test:e2e -- six focused specs","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"58 passed"},
     {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"pytest 236; web unit 183; E2E 59"},
+    {"command":"bun run test -- volume-ratio-meta dashboard-filters vpi-lite-plus; bun run check; bun run build; bun run test:e2e -- four terminology-focused specs","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"22 unit passed; check and build passed; focused E2E 55 passed"},
+    {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"post-copy follow-up: pytest 236; web unit 183; E2E 59"},
     {"command":"npx @google/design.md@0.1.0 lint --format json DESIGN.md","cwd":"/home/tn/projects/prep-watchdeck","exitCode":1,"summary":"same pre-existing 1 error and 1 warning as baseline; zero new findings"},
     {"command":"sha256sum Past Note and Dashboard settings","cwd":"/home/tn/.local/share/prep-watchdeck","exitCode":0,"summary":"both sentinel hashes unchanged"}
   ],
@@ -66,5 +68,10 @@
     "Pre-existing DesignMD 0.1.0 panelOverlay error and unused-primary warning remain; no new finding.",
     "Production restart and deploy were out of scope and were not performed."
   ],
-  "remainingWork": "Create the explicit local commit and confirm a clean worktree."
+  "followUpDecisions": [
+    "Keep Smart Rank calculation and internal identifiers unchanged while using 補正順位 in user-visible copy.",
+    "Use 15分量倍率 and 直近約24h中央値比 for the concise UI; keep the precise rolling-sample tooltip and no-guess fallback.",
+    "Use 市場活動 as the primary heading and retain VPI-Lite+ only as a small technical label; preserve payload, enum, score, OI availability, and ranking exclusion."
+  ],
+  "remainingWork": "Create the explicit follow-up local commit and confirm a clean worktree."
 }

@@ -13,10 +13,11 @@
   let { item }: { item: VpiLitePlusItem } = $props();
 </script>
 
-<section class="vpi-detail" aria-label="選択銘柄 VPI補助詳細">
+<section class="vpi-detail" aria-label="選択銘柄 市場活動詳細">
   <header>
     <div>
-      <h3>選択銘柄 VPI補助</h3>
+      <h3>市場活動</h3>
+      <small class="technical-name">VPI-Lite+</small>
       <p>補助値 {fmt(item.score)} / 100</p>
     </div>
     <strong>{vpiStateLabel(item.state)}</strong>
@@ -86,6 +87,13 @@
 
   h3 {
     font-size: 12px;
+  }
+
+  .technical-name {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 9px;
   }
 
   header p {

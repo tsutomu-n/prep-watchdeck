@@ -204,7 +204,7 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   await expect(
     page.getByText("74h条件: 価格±4%以上 かつ 24h売買代金+15%以上（合致1 / 未一致0 / 判定不能3）", { exact: true })
   ).toBeVisible();
-  await expect(page.getByText("15m量倍率: 約24hの15m中央値比", { exact: true })).toBeVisible();
+  await expect(page.getByText("15分量倍率: 直近約24h中央値比", { exact: true })).toBeVisible();
 
   const rankings = page.getByRole("region", { name: "15m ランキング" });
   const desktopRankings = rankings.locator('[data-candidate-representation="desktop"]');
@@ -216,7 +216,7 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
     .filter({ has: page.getByRole("heading", { name: "売買代金" }) });
   const volumeRatioPanel = desktopRankings
     .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "15m量倍率" }) });
+    .filter({ has: page.getByRole("heading", { name: "15分量倍率" }) });
   await expect(changeUpPanel.getByRole("link", { name: /ALT\s+2\.1%/ })).toBeVisible();
   await expect(changeUpPanel.getByText("表示 1/1")).toBeVisible();
   await expect(volumePanel.getByRole("link", { name: /ALT\s+89,000/ })).toBeVisible();
@@ -238,10 +238,10 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   await expect(marketRow(watchlist, "THINUSDT")).toContainText("薄商い急変");
 
   const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });
-  await expect(detail.getByRole("region", { name: "VPI-Lite+ 実験表示" })).toHaveCount(0);
+  await expect(detail.getByRole("region", { name: "市場活動（VPI-Lite+）" })).toHaveCount(0);
   await expect(watchlist.getByText("Raw Sort: 15m 価格変化 大きい順")).toBeVisible();
   await expect(watchlist.locator(".market-header").getByText("現在価格")).toBeVisible();
-  await expect(watchlist.locator(".market-header").getByText("15m量倍率")).toBeVisible();
+  await expect(watchlist.locator(".market-header").getByText("15分量倍率")).toBeVisible();
   await expect(altRow).toContainText("注視");
   await expect(altRow).toContainText("3.4×");
   await expect(watchlist.getByText("詳細な並び替え")).toBeVisible();
@@ -260,7 +260,7 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   expect(monitoringMaterialBox?.y).toBeLessThan(statsBox?.y ?? 0);
   expect(statsBox?.y).toBeLessThan(contextSummaryBox?.y ?? 0);
   await expect(detail.getByText("15分変化率")).toBeVisible();
-  await expect(detail.getByText("15m量倍率", { exact: true })).toBeVisible();
+  await expect(detail.getByText("15分量倍率", { exact: true })).toBeVisible();
   await expect(detail.getByText("データ網羅率")).toBeVisible();
   await openDetailGroup(detail, "context");
   await expect(detail.getByText("銘柄への注意・クセ・過去反応")).toBeVisible();
@@ -275,7 +275,7 @@ test("shows VPI experiment states without turning the dashboard into a score ran
   await page.goto("/");
 
   const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });
-  const panel = detail.getByRole("region", { name: "VPI-Lite+ 実験表示" });
+  const panel = detail.getByRole("region", { name: "市場活動（VPI-Lite+）" });
   await expect(panel).toBeVisible();
   await expect(panel.getByText("実験中の補助指標です。売買シグナルではありません。")).toBeVisible();
   await expect(panel.getByText("Benchmark")).toHaveCount(2);
@@ -285,7 +285,7 @@ test("shows VPI experiment states without turning the dashboard into a score ran
   await expect(panel.getByText("活動増加")).toBeVisible();
   await expect(panel).not.toContainText("48.5");
 
-  const selectedVpi = detail.getByRole("region", { name: "選択銘柄 VPI補助詳細" });
+  const selectedVpi = detail.getByRole("region", { name: "選択銘柄 市場活動詳細" });
   await expect(selectedVpi).toBeVisible();
   await expect(selectedVpi.getByText("補助値 48.5 / 100")).toBeVisible();
   await expect(selectedVpi.getByText("OI availability", { exact: true })).toBeVisible();
@@ -312,7 +312,7 @@ test("ignores a malformed VPI summary without breaking the dashboard", async ({ 
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "ローカル市場監視" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "VPI-Lite+ 実験表示" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "市場活動（VPI-Lite+）" })).toHaveCount(0);
 });
 
 test("falls back to the generic 74h candidate rule when summary metadata is malformed", async ({
@@ -347,8 +347,8 @@ test("falls back without guessing the 15m volume ratio baseline", async ({ page 
 
   await page.goto("/");
 
-  await expect(page.getByText("15m量倍率: 15m量倍率の基準比", { exact: true })).toBeVisible();
-  await expect(page.getByText("約24hの15m中央値比", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("15分量倍率: 基準期間を取得できません", { exact: true })).toBeVisible();
+  await expect(page.getByText("直近約24h中央値比", { exact: true })).toHaveCount(0);
 });
 
 test("keeps an empty Candidate ranking as a normal mobile tab state", async ({ page }) => {
@@ -365,7 +365,7 @@ test("keeps an empty Candidate ranking as a normal mobile tab state", async ({ p
   const ranking = page.getByRole("region", { name: "15m ランキング" });
   await expect(ranking.getByRole("tab")).toHaveCount(4);
   await expect(ranking.getByRole("tabpanel").getByText("該当なし", { exact: true })).toBeVisible();
-  await ranking.getByRole("tab", { name: "15m量倍率", exact: true }).click();
+  await ranking.getByRole("tab", { name: "15分量倍率", exact: true }).click();
   await expect(ranking.getByRole("tabpanel").getByText("該当なし", { exact: true })).toBeVisible();
 });
 
@@ -434,7 +434,7 @@ test("can switch ranking timeframe and display view filters", async ({ page }) =
     .filter({ has: page.getByRole("heading", { name: "売買代金" }) });
   const volumeRatioPanel = rankings
     .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "15m量倍率" }) });
+    .filter({ has: page.getByRole("heading", { name: "15分量倍率" }) });
 
   await expect(changeUpPanel.getByRole("link", { name: /ALT\s+2\.2%/ })).toBeVisible();
   await expect(volumePanel.getByRole("link", { name: /ALT\s+820,000/ })).toBeVisible();
@@ -529,16 +529,16 @@ test("can raw sort the dashboard watchlist by initial movement, attention, and t
 
   await watchlist
     .getByRole("group", { name: "観点ショートカット" })
-    .getByRole("button", { name: "15m量倍率", exact: true })
+    .getByRole("button", { name: "15分量倍率", exact: true })
     .click();
-  await expect(watchlist.getByText("Raw Sort: 15m 15m量倍率 大きい順")).toBeVisible();
+  await expect(watchlist.getByText("Raw Sort: 15m 15分量倍率 大きい順")).toBeVisible();
   await expect(page.getByRole("region", { name: "15m ランキング" })).toBeVisible();
 
   await page
     .getByRole("region", { name: "15m ランキング" })
     .getByRole("button", { name: "15m", exact: true })
     .click();
-  await expect(watchlist.getByText("Raw Sort: 15m 15m量倍率 大きい順")).toBeVisible();
+  await expect(watchlist.getByText("Raw Sort: 15m 15分量倍率 大きい順")).toBeVisible();
 
   await watchlist
     .getByRole("group", { name: "時間軸ショートカット" })
@@ -581,7 +581,7 @@ test("keeps primary timeframe controls and the watchlist reachable at 390px", as
   await expect(
     watchlist
       .getByRole("group", { name: "観点ショートカット" })
-      .getByRole("button", { name: "15m量倍率", exact: true })
+      .getByRole("button", { name: "15分量倍率", exact: true })
   ).toBeVisible();
   await expect(watchlist.getByText("詳細な並び替え")).toBeVisible();
 

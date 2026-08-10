@@ -7,7 +7,7 @@ export type VolumeRatio15mMeta = {
   floorUsdt: number;
 };
 
-const BASELINE_FALLBACK = "15m量倍率の基準比";
+const BASELINE_FALLBACK = "基準期間を取得できません";
 const HELP_FALLBACK =
   "現在15分のUSDT売買代金をrolling 15分売買代金の基準中央値と比較します。基準期間の詳細は取得できません。";
 const integerFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
@@ -56,7 +56,7 @@ function formatApproxSpan(minutes: number) {
 export function formatVolumeRatioBaseline(value: unknown) {
   const meta = parseVolumeRatio15mMeta(value);
   if (!meta) return BASELINE_FALLBACK;
-  return `${formatApproxSpan(meta.approxBaselineSpanMinutes)}の15m中央値比`;
+  return `直近${formatApproxSpan(meta.approxBaselineSpanMinutes)}中央値比`;
 }
 
 export function formatVolumeRatioHelp(value: unknown) {

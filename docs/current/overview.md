@@ -1,8 +1,8 @@
 # prep-watchdeck 現行概要
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
+- 更新: `2026-08-10T20:23:57+09:00`
+- 検証: `2026-08-10T20:23:57+09:00`
 - 状態: `現行`
 
 ---
@@ -31,7 +31,7 @@ risk/contextとdata qualityを確認するlocal-first市場監視watchdeckであ
 - Cold snapshot、1秒Hot ticker、detail chartを分離して表示する。
 - 5m、15m、1h、4h、24h、74hで候補を確認する。
 - Raw Sort、ranking、カテゴリ、data quality、risk tagで候補を絞る。
-- Candidate、Watchlist、選択銘柄detail、Smart Rankの順でDashboardを確認する。
+- Candidate、Watchlist、選択銘柄detail、補正順位の順でDashboardを確認する。
 - Symbol画面のMonitoring Railで分類、label、品質、時間軸、ranking位置、movement signal、
   risk tagを確認する。
 - Past Noteを銘柄annotationとして保存し、`observedAt`から60日または`expiresAt`到達時に

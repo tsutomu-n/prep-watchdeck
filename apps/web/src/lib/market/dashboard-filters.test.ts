@@ -42,12 +42,12 @@ describe("dashboard filters", () => {
       ["上昇順", "changeUp"],
       ["下落順", "changeDown"],
       ["売買代金", "turnoverTop"],
-      ["15m量倍率", "volumeUp"]
+      ["15分量倍率", "volumeUp"]
     ]);
     expect(dashboardRawSortKeys).toEqual([
       { id: "changePct", label: "価格変化" },
       { id: "turnoverUsdt", label: "売買代金" },
-      { id: "volumeRatio", label: "15m量倍率" },
+      { id: "volumeRatio", label: "15分量倍率" },
       { id: "attentionScore", label: "注目度" },
       { id: "riskTagCount", label: "警戒数" },
       { id: "dataQuality", label: "データ品質" }

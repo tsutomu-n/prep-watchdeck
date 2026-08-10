@@ -402,7 +402,7 @@
           aria-pressed={isFifteenMinuteVolumeRatioState(rawSortState)}
           onclick={() => onRawSortQuickSelect(fifteenMinuteVolumeRatioState)}
         >
-          15m量倍率
+          15分量倍率
         </button>
       </div>
       <details class="advanced-sort">
@@ -627,7 +627,7 @@
     <span>現在価格</span>
     <span>流れ</span>
     <span>監視材料</span>
-    <span title={volumeRatioHelp}>15m量倍率<small>{volumeRatioBaseline}</small></span>
+    <span title={volumeRatioHelp}>15分量倍率<small>{volumeRatioBaseline}</small></span>
     {#each rankingTimeframes as timeframe}
       <button
         type="button"
