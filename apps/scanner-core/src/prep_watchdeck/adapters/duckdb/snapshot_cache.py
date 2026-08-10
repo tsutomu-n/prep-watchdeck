@@ -34,13 +34,20 @@ class DuckDbSnapshotCache:
     def save(self, snapshot: SnapshotDTO) -> None:
         payload = snapshot.model_dump_json(by_alias=True)
         with self._connect() as con:
-            con.execute("DELETE FROM snapshots WHERE run_id = ?", [snapshot.run_id])
-            con.execute(
-                """
-                INSERT INTO snapshots VALUES (?, ?, ?, ?)
-                """,
-                [snapshot.run_id, snapshot.generated_at, snapshot.data_as_of, payload],
-            )
+            con.execute("BEGIN TRANSACTION")
+            try:
+                con.execute("DELETE FROM snapshots WHERE run_id = ?", [snapshot.run_id])
+                con.execute(
+                    """
+                    INSERT INTO snapshots VALUES (?, ?, ?, ?)
+                    """,
+                    [snapshot.run_id, snapshot.generated_at, snapshot.data_as_of, payload],
+                )
+                con.execute("DELETE FROM snapshots WHERE run_id <> ?", [snapshot.run_id])
+                con.execute("COMMIT")
+            except Exception:
+                con.execute("ROLLBACK")
+                raise
 
     def save_candles_5m(self, candles_by_symbol: dict[str, list[CandleBar]]) -> None:
         if not any(candles_by_symbol.values()):

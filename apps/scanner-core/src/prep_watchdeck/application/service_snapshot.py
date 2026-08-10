@@ -7,7 +7,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 from math import isfinite
-from typing import Any, Protocol
+from typing import Any, Protocol, runtime_checkable
 
 from prep_watchdeck.adapters.bitget_live.provider import snapshot_from_pipeline
 from prep_watchdeck.adapters.local_snapshot import AtomicSnapshotWriter
@@ -76,10 +76,30 @@ class ServiceSnapshotStore(Protocol):
         """Load 1m candle records from an inclusive timestamp window."""
 
 
+@runtime_checkable
+class CompactServiceSnapshotStore(Protocol):
+    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+        """Load 5m bars aggregated inside DuckDB for the snapshot window."""
+
+    def count_candles_1m_since(self, start_ts_ms: int) -> int:
+        """Count 1m candle records from the snapshot lookback window."""
+
+    def latest_candle_1m_ts_since(self, start_ts_ms: int) -> int | None:
+        """Return the latest persisted 1m candle timestamp."""
+
+
 @dataclass(frozen=True)
 class ServiceSnapshotBuild:
     snapshot: SnapshotDTO
     candles_by_symbol: dict[str, list[CandleBar]]
+    latest_candle_1m_ts_ms: int | None
+
+
+@dataclass(frozen=True)
+class ServiceCandleWindow:
+    candles_by_symbol: dict[str, list[CandleBar]]
+    vpi_candles_1m: list[Candle1mRecord]
+    candle_1m_count: int
     latest_candle_1m_ts_ms: int | None
 
 
@@ -124,20 +144,33 @@ def build_service_snapshot(
     ]
     required_1m_limit = _required_1m_limit(config)
     required_window_start_ms = _required_1m_window_start_ms(generated_at_ms, required_1m_limit)
-    candles_1m = store.load_candles_1m_since(start_ts_ms=required_window_start_ms)
     generated_window_end_ms = generated_at_ms - (generated_at_ms % ONE_MINUTE_MS)
-    required_window_end_ms = _service_gap_window_end_ms(candles_1m, generated_window_end_ms)
+    candle_window = _load_service_candle_window(
+        store,
+        start_ts_ms=required_window_start_ms,
+        end_ts_ms=generated_window_end_ms,
+        vpi_config=vpi_config,
+    )
+    required_window_end_ms = _service_gap_window_end_ms(
+        candle_window.latest_candle_1m_ts_ms,
+        generated_window_end_ms,
+    )
     adjusted_window_start_ms = required_window_end_ms - (required_1m_limit - 1) * ONE_MINUTE_MS
     if adjusted_window_start_ms < required_window_start_ms:
         required_window_start_ms = adjusted_window_start_ms
-        candles_1m = store.load_candles_1m_since(start_ts_ms=required_window_start_ms)
+        candle_window = _load_service_candle_window(
+            store,
+            start_ts_ms=required_window_start_ms,
+            end_ts_ms=generated_window_end_ms,
+            vpi_config=vpi_config,
+        )
     vpi_block = _build_vpi_block(
-        candles_1m,
+        candle_window.vpi_candles_1m,
         tickers=ticker_records,
         config=vpi_config,
         generated_at_ms=generated_at_ms,
     )
-    candles_by_symbol = aggregate_1m_to_5m(candles_1m)
+    candles_by_symbol = candle_window.candles_by_symbol
     try:
         previous_oi_by_symbol, oi_diagnostics = _prepare_open_interest_history(
             store,
@@ -189,7 +222,7 @@ def build_service_snapshot(
         sparkline_points_limit=5,
     )
     snapshot.summary["serviceSource"] = "duckdb-service"
-    snapshot.summary["serviceCandles1m"] = len(candles_1m)
+    snapshot.summary["serviceCandles1m"] = candle_window.candle_1m_count
     snapshot.summary["oiDiagnostics"] = oi_diagnostics
     if vpi_block is not None:
         snapshot.summary["vpiLitePlus"] = vpi_block
@@ -202,7 +235,7 @@ def build_service_snapshot(
     return ServiceSnapshotBuild(
         snapshot=snapshot,
         candles_by_symbol=candles_by_symbol,
-        latest_candle_1m_ts_ms=max((candle.ts_ms for candle in candles_1m), default=None),
+        latest_candle_1m_ts_ms=candle_window.latest_candle_1m_ts_ms,
     )
 
 
@@ -429,6 +462,38 @@ def _build_vpi_block(
         return None
 
 
+def _load_service_candle_window(
+    store: ServiceSnapshotStore,
+    *,
+    start_ts_ms: int,
+    end_ts_ms: int,
+    vpi_config: VpiConfig | None,
+) -> ServiceCandleWindow:
+    if isinstance(store, CompactServiceSnapshotStore):
+        vpi_symbols = (
+            sorted(set(vpi_config.benchmark_symbols) | set(vpi_config.target_symbols))
+            if vpi_config is not None and vpi_config.enabled
+            else []
+        )
+        vpi_candles = (
+            store.load_candles_1m_range(vpi_symbols, start_ts_ms, end_ts_ms) if vpi_symbols else []
+        )
+        return ServiceCandleWindow(
+            candles_by_symbol=store.load_candles_5m_since(start_ts_ms),
+            vpi_candles_1m=vpi_candles,
+            candle_1m_count=store.count_candles_1m_since(start_ts_ms),
+            latest_candle_1m_ts_ms=store.latest_candle_1m_ts_since(start_ts_ms),
+        )
+
+    candles_1m = store.load_candles_1m_since(start_ts_ms)
+    return ServiceCandleWindow(
+        candles_by_symbol=aggregate_1m_to_5m(candles_1m),
+        vpi_candles_1m=candles_1m,
+        candle_1m_count=len(candles_1m),
+        latest_candle_1m_ts_ms=max((candle.ts_ms for candle in candles_1m), default=None),
+    )
+
+
 def aggregate_1m_to_5m(candles: Iterable[Candle1mRecord]) -> dict[str, list[CandleBar]]:
     grouped: dict[tuple[str, int], list[Candle1mRecord]] = {}
     for candle in sorted(candles, key=lambda item: (item.symbol, item.ts_ms)):
@@ -505,10 +570,9 @@ def _risk_tags_for_gap_audit(item: SymbolGapAudit) -> list[str]:
 
 
 def _service_gap_window_end_ms(
-    candles: Iterable[Candle1mRecord],
+    latest_candle_ts: int | None,
     generated_window_end_ms: int,
 ) -> int:
-    latest_candle_ts = max((candle.ts_ms for candle in candles), default=None)
     if latest_candle_ts is None:
         generated_bucket_ts = generated_window_end_ms - (generated_window_end_ms % FIVE_MINUTES_MS)
         return generated_bucket_ts - FIVE_MINUTES_MS

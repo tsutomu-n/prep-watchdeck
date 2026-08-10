@@ -307,6 +307,37 @@ def test_duckdb_service_store_load_candles_1m_since_filters_by_timestamp(tmp_pat
     assert [row.ts_ms for row in rows] == [1_781_000_060_000]
 
 
+def test_duckdb_service_store_loads_compact_snapshot_candle_window(tmp_path) -> None:
+    store = DuckDbServiceStore(tmp_path / "watchdeck.duckdb")
+    bucket_start_ms = 1_781_000_100_000
+    store.upsert_candles_1m(
+        [
+            candle("ALTUSDT", bucket_start_ms, 1.0, 1.2, 0.9, 1.1, 100.0),
+            candle("ALTUSDT", bucket_start_ms + 60_000, 1.1, 1.4, 1.0, 1.3, 120.0),
+            candle("ALTUSDT", bucket_start_ms + 300_000, 1.3, 1.5, 1.2, 1.4, 140.0),
+            candle("BTCUSDT", bucket_start_ms, 100.0, 102.0, 99.0, 101.0, 200.0),
+        ]
+    )
+
+    bars_by_symbol = store.load_candles_5m_since(bucket_start_ms)
+
+    assert store.count_candles_1m_since(bucket_start_ms) == 4
+    assert store.latest_candle_1m_ts_since(bucket_start_ms) == bucket_start_ms + 300_000
+    assert [bar.ts for bar in bars_by_symbol["ALTUSDT"]] == [
+        bucket_start_ms,
+        bucket_start_ms + 300_000,
+    ]
+    first = bars_by_symbol["ALTUSDT"][0]
+    assert (float(first.open), float(first.high), float(first.low), float(first.close)) == (
+        1.0,
+        1.4,
+        0.9,
+        1.3,
+    )
+    assert float(first.base_vol) == 220.0
+    assert float(first.quote_vol) == 220.0
+
+
 def test_publish_service_snapshot_once_writes_latest_json(tmp_path) -> None:
     store = service_store_with_market_data(tmp_path)
     config = load_template(Path("../../config/scanner-filters"), "balanced")

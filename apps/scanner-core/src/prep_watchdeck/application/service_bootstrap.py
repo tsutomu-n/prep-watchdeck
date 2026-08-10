@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import time
+from collections.abc import Awaitable, Callable, Iterable
 from typing import Protocol
 
 from prep_watchdeck.config.filter_config import FilterConfig
@@ -56,7 +58,7 @@ async def bootstrap_universe(
         [_instrument_from_contract(item, updated_at_ms) for item in supported_contracts]
     )
     store.upsert_ticker_latest(
-        [_ticker_latest_from_ticker(item, updated_at_ms) for item in supported_tickers]
+        ticker_latest_records(supported_tickers, updated_at_ms=updated_at_ms)
     )
 
     return BootstrapResult(
@@ -82,6 +84,47 @@ def _instrument_from_contract(contract: ContractInfo, updated_at_ms: int) -> Ins
         is_rwa=contract.is_rwa,
         updated_at_ms=updated_at_ms,
     )
+
+
+async def refresh_ticker_latest_periodically(
+    *,
+    store: UniverseStore,
+    fetcher: Callable[[str], Awaitable[list[TickerInfo]]],
+    product_type: str,
+    interval_seconds: float,
+    publish_immediately: bool,
+    ticker_sink: Callable[[list[TickerLatestRecord]], None] | None,
+    on_error: Callable[[Exception], None],
+    now_ms_provider: Callable[[], int] | None = None,
+    sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
+) -> None:
+    if interval_seconds <= 0:
+        raise ValueError("interval_seconds must be positive")
+    now_ms_provider = now_ms_provider or (lambda: int(time.time() * 1000))
+    if not publish_immediately:
+        await sleep(interval_seconds)
+    while True:
+        try:
+            tickers = await fetcher(product_type)
+            records = ticker_latest_records(tickers, updated_at_ms=now_ms_provider())
+            await asyncio.to_thread(store.upsert_ticker_latest, records)
+            if ticker_sink is not None:
+                ticker_sink(records)
+        except asyncio.CancelledError:
+            raise
+        except Exception as exc:
+            on_error(exc)
+        await sleep(interval_seconds)
+
+
+def ticker_latest_records(
+    tickers: Iterable[TickerInfo], *, updated_at_ms: int
+) -> list[TickerLatestRecord]:
+    return [
+        _ticker_latest_from_ticker(ticker, updated_at_ms)
+        for ticker in tickers
+        if is_safe_public_symbol(ticker.symbol)
+    ]
 
 
 def _ticker_latest_from_ticker(ticker: TickerInfo, updated_at_ms: int) -> TickerLatestRecord:

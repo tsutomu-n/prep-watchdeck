@@ -1,8 +1,8 @@
 # P1 Candidate / OI 契約修正 実装計画
 
 - 作成: `2026-08-08T14:21:08+09:00`
-- 更新: `2026-08-10T11:59:58+09:00`
-- 検証: `2026-08-10T11:59:58+09:00`
+- 更新: `2026-08-10T14:45:00+09:00`
+- 検証: `2026-08-10T14:45:00+09:00`
 - 状態: `実装計画`
 
 ---
@@ -11,7 +11,7 @@
 ## 0. メタデータ
 
 - Plan ID: `PLAN-P1-CANDIDATE-OI-001`
-- Revision: `6`
+- Revision: `7`
 - Target repo: `tsutomu-n/prep-watchdeck`
 - Baseline commit: `8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583`
 - Canonical path:
@@ -399,8 +399,8 @@ result=no whitespace errors
 - 未解決P0/P1: `0`。
 - Goal gap / remaining work: `none / 0`。
 - Residual risk: 自然な24時間WebSocket切断は同期gateで未観測。決定論的reconnect testをPASSし、
-  運用観測だけを非blockingで残す。2026-08-10のcontrolled restartではservice停止が30秒以内に
-  完了せずsystemdがSIGKILLへ移行したが、再起動後の状態・data・single writerに破損はない。
+  運用観測だけを非blockingで残す。Bitget public ticker取得が失敗したcycleは古いOIへfallbackせず
+  一時的に全UNKNOWNとなるが、次cycleへ継続する回帰testとlive回復を確認した。
 
 ## 13. PR review remediation（Revision 6）
 
@@ -424,4 +424,34 @@ result=no whitespace errors
   Candidate AND条件/counts、OI 60分、Watchlist、Raw Sort、Smart Rank、VPI-Lite+を確認した。
 - Past NoteとDashboard settingsのhashは不変。DuckDB writerはPID `3667388`の1つでservice
   cgroup内、app service workerも1つ、Web listenerもWeb cgroup内、orphanは0。
-- service stop timeout/SIGKILLは非blocking運用残余リスクとして保持する。
+- service stop timeout/SIGKILLはRevision 7のruntime readiness follow-upで解消した。
+
+## 14. Runtime readiness follow-up（Revision 7）
+
+- branch `ai/runtime-readiness-20260810-1242`でshutdown child回収、background task同時cancel、
+  終了時の重複full snapshot廃止、DuckDB側5分集約、latest-only snapshot cache、再現可能な
+  user-systemd template/installerを追加した。P1 Candidate/OI、schema、UI、private API境界は変更していない。
+- isolated stopは`5.260 / 5.479 / 5.525`秒、live idleは`3.654〜5.310`秒、live in-flightは
+  `44.945`秒で、いずれもSIGKILL/orphanなし。2026-08-10 14:32 JSTの最終controlled stopも
+  `26.637`秒、exit 0、writer 0へ移行した。
+- 旧snapshot cacheで肥大したDuckDBは全writer停止下の`COPY FROM DATABASE`と、8 tables、
+  全件数、72 columns、49 constraintsの照合後にatomic swapした。現行DBは約1.6GB、旧8.2GBは
+  rollback backupとしてstate rootへ保持する。
+- restart後snapshotは`generatedAt=1786339881626`、`dataAsOf=1786339800000`、schema `1`、
+  feature/ruleset `3`、OI `sampled=692/references=692`で既存履歴を再利用した。後続最終smokeは
+  `generatedAt=1786340068355`、Candidate `eligible=1`、OI `740/740`、UNKNOWN 0。
+- public ticker取得失敗はjournalへ`BitgetAPIError` warningを出し、古いOIを使わずdegraded cycleを
+  継続する。追加回帰testは1回目失敗後の2回目保存成功を証明し、focused `2 passed`。
+- 最終diff監査で、同時cancelの`gather(..., return_exceptions=True)`が非Cancellation例外も
+  隠す経路を検出した。cleanup failureを再送出する最小修正と回帰testを追加し、focused
+  `6 passed`。並行cancelと通常のCancelledError回収は維持する。
+- source最終状態の`bash scripts/verify-local.sh`はexit 0。maintenance 82、scanner 234、Web unit 174、
+  Playwright 56、Ruff/format/pyrefly/Svelte check/buildがPASSした。
+- service/Webは正式user-systemd unitでactive/running、NRestarts 0、writer process 1、Web health PASS。
+  Past Note 6件とDashboard settings 5 viewsのsentinel SHA-256はRevision 6時点から不変。
+- source最終状態を正式service unitへcontrolled restartした。`51.836`秒で60秒目標内、SIGKILLなし、
+  PID `376489 -> 473720`、NRestarts 0。snapshotは`generatedAt=1786340642333`、
+  `dataAsOf=1786340400000`、OI `739/739`、Candidate eligible 1、schema 1、feature/ruleset 3。
+  writer process 1、sentinel不変、Web health PASS。
+- 未解決P0/P1は0。残る非blocking riskは自然な24時間切断の運用観測、public provider一時障害時の
+  fail-degraded表示、明示削除していないcompact前DB rollback backupのdisk使用だけである。

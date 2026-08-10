@@ -11,6 +11,7 @@ from typing import Annotated, Any
 
 import duckdb
 import typer
+from loguru import logger
 from rich.console import Console
 from rich.table import Table
 
@@ -27,7 +28,10 @@ from prep_watchdeck.application.service_backfill import (
     backfill_1m_candles,
     normalize_symbols,
 )
-from prep_watchdeck.application.service_bootstrap import bootstrap_universe
+from prep_watchdeck.application.service_bootstrap import (
+    bootstrap_universe,
+    refresh_ticker_latest_periodically,
+)
 from prep_watchdeck.application.service_deep_backfill import (
     DeepBackfillProgressTracker,
     run_deep_backfill_worker,
@@ -87,7 +91,12 @@ from prep_watchdeck.config.templates import load_template
 from prep_watchdeck.config.vpi_config import load_vpi_config
 from prep_watchdeck.domain.dto import SnapshotDTO
 from prep_watchdeck.domain.enums import Category
-from prep_watchdeck.domain.service_models import BackfillResult, BootstrapResult, ServiceDiagnostics
+from prep_watchdeck.domain.service_models import (
+    BackfillResult,
+    BootstrapResult,
+    ServiceDiagnostics,
+    TickerLatestRecord,
+)
 from prep_watchdeck.domain.source_mode import SourceMode
 from prep_watchdeck.export.schema_export import export_snapshot_schema
 from prep_watchdeck.settings import Settings
@@ -141,6 +150,14 @@ def service(
     ] = 60.0,
     reconcile_limit: Annotated[int, typer.Option("--reconcile-limit", min=1, max=200)] = 60,
     reconcile_concurrency: Annotated[int, typer.Option("--reconcile-concurrency", min=1)] = 2,
+    ticker_refresh_interval_sec: Annotated[
+        float,
+        typer.Option(
+            "--ticker-refresh-interval-sec",
+            min=0.0,
+            help="Refresh public all-ticker data for current OI; 0 disables it.",
+        ),
+    ] = 60.0,
     watchdog_interval_sec: Annotated[
         float,
         typer.Option(
@@ -248,6 +265,7 @@ def service(
                 reconcile_interval_sec=reconcile_interval_sec,
                 reconcile_limit=reconcile_limit,
                 reconcile_concurrency=reconcile_concurrency,
+                ticker_refresh_interval_sec=ticker_refresh_interval_sec,
                 watchdog_interval_sec=watchdog_interval_sec,
                 watchdog_stall_sec=watchdog_stall_sec,
                 watchdog_confirmations=watchdog_confirmations,
@@ -792,6 +810,7 @@ async def run_service_from_bitget(
     reconcile_interval_sec: float,
     reconcile_limit: int,
     reconcile_concurrency: int,
+    ticker_refresh_interval_sec: float,
     watchdog_interval_sec: float,
     watchdog_stall_sec: float,
     watchdog_confirmations: int,
@@ -852,6 +871,18 @@ async def run_service_from_bitget(
     snapshot_cache = build_snapshot_cache(settings)
     ticker_collector = TickerRuntimeCollector(store.load_ticker_latest())
     ticker_writer = build_ticker_runtime_writer(settings)
+    ticker_refresh_task = (
+        asyncio.create_task(
+            _run_service_ticker_refresh_from_bitget(
+                store=store,
+                product_type=bootstrap_result.product_type,
+                interval_seconds=ticker_refresh_interval_sec,
+                ticker_sink=ticker_collector.record,
+            )
+        )
+        if ticker_refresh_interval_sec > 0
+        else None
+    )
     backfill_tracker = (
         BackfillProgressTracker(
             stream_symbols,
@@ -1072,6 +1103,7 @@ async def run_service_from_bitget(
             publish_task,
             snapshot_task,
             ticker_task,
+            ticker_refresh_task,
             backfill_task,
             reconcile_task,
             deep_backfill_task,
@@ -1084,14 +1116,6 @@ async def run_service_from_bitget(
             backfill=backfill_progress(),
             reconcile=reconcile_progress(),
             deep_backfill=deep_backfill_progress(),
-        )
-        publish_service_snapshot_once(
-            store,
-            snapshot_writer,
-            snapshot_cache,
-            template=template,
-            config=config,
-            vpi_config=vpi_config,
         )
     return ServiceRunResult(
         bootstrap=bootstrap_result,
@@ -1149,6 +1173,31 @@ async def _run_service_backfill_from_bitget(
     else:
         tracker.mark_completed()
     return result
+
+
+async def _run_service_ticker_refresh_from_bitget(
+    *,
+    store: Any,
+    product_type: str,
+    interval_seconds: float,
+    ticker_sink: Callable[[list[TickerLatestRecord]], None],
+) -> None:
+    async with BitgetPublicClient() as client:
+
+        async def fetcher(product_type: str):
+            return await fetch_all_tickers(client, product_type)
+
+        await refresh_ticker_latest_periodically(
+            store=store,
+            fetcher=fetcher,
+            product_type=product_type,
+            interval_seconds=interval_seconds,
+            publish_immediately=False,
+            ticker_sink=ticker_sink,
+            on_error=lambda exc: logger.warning(
+                "public ticker refresh failed: {}", type(exc).__name__
+            ),
+        )
 
 
 async def _run_service_deep_backfill_from_bitget(
@@ -1247,8 +1296,14 @@ async def _cancel_service_task(task: asyncio.Task[Any] | None) -> None:
 
 
 async def _cancel_service_tasks(*tasks: asyncio.Task[Any] | None) -> None:
-    for task in tasks:
-        await _cancel_service_task(task)
+    present = [task for task in tasks if task is not None]
+    pending = [task for task in present if not task.done()]
+    for task in pending:
+        task.cancel()
+    results = await asyncio.gather(*present, return_exceptions=True)
+    for result in results:
+        if isinstance(result, BaseException) and not isinstance(result, asyncio.CancelledError):
+            raise result
 
 
 async def _probe_service_upstream_from_bitget(*, symbol: str, product_type: str) -> bool:

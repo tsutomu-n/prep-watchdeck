@@ -12,6 +12,7 @@ bun test \
   scripts/maintenance/retired-records-archive.test.mjs \
   scripts/maintenance/state-dir.test.mjs \
   scripts/maintenance/web-port.test.mjs \
+  scripts/ops/install-user-services.test.mjs \
   scripts/ops/watchdeck-daily-summary.test.mjs
 
 echo "== document metadata =="

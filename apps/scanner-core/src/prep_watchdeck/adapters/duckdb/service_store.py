@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
+from decimal import Decimal
 from pathlib import Path
 from threading import RLock
 
@@ -15,6 +16,7 @@ from prep_watchdeck.domain.service_models import (
     StreamHealthRecord,
     TickerLatestRecord,
 )
+from prep_watchdeck.models import CandleBar
 
 
 class DuckDbServiceStore:
@@ -414,6 +416,59 @@ class DuckDbServiceStore:
             )
             for row in rows
         ]
+
+    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+        with self._lock, self._connect() as con:
+            rows = con.execute(
+                """
+                SELECT
+                  symbol,
+                  ts_ms - (ts_ms % 300000) AS bucket_ts_ms,
+                  ARG_MIN(open, ts_ms),
+                  MAX(high),
+                  MIN(low),
+                  ARG_MAX(close, ts_ms),
+                  SUM(COALESCE(base_volume, 0)),
+                  SUM(COALESCE(usdt_volume, quote_volume, 0))
+                FROM candles_1m
+                WHERE ts_ms >= ?
+                GROUP BY symbol, bucket_ts_ms
+                ORDER BY symbol, bucket_ts_ms
+                """,
+                [start_ts_ms],
+            ).fetchall()
+        bars_by_symbol: dict[str, list[CandleBar]] = {}
+        for row in rows:
+            symbol = str(row[0])
+            bars_by_symbol.setdefault(symbol, []).append(
+                CandleBar(
+                    symbol=symbol,
+                    ts=int(row[1]),
+                    open=Decimal(str(row[2])),
+                    high=Decimal(str(row[3])),
+                    low=Decimal(str(row[4])),
+                    close=Decimal(str(row[5])),
+                    base_vol=Decimal(str(row[6])),
+                    quote_vol=Decimal(str(row[7])),
+                )
+            )
+        return bars_by_symbol
+
+    def count_candles_1m_since(self, start_ts_ms: int) -> int:
+        with self._lock, self._connect() as con:
+            row = con.execute(
+                "SELECT COUNT(*) FROM candles_1m WHERE ts_ms >= ?",
+                [start_ts_ms],
+            ).fetchone()
+        return int(row[0]) if row is not None else 0
+
+    def latest_candle_1m_ts_since(self, start_ts_ms: int) -> int | None:
+        with self._lock, self._connect() as con:
+            row = con.execute(
+                "SELECT MAX(ts_ms) FROM candles_1m WHERE ts_ms >= ?",
+                [start_ts_ms],
+            ).fetchone()
+        return int(row[0]) if row is not None and row[0] is not None else None
 
     def load_candles_1m_range(
         self,
