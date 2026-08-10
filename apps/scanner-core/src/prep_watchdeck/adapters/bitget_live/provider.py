@@ -16,6 +16,7 @@ from prep_watchdeck.domain.enums import DataSource, SnapshotStatus
 from prep_watchdeck.domain.features.long_horizon import compute_74h_features
 from prep_watchdeck.domain.features.time_grid import normalize_5m_grid
 from prep_watchdeck.domain.screening.rankings import build_rankings, candidate_rule_counts
+from prep_watchdeck.features.volume_ratio import volume_ratio_15m_metadata
 from prep_watchdeck.models import CandleBar, ContractInfo, ScannerRow, TickerInfo
 from prep_watchdeck.screening.pipeline import PipelineResult, run_live_pipeline
 from prep_watchdeck.settings import Settings
@@ -90,6 +91,10 @@ def snapshot_from_pipeline(
         "candleErrors": result.candle_errors,
     }
     if config is not None:
+        summary["volumeRatio15m"] = volume_ratio_15m_metadata(
+            config.volume.baseline_window_bars,
+            config.volume.volume_ratio_floor_usdt,
+        )
         summary["candidateRule74h"] = {
             "operator": "AND",
             "priceAbsPct": config.user_rule.price_74h_abs_pct,

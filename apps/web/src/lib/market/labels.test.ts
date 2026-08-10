@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   categoryLabel,
+  categoryCompactLabel,
   changeTone,
   codeLabel,
   dataQualityClass,
@@ -19,6 +20,10 @@ describe("market label helpers", () => {
     expect(categoryLabel("ALL")).toBe("すべて");
     expect(categoryLabel("WATCH")).toBe("注視");
     expect(categoryLabel("NO_TRADE")).toBe("監視除外候補");
+    expect(categoryCompactLabel("WATCH")).toBe("注視");
+    expect(categoryCompactLabel("CAUTION")).toBe("注意");
+    expect(categoryCompactLabel("LOW_PRIORITY")).toBe("低優");
+    expect(categoryCompactLabel("NO_TRADE")).toBe("除外");
     expect(dataQualityLabel("PARTIAL")).toBe("一部不足");
     expect(snapshotStatusLabel("STALE")).toBe("古い");
     expect(dataSourceLabel("fixture")).toBe("検証データ");

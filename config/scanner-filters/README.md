@@ -1,8 +1,8 @@
 # Scanner Filter Templates
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-06-29T20:31:00+09:00`
-- 検証: `2026-07-16T23:22:53+09:00`
+- 更新: `2026-08-10T20:04:38+09:00`
+- 検証: `2026-08-10T20:04:38+09:00`
 - 状態: `現行`
 
 ---
@@ -21,7 +21,7 @@ aggressive
 
 - `universe`: スキャン対象に残す銘柄条件。BTCUSDTは対象外でもBTC比計算用に使う。
 - `candles`: 5m足と必要本数。74h変化率と比較用24h窓のため `min_required_bars >= 1177`。
-- `user_rule`: 74hの価格変化または出来高増加を計算し `userRule74hMatched` として出力（閾値は compute で使用）。
+- `user_rule`: 74hの価格変化と売買代金増加を個別に計算し、両方が一致した場合だけ `userRule74hMatched=true` として出力（履歴不足・比較不能は`null`）。
 - `price_change`: surge と move の閾値。Changeだけでは候補にしない。
 - `volume`: 自銘柄の普段比。current 15m は baseline に含めない。
 - `turnover`: USDT売買代金。小さい急変は `NO_TRADE` 寄り。

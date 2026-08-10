@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-09T20:30:00+09:00`
-- 検証: `2026-08-09T20:30:00+09:00`
-- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
+- 更新: `2026-08-10T20:04:38+09:00`
+- 検証: `2026-08-10T20:04:38+09:00`
+- 文書更新作業: `2026-08-10_20:04`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -181,6 +181,12 @@ componentと`userRule74hMatched`は`true | false | null`で、componentのどち
 `turnoverMode=current_24h_vs_74h_ago_24h`、`eligible/notMatched/unknown`件数を持つ。
 Candidateの`rankings.timeframes`は複合値`true`かつ非`NO_TRADE`だけを含み、
 `rankings.noTrade`は全rows由来の診断を維持する。
+
+`summary.volumeRatio15m`は量倍率計算を変えず、Webへ基準の意味を渡す追加metadataである。
+`windowMinutes=15`、`sampleStepMinutes=5`、`baselineSampleCount`、
+`approxBaselineSpanMinutes=baselineSampleCount * sampleStepMinutes`、`statistic=median`、
+`floorUsdt`を持つ。sample countとfloorはactive filter config由来で、LiveとFixtureが同じ意味を出す。
+旧config名`baseline_window_bars`と`schemaVersion=1`は変更しない。
 
 `open_interest_samples`は`(symbol,bucket_ts_ms)`主キー、`holding_amount`、`source_ts_ms`、
 `updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは

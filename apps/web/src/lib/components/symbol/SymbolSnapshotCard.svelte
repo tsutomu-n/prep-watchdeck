@@ -18,7 +18,7 @@
       <dd>{snapshotStatusLabel(snapshot.snapshotStatus)}</dd>
     </div>
     <div>
-      <dt>data as of</dt>
+      <dt>データ時点</dt>
       <dd>{fmtDate(snapshot.dataAsOf)}</dd>
     </div>
     <div>

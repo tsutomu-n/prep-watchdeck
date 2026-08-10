@@ -284,6 +284,9 @@ test("symbol support information is one flat divided workspace in workflow order
   const symbolPage = page.locator("main.symbol-page");
   const workspace = symbolPage.locator("[data-symbol-workspace]");
   await expect(workspace).toBeVisible();
+  const timeframeBoard = symbolPage.getByRole("region", { name: "時間軸別データ" });
+  await expect(timeframeBoard.locator("em")).toHaveCount(1);
+  await expect(timeframeBoard.getByText("15m量倍率 3.4×", { exact: true })).toBeVisible();
 
   const topLevelOrder = await symbolPage.locator(":scope > *").evaluateAll((elements) =>
     elements.map(
@@ -359,7 +362,7 @@ test("symbol support information is one flat divided workspace in workflow order
     await expect(workspace.getByText("レンジ未取得", { exact: true })).toBeVisible();
   }
   await expect(workspace.getByText("銘柄注記は、銘柄への注意・クセ・過去反応を残す監視用メモです。")).toBeVisible();
-  await expect(workspace.getByText("data as of", { exact: true })).toBeVisible();
+  await expect(workspace.getByText("データ時点", { exact: true })).toBeVisible();
 });
 
 test("uses dashboard sort-order labels in the Symbol ranking position", async ({ page }) => {

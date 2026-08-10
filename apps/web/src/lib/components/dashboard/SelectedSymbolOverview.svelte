@@ -9,16 +9,26 @@
   let {
     row,
     selectedTimeframe,
-    range
+    range,
+    volumeRatioBaseline,
+    volumeRatioHelp
   }: {
     row: ScannerRowDTO;
     selectedTimeframe: string;
     range: Range24h | null;
+    volumeRatioBaseline: string;
+    volumeRatioHelp: string;
   } = $props();
 
   let selectedSignals = $derived(movementSignals(row, selectedTimeframe));
   let exclusionItems = $derived(rowExclusionLabels(row));
   let displaySymbol = $derived(formatDisplaySymbol(row.symbol));
+  let volumeRatio = $derived(row.volumeRatioByTf?.["15m"]);
+  let volumeRatioText = $derived(
+    typeof volumeRatio === "number" && Number.isFinite(volumeRatio)
+      ? `${fmt(volumeRatio)}×`
+      : "—"
+  );
 </script>
 
 <div class="section-head">
@@ -45,7 +55,7 @@
       <dd>{fmt(row.attentionScore)}</dd>
     </div>
     <div>
-      <dt>quality</dt>
+      <dt>データ品質</dt>
       <dd>{dataQualityLabel(row.dataQuality)}</dd>
     </div>
     <div>
@@ -92,6 +102,11 @@
   </section>
 {/if}
 <dl class="stats">
+  <div>
+    <dt title={volumeRatioHelp}>15m量倍率</dt>
+    <dd>{volumeRatioText}</dd>
+    <small title={volumeRatioHelp}>{volumeRatioBaseline}</small>
+  </div>
   <div>
     <dt>15分変化率</dt>
     <dd>{fmt(row.changePctByTf?.["15m"], "%")}</dd>
@@ -206,7 +221,7 @@
     gap: var(--space-md);
     padding: var(--space-lg) var(--space-md);
     border-bottom: 1px solid var(--line);
-    background: var(--panel-selected);
+    background: transparent;
   }
 
   .attention-note {
@@ -229,7 +244,7 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1px;
     margin: 0;
-    background: color-mix(in srgb, var(--muted) 20%, transparent);
+    background: transparent;
   }
 
   .detail-hero div {
@@ -238,7 +253,8 @@
 
   .detail-hero dl div {
     padding: 8px;
-    background: color-mix(in srgb, var(--bg-alt) 76%, transparent);
+    border-left: 1px solid var(--line);
+    background: transparent;
   }
 
   .detail-hero dt {
@@ -255,7 +271,7 @@
   .exclusion-panel {
     padding: 12px;
     border-bottom: 1px solid var(--line-strong);
-    background: var(--panel);
+    background: transparent;
   }
 
   .precheck {
@@ -289,14 +305,15 @@
   .stats {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 1px;
+    gap: 0;
     margin: 0;
-    background: var(--line-strong);
+    background: transparent;
   }
 
   .stats div {
     padding: 12px;
-    background: color-mix(in srgb, var(--bg-alt) 86%, transparent);
+    border-bottom: 1px solid var(--line);
+    background: transparent;
   }
 
   dt {
@@ -312,6 +329,14 @@
     font-variant-numeric: tabular-nums;
   }
 
+  .stats small {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 10px;
+    line-height: 1.3;
+  }
+
   .signal-list {
     display: flex;
     flex-wrap: wrap;
@@ -322,8 +347,8 @@
     display: inline-flex;
     align-items: center;
     min-height: 18px;
-    border: 1px solid var(--chip-line);
-    padding: 1px 5px;
+    border: 0;
+    padding: 1px 0;
     color: var(--chip-neutral);
     font-size: 10px;
     line-height: 1.2;
@@ -331,22 +356,18 @@
   }
 
   .signal-chip.up {
-    border-color: color-mix(in srgb, var(--up) 68%, var(--surface));
     color: var(--up);
   }
 
   .signal-chip.down {
-    border-color: color-mix(in srgb, var(--down) 68%, var(--surface));
     color: var(--down);
   }
 
   .signal-chip.warn {
-    border-color: var(--warning-border);
     color: var(--warning);
   }
 
   .signal-chip.neutral {
-    border-color: var(--chip-line);
     color: var(--chip-neutral);
   }
 

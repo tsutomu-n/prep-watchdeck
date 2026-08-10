@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-10T14:39:00+09:00`
-- 検証: `2026-08-10T14:39:00+09:00`
-- 文書更新作業: `2026-08-10_14:39`（Asia/Tokyo）
+- 更新: `2026-08-10T20:04:38+09:00`
+- 検証: `2026-08-10T20:04:38+09:00`
+- 文書更新作業: `2026-08-10_20:04`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -42,7 +42,8 @@
 
 ## 実装・検証計画
 
-- [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 74h Candidate条件、OI 60分変化、最小UI・テスト・初期runtime qualificationの進行中living plan。
+- [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 74h Candidate条件、OI 60分変化、最小UI・テスト・初期runtime qualificationを完了済み。安全な履歴Archive待ちのliving plan。
+- [Quiet Market Instrument](plans/active/quiet-market-instrument/IMPLEMENTATION_PLAN.md): Candidate、Watchlist、Inspector、補正順位の表示契約を同期する現行living plan。
 
 監視専用化の完了計画と過去検証証拠はRepo外Archiveへ退避し、
 現行仕様は`docs/current/`、有効な判断はADR 0007とADR 0008を正本とする。

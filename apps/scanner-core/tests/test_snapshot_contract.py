@@ -36,6 +36,14 @@ def test_basic_fixture_computes_candidate_74h_contract() -> None:
     assert snapshot.feature_version == "3"
     assert snapshot.ruleset_version == "3"
     assert snapshot.schema_version == 1
+    assert snapshot.summary["volumeRatio15m"] == {
+        "windowMinutes": 15,
+        "sampleStepMinutes": 5,
+        "baselineSampleCount": 288,
+        "approxBaselineSpanMinutes": 1440,
+        "statistic": "median",
+        "floorUsdt": 1000.0,
+    }
 
 
 def test_fixture_provider_uses_template_ranking_top_n(tmp_path) -> None:
@@ -51,6 +59,31 @@ def test_fixture_provider_uses_template_ranking_top_n(tmp_path) -> None:
 
     assert len(snapshot.rankings["timeframes"]["15m"]["changeUp"]) == 1
     assert snapshot.rankings["meta"]["timeframes"]["15m"]["changeUp"]["limit"] == 1
+
+
+def test_fixture_volume_ratio_metadata_follows_active_config(tmp_path) -> None:
+    config_dir = tmp_path / "scanner-filters"
+    config_dir.mkdir()
+    source = Path("../../config/scanner-filters/balanced.toml")
+    config = (
+        source.read_text(encoding="utf-8")
+        .replace("baseline_window_bars = 288", "baseline_window_bars = 96")
+        .replace("volume_ratio_floor_usdt = 1000", "volume_ratio_floor_usdt = 2500")
+    )
+    (config_dir / "balanced.toml").write_text(config, encoding="utf-8")
+
+    snapshot = FixtureProvider(Path("../../fixtures"), config_dir=config_dir).build_snapshot(
+        template="balanced", fixture_set="basic"
+    )
+
+    assert snapshot.summary["volumeRatio15m"] == {
+        "windowMinutes": 15,
+        "sampleStepMinutes": 5,
+        "baselineSampleCount": 96,
+        "approxBaselineSpanMinutes": 480,
+        "statistic": "median",
+        "floorUsdt": 2500.0,
+    }
 
 
 def test_fixture_sparkline_shape_survives_duckdb_cache_round_trip(tmp_path) -> None:

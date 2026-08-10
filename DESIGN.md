@@ -1,9 +1,9 @@
 # Prep Watchdeck DESIGN.md
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
-- 文書更新作業時刻: `2026-08-02_22:00`
+- 更新: `2026-08-10T20:04:38+09:00`
+- 検証: `2026-08-10T20:04:38+09:00`
+- 文書更新作業時刻: `2026-08-10_20:04`
 - 状態: `現行`
 
 ---
@@ -305,7 +305,7 @@ Avoid decorative fonts, rounded consumer-app fonts, excessive letter spacing, an
 
 The layout should prioritize short eye travel and fast symbol triage.
 
-Dashboard source and focus order is fixed: Candidate Radar, Watchlist, selected-symbol detail, then Smart Rank. Header and service state stay compact, while the Watchlist remains the main working area. At `85rem` and wider the selected detail may be placed in the right rail; that visual placement must not change source or keyboard order.
+Dashboard source and focus order is fixed: Candidate Radar, Watchlist, selected-symbol detail, then corrected ranking (`補正順位`). Header and service state stay compact, while the Watchlist remains the main working area. At `85rem` and wider the selected detail may be placed in the right rail; that visual placement must not change source or keyboard order.
 
 VPI-Lite+ is an experimental Cold snapshot aid, not a trading signal. When the optional payload is valid, show Benchmark and Target states plus data quality in a compact Dashboard panel, without score. The numeric score, reasons, risks, funding state, and open-interest state belong only in the selected-symbol detail. Do not add VPI to Watchlist rows, ranking, sort, or Hot ticker updates. The experimental notice must remain visible, and VPI uses existing state and quality colors rather than introducing a new palette.
 
@@ -317,7 +317,7 @@ The symbol page order is symbol identity and key metrics, chart with timeframe s
 
 On mobile, Candidate Radar and Watchlist keep every item in bounded internal scroll regions. Do not reduce them to a top-N subset, pagination, or hidden default. The outer document height must not grow in proportion to the row count. Dense table rows become compact cards without changing selection, navigation, quality, stale, note, or signal meaning.
 
-Candidate Radar uses two ranking columns at `960px` and narrower and one column at `560px` and narrower. All ranking links remain in the bounded vertical scroller. A long formatted symbol wraps without ellipsis or horizontal overflow. Change ranking headings say `上昇順` and `下落順` because they describe sort order; every displayed change value uses `up`, `down`, or neutral styling from its actual numeric sign, independent of the panel in which it appears.
+Candidate Radar uses one continuous four-column surface at `561px` and wider. At `560px` and narrower it uses four automatic-activation tabs while retaining all ranking links in one bounded vertical scroller. Desktop and mobile representations are selected by CSS, not an SSR-sensitive viewport branch. A long formatted symbol wraps without ellipsis or horizontal overflow. Change ranking headings say `上昇順` and `下落順` because they describe sort order; every displayed change value uses `up`, `down`, or neutral styling from its actual numeric sign, independent of the panel in which it appears.
 
 On the mobile symbol page, the Monitoring Rail summary remains two columns and the six-timeframe board remains two columns by three rows. Chart, monitoring evidence, and timeframe context appear before the Past Note form. Mobile is acceptable for checking and annotating, not full high-density scanning.
 
@@ -336,7 +336,9 @@ Depth should be communicated through:
 - active timeframe fill,
 - section grouping and dividers.
 
-Primary surfaces are Watchlist and chart. Context surfaces are selected detail and Monitoring Rail. Smart Rank and supporting information are secondary. Express these levels through border strength, surface difference, and divider rhythm—not new colors, gradients, glow, larger radius, or repeated card shadows. Avoid glassmorphism, backdrop blur, neumorphism, and decorative depth effects that reduce data clarity.
+Primary surfaces are Watchlist and chart. Context surfaces are selected detail and Monitoring Rail. Corrected ranking and supporting information are secondary. Express these levels through border strength, surface difference, and divider rhythm—not new colors, gradients, glow, larger radius, or repeated card shadows. Avoid glassmorphism, backdrop blur, neumorphism, and decorative depth effects that reduce data clarity.
+
+Quiet Market Instrument keeps market evidence readable without turning density into decoration. Use continuous surfaces, compact inline semantic text, neutral range tracks with a current-value marker, and explicit missing/stale states. `15m量倍率` means the current rolling 15-minute USDT turnover divided by the configured rolling 15-minute median baseline; show the validated approximate baseline span and do not infer it when metadata is missing or malformed.
 
 ## Shapes
 
@@ -383,10 +385,11 @@ It must show:
 - top upward movers,
 - top downward movers,
 - volume leaders.
+- 15-minute volume-ratio leaders and the validated baseline description.
 
 It should be compact on desktop and readable on mobile. It should not visually imply that top-ranked items are automatic trade entries.
 
-At compact widths, rank and value columns must yield enough inline space for every formatted symbol identity. A candidate link may not collapse the symbol column or replace a symbol with ellipsis; all ranking identities remain readable while the four ranking panels stay inside their bounded scroll region.
+At compact widths, rank and value columns must yield enough inline space for every formatted symbol identity. A candidate link may not collapse the symbol column or replace a symbol with ellipsis. Mobile tabs use automatic activation: arrows, Home, and End move focus and activate the corresponding panel at the same time.
 
 Change panels are labeled by ordering (`上昇順`, `下落順`), not by an assumed sign. Mixed-sign fixtures are valid: a negative tail value in `上昇順` remains `down`, and a positive tail value in `下落順` remains `up`.
 

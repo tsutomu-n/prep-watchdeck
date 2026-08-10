@@ -44,6 +44,8 @@
     tickerOverlay,
     tickerStatus,
     tickerError,
+    volumeRatioBaseline,
+    volumeRatioHelp,
     onViewSelect,
     onSymbolSelect,
     onTimeframeSelect,
@@ -73,6 +75,8 @@
     tickerOverlay: TickerOverlay;
     tickerStatus: TickerPollController["status"];
     tickerError: string | null;
+    volumeRatioBaseline: string;
+    volumeRatioHelp: string;
     onViewSelect: (viewId: string) => void;
     onSymbolSelect: (symbol: string) => void;
     onTimeframeSelect: (timeframe: DashboardRankingTimeframe) => void;
@@ -398,7 +402,7 @@
           aria-pressed={isFifteenMinuteVolumeRatioState(rawSortState)}
           onclick={() => onRawSortQuickSelect(fifteenMinuteVolumeRatioState)}
         >
-          15分出来高倍率
+          15m量倍率
         </button>
       </div>
       <details class="advanced-sort">
@@ -623,7 +627,7 @@
     <span>現在価格</span>
     <span>流れ</span>
     <span>監視材料</span>
-    <span>15分出来高倍率</span>
+    <span title={volumeRatioHelp}>15m量倍率<small>{volumeRatioBaseline}</small></span>
     {#each rankingTimeframes as timeframe}
       <button
         type="button"
@@ -660,6 +664,7 @@
         {selectedTimeframe}
         {rankingTimeframes}
         {noteBadge}
+        {volumeRatioHelp}
         tabIndex={row.symbol === rovingRowSymbol ? 0 : -1}
         isRekindle={hasAutoRekindleNote(row.symbol)}
         {onSymbolSelect}

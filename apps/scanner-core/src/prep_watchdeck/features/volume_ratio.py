@@ -5,6 +5,23 @@ from statistics import median
 from prep_watchdeck.features.turnover import rolling_turnovers
 from prep_watchdeck.models import CandleBar
 
+VOLUME_RATIO_WINDOW_MINUTES = 15
+VOLUME_RATIO_SAMPLE_STEP_MINUTES = 5
+
+
+def volume_ratio_15m_metadata(
+    baseline_sample_count: int,
+    floor_usdt: float,
+) -> dict[str, int | float | str]:
+    return {
+        "windowMinutes": VOLUME_RATIO_WINDOW_MINUTES,
+        "sampleStepMinutes": VOLUME_RATIO_SAMPLE_STEP_MINUTES,
+        "baselineSampleCount": baseline_sample_count,
+        "approxBaselineSpanMinutes": baseline_sample_count * VOLUME_RATIO_SAMPLE_STEP_MINUTES,
+        "statistic": "median",
+        "floorUsdt": floor_usdt,
+    }
+
 
 def volume_ratio_15m(
     bars: list[CandleBar],

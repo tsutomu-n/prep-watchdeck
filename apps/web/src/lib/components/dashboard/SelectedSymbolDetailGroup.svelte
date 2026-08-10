@@ -40,7 +40,7 @@
 <style>
   .detail-group {
     border-bottom: 1px solid var(--line);
-    background: color-mix(in srgb, var(--bg-alt) 88%, transparent);
+    background: transparent;
   }
 
   .detail-group > summary {
@@ -109,8 +109,8 @@
   }
 
   .detail-group > summary em {
-    border: 1px solid color-mix(in srgb, var(--muted) 38%, transparent);
-    padding: 3px 6px;
+    border: 0;
+    padding: 0;
     color: var(--muted);
     font-size: 10px;
     font-style: normal;
@@ -118,17 +118,14 @@
   }
 
   .detail-group > summary em.good {
-    border-color: var(--quality-good);
     color: var(--quality-good);
   }
 
   .detail-group > summary em.warn {
-    border-color: var(--warning-border);
     color: var(--warning);
   }
 
   .detail-group > summary em.risk {
-    border-color: var(--quality-risk);
     color: var(--quality-risk);
   }
 

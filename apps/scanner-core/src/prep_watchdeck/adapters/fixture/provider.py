@@ -7,6 +7,7 @@ from prep_watchdeck.config.templates import load_template
 from prep_watchdeck.domain.dto import SnapshotDTO
 from prep_watchdeck.domain.enums import DataSource
 from prep_watchdeck.domain.screening.rankings import build_rankings, candidate_rule_counts
+from prep_watchdeck.features.volume_ratio import volume_ratio_15m_metadata
 
 
 class FixtureProvider:
@@ -32,6 +33,10 @@ class FixtureProvider:
         payload["source"]["fixtureSet"] = name
         snapshot = SnapshotDTO.model_validate(payload)
         snapshot.rankings = build_rankings(snapshot.rows, top_n=config.ranking.top_n)
+        snapshot.summary["volumeRatio15m"] = volume_ratio_15m_metadata(
+            config.volume.baseline_window_bars,
+            config.volume.volume_ratio_floor_usdt,
+        )
         snapshot.summary["candidateRule74h"] = {
             "operator": "AND",
             "priceAbsPct": config.user_rule.price_74h_abs_pct,
