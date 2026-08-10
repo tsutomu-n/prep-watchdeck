@@ -121,11 +121,6 @@ components:
     textColor: "{colors.text}"
     rounded: "{rounded.none}"
     padding: "{spacing.md}"
-  panel-overlay:
-    backgroundColor: "{colors.panel}"
-    textColor: "{colors.text}"
-    rounded: "{rounded.none}"
-    padding: "{spacing.md}"
   panel-selected:
     backgroundColor: "{colors.panelSelected}"
     textColor: "{colors.text}"
