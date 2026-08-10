@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  abnormalDataQualityLabel,
+  activityPhaseLabel,
+  activityPhaseWatchlistLabel,
   categoryLabel,
   categoryCompactLabel,
   changeTone,
@@ -24,7 +27,19 @@ describe("market label helpers", () => {
     expect(categoryCompactLabel("CAUTION")).toBe("注意");
     expect(categoryCompactLabel("LOW_PRIORITY")).toBe("低優");
     expect(categoryCompactLabel("NO_TRADE")).toBe("除外");
-    expect(dataQualityLabel("PARTIAL")).toBe("一部不足");
+    expect(dataQualityLabel("PARTIAL")).toBe("一部データ不足");
+    expect(dataQualityLabel("STALE")).toBe("更新遅延");
+    expect(dataQualityLabel("MISSING")).toBe("判定不能");
+    expect(abnormalDataQualityLabel("OK")).toBeNull();
+    expect(abnormalDataQualityLabel("PARTIAL")).toBe("一部データ不足");
+    expect(activityPhaseLabel("BURST")).toBe("急増");
+    expect(activityPhaseLabel("EXPANDING")).toBe("拡大");
+    expect(activityPhaseLabel("SUSTAINED")).toBe("持続");
+    expect(activityPhaseLabel("COOLING")).toBe("失速");
+    expect(activityPhaseLabel("NORMAL")).toBe("平常");
+    expect(activityPhaseLabel(null)).toBe("判定不能");
+    expect(activityPhaseWatchlistLabel("NORMAL")).toBeNull();
+    expect(activityPhaseWatchlistLabel("UNKNOWN")).toBe("判定不能");
     expect(snapshotStatusLabel("STALE")).toBe("古い");
     expect(dataSourceLabel("fixture")).toBe("検証データ");
     expect(templateLabel("thin-spike")).toBe("薄商い急変");
@@ -63,7 +78,7 @@ describe("market label helpers", () => {
         dataQuality: "MISSING",
         riskTagCodes: ["THIN_SPIKE", "DATA_MISSING", "THIN_SPIKE"]
       })
-    ).toEqual(["監視除外候補", "薄商い急変", "欠損", "データ欠損"]);
+    ).toEqual(["監視除外候補", "薄商い急変", "判定不能", "データ欠損"]);
 
     expect(
       rowExclusionLabels({

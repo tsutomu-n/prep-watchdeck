@@ -4,7 +4,13 @@ from typing import Annotated, Any, Literal, NotRequired, Required, TypedDict
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from prep_watchdeck.domain.enums import Category, DataQuality, DataSource, SnapshotStatus
+from prep_watchdeck.domain.enums import (
+    ActivityPhase,
+    Category,
+    DataQuality,
+    DataSource,
+    SnapshotStatus,
+)
 
 
 def to_camel(value: str) -> str:
@@ -78,6 +84,7 @@ class ScannerRowDTO(CamelModel):
     change_pct_by_tf: dict[str, float | None]
     turnover_usdt_by_tf: dict[str, float | None]
     volume_ratio_by_tf: dict[str, float | None] = Field(default_factory=dict)
+    activity_phase: ActivityPhase | None = None
     range_24h_high: float | None = None
     range_24h_low: float | None = None
     range_24h_position_pct: float | None = None

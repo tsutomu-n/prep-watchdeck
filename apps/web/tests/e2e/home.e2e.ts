@@ -71,6 +71,28 @@ function addVpiLitePlusSnapshotPayload() {
   writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
 }
 
+function setVpiLitePlusTargetState(state: "CALM" | "DATA_STALE" | null) {
+  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8")) as {
+    summary: { vpiLitePlus: { targets: Array<Record<string, unknown>> } };
+  };
+  const current = snapshot.summary.vpiLitePlus.targets[0];
+  if (!current) {
+    if (state === null) return;
+    throw new Error("VPI target fixture is missing");
+  }
+  snapshot.summary.vpiLitePlus.targets =
+    state === null
+      ? []
+      : [
+          {
+            ...current,
+            state,
+            dataQuality: state === "DATA_STALE" ? "STALE" : "OK"
+          }
+        ];
+  writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
+}
+
 function marketRow(watchlist: Locator, symbol: string) {
   return watchlist.locator(`[data-market-row][data-symbol="${symbol}"]`);
 }
@@ -244,9 +266,12 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   await expect(watchlist.locator(".market-header").getByText("15分量倍率")).toBeVisible();
   await expect(altRow).toContainText("注視");
   await expect(altRow).toContainText("3.4×");
+  await expect(altRow).toContainText("持続");
+  await expect(altRow.getByText("正常", { exact: true })).toHaveCount(0);
   await expect(watchlist.getByText("詳細な並び替え")).toBeVisible();
   await expect(watchlist.getByLabel("Raw Sortキー")).not.toBeVisible();
-  await expect(detail.getByRole("heading", { name: "THIN" })).toBeVisible();
+  await marketRowButton(watchlist, "ALTUSDT").click();
+  await expect(detail.getByRole("heading", { name: "ALT" })).toBeVisible();
   const sections = await page
     .locator("[data-dashboard-section]")
     .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-dashboard-section")));
@@ -261,6 +286,13 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   expect(statsBox?.y).toBeLessThan(contextSummaryBox?.y ?? 0);
   await expect(detail.getByText("15分変化率")).toBeVisible();
   await expect(detail.getByText("15分量倍率", { exact: true })).toBeVisible();
+  await expect(detail.getByText("1時間量倍率", { exact: true })).toBeVisible();
+  await expect(detail.getByText("4時間量倍率", { exact: true })).toBeVisible();
+  await expect(detail.getByText("活動phase", { exact: true })).toBeVisible();
+  await expect(detail.getByText("持続", { exact: true })).toBeVisible();
+  await expect(detail.getByText("OI 60分", { exact: true })).toBeVisible();
+  await expect(detail.getByText("74h状態", { exact: true })).toBeVisible();
+  await expect(detail.getByText("データ品質", { exact: true })).toHaveCount(0);
   await expect(detail.getByText("データ網羅率")).toBeVisible();
   await openDetailGroup(detail, "context");
   await expect(detail.getByText("銘柄への注意・クセ・過去反応")).toBeVisible();
@@ -274,17 +306,17 @@ test("shows VPI experiment states without turning the dashboard into a score ran
   addVpiLitePlusSnapshotPayload();
   await page.goto("/");
 
-  const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });
-  const panel = detail.getByRole("region", { name: "市場活動（VPI-Lite+）" });
+  const candidate = page.locator('[data-dashboard-section="candidate"]');
+  const panel = candidate.getByRole("region", { name: "市場活動（VPI-Lite+）" });
   await expect(panel).toBeVisible();
-  await expect(panel.getByText("実験中の補助指標です。売買シグナルではありません。")).toBeVisible();
-  await expect(panel.getByText("Benchmark")).toHaveCount(2);
-  await expect(panel.getByText("Target")).toHaveCount(1);
-  await expect(panel.getByText("平常")).toBeVisible();
-  await expect(panel.getByText("データ遅延")).toBeVisible();
-  await expect(panel.getByText("活動増加")).toBeVisible();
+  await expect(panel.getByText("既存の限定対象だけを使う活動発見です。売買シグナルではありません。")).toBeVisible();
+  await expect(panel.getByText("VPI対象 1 / Watchlist 5銘柄", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("heading", { name: "活動増加" })).toBeVisible();
   await expect(panel).not.toContainText("48.5");
 
+  await panel.getByRole("button", { name: "THINUSDT、活動増加を選択" }).click();
+
+  const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });
   const selectedVpi = detail.getByRole("region", { name: "選択銘柄 市場活動詳細" });
   await expect(selectedVpi).toBeVisible();
   await expect(selectedVpi.getByText("補助値 48.5 / 100")).toBeVisible();
@@ -295,6 +327,28 @@ test("shows VPI experiment states without turning the dashboard into a score ran
 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
   await expect(watchlist.locator(".market-header")).not.toContainText("VPI");
+});
+
+test("distinguishes every VPI discovery empty state", async ({ page }) => {
+  const panel = page.getByRole("region", { name: "市場活動（VPI-Lite+）" });
+
+  generateSnapshot("basic");
+  addVpiLitePlusSnapshotPayload();
+  setVpiLitePlusTargetState(null);
+  await page.goto("/");
+  await expect(panel.getByText("VPI判定対象なし", { exact: true })).toBeVisible();
+
+  generateSnapshot("basic");
+  addVpiLitePlusSnapshotPayload();
+  setVpiLitePlusTargetState("CALM");
+  await page.goto("/");
+  await expect(panel.getByText("活動急増なし", { exact: true })).toBeVisible();
+
+  generateSnapshot("basic");
+  addVpiLitePlusSnapshotPayload();
+  setVpiLitePlusTargetState("DATA_STALE");
+  await page.goto("/");
+  await expect(panel.getByText("VPIデータ不足", { exact: true })).toBeVisible();
 });
 
 test("ignores a malformed VPI summary without breaking the dashboard", async ({ page }) => {
@@ -913,14 +967,14 @@ test("renders stale and partial data as risk states", async ({ page }) => {
 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
   await expect(watchlist.getByText("表示 2 / 全 2")).toBeVisible();
-  await expect(marketRow(watchlist, "STALEUSDT")).toContainText("古いデータ");
-  await expect(marketRow(watchlist, "PARTIALUSDT")).toContainText("一部不足");
+  await expect(marketRow(watchlist, "STALEUSDT")).toContainText("更新遅延");
+  await expect(marketRow(watchlist, "PARTIALUSDT")).toContainText("一部データ不足");
 
   await categories.getByRole("button", { name: /監視除外候補\s+1/ }).click();
-  await expect(marketRow(watchlist, "STALEUSDT")).toContainText("古いデータ");
+  await expect(marketRow(watchlist, "STALEUSDT")).toContainText("更新遅延");
 
   await categories.getByRole("button", { name: /注意\s+1/ }).click();
-  await expect(marketRow(watchlist, "PARTIALUSDT")).toContainText("一部不足");
+  await expect(marketRow(watchlist, "PARTIALUSDT")).toContainText("一部データ不足");
 });
 
 test("renders thin-spike and missing-coverage monitoring-exclusion rows", async ({ page }) => {
@@ -939,7 +993,7 @@ test("renders thin-spike and missing-coverage monitoring-exclusion rows", async 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
   await expect(marketRow(watchlist, "WICKUSDT")).toContainText("薄商い急変");
   await expect(marketRow(watchlist, "GAPUSDT")).toContainText("データ不足");
-  await expect(marketRow(watchlist, "GAPUSDT")).toContainText("欠損");
+  await expect(marketRow(watchlist, "GAPUSDT")).toContainText("判定不能");
 
   const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });
   await expect(detail.getByRole("heading", { name: "WICK" })).toBeVisible();

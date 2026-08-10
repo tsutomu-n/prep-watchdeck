@@ -731,6 +731,13 @@
           {metrics}
           onTimeframeSelect={selectRankingTimeframe}
         />
+        {#if vpiSummary}
+          <DashboardVpiExperimentPanel
+            summary={vpiSummary}
+            watchlistCount={rows.length}
+            onSymbolSelect={selectDashboardSymbol}
+          />
+        {/if}
       </div>
 
       <div class="dashboard-slot watchlist-slot" data-dashboard-section="watchlist">
@@ -796,9 +803,6 @@
             {volumeRatioBaseline}
             {volumeRatioHelp}
           />
-          {#if vpiSummary}
-            <DashboardVpiExperimentPanel summary={vpiSummary} />
-          {/if}
           {#if selectedVpi}
             <SelectedSymbolVpiDetail item={selectedVpi} />
           {/if}

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-10T20:04:38+09:00`
-- 検証: `2026-08-10T20:04:38+09:00`
-- 文書更新作業: `2026-08-10_20:04`（Asia/Tokyo）
+- 更新: `2026-08-10T23:10:43+09:00`
+- 検証: `2026-08-10T23:10:43+09:00`
+- 文書更新作業: `2026-08-10_23:10`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -173,7 +173,9 @@ GET、POST、PATCH、PUT、DELETEはいずれも404であり、CSV exportも提�
 
 ## Candidate 74h / OI 60分
 
-`featureVersion`と`rulesetVersion`は`3`、`schemaVersion`は`1`である。74h価格・売買代金
+`featureVersion`は`4`、`rulesetVersion`は`3`、`schemaVersion`は`1`である。feature 4は
+1h/4h量倍率と表示専用activity phaseを追加し、74h Candidate / OI契約自体は変更しない。
+74h価格・売買代金
 componentと`userRule74hMatched`は`true | false | null`で、componentのどちらかが`null`なら
 複合値も`null`になる。
 
@@ -187,6 +189,16 @@ Candidateの`rankings.timeframes`は複合値`true`かつ非`NO_TRADE`だけを�
 `approxBaselineSpanMinutes=baselineSampleCount * sampleStepMinutes`、`statistic=median`、
 `floorUsdt`を持つ。sample countとfloorはactive filter config由来で、LiveとFixtureが同じ意味を出す。
 旧config名`baseline_window_bars`と`schemaVersion=1`は変更しない。
+
+rowの`volumeRatioByTf`は15mの既存値に加えて1hと4hを持てる。各値は現在windowのUSDT売買代金を、
+同じwindow幅のrolling baseline直近`baseline_window_bars` sampleのmedianで割る。sample stepは5分、
+windowは15m=3本、1h=12本、4h=48本である。必要履歴、有限値、正のbaseline、floorを満たさない
+windowだけ`null`にする。5m/24h/74hは量倍率を生成しない。
+
+rowのoptional `activityPhase`は`BURST | EXPANDING | SUSTAINED | COOLING | NORMAL | UNKNOWN`である。
+判定順はUNKNOWN、COOLING、SUSTAINED、EXPANDING、BURST、NORMALを固定し、required ratioが欠ける時は
+UNKNOWNとする。これはdisplay-only契約であり、attention score、category、Candidate ranking、
+Raw Sort、補正順位、VPI-Lite+計算へ入力しない。
 
 `open_interest_samples`は`(symbol,bucket_ts_ms)`主キー、`holding_amount`、`source_ts_ms`、
 `updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは

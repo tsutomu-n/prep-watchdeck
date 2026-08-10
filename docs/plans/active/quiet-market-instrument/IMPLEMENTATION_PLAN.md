@@ -1,93 +1,133 @@
 # Quiet Market Instrument 実装計画
 
-- 作成: `2026-08-10T19:45:00+09:00`
-- 更新: `2026-08-10T22:35:24+09:00`
-- 検証: `2026-08-10T22:35:24+09:00`
+- 作成: `2026-08-10T22:18:28+09:00`
+- 更新: `2026-08-10T23:24:00+09:00`
+- 検証: `2026-08-10T23:24:00+09:00`
 - 状態: `実装計画`
 
-## 0. 最終状態
+---
 
-- Plan ID: `PLAN-QUIET-MARKET-INSTRUMENT-001`
-- Revision: `4`
-- Profile / risk: `EXECPLAN / MEDIUM`
-- Branch: `ai/quiet-market-plan-sync-20260810-2232`
-- Parent HEAD: `8a17b68cf2c8283a7c89cf51b7c2539c11d9358e`
-- Implementation commits: `aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1`、`046c9aff3712111ad09084cae179b599edb06452`
-- Main merge: `ce719dd10a59b0f548d4cf649bf125e11cc80c40`（PR #3）
-- Final HEAD: `このplanを最終同期するlocal commit自身`
-- Verified tree: commit後の`HEAD^{tree}`。自己参照を避けるため正確なhashは`.ai-work/state.md`と最終報告へ記録する。
-- Current checkpoint: `complete`
-- Result: `PASS`
+## 0. Current plan goal
 
-## 1. 実装結果
+`PLAN-QMI-001`は、監視専用境界を維持したまま、現行15分量倍率と同じ計算族で1時間・4時間量倍率を追加し、3時間軸から表示専用の活動phaseを算出する。正常な行品質は通常UIから消し、異常だけを具体的な日本語で示す。既存VPI-Lite+対象だけを使う活動発見laneをCandidate付近へ追加する。
 
-監視専用境界、Candidate/OI algorithm、Watchlist、Raw Sort、Smart Rank計算、VPI-Lite+、Cold/Hot、Chart、Past Note、Dashboard設定、data-quality状態を維持した。
+15分量倍率、Attention Score、74h Candidate、category、Smart Rank計算、VPI計算・対象・threshold・主ranking非介入、Hot/Cold/Chart、Past Note、Dashboard設定は維持する。Production dependency、Private API、取引・注文・予測・通知は追加しない。
 
-- Live/Fixtureの`summary.volumeRatio15m`へactive config由来のrolling 15分基準metadataを追加した。計算、`schemaVersion=1`、generated schema typeは変更していない。
-- Desktop Candidateは連続4列、MobileはCSS breakpointで切り替えるautomatic activation tabsとした。`MediaQuery`によるSSR markup分岐はない。
-- Watchlist分類、有限値の`×`表記、valid baseline説明、invalid fallback、15mだけのSymbol量倍率行を実装した。
-- user-visible `Smart Rank`を`補正順位`へ変更し、`Raw #n → 補正 #n`を最終表示indexから出した。`smart-rank.ts`は無変更である。
-- Selected detailを連続Inspectorへ軽量化し、VPI state主・補助値副、OI availability、全signal/risk/reasonを維持した。
-- Dashboard/Symbolの24h rangeはdecorative gradientを廃止しneutral trackとmarkerにした。selected/focus/state insetは維持した。
-- 追加の用語レビューを反映し、ユーザーが最初に見る表記を`15分量倍率`、`直近約24h中央値比`、`市場活動`へ統一した。`VPI-Lite+`は小さな技術名として残し、stateは従来どおり`活動増加`等の日本語を主表示する。内部enum、payload、計算、ランキングは変更していない。
+Profileは`EXECPLAN`、riskは`MEDIUM`。正本checkoutは`/home/tn/projects/prep-watchdeck`、branchは`ai/quiet-market-plan-sync-20260810-2232`、開始HEADは`79f5e8d939dddb3948ead270c2eff7a1350daab2`。
 
-## 2. Acceptance criteria
+## 1. Current repository audit
 
-| ID | Status | Reproducible evidence |
-| --- | --- | --- |
-| AC-UI-001 | PASS | `git diff -- apps/web/src/lib/market/smart-rank.ts apps/scanner-core/src/prep_watchdeck/domain/screening/rankings.py`は空。focused E2E 58 PASS。 |
-| AC-UI-002 | PASS | `DashboardRankingArea.svelte`のDesktop 4列。final `dashboard-1440.png`。 |
-| AC-UI-003 | PASS | 560/390/320px final screenshotsとresponsive E2E。 |
-| AC-UI-004 | PASS | `mobile candidate tabs use automatic roving activation` PASS。Arrow、Home、End、wrap、ARIAを検証。 |
-| AC-UI-005 | PASS | `categoryCompactLabel` unitとhome E2E。全rowのlabel領域に分類を表示。 |
-| AC-UI-006 | PASS | scanner metadata tests 19 PASS、Web helper 9 PASS。valid時は`15分量倍率`と`直近約24h中央値比`、invalid時は期間を推測しないfallbackをhome E2Eで確認。 |
-| AC-UI-007 | PASS | symbol-workspace E2EでTimeframe Boardの`em`が1件かつ`15分量倍率`と確認。 |
-| AC-UI-008 | PASS | smart-rank E2E PASS、`smart-rank.ts`無変更、Raw→補正表示確認。 |
-| AC-UI-009 | PASS | final desktop/mobile visual review、home/symbol workspace E2E。market fact削除なし。 |
-| AC-UI-010 | PASS | user-visible名称は`市場活動`、`VPI-Lite+`は小さな技術名。state主・補助値副、OI availability assertion、Cold非再計算E2E PASS。 |
-| AC-UI-011 | PASS | full gateのSTALE/PARTIAL/Past Note/Hot/Cold tests PASS。sentinel hash不変。 |
-| AC-UI-012 | PASS | 1440/1200/960/560/390/320px visual reviewとresponsive overflow E2E PASS。 |
-| AC-UI-013 | PASS | package/lock diffなし。新production dependency 0。 |
-| AC-UI-014 | PASS | scanner 19、Web unit 19、check/build、指定focused E2E 58 PASS。 |
-| AC-UI-015 | PASS | `bash scripts/verify-local.sh` exit 0: pytest 236、Web unit 183、E2E 59。 |
-| AC-UI-016 | PASS | baseline/final比較と3銘柄選択実測。未解決P0/P1なし。 |
-| AC-UI-017 | PASS | `DESIGN.md`、current docs、index、config READMEを同期。metadata/link tests 17 PASS。 |
-| AC-UI-018 | PASS | 対象source/tests/docsだけを`aeb0d9c`と`046c9af`へcommitし、各commit後cleanを確認。両commitはPR #3経由でmainへmerge済み。 |
+### 1.1 ZIPとの差異と判断
 
-## 3. Checkpoints
+- ZIP baseline `2b5bfd5`より現行Repoは新しい。Candidateの連続4列surface、560px以下のautomatic activation tabs、15分metadata、Watchlist分類、連続Inspector、`補正順位`、`市場活動`表示は既に`aeb0d9c`/`046c9af`とPR #3で実装済み。再実装しない。
+- ZIPの`apply-to-repo.sh`は対象directory不存在を前提とする。現行directoryとliving planを上書きするため実行せず、checksum PASSのappendicesだけを追加し、両living planを現行Repoへ読み替える。
+- 計画上の`domain/screening/pipeline.py`と`tests/test_rankings.py`は存在しない。現行責務は`screening/pipeline.py`と`tests/test_rankings_contract.py`。
+- `.codex`には今回用plan schema/templateがなく、過去の`.codex/SP_STATE.md`だけがある。今回の正本にはしない。
+- 現行`volume_ratio_by_timeframe()`は15mだけ有限値、1h/4hは`None`。rowにactivity phase fieldはない。
+- 現行DashboardはWatchlist/Selected detail/Smart Rankで`OK`品質を表示する。VPI panelは全benchmark/targetを列挙し、発見state・coverage・empty/unavailableを分離していない。
+- `dataQuality -> riskTag -> category`は`build_risk_tags()`と`choose_category()`、Candidateは既存category/74h gateで制御される。新しい品質gateは追加しない。
+- 通常履歴は74h契約用に1177本を保持し、4h倍率に必要な`baseline 288 + window 48`本を満たす。停止条件には該当しない。
 
-CP-001〜CP-013はすべて完了。CP-002はPython RED 4件から19 PASS、Web helperはmissing module REDからunit PASS。Wave 1はscanner 19、Web unit 26、check/build、E2E 47 PASS後にWave 2へ進んだ。Wave 2とvisual QA、docs、full gate、final auditを完了した。
+### 1.2 実装契約
 
-用語follow-upは既存checkpointの契約を変えない局所変更として処理した。copy expectationを先にRED化し、helper/component/docsだけを変更した。Smart Rankの計算、VPI payload/enum、Candidate/OI、schema、依存関係は無変更である。
+- 量倍率windowは15m=3本、1h=12本、4h=48本。現在windowを除いたrolling同長windowの末尾`baseline_window_bars`件の中央値を分母とし、`volume_ratio_floor_usdt`をfloorに使う。
+- 15mの現行値をgoldenとして保持する。5m/24h/74hは`None`のまま。
+- activity phaseは`UNKNOWN -> COOLING -> SUSTAINED -> EXPANDING -> BURST -> NORMAL`の順。内部値は`BURST | EXPANDING | SUSTAINED | COOLING | NORMAL | UNKNOWN`。
+- phaseは方向・売買推奨・Score・category・rankingを意味しない。
+- VPI laneは既存summary sidecarのみを分類し、`EARLY_ACTIVITY/ACTIVE_MOVE`を活動増加、`THIN_VOLATILITY/SINGLE_BAR_SUSPECT`を要注意として各score降順最大5件。対象0、valid該当0、全件判定不能を別表示する。
+- snapshotはadditive optional field `activityPhase`をrowへ追加する。`featureVersion=4`、`rulesetVersion=3`、`schemaVersion=1`。
 
-## 4. 実行証拠
+## 2. Baseline evidence
 
-- cwd `/home/tn/projects/prep-watchdeck/apps/scanner-core`: focused pytest、exit 0、`19 passed`。
-- cwd `/home/tn/projects/prep-watchdeck/apps/web`: specified unit、exit 0、`19 passed`; `bun run check` 0; `bun run build` 0; focused E2E `58 passed`。
-- cwd `/home/tn/projects/prep-watchdeck`: `bash scripts/verify-local.sh`、exit 0、pytest 236 / Web unit 183 / E2E 59。
-- 用語follow-up focused、cwd `/home/tn/projects/prep-watchdeck/apps/web`: relevant unit `22 passed`、`bun run check` 0、`bun run build` 0、focused E2E `55 passed`。
-- 用語follow-up後full gate、cwd `/home/tn/projects/prep-watchdeck`: `bash scripts/verify-local.sh`、exit 0、pytest 236 / Web unit 183 / E2E 59。
-- DesignMD 0.1.0: 後続PR #4で既存debtを解消。現行main `8a17b68`でexit 0、errors 0 / warnings 0 / infos 1。
-- Visual: resolved state rootの`tmp/quiet-market-instrument/{baseline,final}`。6 viewport、390pxの4 tab、補正順位、3銘柄選択evidenceを保存。
-- Sentinel: Past Note `2240c8ad...b24001`、Dashboard設定 `e1e57eb1...4fb7e`で前後一致。
-- Final read-only audit: `git diff --check` 0、package/lock diff空、runtime/test artifact・secret・private/trading API・debug logなし。
-- GitHub: PR #3 required `verify` PASS、未解決thread 0、merge commit `ce719dd`。実装AI branchはmerge/ancestor確認後にlocal/remoteから削除済み。
-- Runtime: 正式user systemdでservice/Webをcontrolled restart。service PID `473720→2008044`、Web PID `3667390→2009307`、両方active/running・NRestarts 0。`dataAsOf 1786365000000→1786365300000`、schema 1、feature/ruleset 3、writer 1、旧process 0、health/UI smoke/sentinel PASS。
-- 最終living plan同期後gate、cwd `/home/tn/projects/prep-watchdeck`: `bash scripts/verify-local.sh`、exit 0、pytest 236 / Web unit 183 / E2E 59、lint/type/check/build PASS。
+| 検証 | cwd | 結果 |
+|---|---|---|
+| Git status/branch/HEAD | Repo root | exit 0、clean、専用branch、HEAD `79f5e8d` |
+| ZIP checksum | Windows temp extract | exit 0、全manifest file PASS |
+| Scanner focused | `apps/scanner-core` | exit 0、59 passed |
+| Web focused unit/check/build | `apps/web` | exit 0、25 passed、0 errors/warnings、build PASS |
+| Full local gate | Repo root | exit 0、pytest 236、Web unit 183、Playwright 59、maintenance/lint/type/check/build PASS |
+| Web performance | `apps/web` | exit 0、2 passed。hot p95 1.9ms、Raw Sort p95 29.6ms、Cold max 56ms |
 
-## 5. 差異と判断
+Windows共有側の最初のWeb baselineはLinux用`node_modules`を解決できずexit 1だった。source変更はなく、Linux正本で同一commandを再実行してPASSした。この失敗記録は保持する。
 
-- `baseline_window_bars`は5分足本数ではなくrolling 15分値のsample数なので、外部metadataを`baselineSampleCount`とした。
-- 実装時点では既存DesignMD failureをbaselineとの差分0で分離した。後続PR #4でunsupported overlay tokenとunused primaryを修正し、現行mainではlint debt 0である。
-- P1 planは既存Archive手順がactive planを除外するため削除せず、indexだけ完了済み・Archive待ちへ直した。
-- selected/focus/stateのinset lineとmarker outlineはsemantic stateなので削除対象外とした。
-- `VPI-Lite+`は内部契約名として削除せず、主要見出しを意味ベースの`市場活動`、技術名を小さな副表示とした。
-- metadata helperの精密なtooltipは維持し、短いbaseline labelだけを`直近約24h中央値比`へ変更した。metadata不正時は引き続き期間を推測しない。
+## 3. Acceptance criteria
 
-## 6. 残余リスクと残作業
+| ID | 状態 | 条件 / 検証 |
+|---|---|---|
+| AC-QMI-001 | passed | 専用branch、開始HEAD、clean tree、AGENTS/DESIGN/skill/ZIPを証拠化。 |
+| AC-QMI-002 | passed | Markdown/JSON living plan、appendices、handoffを同期。JSON parse、metadata/link、diff check exit 0。 |
+| AC-QMI-003 | passed | package/lock差分なし、monitoring-only boundary PASS、Private/trading API差分なし。 |
+| AC-QMI-004 | passed | `test_volume_ratio_timeframes_keep_15m_golden_and_add_hour_windows`とfixture E2Eで15m値を再証明。 |
+| AC-QMI-005 | passed | 3/12/48本window、exact baseline sample、不足/nonfiniteの`None`をscanner focusedで証明。 |
+| AC-QMI-006 | passed | priority/category実装は無変更。1h/4h Candidate volume ranking空のcontract test PASS。 |
+| AC-QMI-007 | passed | 全phase、優先順、None/NaN/Infinity UNKNOWNのparameterized test PASS。 |
+| AC-QMI-008 | passed | feature 4 / ruleset 3 / schema 1、Live/Fixture/schema/generated typeのfocused testと再生成比較PASS。 |
+| AC-QMI-009 | passed | OK非表示、`一部データ不足 / 更新遅延 / 判定不能`をunit/E2Eで証明。 |
+| AC-QMI-010 | passed | stale/partial/missing fixture E2Eと既存74h gate tests PASS。新しい品質gateは追加していない。 |
+| AC-QMI-011 | passed | Desktop Candidate連続4観点をfocused/full E2Eと1440px screenshotで再検証。 |
+| AC-QMI-012 | passed | Mobile automatic tabs、ARIA/keyboard、4 tabs、selection保持をresponsive E2Eと390/320pxで再検証。 |
+| AC-QMI-013 | passed | Watchlist category、15m倍率、phase、異常品質、3 viewport overflow 0を証明。 |
+| AC-QMI-014 | passed | Inspectorの15m/1h/4h、phase、OI、74h、理由をE2Eと3銘柄実測で証明。 |
+| AC-QMI-015 | passed | VPI Target限定、coverage、分類/sort/limit、3 empty状態をunit/E2Eで証明。 |
+| AC-QMI-016 | passed | VPI score/対象計算とSmart Rank algorithmは無変更。Hot非再計算と品質補正理由E2E PASS。 |
+| AC-QMI-017 | passed | focused、check/build、E2E 59、performance 2、full gate 249/185/60 PASS。 |
+| AC-QMI-018 | passed_on_commit | DESIGN/current docs/ADR/plans、visual evidence、final diff、未解決P0/P1なし。対象fileだけを含む本commit自身で完了し、正確なHEAD/cleanはignored stateと最終報告へ記録する。 |
 
-- 未解決P0/P1: なし。
-- 非blocking残余: なし。
-- production service/Webは実装merge後の明示依頼によりcontrolled restart・smoke確認済み。
-- screenshots、Playwright output、runtime state、`.ai-work/`はRepo外またはignoredでcommitしない。
+## 4. Checkpoints
+
+1. `CP-QMI-001` completed: Repo/ZIP/current implementation/baselineを監査。
+2. `CP-QMI-002` completed: appendicesと両living planを現行Repoへ同期。JSON/docs/diff gate PASS。
+3. `CP-QMI-003` completed: 最小RED後、15m互換の汎用window ratioと1h/4hを実装。
+4. `CP-QMI-004` completed: activity phase、DTO/schema/fixture/versionを同期。
+5. `CP-QMI-005` completed: 品質label/helperと正常品質非表示を実装。
+6. `CP-QMI-006` completed: Watchlist/Inspectorへ倍率・phaseを追加。既存Candidate/tabsを再検証。
+7. `CP-QMI-007` completed: VPI discovery helper/unit/panelを追加し既存detailを維持。
+8. `CP-QMI-008` completed: focused/full/performance gate PASS。
+9. `CP-QMI-009` completed_on_commit: 1440/390/320 visual QA、docs/ADR/final diff、選択的local commit/clean。
+
+各checkpointは関連ACの再現証拠が揃うまで完了にしない。source確定後にfull gateとperformanceを再実行し、その後sourceを変えた場合は影響focused/full gateを再実行する。
+
+## 5. Prior completed UI wave evidence
+
+既存living planの履歴を保持する。前wave `PLAN-QUIET-MARKET-INSTRUMENT-001` revision 4はAC-UI-001〜018 PASS、CP-001〜013 completed。実装commitは`aeb0d9c`と`046c9af`、PR #3 mergeは`ce719dd`、DesignMD cleanup PR #4 mergeは`8a17b68`。前wave full gateはpytest 236、Web unit 183、E2E 59。visual evidenceは`/home/tn/.local/share/prep-watchdeck/tmp/quiet-market-instrument/final/`。この証拠は今回のAC-QMI-011/012のbaselineとして再検証するが、新しいACの代用にはしない。
+
+## 6. Stop / rollback / scope
+
+停止条件は15m golden変化、通常履歴不足、VPI対象拡張/計算変更の必要化、Score/category/ranking変更の必要化、production dependency、Private/trading API、性能budget超過、320/390px overflow、無関係差分衝突、同一原因3回連続未解決failure。
+
+rollbackは今回commitをrevert可能なadditive field/UI差分に保つ。DB migration、runtime state mutation、service restart、deploy、push、PR、mergeは行わない。
+
+## 7. Final verification evidence
+
+| 検証 | cwd | 結果 |
+|---|---|---|
+| Scanner focused | `apps/scanner-core` | exit 0、36 passed |
+| Web unit | `apps/web` | exit 0、27 passed |
+| Web focused E2E | `apps/web` | exit 0、59 passed |
+| Web check/build | `apps/web` | exit 0、0 errors/warnings、build PASS |
+| Full local gate | Repo root | exit 0、scanner 249、Web unit 185、Playwright 60、maintenance/Ruff/Pyrefly/check/build PASS |
+| Performance | `apps/web` | exit 0、2 passed。Hot apply p95 1.2ms、Raw Sort p95 24.9ms、Cold max 56.3ms、transport budget内 |
+| DesignMD | Repo root | exit 0、errors 0 / warnings 0 / infos 1 |
+| Docs/JSON/schema | Repo root | JSON parse、metadata/link 17、schema再生成cmp、generated Web type、diff check PASS |
+| Visual QA | isolated port 4190 | 1440/390/320pxでscrollWidth=clientWidth、Candidate/VPI/Watchlist/Inspector/補正順位/銘柄注記、mobile 4 tabs PASS |
+| 3銘柄選択 | isolated fixture | ALT 58/73/60ms、NEWALT 39/43/43ms、THIN 33/34/34ms。各row phaseとInspector 1h/4h/phaseを記録 |
+| Sentinel | production state read-only | Past Note `2240c8ad...b24001`、Dashboard settings `e1e57eb1...4fb7e`でbaseline一致 |
+
+Full gateの途中失敗は2回とも今回差分のformat gateだった。1回目は`domain/dto.py` import整形、2回目は
+`test_domain_features.py` formatでexit 1。局所整形後、同じfull gateを最初から再実行してexit 0を得た。
+一時previewは親停止後にVite子が残ったため、port 4190を保持する今回のPIDだけを確認して停止し、listener/orphan 0を確認した。production processには触れていない。
+
+Visual evidenceはGit外の
+`/home/tn/.local/share/prep-watchdeck/tmp/quiet-market-instrument-activity/final/`にある。
+小fixtureのMobile Watchlistは400-row reachability用の既存bounded scroll高を保つため空きが大きいが、
+overflow/clip/操作不能はなく、今回差分起因のP0/P1ではない。
+
+## 8. Final status
+
+- Current checkpoint: `CP-QMI-009 completed_on_commit`
+- Mandatory passed: `18 / 18`（AC-QMI-018はこのplanを含むcommit自身で成立）
+- Final head: `this plan commit itself`。parent HEADは`79f5e8d939dddb3948ead270c2eff7a1350daab2`。正確なcommit/treeはignored `.ai-work/state.md`と最終報告へ記録する。
+- Goal gap: なし。
 - Remaining work: なし。
+- Unresolved P0/P1: なし。
+- Residual risk: old feature 3 snapshotではoptional `activityPhase`がないためUIは`判定不能`。production反映・restartは今回の明示scope外で未実施。

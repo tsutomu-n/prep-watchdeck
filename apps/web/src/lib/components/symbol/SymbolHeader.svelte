@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatNumber as fmt } from "$lib/market/format";
-  import { categoryLabel, changeTone, codeLabel, dataQualityClass, dataQualityLabel } from "$lib/market/labels";
+  import { abnormalDataQualityLabel, categoryLabel, changeTone, codeLabel, dataQualityClass } from "$lib/market/labels";
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
 
   let { row, selectedTimeframe }: { row: ScannerRowDTO; selectedTimeframe: string } = $props();
   let displaySymbol = $derived(formatDisplaySymbol(row.symbol));
+  let qualityText = $derived(abnormalDataQualityLabel(row.dataQuality));
 
   function monitoringCategoryLabel(category: string) {
     return category === "NO_TRADE" ? "監視除外候補" : categoryLabel(category);
@@ -27,10 +28,12 @@
       <dt>分類</dt>
       <dd>{monitoringCategoryLabel(row.category)}</dd>
     </div>
-    <div>
-      <dt>品質</dt>
-      <dd class={`quality ${dataQualityClass(row.dataQuality)}`}>{dataQualityLabel(row.dataQuality)}</dd>
-    </div>
+    {#if qualityText}
+      <div>
+        <dt>品質</dt>
+        <dd class={`quality ${dataQualityClass(row.dataQuality)}`}>{qualityText}</dd>
+      </div>
+    {/if}
     <div>
       <dt>{selectedTimeframe}</dt>
       <dd class={`movement ${changeTone(row.changePctByTf?.[selectedTimeframe])}`}>

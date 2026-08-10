@@ -3,10 +3,11 @@
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatNumber as fmt } from "$lib/market/format";
   import {
+    abnormalDataQualityLabel,
+    activityPhaseLabel,
     categoryLabel,
     codeLabel,
     dataQualityClass,
-    dataQualityLabel,
     openInterestStateLabel
   } from "$lib/market/labels";
   import type { RankingPositionResult } from "$lib/market/rankings";
@@ -29,6 +30,7 @@
     rankingContext: RankingContextItem[];
     selectedSignals: MovementSignal[];
   } = $props();
+  let qualityText = $derived(abnormalDataQualityLabel(row.dataQuality));
 
   function rankingValueLabel(item: RankingContextItem) {
     if (!item.result || item.result.value === null) return "";
@@ -52,10 +54,12 @@
         <dt>ラベル</dt>
         <dd>{codeLabel(row.label)}</dd>
       </div>
-      <div>
-        <dt>品質</dt>
-        <dd class={`quality ${dataQualityClass(row.dataQuality)}`}>{dataQualityLabel(row.dataQuality)}</dd>
-      </div>
+      {#if qualityText}
+        <div>
+          <dt>品質</dt>
+          <dd class={`quality ${dataQualityClass(row.dataQuality)}`}>{qualityText}</dd>
+        </div>
+      {/if}
       <div>
         <dt>時間軸</dt>
         <dd>{selectedTimeframe}</dd>
@@ -63,6 +67,10 @@
       <div>
         <dt>OI 60分</dt>
         <dd>{openInterestStateLabel(row.openInterestState)}</dd>
+      </div>
+      <div>
+        <dt>活動phase</dt>
+        <dd>{activityPhaseLabel(row.activityPhase)}</dd>
       </div>
     </dl>
   </section>

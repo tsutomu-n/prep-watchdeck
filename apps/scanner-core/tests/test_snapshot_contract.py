@@ -33,9 +33,16 @@ def test_basic_fixture_computes_candidate_74h_contract() -> None:
         "ALTUSDT"
     ]
     assert [item["symbol"] for item in snapshot.rankings["noTrade"]] == ["THINUSDT"]
-    assert snapshot.feature_version == "3"
+    assert snapshot.feature_version == "4"
     assert snapshot.ruleset_version == "3"
     assert snapshot.schema_version == 1
+    assert {row.symbol: row.activity_phase for row in snapshot.rows} == {
+        "ALTUSDT": "SUSTAINED",
+        "DUMPUSDT": "NORMAL",
+        "NEWALTUSDT": "EXPANDING",
+        "THINUSDT": "BURST",
+        "SLEEPUSDT": "COOLING",
+    }
     assert snapshot.summary["volumeRatio15m"] == {
         "windowMinutes": 15,
         "sampleStepMinutes": 5,
@@ -173,3 +180,22 @@ def test_schema_limits_embedded_sparkline_arrays_to_16_items() -> None:
     assert properties["points"]["maxItems"] == 16
     assert properties["bars"]["maxItems"] == 16
     assert properties["timeframes"]["additionalProperties"]["maxItems"] == 16
+
+
+def test_schema_exposes_optional_activity_phase_enum() -> None:
+    schema = json.loads(Path("../../schemas/scanner-snapshot.schema.json").read_text())
+
+    row_schema = schema["$defs"]["ScannerRowDTO"]
+    activity = row_schema["properties"]["activityPhase"]
+    enum_ref = activity["anyOf"][0]["$ref"]
+
+    assert enum_ref == "#/$defs/ActivityPhase"
+    assert schema["$defs"]["ActivityPhase"]["enum"] == [
+        "BURST",
+        "EXPANDING",
+        "SUSTAINED",
+        "COOLING",
+        "NORMAL",
+        "UNKNOWN",
+    ]
+    assert "activityPhase" not in row_schema["required"]

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildVpiDiscoveryLane,
   parseVpiLitePlusItem,
   parseVpiLitePlusSummary,
   resolveVpiLitePlusRowItem,
@@ -127,5 +128,53 @@ describe("VPI-Lite+ Japanese labels", () => {
     expect(vpiDataQualityLabel("INSUFFICIENT")).toBe("データ不足");
     expect(vpiFundingStateLabel("OVERHEATED")).toBe("高偏り");
     expect(vpiOpenInterestStateLabel("AVAILABLE")).toBe("取得あり");
+  });
+});
+
+describe("VPI-Lite+ discovery lane", () => {
+  it("classifies, sorts, limits, and reports explicit coverage", () => {
+    const summary = parseVpiLitePlusSummary({
+      schemaVersion: 1,
+      mode: "lite_plus_v0",
+      generatedAt: 1,
+      benchmarks: [{ ...validItem, symbol: "BTCUSDT", state: "ACTIVE_MOVE", score: 100 }],
+      targets: [
+        { ...validItem, symbol: "EARLY1", state: "EARLY_ACTIVITY", score: 40 },
+        { ...validItem, symbol: "ACTIVE1", state: "ACTIVE_MOVE", score: 80 },
+        { ...validItem, symbol: "THIN1", state: "THIN_VOLATILITY", score: 70 },
+        { ...validItem, symbol: "SINGLE1", state: "SINGLE_BAR_SUSPECT", score: 60 },
+        { ...validItem, symbol: "CALM1", state: "CALM", score: 10 }
+      ]
+    });
+    if (!summary) throw new Error("valid VPI summary was rejected");
+
+    const lane = buildVpiDiscoveryLane(summary, 20);
+
+    expect(lane.coverageLabel).toBe("VPI対象 5 / Watchlist 20銘柄");
+    expect(lane.status).toBe("ready");
+    expect(lane.activity.map((item) => item.symbol)).toEqual(["ACTIVE1", "EARLY1"]);
+    expect(lane.caution.map((item) => item.symbol)).toEqual(["THIN1", "SINGLE1"]);
+  });
+
+  it("distinguishes no targets, no matching activity, and unavailable data", () => {
+    const summary = (targets: unknown[]) =>
+      parseVpiLitePlusSummary({
+        schemaVersion: 1,
+        mode: "lite_plus_v0",
+        generatedAt: 1,
+        benchmarks: [],
+        targets
+      });
+
+    const none = summary([]);
+    const calm = summary([{ ...validItem, state: "CALM" }]);
+    const unavailable = summary([
+      { ...validItem, state: "DATA_STALE", dataQuality: "STALE" }
+    ]);
+    if (!none || !calm || !unavailable) throw new Error("valid VPI summary was rejected");
+
+    expect(buildVpiDiscoveryLane(none, 4).status).toBe("no-targets");
+    expect(buildVpiDiscoveryLane(calm, 4).status).toBe("no-match");
+    expect(buildVpiDiscoveryLane(unavailable, 4).status).toBe("unavailable");
   });
 });

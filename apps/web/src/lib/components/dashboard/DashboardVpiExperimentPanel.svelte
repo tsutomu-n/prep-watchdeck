@@ -1,65 +1,86 @@
 <script lang="ts">
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
   import {
-    vpiDataQualityLabel,
+    buildVpiDiscoveryLane,
     vpiStateLabel,
     type VpiLitePlusItem,
     type VpiLitePlusSummary
   } from "$lib/market/vpi-lite-plus";
 
-  let { summary }: { summary: VpiLitePlusSummary } = $props();
+  let {
+    summary,
+    watchlistCount,
+    onSymbolSelect
+  }: {
+    summary: VpiLitePlusSummary;
+    watchlistCount: number;
+    onSymbolSelect: (symbol: string) => void;
+  } = $props();
 
-  let items = $derived([
-    ...summary.benchmarks.map((item) => ({ item, kind: "Benchmark" as const })),
-    ...summary.targets.map((item) => ({ item, kind: "Target" as const }))
-  ]);
+  let lane = $derived(buildVpiDiscoveryLane(summary, watchlistCount));
 
-  function stateTone(item: VpiLitePlusItem): "neutral" | "warn" | "risk" {
-    if (item.dataQuality === "STALE" || item.dataQuality === "ERROR") return "risk";
-    if (
-      item.dataQuality === "INSUFFICIENT" ||
-      item.state === "THIN_VOLATILITY" ||
-      item.state === "SINGLE_BAR_SUSPECT"
-    ) {
-      return "warn";
-    }
-    return "neutral";
+  function itemLabel(item: VpiLitePlusItem) {
+    return `${item.symbol}、${vpiStateLabel(item.state)}を選択`;
   }
 </script>
 
-{#if items.length > 0}
-  <section class="vpi-panel" aria-label="市場活動（VPI-Lite+）">
-    <header>
-      <div>
-        <h3>市場活動</h3>
-        <small class="technical-name">VPI-Lite+</small>
-        <p>実験中の補助指標です。売買シグナルではありません。</p>
-      </div>
-      <span>Cold snapshot</span>
-    </header>
-    <ul>
-      {#each items as { item, kind } (item.symbol)}
-        <li>
-          <div>
-            <strong title={item.symbol}>{formatDisplaySymbol(item.symbol)}</strong>
-            <span>{kind}</span>
-          </div>
-          <div class="state-line">
-            <b class={stateTone(item)}>{vpiStateLabel(item.state)}</b>
-            {#if item.dataQuality !== "OK" && vpiDataQualityLabel(item.dataQuality) !== vpiStateLabel(item.state)}
-              <small>{vpiDataQualityLabel(item.dataQuality)}</small>
-            {/if}
-          </div>
-        </li>
-      {/each}
-    </ul>
-  </section>
-{/if}
+<section class="vpi-lane" aria-label="市場活動（VPI-Lite+）">
+  <header>
+    <div>
+      <h3>市場活動</h3>
+      <small class="technical-name">VPI-Lite+</small>
+      <p>既存の限定対象だけを使う活動発見です。売買シグナルではありません。</p>
+    </div>
+    <span>{lane.coverageLabel}</span>
+  </header>
+
+  {#if lane.status === "no-targets"}
+    <p class="lane-status">VPI判定対象なし</p>
+  {:else if lane.status === "unavailable"}
+    <p class="lane-status risk">VPIデータ不足</p>
+  {:else if lane.status === "no-match"}
+    <p class="lane-status">活動急増なし</p>
+  {:else}
+    <div class="lane-columns">
+      <section aria-label="活動増加">
+        <h4>活動増加</h4>
+        <ul>
+          {#each lane.activity as item (item.symbol)}
+            <li>
+              <button type="button" aria-label={itemLabel(item)} onclick={() => onSymbolSelect(item.symbol)}>
+                <strong title={item.symbol}>{formatDisplaySymbol(item.symbol)}</strong>
+                <span>{vpiStateLabel(item.state)}</span>
+              </button>
+            </li>
+          {:else}
+            <li class="empty">該当なし</li>
+          {/each}
+        </ul>
+      </section>
+      <section aria-label="要注意">
+        <h4>要注意</h4>
+        <ul>
+          {#each lane.caution as item (item.symbol)}
+            <li>
+              <button type="button" aria-label={itemLabel(item)} onclick={() => onSymbolSelect(item.symbol)}>
+                <strong title={item.symbol}>{formatDisplaySymbol(item.symbol)}</strong>
+                <span>{vpiStateLabel(item.state)}</span>
+              </button>
+            </li>
+          {:else}
+            <li class="empty">該当なし</li>
+          {/each}
+        </ul>
+      </section>
+    </div>
+  {/if}
+</section>
 
 <style>
-  .vpi-panel {
-    border-block: 1px solid var(--line-strong);
-    background: var(--panel-strong);
+  .vpi-lane {
+    border: 1px solid var(--line-strong);
+    border-top: 0;
+    background: var(--panel);
   }
 
   header {
@@ -67,35 +88,44 @@
     align-items: start;
     justify-content: space-between;
     gap: var(--space-md);
-    padding: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
     border-bottom: 1px solid var(--line);
   }
 
   h3,
-  p {
+  h4,
+  p,
+  ul {
     margin: 0;
   }
 
   h3 {
     font-size: var(--type-heading-md-size);
-    line-height: var(--type-heading-md-leading);
+  }
+
+  h4 {
+    padding: var(--space-xs) var(--space-md);
+    color: var(--subtle);
+    font-size: 11px;
   }
 
   .technical-name {
+    display: block;
     margin-top: 2px;
     color: var(--muted);
     font-size: 9px;
-    letter-spacing: 0.04em;
   }
 
-  p,
-  header > span {
+  header p,
+  header > span,
+  .lane-status,
+  .empty {
     color: var(--subtle);
     font-size: 11px;
     line-height: 1.35;
   }
 
-  p {
+  header p {
     margin-top: var(--space-xs);
   }
 
@@ -104,68 +134,71 @@
     white-space: nowrap;
   }
 
-  ul {
+  .lane-status {
+    padding: var(--space-md);
+  }
+
+  .lane-status.risk {
+    color: var(--quality-risk);
+  }
+
+  .lane-columns {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1px;
-    margin: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lane-columns > section + section {
+    border-left: 1px solid var(--line);
+  }
+
+  ul {
     padding: 0;
-    background: var(--line);
     list-style: none;
   }
 
   li {
+    border-top: 1px solid var(--line);
+  }
+
+  li.empty {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  button {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--space-sm);
-    min-width: 0;
-    min-height: 42px;
-    padding: var(--space-sm) var(--space-md);
-    box-sizing: border-box;
-    background: var(--panel);
+    width: 100%;
+    min-height: var(--control-height-touch);
+    border: 0;
+    background: transparent;
+    padding: var(--space-xs) var(--space-md);
+    color: var(--text);
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
   }
 
-  li > div:first-child,
-  .state-line {
-    min-width: 0;
-  }
-
-  strong,
-  li span,
-  b,
-  small {
-    display: block;
-  }
-
-  strong {
+  button strong {
     overflow-wrap: anywhere;
     font-size: 12px;
   }
 
-  li span,
-  small {
-    margin-top: 2px;
-    color: var(--muted);
+  button span {
+    color: var(--chip-neutral);
     font-size: 10px;
-  }
-
-  .state-line {
     text-align: right;
   }
 
-  b {
-    color: var(--chip-neutral);
-    font-size: 11px;
-    line-height: 1.25;
+  button:active {
+    background: var(--panel-strong);
   }
 
-  b.warn {
-    color: var(--warning);
-  }
-
-  b.risk {
-    color: var(--quality-risk);
+  @media (hover: hover) and (pointer: fine) {
+    button:hover {
+      background: var(--surface);
+    }
   }
 
   @media (max-width: 560px) {
@@ -173,8 +206,17 @@
       display: grid;
     }
 
-    ul {
+    .lane-columns {
       grid-template-columns: 1fr;
+    }
+
+    .lane-columns > section + section {
+      border-top: 1px solid var(--line);
+      border-left: 0;
+    }
+
+    button {
+      min-height: var(--control-height-touch);
     }
   }
 </style>

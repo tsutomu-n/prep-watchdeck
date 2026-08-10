@@ -1,85 +1,294 @@
 {
-  "planId": "PLAN-QUIET-MARKET-INSTRUMENT-001",
-  "revision": 4,
-  "status": "complete",
+  "schemaVersion": 1,
+  "planId": "PLAN-QMI-001",
+  "revision": 2,
+  "status": "complete_on_commit",
   "profile": "EXECPLAN",
   "risk": "MEDIUM",
   "branch": "ai/quiet-market-plan-sync-20260810-2232",
-  "parentHead": "8a17b68cf2c8283a7c89cf51b7c2539c11d9358e",
-  "implementationCommits": ["aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1", "046c9aff3712111ad09084cae179b599edb06452"],
-  "mainMerge": "ce719dd10a59b0f548d4cf649bf125e11cc80c40",
-  "finalHead": "this-final-plan-sync-local-commit",
-  "verifiedTree": "HEAD^{tree}; exact hash is recorded post-commit in .ai-work/state.md and final report",
-  "currentCheckpoint": "complete",
-  "objective": "Preserve monitoring contracts while refining the UI into Quiet Market Instrument.",
-  "preserved": [
-    "monitoring-only boundary",
-    "Candidate and OI algorithms",
-    "Watchlist and Raw Sort semantics",
-    "Smart Rank calculation and order",
-    "VPI-Lite+ OI availability and ranking exclusion",
-    "Cold/Hot, chart, Past Note, settings, and data-quality states"
+  "baseRevision": "79f5e8d939dddb3948ead270c2eff7a1350daab2",
+  "objective": "Preserve monitoring-only contracts while adding display-only 1h/4h volume ratios, activity phase, abnormal-only row quality, and a coverage-explicit VPI discovery lane.",
+  "preserve": [
+    "15m volume ratio values and score input",
+    "Attention Score and category rules",
+    "Candidate 74h contract",
+    "Smart Rank calculation",
+    "VPI calculation, thresholds, targets and ranking non-intervention",
+    "Hot/Cold/Chart/Past Note/Dashboard settings"
+  ],
+  "nonGoals": [
+    "production dependency",
+    "private or trading API",
+    "prediction, alert or notification",
+    "VPI target expansion",
+    "1h/4h or activity score contribution",
+    "chart changes"
+  ],
+  "baseline": {
+    "head": "79f5e8d939dddb3948ead270c2eff7a1350daab2",
+    "worktree": "clean",
+    "zipChecksum": "pass",
+    "scannerFocused": "exit 0; 59 passed",
+    "webFocused": "exit 0; 25 passed; check/build pass",
+    "fullGate": "exit 0; scanner 236; web unit 183; Playwright 59",
+    "performance": "exit 0; 2 passed; hot p95 1.9ms; raw sort p95 29.6ms; cold max 56ms",
+    "failedAttempt": "Windows share web baseline exit 1 because Linux node_modules was not executable/resolvable; no source change; Linux rerun passed"
+  },
+  "differences": [
+    "ZIP baseline 2b5bfd5 is stale; current repo already implements the continuous Candidate surface, automatic mobile tabs, metadata, compact categories, inspector foundation, corrected-rank copy, and market-activity naming.",
+    "ZIP apply script requires an absent target directory and is not used.",
+    "Actual pipeline/ranking test paths are screening/pipeline.py and tests/test_rankings_contract.py.",
+    ".codex has no current plan schema/template; stale SP_STATE is not authoritative.",
+    "1h/4h ratios, row activityPhase, abnormal-only quality presentation, and the VPI discovery lane are not implemented."
   ],
   "acceptanceCriteria": [
-    {"id":"AC-UI-001","status":"pass","evidence":"algorithm files unchanged; focused E2E pass"},
-    {"id":"AC-UI-002","status":"pass","evidence":"desktop four-column continuous surface and 1440 visual"},
-    {"id":"AC-UI-003","status":"pass","evidence":"560/390/320 mobile tab visuals"},
-    {"id":"AC-UI-004","status":"pass","evidence":"automatic roving activation E2E"},
-    {"id":"AC-UI-005","status":"pass","evidence":"compact category unit and home E2E"},
-    {"id":"AC-UI-006","status":"pass","evidence":"provider metadata and helper tests; UI shows 15分量倍率 and 直近約24h中央値比 only for valid metadata"},
-    {"id":"AC-UI-007","status":"pass","evidence":"symbol board has exactly one 15分量倍率 DOM row"},
-    {"id":"AC-UI-008","status":"pass","evidence":"corrected-ranking E2E and unchanged smart-rank.ts"},
-    {"id":"AC-UI-009","status":"pass","evidence":"desktop/mobile inspector visual and workspace E2E"},
-    {"id":"AC-UI-010","status":"pass","evidence":"市場活動 is primary, VPI-Lite+ is a small technical label; state-primary display, OI availability, and Cold boundary tests"},
-    {"id":"AC-UI-011","status":"pass","evidence":"full gate states and unchanged sentinels"},
-    {"id":"AC-UI-012","status":"pass","evidence":"six viewports and responsive overflow E2E"},
-    {"id":"AC-UI-013","status":"pass","evidence":"package and lock diff empty"},
-    {"id":"AC-UI-014","status":"pass","evidence":"scanner 19, web unit 19, check/build, focused E2E 58"},
-    {"id":"AC-UI-015","status":"pass","evidence":"verify-local exit 0; pytest 236, web unit 183, E2E 59"},
-    {"id":"AC-UI-016","status":"pass","evidence":"visual review and three-symbol task; no P0/P1"},
-    {"id":"AC-UI-017","status":"pass","evidence":"DESIGN and current docs synchronized; doc tests 17 pass"},
-    {"id":"AC-UI-018","status":"pass","evidence":"explicit source/test/doc commits aeb0d9c and 046c9af were clean and merged through PR 3"}
+    {
+      "id": "AC-QMI-001",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "branch, baseline and governing docs fixed"
+    },
+    {
+      "id": "AC-QMI-002",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "living plans and package appendices synchronized; JSON, metadata, links and diff check exit 0"
+    },
+    {
+      "id": "AC-QMI-003",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "package and lock diff empty; monitoring-only boundary and final scope audit pass"
+    },
+    {
+      "id": "AC-QMI-004",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "scanner golden and fixture E2E retain established 15m values"
+    },
+    {
+      "id": "AC-QMI-005",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "3/12/48 bar rolling median ratios and missing/nonfinite null paths pass focused scanner tests"
+    },
+    {
+      "id": "AC-QMI-006",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "priority and category source unchanged; 1h/4h Candidate volume rankings remain empty by contract test"
+    },
+    {
+      "id": "AC-QMI-007",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "all phases, precedence, missing, NaN and Infinity pass parameterized tests"
+    },
+    {
+      "id": "AC-QMI-008",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "Live and Fixture feature 4, ruleset 3, schema 1; exported schema cmp and generated Web type pass"
+    },
+    {
+      "id": "AC-QMI-009",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "OK is hidden; PARTIAL, STALE and missing are exact Japanese labels in unit and E2E"
+    },
+    {
+      "id": "AC-QMI-010",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "stale/partial/missing fixture E2E and existing 74h gate tests pass; no duplicate quality gate added"
+    },
+    {
+      "id": "AC-QMI-011",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "focused/full E2E and 1440px visual retain the continuous four-view Candidate"
+    },
+    {
+      "id": "AC-QMI-012",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "responsive E2E and 390/320px visual retain four automatic activation tabs"
+    },
+    {
+      "id": "AC-QMI-013",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "Watchlist category, ratio, phase and abnormal quality pass with zero overflow at 1440/390/320"
+    },
+    {
+      "id": "AC-QMI-014",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "E2E and three-symbol task confirm 15m/1h/4h, phase, OI, 74h and reasons"
+    },
+    {
+      "id": "AC-QMI-015",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "Target-only classification, score ordering, max five, coverage and all three empty states pass unit/E2E"
+    },
+    {
+      "id": "AC-QMI-016",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "VPI calculation and Smart Rank algorithm unchanged; Hot non-recompute and quality-reason E2E pass"
+    },
+    {
+      "id": "AC-QMI-017",
+      "mandatory": true,
+      "status": "passed",
+      "evidence": "scanner 36; Web unit 27; focused E2E 59; full 249/185/60; performance 2"
+    },
+    {
+      "id": "AC-QMI-018",
+      "mandatory": true,
+      "status": "passed_on_commit",
+      "evidence": "DesignMD, current docs, ADR 0009, plans, 1440/390/320 visual, final diff and explicit-file commit; exact head and clean state recorded outside tracked self-reference"
+    }
   ],
   "checkpoints": [
-    {"id":"CP-001","status":"completed"},{"id":"CP-002","status":"completed"},
-    {"id":"CP-003","status":"completed"},{"id":"CP-004","status":"completed"},
-    {"id":"CP-005","status":"completed"},{"id":"CP-006","status":"completed"},
-    {"id":"CP-007","status":"completed"},{"id":"CP-008","status":"completed"},
-    {"id":"CP-009","status":"completed"},{"id":"CP-010","status":"completed"},
-    {"id":"CP-011","status":"completed"},{"id":"CP-012","status":"completed"},
-    {"id":"CP-013","status":"completed"}
+    {
+      "id": "CP-QMI-001",
+      "status": "completed",
+      "goal": "baseline and contract audit"
+    },
+    {
+      "id": "CP-QMI-002",
+      "status": "completed",
+      "goal": "living plan and appendices"
+    },
+    {
+      "id": "CP-QMI-003",
+      "status": "completed",
+      "goal": "volume ratios"
+    },
+    {
+      "id": "CP-QMI-004",
+      "status": "completed",
+      "goal": "activity phase and schema"
+    },
+    {
+      "id": "CP-QMI-005",
+      "status": "completed",
+      "goal": "data quality UI"
+    },
+    {
+      "id": "CP-QMI-006",
+      "status": "completed",
+      "goal": "watchlist and inspector"
+    },
+    {
+      "id": "CP-QMI-007",
+      "status": "completed",
+      "goal": "VPI discovery lane"
+    },
+    {
+      "id": "CP-QMI-008",
+      "status": "completed",
+      "goal": "focused full and performance verification"
+    },
+    {
+      "id": "CP-QMI-009",
+      "status": "completed_on_commit",
+      "goal": "visual docs final audit and commit"
+    }
   ],
-  "evidence": [
-    {"command":"uv run python -m pytest -q tests/test_bitget_live_provider.py tests/test_snapshot_contract.py tests/test_domain_features.py","cwd":"/home/tn/projects/prep-watchdeck/apps/scanner-core","exitCode":0,"summary":"19 passed"},
-    {"command":"bun run test -- volume-ratio-meta labels smart-rank; bun run check; bun run build","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"19 unit passed; check and build passed"},
-    {"command":"bun run test:e2e -- six focused specs","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"58 passed"},
-    {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"pytest 236; web unit 183; E2E 59"},
-    {"command":"bun run test -- volume-ratio-meta dashboard-filters vpi-lite-plus; bun run check; bun run build; bun run test:e2e -- four terminology-focused specs","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"22 unit passed; check and build passed; focused E2E 55 passed"},
-    {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"post-copy follow-up: pytest 236; web unit 183; E2E 59"},
-    {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"final living-plan sync: pytest 236; web unit 183; E2E 59; lint, type, check, and build passed"},
-    {"command":"npx @google/design.md@0.1.0 lint --format json DESIGN.md","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"post-PR-4 main: errors 0; warnings 0; infos 1"},
-    {"command":"sha256sum Past Note and Dashboard settings","cwd":"/home/tn/.local/share/prep-watchdeck","exitCode":0,"summary":"both sentinel hashes unchanged"}
-  ],
-  "visualEvidence": {
-    "root": "/home/tn/.local/share/prep-watchdeck/tmp/quiet-market-instrument",
-    "viewports": [1440, 1200, 960, 560, 390, 320],
-    "mobileTabs": ["up", "down", "turnover", "volumeRatio"],
-    "threeSymbolTask": "final/three-symbol-selection.json",
-    "unresolvedP0P1": []
+  "priorWave": {
+    "planId": "PLAN-QUIET-MARKET-INSTRUMENT-001",
+    "revision": 4,
+    "status": "complete",
+    "acceptance": "AC-UI-001..018 pass",
+    "checkpoints": "CP-001..013 completed",
+    "commits": [
+      "aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1",
+      "046c9aff3712111ad09084cae179b599edb06452"
+    ],
+    "merge": "ce719dd10a59b0f548d4cf649bf125e11cc80c40",
+    "evidence": "scanner 236; web unit 183; Playwright 59; visual evidence under state-root tmp/quiet-market-instrument/final"
   },
-  "deliveryEvidence": {
-    "pullRequest": 3,
-    "requiredVerify": "pass",
-    "unresolvedReviewThreads": 0,
-    "mergedMainCommit": "ce719dd10a59b0f548d4cf649bf125e11cc80c40",
-    "runtime": "service and Web active after controlled restart; dataAsOf advanced; schema 1; feature/ruleset 3; one writer; no orphan; health, UI smoke, and sentinels pass",
-    "branchCleanup": "implementation branch removed locally and remotely after merge verification"
-  },
-  "residualRisks": [],
-  "followUpDecisions": [
-    "Keep Smart Rank calculation and internal identifiers unchanged while using 補正順位 in user-visible copy.",
-    "Use 15分量倍率 and 直近約24h中央値比 for the concise UI; keep the precise rolling-sample tooltip and no-guess fallback.",
-    "Use 市場活動 as the primary heading and retain VPI-Lite+ only as a small technical label; preserve payload, enum, score, OI availability, and ranking exclusion."
+  "decisions": [
+    {
+      "id": "D-QMI-001",
+      "decision": "reuse current dedicated branch",
+      "reason": "clean branch contains only prior Quiet Market living-plan synchronization"
+    },
+    {
+      "id": "D-QMI-002",
+      "decision": "do not run ZIP apply script",
+      "reason": "target exists and current evidence must be preserved"
+    },
+    {
+      "id": "D-QMI-003",
+      "decision": "additive optional activityPhase and featureVersion 4",
+      "reason": "new displayed feature without ranking rule change"
+    },
+    {
+      "id": "D-QMI-004",
+      "decision": "no duplicate quality gate",
+      "reason": "current risk/category/Candidate path already excludes non-candidates"
+    },
+    {
+      "id": "D-QMI-005",
+      "decision": "compatibility Svelte lane and existing CSS",
+      "reason": "no upgrade or dependency requested"
+    }
   ],
-  "remainingWork": "none"
+  "currentCheckpoint": "CP-QMI-009 completed_on_commit",
+  "progress": {
+    "mandatoryPassed": 18,
+    "mandatoryTotal": 18,
+    "completedCheckpoints": [
+      "CP-QMI-001",
+      "CP-QMI-002",
+      "CP-QMI-003",
+      "CP-QMI-004",
+      "CP-QMI-005",
+      "CP-QMI-006",
+      "CP-QMI-007",
+      "CP-QMI-008",
+      "CP-QMI-009 completed_on_commit"
+    ]
+  },
+  "unresolvedP0P1": [],
+  "residualRisks": [
+    "Old feature 3 snapshots omit optional activityPhase and therefore render 判定不能 until a feature 4 snapshot is produced.",
+    "Production activation and restart are outside this task and were not performed.",
+    "The existing bounded mobile Watchlist leaves visible unused scroll height for a five-row fixture; no overflow, clipping or inaccessibility was observed."
+  ],
+  "goalGap": "none",
+  "remainingWork": [],
+  "verification": {
+    "scannerFocused": "exit 0; 36 passed",
+    "webUnit": "exit 0; 27 passed",
+    "webFocusedE2E": "exit 0; 59 passed",
+    "webCheckBuild": "exit 0; 0 errors and warnings; build pass",
+    "fullGate": "exit 0; scanner 249; Web unit 185; Playwright 60; maintenance, Ruff, Pyrefly, check and build pass",
+    "performance": "exit 0; 2 passed; hot p95 1.2ms; raw sort p95 24.9ms; cold max 56.3ms",
+    "designMd": "exit 0; errors 0; warnings 0; infos 1",
+    "documents": "JSON parse, metadata and link tests 17, schema cmp, generated type and diff check pass",
+    "visual": "isolated port 4190; 1440/390/320 clientWidth equals scrollWidth; required surfaces and four mobile tabs pass",
+    "sentinels": "Past Note 2240c8ad...b24001 and Dashboard settings e1e57eb1...4fb7e unchanged"
+  },
+  "failedChecksResolved": [
+    "full gate exit 1 on dto import formatting; fixed locally",
+    "full gate exit 1 on domain feature test formatting; fixed locally",
+    "final full gate rerun exit 0"
+  ],
+  "visualEvidenceRoot": "/home/tn/.local/share/prep-watchdeck/tmp/quiet-market-instrument-activity/final/",
+  "delivery": {
+    "finalHead": "this plan commit itself",
+    "parentHead": "79f5e8d939dddb3948ead270c2eff7a1350daab2",
+    "verifiedTree": "exact tree recorded in ignored .ai-work/state.md after explicit staging",
+    "push": false,
+    "pullRequest": false,
+    "merge": false,
+    "deploy": false,
+    "productionRestart": false
+  },
+  "finalResult": "complete_on_commit"
 }

@@ -16,6 +16,7 @@ from prep_watchdeck.bitget.contracts import fetch_contracts
 from prep_watchdeck.bitget.tickers import fetch_all_tickers
 from prep_watchdeck.config.filter_config import FilterConfig
 from prep_watchdeck.domain.features.time_grid import normalize_5m_grid
+from prep_watchdeck.features.activity_phase import classify_activity_phase
 from prep_watchdeck.features.btc_relative import classify_btc_relative_15m
 from prep_watchdeck.features.funding import classify_funding
 from prep_watchdeck.features.open_interest import classify_open_interest_change
@@ -95,6 +96,13 @@ def build_scanner_rows(
             config.volume.baseline_window_bars,
             config.volume.volume_ratio_floor_usdt,
         )
+        activity_phase = classify_activity_phase(
+            volume_ratios.get("15m"),
+            volume_ratios.get("1h"),
+            volume_ratios.get("4h"),
+            min_volume_ratio=config.volume.min_volume_ratio,
+            strong_volume_ratio=config.volume.strong_volume_ratio,
+        )
         roughness = classify_roughness_15m(
             bars,
             config.roughness.warn_move_concentration_15m,
@@ -171,6 +179,7 @@ def build_scanner_rows(
                 change_pct_by_tf=changes,
                 turnover_usdt_by_tf=turnovers,
                 volume_ratio_by_tf=volume_ratios,
+                activity_phase=activity_phase,
                 roughness_15m=roughness,
                 btc_relative_15m=btc_relative,
                 funding_bias=funding_bias,

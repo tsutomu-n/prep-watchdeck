@@ -32,6 +32,13 @@ export type VpiLitePlusSummary = {
   targets: VpiLitePlusItem[];
 };
 
+export type VpiDiscoveryLane = {
+  status: "ready" | "no-match" | "no-targets" | "unavailable";
+  coverageLabel: string;
+  activity: VpiLitePlusItem[];
+  caution: VpiLitePlusItem[];
+};
+
 const states = new Set<VpiLitePlusState>([
   "CALM",
   "EARLY_ACTIVITY",
@@ -115,6 +122,40 @@ export function resolveVpiLitePlusRowItem(
     (item) => item.symbol === selectedSymbol
   );
   return canonical && sameItem(canonical, rowItem) ? rowItem : null;
+}
+
+export function buildVpiDiscoveryLane(
+  summary: VpiLitePlusSummary,
+  watchlistCount?: number | null
+): VpiDiscoveryLane {
+  const targetCount = summary.targets.length;
+  const coverageLabel =
+    typeof watchlistCount === "number" && Number.isSafeInteger(watchlistCount) && watchlistCount >= 0
+      ? `VPI対象 ${targetCount} / Watchlist ${watchlistCount}銘柄`
+      : `VPI対象 ${targetCount}銘柄`;
+  const validTargets = summary.targets.filter(
+    (item) =>
+      item.dataQuality === "OK" &&
+      !["DATA_INSUFFICIENT", "DATA_STALE", "UNKNOWN"].includes(item.state)
+  );
+  const byScore = (left: VpiLitePlusItem, right: VpiLitePlusItem) => right.score - left.score;
+  const activity = validTargets
+    .filter((item) => ["EARLY_ACTIVITY", "ACTIVE_MOVE"].includes(item.state))
+    .sort(byScore)
+    .slice(0, 5);
+  const caution = validTargets
+    .filter((item) => ["THIN_VOLATILITY", "SINGLE_BAR_SUSPECT"].includes(item.state))
+    .sort(byScore)
+    .slice(0, 5);
+  const status =
+    targetCount === 0
+      ? "no-targets"
+      : validTargets.length === 0
+        ? "unavailable"
+        : activity.length === 0 && caution.length === 0
+          ? "no-match"
+          : "ready";
+  return { status, coverageLabel, activity, caution };
 }
 
 export function vpiStateLabel(state: VpiLitePlusState): string {

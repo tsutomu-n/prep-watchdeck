@@ -28,3 +28,12 @@ class DataQuality(StrEnum):
     STALE = "STALE"
     MISSING = "MISSING"
     PARTIAL = "PARTIAL"
+
+
+class ActivityPhase(StrEnum):
+    BURST = "BURST"
+    EXPANDING = "EXPANDING"
+    SUSTAINED = "SUSTAINED"
+    COOLING = "COOLING"
+    NORMAL = "NORMAL"
+    UNKNOWN = "UNKNOWN"
