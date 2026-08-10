@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-10T00:05:00+09:00",
+  "updated_at": "2026-08-10T11:43:34+09:00",
   "plan_id": "PLAN-P1-CANDIDATE-OI-001",
-  "revision": 5,
+  "revision": 6,
   "target_repository": "tsutomu-n/prep-watchdeck",
   "baseline_commit": "8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583",
   "objective": "候補選定の74h複合条件とOI 60分変化について、設定・計算・ランキング・UI・runtimeの意味を一致させる。",
@@ -279,9 +279,9 @@
     "candidate_counts": "candidateRule74h counts eligible, notMatched and unknown within the non-NO_TRADE Candidate universe; an empty Candidate during warmup is valid.",
     "oi_bucket": "Floor Bitget source_ts_ms to five-minute buckets.",
     "oi_upsert": "Update an existing symbol/bucket only when incoming source_ts_ms is newer.",
-    "lookback_validation": "change_lookback_minutes must be positive and divisible by five.",
+    "lookback_validation": "change_lookback_minutes is fixed to 60, which satisfies the positive and five-minute bucket boundary; dynamic labels and retention are not implemented.",
     "failure_semantics": "DDL/init failure stops service startup; per-cycle OI failure publishes all OI as UNKNOWN with zero contribution and an explicit snapshot diagnostic.",
-    "ui_copy": "OI UNKNOWN is 不明; 74h null is 判定不能.",
+    "ui_copy": "OI UNKNOWN is 不明; 74h null is 判定不能; malformed Candidate metadata reports unavailable details and asks for a refreshed snapshot without claiming the cached ranking is gated.",
     "vpi_boundary": "Do not change or remove VPI-Lite+ OI availability; only confirmed equivalent non-VPI duplication may be removed.",
     "qualification": "Finite live smoke is separate from seeded deterministic exact-60m, retention and restart integration tests.",
     "baseline": "cwd apps/scanner-core; HEAD 8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583; focused command exit 0; 58 passed in 4.31s.",
@@ -800,6 +800,11 @@
   },
   "decision_log": [
     {
+      "at": "2026-08-10T11:34:05+09:00",
+      "decision": "Revision 6 addresses both blocking PR review threads without expanding scope.",
+      "reason": "Legacy metadata cannot prove Candidate gating, and the implemented UI, state names and retention contract support exactly a 60-minute OI lookback."
+    },
+    {
       "at": "2026-08-09T19:35:00+09:00",
       "decision": "Revision 4 incorporates all thirteen conditional-approval contracts before RED tests.",
       "reason": "The user clarified noTrade preservation, strict three-valued logic, OI ordering and failure semantics, UI copy, deterministic qualification, baseline evidence, ADR and fixture acceptance boundaries."
@@ -905,6 +910,20 @@
       "working_directory": "/home/tn/projects/prep-watchdeck",
       "exit_code": 0,
       "result": "Maintenance 81, scanner pytest 225, web unit 174, Playwright 56; Ruff, format, pyrefly, Svelte check and build passed."
+    },
+    {
+      "checkpoint_id": "CP-012-PR-REVIEW",
+      "command": "focused scanner and Web tests; bash scripts/verify-local.sh",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 0,
+      "result": "Review RED: Web 1 failed/1 passed and scanner 2 failed/10 passed. GREEN: scanner 87 passed and Web E2E 21 passed. Final full gate: maintenance 81, scanner 227, web unit 174, Playwright 56; Ruff, format, pyrefly, Svelte check and build passed."
+    },
+    {
+      "checkpoint_id": "CP-012-PR-REVIEW-FIRST-GATE",
+      "command": "bash scripts/verify-local.sh",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 1,
+      "result": "Detected malformed decision-log insertion and a pyrefly-only invalid-value test path; both were corrected before the passing final gate."
     }
   ],
   "current_checkpoint": "COMPLETE",

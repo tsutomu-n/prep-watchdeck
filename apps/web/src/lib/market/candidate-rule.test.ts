@@ -20,7 +20,10 @@ describe("candidate rule summary", () => {
 
   it("falls back without guessing numbers when the summary is malformed", () => {
     expect(formatCandidateRule74h({ operator: "AND", priceAbsPct: "4" })).toBe(
-      "74h価格条件かつ74h売買代金条件。履歴不足は候補に含めません。"
+      "74h候補条件の詳細を取得できません。snapshot更新後に再確認してください。"
+    );
+    expect(formatCandidateRule74h(undefined)).toBe(
+      "74h候補条件の詳細を取得できません。snapshot更新後に再確認してください。"
     );
   });
 });

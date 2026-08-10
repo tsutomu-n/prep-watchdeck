@@ -96,13 +96,15 @@ def test_negative_volume_is_invalid() -> None:
         )
 
 
-@pytest.mark.parametrize("lookback", [0, -5, 7])
-def test_open_interest_lookback_requires_positive_five_minute_multiple(lookback: int) -> None:
+@pytest.mark.parametrize("lookback", [0, -5, 7, 30, 1_445])
+def test_open_interest_lookback_requires_supported_sixty_minutes(lookback: int) -> None:
     with pytest.raises(ValueError):
-        OpenInterestConfig(
-            change_lookback_minutes=lookback,
-            increase_threshold_pct=5.0,
-            decrease_threshold_pct=-5.0,
+        OpenInterestConfig.model_validate(
+            {
+                "change_lookback_minutes": lookback,
+                "increase_threshold_pct": 5.0,
+                "decrease_threshold_pct": -5.0,
+            }
         )
 
 

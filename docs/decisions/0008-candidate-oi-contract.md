@@ -27,7 +27,8 @@ Bitget public tickerの`holdingAmount`をcoin単位のOpen Interest、row内の`
 `source_ts_ms`を5分floorしたbucketへ、`(symbol, bucket_ts_ms)`を主キーとして保存する。
 同bucketは新しい`source_ts_ms`だけが更新できる。24時間より古いsampleを削除し、境界ちょうど
 24時間は保持する。比較にはcurrent bucketから設定済みlookbackを引いたexact bucketだけを使う。
-lookbackは正数かつ5分の倍数でなければならない。
+現在の表示・分類・retention契約はOI 60分に固定されているため、設定値も`60`だけを許容する。
+`60`は正数かつ5分の倍数というbucket境界を満たす。
 
 currentとpreviousは有限かつ正数、ticker source/update時刻はsnapshot生成時刻から2分以内を
 必須とし、満たさない場合は`UNKNOWN`とする。`UNKNOWN`はattention scoreへ加点しない。
@@ -41,7 +42,9 @@ snapshot発行自体は継続する。
 ## 表示とversion
 
 Candidate見出し下へ有効なAND条件と`eligible/notMatched/unknown`件数を表示する。不正なsummaryは
-数値を推測せず一般説明へfallbackする。OI `UNKNOWN`は「不明」、74h `null`は「判定不能」と表示する。
+数値を推測せず、条件metadataを取得できないこととsnapshot更新後の再確認を案内する。
+旧snapshotのランキングへ現行gate済みという説明は付けない。OI `UNKNOWN`は「不明」、
+74h `null`は「判定不能」と表示する。
 VPI-Lite+固有のOI availability表示は別契約として維持する。
 
 `featureVersion`と`rulesetVersion`は`3`、`schemaVersion`は`1`を維持する。

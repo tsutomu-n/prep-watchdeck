@@ -105,7 +105,7 @@ class FundingConfig(BaseModel):
 
 
 class OpenInterestConfig(BaseModel):
-    change_lookback_minutes: int = Field(gt=0, multiple_of=5)
+    change_lookback_minutes: Literal[60]
     increase_threshold_pct: float
     decrease_threshold_pct: float
 

@@ -1,4 +1,4 @@
-const FALLBACK = "74h価格条件かつ74h売買代金条件。履歴不足は候補に含めません。";
+const FALLBACK = "74h候補条件の詳細を取得できません。snapshot更新後に再確認してください。";
 const TURNOVER_MODE = "current_24h_vs_74h_ago_24h";
 
 function isRecord(value: unknown): value is Record<string, unknown> {

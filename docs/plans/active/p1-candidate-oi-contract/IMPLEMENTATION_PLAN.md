@@ -1,8 +1,8 @@
 # P1 Candidate / OI 契約修正 実装計画
 
 - 作成: `2026-08-08T14:21:08+09:00`
-- 更新: `2026-08-10T00:05:00+09:00`
-- 検証: `2026-08-10T00:05:00+09:00`
+- 更新: `2026-08-10T11:43:34+09:00`
+- 検証: `2026-08-10T11:43:34+09:00`
 - 状態: `実装計画`
 
 ---
@@ -11,7 +11,7 @@
 ## 0. メタデータ
 
 - Plan ID: `PLAN-P1-CANDIDATE-OI-001`
-- Revision: `5`
+- Revision: `6`
 - Target repo: `tsutomu-n/prep-watchdeck`
 - Baseline commit: `8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583`
 - Canonical path:
@@ -310,7 +310,7 @@ Remaining work:
 3. `summary.candidateRule74h`はactive ruleに加え、非`NO_TRADE`のCandidate universe基準で`eligible`、`notMatched`、`unknown`件数を出す。履歴不足でCandidateが空でも正常なsnapshotとする。
 4. OI bucketはBitget `source_ts_ms`を5分単位でfloorする。
 5. 同一symbol/bucketのupsertはincoming `source_ts_ms`が既存値より新しい場合だけ更新する。同値・古いout-of-order payloadは既存sampleを保持する。
-6. `change_lookback_minutes`は設定load時に正数かつ5の倍数であることをvalidationする。
+6. `change_lookback_minutes`は正数かつ5の倍数というbucket境界を満たし、現在の表示・分類契約と同じ`60`だけを設定load時に許容する。
 7. DuckDB DDL/init失敗はservice startupを失敗させる。個別snapshot cycleのOI upsert/load/prune失敗は全銘柄OIを`UNKNOWN`、加点0とし、`summary.oiDiagnostics`へ明示してsnapshot発行を継続する。
 8. UI文言はOI `UNKNOWN`を「不明」、74h `None`を「判定不能」とする。
 9. VPI-Lite+のOI availability表示は変更・削除しない。重複整理は非VPIかつ完全同義と確認できた表示だけに限定する。
@@ -399,3 +399,19 @@ result=no whitespace errors
 - 未解決P0/P1: `0`。
 - Goal gap / remaining work: `none / 0`。
 - Residual risk: 自然な24時間WebSocket切断は同期gateで未観測。決定論的reconnect testをPASSし、運用観測だけを非blockingで残す。
+
+## 13. PR review remediation（Revision 6）
+
+- 旧v2/cached snapshotは`candidateRule74h` metadataを持たず、ランキングが現行74h gate済みとは
+  証明できないため、fallbackを「条件詳細を取得できない／snapshot更新後に再確認」へ変更した。
+- UI・分類・retentionがすべてOI 60分を公開契約としているため、設定値を`Literal[60]`へ固定した。
+  将来可変化する場合は状態名、UI、retention、testsを同時に更新する。
+- 最小REDはWeb `1 failed, 1 passed`、scanner `2 failed, 10 passed`。実装後の同一focused
+  GREENはWeb `2 passed`、scanner `12 passed`。
+- このremediationはCandidate/OI契約の不整合除去だけで、Watchlist、Raw Sort、Smart Rank、
+  VPI-Lite+、schemaVersion、依存関係を変更しない。
+- 最初のpost-review full gateは、JSON追記位置と不正値testの型検査経路を検出してexit 1。
+  JSON構文を修正し、runtime validation testを`model_validate`へ変更した。
+- 再実行したfocusedはscanner `87 passed`、Web E2E `21 passed`。最終
+  `bash scripts/verify-local.sh`はexit 0（maintenance 81、scanner 227、Web unit 174、
+  Playwright 56、Ruff/format/pyrefly/Svelte check/build PASS）。

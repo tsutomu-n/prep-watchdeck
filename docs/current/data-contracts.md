@@ -186,3 +186,5 @@ Candidateの`rankings.timeframes`は複合値`true`かつ非`NO_TRADE`だけを�
 `updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは
 より新しいsource時刻だけ更新し、24時間より古いrowだけを削除する。OI cycle障害は
 `summary.oiDiagnostics.status=degraded`と`code=OI_HISTORY_UNAVAILABLE`で可視化する。
+公開する状態名とUIは60分比較に固定されているため、`change_lookback_minutes`の現在の許容値も
+`60`だけとする。

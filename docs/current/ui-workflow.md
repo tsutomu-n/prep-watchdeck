@@ -316,7 +316,8 @@ UI変更時は`DESIGN.md`を先に読み、Dashboard、Symbol page、Desktop、M
 
 Candidate見出し下はsnapshot summaryをvalidationし、74h価格AND売買代金条件と
 `合致 / 未一致 / 判定不能`件数を表示する。不正または欠損summaryでは数値を推測せず、
-履歴不足を候補に含めない一般説明へfallbackする。
+条件metadataを取得できないこととsnapshot更新後の再確認を案内する。旧snapshotのランキングが
+現行74h gate済みであるとは断定しない。
 
 Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で表示する。
 74h条件の複合結果は`一致 / 未一致 / 判定不能`で表示する。VPI-Lite+のOI availabilityは

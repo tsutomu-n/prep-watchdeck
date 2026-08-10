@@ -320,7 +320,7 @@ test("falls back to the generic 74h candidate rule when summary metadata is malf
   await page.goto("/");
 
   await expect(
-    page.getByText("74h価格条件かつ74h売買代金条件。履歴不足は候補に含めません。", {
+    page.getByText("74h候補条件の詳細を取得できません。snapshot更新後に再確認してください。", {
       exact: true
     })
   ).toBeVisible();
