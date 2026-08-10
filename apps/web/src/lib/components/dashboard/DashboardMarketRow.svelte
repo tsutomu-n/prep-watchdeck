@@ -3,11 +3,12 @@
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatCompactNumber as fmtCompact, formatNumber as fmt } from "$lib/market/format";
   import {
+    abnormalDataQualityLabel,
+    activityPhaseWatchlistLabel,
     categoryCompactLabel,
     categoryLabel,
     changeTone,
     codeLabel,
-    dataQualityLabel,
     rowQualityClass as qualityClass
   } from "$lib/market/labels";
   import { movementSignals } from "$lib/market/row-analysis";
@@ -50,6 +51,8 @@
       ? `${fmt(volumeRatio15m)}×`
       : "—"
   );
+  let activityPhaseText = $derived(activityPhaseWatchlistLabel(row.activityPhase));
+  let qualityText = $derived(abnormalDataQualityLabel(row.dataQuality));
   let price = $derived(tickerOverlay.priceFor(row.symbol, row.lastPrice, row.analysisPrice));
   let priceDescriptionId = $derived(`market-row-price-${encodeURIComponent(row.symbol)}`);
   let accessibleSummary = $derived(
@@ -63,7 +66,8 @@
       `${selectedTimeframe}変化 ${fmtCompact(row.changePctByTf?.[selectedTimeframe], "%")}`,
       `${selectedTimeframe}代金 ${fmtCompact(row.turnoverUsdtByTf?.[selectedTimeframe])}`,
       `15分量倍率 ${volumeRatioText}`,
-      `品質 ${dataQualityLabel(row.dataQuality)}`,
+      qualityText ? `品質 ${qualityText}` : null,
+      activityPhaseText ? `活動 ${activityPhaseText}` : null,
       noteBadge ? `注記 ${noteBadge}` : null,
       signals.length > 0
         ? `シグナル ${signals.map((signal) => signal.label).join("、")}`
@@ -119,9 +123,10 @@
         </span>
       {/if}
     </span>
-    <span class="volume-ratio" title={`15分量倍率 ${volumeRatioText}。${volumeRatioHelp}`}
-      >{volumeRatioText}</span
-    >
+    <span class="volume-ratio" title={`15分量倍率 ${volumeRatioText}。${volumeRatioHelp}`}>
+      <span>{volumeRatioText}</span>
+      {#if activityPhaseText}<small>{activityPhaseText}</small>{/if}
+    </span>
     {#each rankingTimeframes as timeframe, index}
       <span
         class={`tf-metric ${changeTone(row.changePctByTf?.[timeframe])}`}
@@ -137,7 +142,11 @@
     {:else}
       <span class="note-badge placeholder" aria-hidden="true"></span>
     {/if}
-    <span class={qualityClass(row)}>{dataQualityLabel(row.dataQuality)}</span>
+    {#if qualityText}
+      <span class={qualityClass(row)}>{qualityText}</span>
+    {:else}
+      <span class="quality-placeholder" aria-hidden="true"></span>
+    {/if}
     <span class="tf-change" title={`${selectedTimeframe}変化 ${fmtCompact(row.changePctByTf?.[selectedTimeframe], "%")}`}
       >{fmtCompact(row.changePctByTf?.[selectedTimeframe], "%")}</span
     >
@@ -364,16 +373,29 @@
 
   .volume-ratio {
     grid-area: score;
+    display: grid;
+    gap: 1px;
     text-align: right;
     font-variant-numeric: tabular-nums;
   }
 
+  .volume-ratio small {
+    color: var(--subtle);
+    font-size: 9px;
+    line-height: 1;
+  }
+
   .ok,
-  .risk {
+  .risk,
+  .quality-placeholder {
     grid-area: quality;
     display: block;
     text-align: right;
     font-size: var(--type-label-caps-size);
+  }
+
+  .quality-placeholder {
+    min-width: 0;
   }
 
   .ok {

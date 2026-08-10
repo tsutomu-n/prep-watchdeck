@@ -1,0 +1,10 @@
+id,status,goal,dependencies,mandatory_ac
+CP-QMI-001,completed,"現行mainと実装契約を証拠付きで固定する。","","AC-QMI-001,AC-QMI-002,AC-QMI-003"
+CP-QMI-002,completed,"living plansとADR判断境界をRepo契約へ同期する。","CP-QMI-001","AC-QMI-001,AC-QMI-002,AC-QMI-018"
+CP-QMI-003,completed,"15m互換を保ち1h/4h倍率を生成する。","CP-QMI-002","AC-QMI-004,AC-QMI-005,AC-QMI-006"
+CP-QMI-004,completed,"activity phaseとschema/fixture/typesを同期する。","CP-QMI-003","AC-QMI-007,AC-QMI-008"
+CP-QMI-005,completed,"正常品質を隠し異常表示とCandidate契約を固定する。","CP-QMI-004","AC-QMI-009,AC-QMI-010"
+CP-QMI-006,completed,"Candidate、Watchlist、Inspectorの連続workspaceを実装する。","CP-QMI-005","AC-QMI-011,AC-QMI-012,AC-QMI-013,AC-QMI-014"
+CP-QMI-007,completed,"VPI laneと補正順位の説明表示を実装する。","CP-QMI-006","AC-QMI-015,AC-QMI-016"
+CP-QMI-008,completed,"focused/full/performance gateで非回帰を証明する。","CP-QMI-007","AC-QMI-004,AC-QMI-005,AC-QMI-006,AC-QMI-007,AC-QMI-008,AC-QMI-009,AC-QMI-010,AC-QMI-011,AC-QMI-012,AC-QMI-013,AC-QMI-014,AC-QMI-015,AC-QMI-016,AC-QMI-017"
+CP-QMI-009,completed_on_commit,"visual evidence、docs、diff、plansを最終同期する。","CP-QMI-008","AC-QMI-011,AC-QMI-012,AC-QMI-013,AC-QMI-014,AC-QMI-015,AC-QMI-016,AC-QMI-017,AC-QMI-018"

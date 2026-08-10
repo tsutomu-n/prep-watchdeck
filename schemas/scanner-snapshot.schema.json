@@ -1,5 +1,17 @@
 {
   "$defs": {
+    "ActivityPhase": {
+      "enum": [
+        "BURST",
+        "EXPANDING",
+        "SUSTAINED",
+        "COOLING",
+        "NORMAL",
+        "UNKNOWN"
+      ],
+      "title": "ActivityPhase",
+      "type": "string"
+    },
     "Category": {
       "enum": [
         "WATCH",
@@ -183,6 +195,17 @@
           },
           "title": "Volumeratiobytf",
           "type": "object"
+        },
+        "activityPhase": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActivityPhase"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         },
         "range24hHigh": {
           "anyOf": [

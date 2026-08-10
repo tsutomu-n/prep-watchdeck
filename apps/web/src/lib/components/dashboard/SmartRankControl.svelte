@@ -1,6 +1,6 @@
 <script lang="ts">
   import { formatNumber as fmt } from "$lib/market/format";
-  import { codeLabel, dataQualityLabel } from "$lib/market/labels";
+  import { abnormalDataQualityLabel, codeLabel } from "$lib/market/labels";
   import type { SmartRankState } from "$lib/market/smart-rank";
 
   let {
@@ -89,7 +89,9 @@
               <b>{fmt(item.smartScore)}</b>
             </span>
             <span>{item.warningCount}警戒</span>
-            <span>{dataQualityLabel(item.row.dataQuality)}</span>
+            {#if item.qualityPenalty > 0}
+              <span>{abnormalDataQualityLabel(item.row.dataQuality)}による補正 -{item.qualityPenalty}</span>
+            {/if}
           </a>
         </li>
       {/each}

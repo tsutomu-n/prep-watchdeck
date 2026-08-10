@@ -106,7 +106,7 @@ def snapshot_from_pipeline(
     return SnapshotDTO(
         schema_version=SCHEMA_VERSION,
         engine_version="0.1.0",
-        feature_version="3",
+        feature_version="4",
         ruleset_version="3",
         config_hash=config_hash,
         run_id=result.run_id,
@@ -188,6 +188,7 @@ def _row_to_dto(
         change_pct_by_tf=row.change_pct_by_tf,
         turnover_usdt_by_tf=row.turnover_usdt_by_tf,
         volume_ratio_by_tf=row.volume_ratio_by_tf,
+        activity_phase=row.activity_phase,
         range_24h_high=range_24h["high"],
         range_24h_low=range_24h["low"],
         range_24h_position_pct=range_24h["position_pct"],

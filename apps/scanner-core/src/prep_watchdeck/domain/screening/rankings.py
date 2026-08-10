@@ -21,7 +21,10 @@ def build_rankings(rows: list[ScannerRowDTO], top_n: int = 10) -> RankingTree:
         metrics = {
             "changeUp": (lambda row, tf=tf: row.change_pct_by_tf.get(tf), True),
             "changeDown": (lambda row, tf=tf: row.change_pct_by_tf.get(tf), False),
-            "volumeUp": (lambda row, tf=tf: row.volume_ratio_by_tf.get(tf), True),
+            "volumeUp": (
+                lambda row, tf=tf: row.volume_ratio_by_tf.get(tf) if tf == "15m" else None,
+                True,
+            ),
             "turnoverTop": (lambda row, tf=tf: row.turnover_usdt_by_tf.get(tf), True),
         }
         timeframes[tf] = {

@@ -30,6 +30,7 @@ export type Category = "WATCH" | "CAUTION" | "NO_TRADE" | "LOW_PRIORITY";
 export type Label = string;
 export type Direction = string;
 export type Attentionscore = number;
+export type ActivityPhase = "BURST" | "EXPANDING" | "SUSTAINED" | "COOLING" | "NORMAL" | "UNKNOWN";
 export type Range24Hhigh = number | null;
 export type Range24Hlow = number | null;
 export type Range24Hpositionpct = number | null;
@@ -102,6 +103,7 @@ export interface ScannerRowDTO {
   changePctByTf: Changepctbytf;
   turnoverUsdtByTf: Turnoverusdtbytf;
   volumeRatioByTf?: Volumeratiobytf;
+  activityPhase?: ActivityPhase | null;
   range24hHigh?: Range24Hhigh;
   range24hLow?: Range24Hlow;
   range24hPositionPct?: Range24Hpositionpct;

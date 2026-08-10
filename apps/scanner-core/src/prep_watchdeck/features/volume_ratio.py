@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from math import isfinite
 from statistics import median
 
 from prep_watchdeck.features.turnover import rolling_turnovers
@@ -28,17 +29,35 @@ def volume_ratio_15m(
     baseline_window_bars: int,
     floor_usdt: float,
 ) -> float | None:
-    window = 3
-    if len(bars) < baseline_window_bars + window:
+    return _volume_ratio(bars, 3, baseline_window_bars, floor_usdt)
+
+
+def _volume_ratio(
+    bars: list[CandleBar],
+    window: int,
+    baseline_sample_count: int,
+    floor_usdt: float,
+) -> float | None:
+    if window <= 0 or baseline_sample_count <= 0 or not isfinite(floor_usdt):
+        return None
+    required_bars = baseline_sample_count + (window * 2) - 1
+    if len(bars) < required_bars:
         return None
     current = sum(float(bar.quote_vol) for bar in bars[-window:])
+    if not isfinite(current):
+        return None
     previous_bars = bars[:-window]
     candidates = rolling_turnovers(previous_bars, window)
-    baseline_values = candidates[-baseline_window_bars:]
-    if len(baseline_values) < baseline_window_bars:
+    baseline_values = candidates[-baseline_sample_count:]
+    if len(baseline_values) < baseline_sample_count or any(
+        not isfinite(value) for value in baseline_values
+    ):
         return None
     baseline = max(median(baseline_values), floor_usdt)
-    return current / baseline if baseline > 0 else None
+    if not isfinite(baseline) or baseline <= 0:
+        return None
+    ratio = current / baseline
+    return ratio if isfinite(ratio) else None
 
 
 def volume_ratio_by_timeframe(
@@ -46,5 +65,11 @@ def volume_ratio_by_timeframe(
     baseline_window_bars: int,
     floor_usdt: float,
 ) -> dict[str, float | None]:
-    ratio_15m = volume_ratio_15m(bars, baseline_window_bars, floor_usdt)
-    return {"5m": None, "15m": ratio_15m, "1h": None, "4h": None, "24h": None, "74h": None}
+    return {
+        "5m": None,
+        "15m": volume_ratio_15m(bars, baseline_window_bars, floor_usdt),
+        "1h": _volume_ratio(bars, 12, baseline_window_bars, floor_usdt),
+        "4h": _volume_ratio(bars, 48, baseline_window_bars, floor_usdt),
+        "24h": None,
+        "74h": None,
+    }

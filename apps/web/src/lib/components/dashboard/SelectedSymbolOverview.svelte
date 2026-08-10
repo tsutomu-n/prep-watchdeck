@@ -2,7 +2,15 @@
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { ATTENTION_SCORE_HELP_TEXT, ATTENTION_SCORE_LABEL } from "$lib/market/attention-score";
   import { formatNumber as fmt } from "$lib/market/format";
-  import { categoryLabel, codeLabel, dataQualityLabel, rowExclusionLabels } from "$lib/market/labels";
+  import {
+    abnormalDataQualityLabel,
+    activityPhaseLabel,
+    categoryLabel,
+    codeLabel,
+    openInterestStateLabel,
+    rowExclusionLabels,
+    userRule74hLabel
+  } from "$lib/market/labels";
   import { movementSignals, type Range24h } from "$lib/market/row-analysis";
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
 
@@ -23,12 +31,12 @@
   let selectedSignals = $derived(movementSignals(row, selectedTimeframe));
   let exclusionItems = $derived(rowExclusionLabels(row));
   let displaySymbol = $derived(formatDisplaySymbol(row.symbol));
-  let volumeRatio = $derived(row.volumeRatioByTf?.["15m"]);
-  let volumeRatioText = $derived(
-    typeof volumeRatio === "number" && Number.isFinite(volumeRatio)
-      ? `${fmt(volumeRatio)}×`
-      : "—"
-  );
+  let qualityText = $derived(abnormalDataQualityLabel(row.dataQuality));
+
+  function volumeRatioText(timeframe: "15m" | "1h" | "4h") {
+    const value = row.volumeRatioByTf?.[timeframe];
+    return typeof value === "number" && Number.isFinite(value) ? `${fmt(value)}×` : "—";
+  }
 </script>
 
 <div class="section-head">
@@ -54,10 +62,12 @@
       <dt>{ATTENTION_SCORE_LABEL}</dt>
       <dd>{fmt(row.attentionScore)}</dd>
     </div>
-    <div>
-      <dt>データ品質</dt>
-      <dd>{dataQualityLabel(row.dataQuality)}</dd>
-    </div>
+    {#if qualityText}
+      <div>
+        <dt>データ品質</dt>
+        <dd class="quality-risk">{qualityText}</dd>
+      </div>
+    {/if}
     <div>
       <dt>{selectedTimeframe}</dt>
       <dd>{fmt(row.changePctByTf?.[selectedTimeframe], "%")}</dd>
@@ -91,7 +101,7 @@
   <section class="exclusion-panel" aria-label="除外理由">
     <div class="section-head compact">
       <h3>{row.category === "NO_TRADE" ? "除外理由" : "注意理由"}</h3>
-      <span>{dataQualityLabel(row.dataQuality)}</span>
+      {#if qualityText}<span>{qualityText}</span>{/if}
     </div>
     <div class="signal-list">
       {#each exclusionItems as reason}
@@ -104,8 +114,29 @@
 <dl class="stats">
   <div>
     <dt title={volumeRatioHelp}>15分量倍率</dt>
-    <dd>{volumeRatioText}</dd>
+    <dd>{volumeRatioText("15m")}</dd>
     <small title={volumeRatioHelp}>{volumeRatioBaseline}</small>
+  </div>
+  <div>
+    <dt>1時間量倍率</dt>
+    <dd>{volumeRatioText("1h")}</dd>
+  </div>
+  <div>
+    <dt>4時間量倍率</dt>
+    <dd>{volumeRatioText("4h")}</dd>
+  </div>
+  <div>
+    <dt>活動phase</dt>
+    <dd>{activityPhaseLabel(row.activityPhase)}</dd>
+    <small>市場の方向や売買推奨を示しません</small>
+  </div>
+  <div>
+    <dt>OI 60分</dt>
+    <dd>{openInterestStateLabel(row.openInterestState)}</dd>
+  </div>
+  <div>
+    <dt>74h状態</dt>
+    <dd>{userRule74hLabel(row.userRule74hMatched)}</dd>
   </div>
   <div>
     <dt>15分変化率</dt>
@@ -327,6 +358,10 @@
     font-size: 18px;
     font-weight: 800;
     font-variant-numeric: tabular-nums;
+  }
+
+  .quality-risk {
+    color: var(--quality-risk);
   }
 
   .stats small {

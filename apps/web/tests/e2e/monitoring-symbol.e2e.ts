@@ -15,15 +15,16 @@ test("symbol page keeps the monitoring evidence in a monitoring-only rail", asyn
   await expect(monitoringRail.locator("dt").filter({ hasText: /^ラベル$/ }).locator("..")).toContainText(
     "出来高確認済み上昇"
   );
-  await expect(monitoringRail.locator("dt").filter({ hasText: /^品質$/ }).locator("..")).toContainText(
-    "正常"
-  );
+  await expect(monitoringRail.locator("dt").filter({ hasText: /^品質$/ })).toHaveCount(0);
   await expect(monitoringRail.locator("dt").filter({ hasText: /^時間軸$/ }).locator("..")).toContainText(
     "15m"
   );
   await expect(
     monitoringRail.locator("dt").filter({ hasText: /^OI 60分$/ }).locator("..")
   ).toContainText("増加");
+  await expect(
+    monitoringRail.locator("dt").filter({ hasText: /^活動phase$/ }).locator("..")
+  ).toContainText("持続");
   const rule74h = page.getByRole("heading", { name: "74h 条件", exact: true }).locator("..");
   await expect(rule74h.locator("dt").filter({ hasText: /^ユーザー条件$/ }).locator("..")).toContainText(
     "一致"

@@ -896,7 +896,8 @@ test("symbol page keeps one chart frame and compact mobile analysis context", as
       await expect(monitoring.getByText("decision", { exact: true })).toHaveCount(0);
       await expect(timeframeBoard.getByText("timeframe scan", { exact: true })).toHaveCount(0);
       await expect(monitoring.locator(".monitoring-summary")).toBeVisible();
-      await expect(monitoring.getByText("品質", { exact: true })).toBeVisible();
+      await expect(monitoring.getByText("品質", { exact: true })).toHaveCount(0);
+      await expect(monitoring.getByText("活動phase", { exact: true })).toBeVisible();
       await expect(monitoring.getByText("15m", { exact: true })).toBeVisible();
       await expect(monitoring.getByText("監視除外候補", { exact: true })).toBeVisible();
 
@@ -1204,7 +1205,7 @@ test("market rows keep a stable 42px or 82px rhythm while exposing every signal"
         const maxRowButton = rowLocators[2].locator("[data-row-select]");
         await expect(maxRowButton).toHaveAttribute(
           "aria-label",
-          /15m変化 .*15m代金 .*品質 .*注記 銘柄注記.*短期逆行.*5分急変.*出来高増/
+          /15m変化 .*15m代金 .*注記 銘柄注記.*短期逆行.*5分急変.*出来高増/
         );
         const priceDescriptionId = await maxRowButton.getAttribute("aria-describedby");
         expect(priceDescriptionId).toBeTruthy();
@@ -1216,7 +1217,6 @@ test("market rows keep a stable 42px or 82px rhythm while exposing every signal"
           rowLocators[2].locator(".symbol"),
           rowLocators[2].locator(".current-price"),
           rowLocators[2].locator(".volume-ratio"),
-          maxRowButton.locator(".ok, .risk:not(.tf-metric)"),
           rowLocators[2].locator(".note-badge"),
           rowLocators[2].locator(".tf-volume")
         ]) {

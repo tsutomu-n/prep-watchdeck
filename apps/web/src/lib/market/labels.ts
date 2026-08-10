@@ -22,11 +22,31 @@ export function categoryCompactLabel(value: string) {
 export function dataQualityLabel(value: string) {
   const labels: Record<string, string> = {
     OK: "正常",
-    STALE: "古い",
-    MISSING: "欠損",
-    PARTIAL: "一部不足"
+    STALE: "更新遅延",
+    MISSING: "判定不能",
+    PARTIAL: "一部データ不足"
   };
-  return labels[value] ?? "未分類";
+  return labels[value] ?? "判定不能";
+}
+
+export function abnormalDataQualityLabel(value: string): string | null {
+  return value === "OK" ? null : dataQualityLabel(value);
+}
+
+export function activityPhaseLabel(value: string | null | undefined) {
+  const labels: Record<string, string> = {
+    BURST: "急増",
+    EXPANDING: "拡大",
+    SUSTAINED: "持続",
+    COOLING: "失速",
+    NORMAL: "平常",
+    UNKNOWN: "判定不能"
+  };
+  return value ? (labels[value] ?? "判定不能") : "判定不能";
+}
+
+export function activityPhaseWatchlistLabel(value: string | null | undefined): string | null {
+  return value === "NORMAL" ? null : activityPhaseLabel(value);
 }
 
 export function snapshotStatusLabel(value: string) {

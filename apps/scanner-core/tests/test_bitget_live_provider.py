@@ -27,6 +27,7 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
                 change_pct_by_tf={"15m": 2.0},
                 turnover_usdt_by_tf={"15m": 5000.0},
                 volume_ratio_by_tf={"15m": 3.0},
+                activity_phase="SUSTAINED",
                 roughness_15m="NORMAL",
                 btc_relative_15m="STRONG",
                 funding_bias="NEUTRAL",
@@ -83,7 +84,7 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
 
     assert snapshot.source.data_source == "live"
     assert snapshot.summary["counts"]["WATCH"] == 1
-    assert snapshot.feature_version == "3"
+    assert snapshot.feature_version == "4"
     assert snapshot.ruleset_version == "3"
     assert snapshot.schema_version == 1
     assert snapshot.summary["candidateRule74h"] == {
@@ -104,6 +105,7 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
         "floorUsdt": 1000.0,
     }
     assert snapshot.rows[0].symbol == "ALTUSDT"
+    assert snapshot.rows[0].activity_phase == "SUSTAINED"
     assert snapshot.rows[0].last_price == 1.19
     assert snapshot.rows[0].range_24h_high == 1.4
     assert snapshot.rows[0].range_24h_low == 0.8

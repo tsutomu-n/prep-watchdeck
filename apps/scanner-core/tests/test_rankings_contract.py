@@ -56,6 +56,17 @@ def test_rankings_total_eligible_counts_metric_values_only() -> None:
     assert rankings["meta"]["timeframes"]["15m"]["volumeUp"]["totalEligible"] == 1
 
 
+def test_display_only_hour_volume_ratios_do_not_populate_candidate_rankings() -> None:
+    rows = [_row("ALTUSDT", Category.WATCH, 2.0, 5.0, volume_1h=9.0, volume_4h=8.0)]
+
+    rankings = build_rankings(rows, top_n=5)
+
+    assert rankings["timeframes"]["1h"]["volumeUp"] == []
+    assert rankings["timeframes"]["4h"]["volumeUp"] == []
+    assert rankings["meta"]["timeframes"]["1h"]["volumeUp"]["totalEligible"] == 0
+    assert rankings["meta"]["timeframes"]["4h"]["volumeUp"]["totalEligible"] == 0
+
+
 def _row(
     symbol: str,
     category: Category,
@@ -63,6 +74,8 @@ def _row(
     volume_15m: float | None,
     *,
     matched: bool | None = True,
+    volume_1h: float | None = None,
+    volume_4h: float | None = None,
 ) -> ScannerRowDTO:
     return ScannerRowDTO(
         symbol=symbol,
@@ -72,7 +85,7 @@ def _row(
         attention_score=50,
         change_pct_by_tf={"15m": change_15m},
         turnover_usdt_by_tf={"15m": 10000},
-        volume_ratio_by_tf={"15m": volume_15m},
+        volume_ratio_by_tf={"15m": volume_15m, "1h": volume_1h, "4h": volume_4h},
         data_quality=DataQuality.OK,
         reason_codes=["TEST"],
         user_rule_74h_matched=matched,

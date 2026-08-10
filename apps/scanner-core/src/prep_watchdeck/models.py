@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from prep_watchdeck.domain.enums import ActivityPhase
+
 Timeframe = Literal["5m", "15m", "1h", "4h", "24h", "74h"]
 Category = Literal["WATCH", "CAUTION", "NO_TRADE", "LOW_PRIORITY"]
 Direction = Literal["UP_SURGE", "UP", "FLAT", "DOWN", "DOWN_CRASH"]
@@ -94,6 +96,7 @@ class ScannerRow(BaseModel):
     change_pct_by_tf: dict[str, float | None]
     turnover_usdt_by_tf: dict[str, float | None]
     volume_ratio_by_tf: dict[str, float | None]
+    activity_phase: ActivityPhase = ActivityPhase.UNKNOWN
     roughness_15m: str
     btc_relative_15m: str
     funding_bias: str

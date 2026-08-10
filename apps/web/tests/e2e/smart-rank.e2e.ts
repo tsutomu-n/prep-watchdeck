@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { execFileSync } from "node:child_process";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { resolveWebTestStatePaths } from "../../test-state-paths";
 
@@ -33,6 +34,13 @@ function generateSnapshot(fixtureSet: string) {
 
 test("Raw Sort controls feed manual corrected ranking without persistence", async ({ page }) => {
   generateSnapshot("basic");
+  const snapshot = JSON.parse(readFileSync(e2ePaths.snapshotPath, "utf-8")) as {
+    rows: Array<{ symbol: string; dataQuality: string }>;
+  };
+  const delayed = snapshot.rows.find((row) => row.symbol === "DUMPUSDT");
+  if (!delayed) throw new Error("DUMPUSDT fixture row not found");
+  delayed.dataQuality = "STALE";
+  writeFileSync(e2ePaths.snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
   await page.goto("/");
 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
@@ -62,13 +70,14 @@ test("Raw Sort controls feed manual corrected ranking without persistence", asyn
   await expect(smartRank.getByText("未実行。Raw Sortで絞った後、必要な時だけ押してください。")).toBeVisible();
   await expect(smartRank.getByText(/監視優先度とデータ品質で並べ直す補助表示/)).toBeVisible();
 
-  await smartRank.getByLabel("補正順位対象上限").fill("2");
+  await smartRank.getByLabel("補正順位対象上限").fill("5");
   await smartRank.getByRole("button", { name: "上位を補正" }).click();
   await expect(smartRank.getByText(/Raw #\d+ → 補正 #1/)).toBeVisible();
 
-  await expect(smartRank.getByText("対象 2 / 表示 5")).toBeVisible();
-  await expect(smartRank.locator(".smart-rank-list li")).toHaveCount(2);
+  await expect(smartRank.getByText("対象 5 / 表示 5")).toBeVisible();
+  await expect(smartRank.locator(".smart-rank-list li")).toHaveCount(5);
   await expect(smartRank.getByText("監視優先度").first()).toBeVisible();
+  await expect(smartRank.getByText("更新遅延による補正 -12", { exact: true })).toBeVisible();
   await expect(smartRank.locator(".smart-rank-list a").first()).toHaveAttribute("href", /\?tf=74h$/);
   await expect(smartRank.getByRole("button", { name: /\d+s/ })).toBeDisabled();
 });
