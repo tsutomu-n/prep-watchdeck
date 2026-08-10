@@ -1,21 +1,23 @@
 # Quiet Market Instrument 実装計画
 
 - 作成: `2026-08-10T19:45:00+09:00`
-- 更新: `2026-08-10T20:23:57+09:00`
-- 検証: `2026-08-10T20:23:57+09:00`
+- 更新: `2026-08-10T22:35:24+09:00`
+- 検証: `2026-08-10T22:35:24+09:00`
 - 状態: `実装計画`
 
 ## 0. 最終状態
 
 - Plan ID: `PLAN-QUIET-MARKET-INSTRUMENT-001`
-- Revision: `3`
+- Revision: `4`
 - Profile / risk: `EXECPLAN / MEDIUM`
-- Branch: `ai/quiet-market-instrument-20260810-1943`
-- Parent HEAD: `aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1`
-- Final HEAD: `このplanを含むRefine market activity UI labels commit自身`
+- Branch: `ai/quiet-market-plan-sync-20260810-2232`
+- Parent HEAD: `8a17b68cf2c8283a7c89cf51b7c2539c11d9358e`
+- Implementation commits: `aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1`、`046c9aff3712111ad09084cae179b599edb06452`
+- Main merge: `ce719dd10a59b0f548d4cf649bf125e11cc80c40`（PR #3）
+- Final HEAD: `このplanを最終同期するlocal commit自身`
 - Verified tree: commit後の`HEAD^{tree}`。自己参照を避けるため正確なhashは`.ai-work/state.md`と最終報告へ記録する。
 - Current checkpoint: `complete`
-- Result: `PASS_ON_COMMIT`
+- Result: `PASS`
 
 ## 1. 実装結果
 
@@ -50,7 +52,7 @@
 | AC-UI-015 | PASS | `bash scripts/verify-local.sh` exit 0: pytest 236、Web unit 183、E2E 59。 |
 | AC-UI-016 | PASS | baseline/final比較と3銘柄選択実測。未解決P0/P1なし。 |
 | AC-UI-017 | PASS | `DESIGN.md`、current docs、index、config READMEを同期。metadata/link tests 17 PASS。 |
-| AC-UI-018 | PASS_ON_COMMIT | follow-up対象fileだけを明示stageし、`Refine market activity UI labels` commitとclean worktreeで成立する。 |
+| AC-UI-018 | PASS | 対象source/tests/docsだけを`aeb0d9c`と`046c9af`へcommitし、各commit後cleanを確認。両commitはPR #3経由でmainへmerge済み。 |
 
 ## 3. Checkpoints
 
@@ -65,15 +67,18 @@ CP-001〜CP-013はすべて完了。CP-002はPython RED 4件から19 PASS、Web 
 - cwd `/home/tn/projects/prep-watchdeck`: `bash scripts/verify-local.sh`、exit 0、pytest 236 / Web unit 183 / E2E 59。
 - 用語follow-up focused、cwd `/home/tn/projects/prep-watchdeck/apps/web`: relevant unit `22 passed`、`bun run check` 0、`bun run build` 0、focused E2E `55 passed`。
 - 用語follow-up後full gate、cwd `/home/tn/projects/prep-watchdeck`: `bash scripts/verify-local.sh`、exit 0、pytest 236 / Web unit 183 / E2E 59。
-- DesignMD 0.1.0: baseline/finalともexit 1でfinding集合同一。既存`colors.panelOverlay` error、unused primary warningのみ。新規finding 0。
+- DesignMD 0.1.0: 後続PR #4で既存debtを解消。現行main `8a17b68`でexit 0、errors 0 / warnings 0 / infos 1。
 - Visual: resolved state rootの`tmp/quiet-market-instrument/{baseline,final}`。6 viewport、390pxの4 tab、補正順位、3銘柄選択evidenceを保存。
 - Sentinel: Past Note `2240c8ad...b24001`、Dashboard設定 `e1e57eb1...4fb7e`で前後一致。
 - Final read-only audit: `git diff --check` 0、package/lock diff空、runtime/test artifact・secret・private/trading API・debug logなし。
+- GitHub: PR #3 required `verify` PASS、未解決thread 0、merge commit `ce719dd`。実装AI branchはmerge/ancestor確認後にlocal/remoteから削除済み。
+- Runtime: 正式user systemdでservice/Webをcontrolled restart。service PID `473720→2008044`、Web PID `3667390→2009307`、両方active/running・NRestarts 0。`dataAsOf 1786365000000→1786365300000`、schema 1、feature/ruleset 3、writer 1、旧process 0、health/UI smoke/sentinel PASS。
+- 最終living plan同期後gate、cwd `/home/tn/projects/prep-watchdeck`: `bash scripts/verify-local.sh`、exit 0、pytest 236 / Web unit 183 / E2E 59、lint/type/check/build PASS。
 
 ## 5. 差異と判断
 
 - `baseline_window_bars`は5分足本数ではなくrolling 15分値のsample数なので、外部metadataを`baselineSampleCount`とした。
-- 既存DesignMD failureは今回と無関係なpre-existing debtで、固定version baselineとの差分0をmandatory conditionとした。
+- 実装時点では既存DesignMD failureをbaselineとの差分0で分離した。後続PR #4でunsupported overlay tokenとunused primaryを修正し、現行mainではlint debt 0である。
 - P1 planは既存Archive手順がactive planを除外するため削除せず、indexだけ完了済み・Archive待ちへ直した。
 - selected/focus/stateのinset lineとmarker outlineはsemantic stateなので削除対象外とした。
 - `VPI-Lite+`は内部契約名として削除せず、主要見出しを意味ベースの`市場活動`、技術名を小さな副表示とした。
@@ -82,7 +87,7 @@ CP-001〜CP-013はすべて完了。CP-002はPython RED 4件から19 PASS、Web 
 ## 6. 残余リスクと残作業
 
 - 未解決P0/P1: なし。
-- 非blocking残余: DesignMD 0.1.0の既存1 error / 1 warning。今回の新規findingはない。
-- production service/Web restartとdeployは明示対象外で未実施。
+- 非blocking残余: なし。
+- production service/Webは実装merge後の明示依頼によりcontrolled restart・smoke確認済み。
 - screenshots、Playwright output、runtime state、`.ai-work/`はRepo外またはignoredでcommitしない。
-- Remaining work: follow-up local commitとcommit後clean確認のみ。
+- Remaining work: なし。

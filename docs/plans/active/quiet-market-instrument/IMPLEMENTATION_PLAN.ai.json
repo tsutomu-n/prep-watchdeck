@@ -1,12 +1,14 @@
 {
   "planId": "PLAN-QUIET-MARKET-INSTRUMENT-001",
-  "revision": 3,
-  "status": "pass_on_commit",
+  "revision": 4,
+  "status": "complete",
   "profile": "EXECPLAN",
   "risk": "MEDIUM",
-  "branch": "ai/quiet-market-instrument-20260810-1943",
-  "parentHead": "aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1",
-  "finalHead": "this-plan-containing-commit",
+  "branch": "ai/quiet-market-plan-sync-20260810-2232",
+  "parentHead": "8a17b68cf2c8283a7c89cf51b7c2539c11d9358e",
+  "implementationCommits": ["aeb0d9cebd314c6e7b44e01fc42a5386bda0a7a1", "046c9aff3712111ad09084cae179b599edb06452"],
+  "mainMerge": "ce719dd10a59b0f548d4cf649bf125e11cc80c40",
+  "finalHead": "this-final-plan-sync-local-commit",
   "verifiedTree": "HEAD^{tree}; exact hash is recorded post-commit in .ai-work/state.md and final report",
   "currentCheckpoint": "complete",
   "objective": "Preserve monitoring contracts while refining the UI into Quiet Market Instrument.",
@@ -36,7 +38,7 @@
     {"id":"AC-UI-015","status":"pass","evidence":"verify-local exit 0; pytest 236, web unit 183, E2E 59"},
     {"id":"AC-UI-016","status":"pass","evidence":"visual review and three-symbol task; no P0/P1"},
     {"id":"AC-UI-017","status":"pass","evidence":"DESIGN and current docs synchronized; doc tests 17 pass"},
-    {"id":"AC-UI-018","status":"pass_on_commit","evidence":"explicit selected staging and this follow-up plan-containing local commit"}
+    {"id":"AC-UI-018","status":"pass","evidence":"explicit source/test/doc commits aeb0d9c and 046c9af were clean and merged through PR 3"}
   ],
   "checkpoints": [
     {"id":"CP-001","status":"completed"},{"id":"CP-002","status":"completed"},
@@ -54,7 +56,8 @@
     {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"pytest 236; web unit 183; E2E 59"},
     {"command":"bun run test -- volume-ratio-meta dashboard-filters vpi-lite-plus; bun run check; bun run build; bun run test:e2e -- four terminology-focused specs","cwd":"/home/tn/projects/prep-watchdeck/apps/web","exitCode":0,"summary":"22 unit passed; check and build passed; focused E2E 55 passed"},
     {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"post-copy follow-up: pytest 236; web unit 183; E2E 59"},
-    {"command":"npx @google/design.md@0.1.0 lint --format json DESIGN.md","cwd":"/home/tn/projects/prep-watchdeck","exitCode":1,"summary":"same pre-existing 1 error and 1 warning as baseline; zero new findings"},
+    {"command":"bash scripts/verify-local.sh","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"final living-plan sync: pytest 236; web unit 183; E2E 59; lint, type, check, and build passed"},
+    {"command":"npx @google/design.md@0.1.0 lint --format json DESIGN.md","cwd":"/home/tn/projects/prep-watchdeck","exitCode":0,"summary":"post-PR-4 main: errors 0; warnings 0; infos 1"},
     {"command":"sha256sum Past Note and Dashboard settings","cwd":"/home/tn/.local/share/prep-watchdeck","exitCode":0,"summary":"both sentinel hashes unchanged"}
   ],
   "visualEvidence": {
@@ -64,14 +67,19 @@
     "threeSymbolTask": "final/three-symbol-selection.json",
     "unresolvedP0P1": []
   },
-  "residualRisks": [
-    "Pre-existing DesignMD 0.1.0 panelOverlay error and unused-primary warning remain; no new finding.",
-    "Production restart and deploy were out of scope and were not performed."
-  ],
+  "deliveryEvidence": {
+    "pullRequest": 3,
+    "requiredVerify": "pass",
+    "unresolvedReviewThreads": 0,
+    "mergedMainCommit": "ce719dd10a59b0f548d4cf649bf125e11cc80c40",
+    "runtime": "service and Web active after controlled restart; dataAsOf advanced; schema 1; feature/ruleset 3; one writer; no orphan; health, UI smoke, and sentinels pass",
+    "branchCleanup": "implementation branch removed locally and remotely after merge verification"
+  },
+  "residualRisks": [],
   "followUpDecisions": [
     "Keep Smart Rank calculation and internal identifiers unchanged while using 補正順位 in user-visible copy.",
     "Use 15分量倍率 and 直近約24h中央値比 for the concise UI; keep the precise rolling-sample tooltip and no-guess fallback.",
     "Use 市場活動 as the primary heading and retain VPI-Lite+ only as a small technical label; preserve payload, enum, score, OI availability, and ranking exclusion."
   ],
-  "remainingWork": "Create the explicit follow-up local commit and confirm a clean worktree."
+  "remainingWork": "none"
 }
