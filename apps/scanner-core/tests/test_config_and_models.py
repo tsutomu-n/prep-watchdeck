@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from prep_watchdeck.config.filter_config import OpenInterestConfig
 from prep_watchdeck.config.templates import load_template
 from prep_watchdeck.errors import ConfigError
 from prep_watchdeck.models import CandleBar, ContractInfo, TickerInfo
@@ -93,3 +94,25 @@ def test_negative_volume_is_invalid() -> None:
             base_vol=Decimal("1"),
             quote_vol=Decimal("-1"),
         )
+
+
+@pytest.mark.parametrize("lookback", [0, -5, 7, 30, 1_445])
+def test_open_interest_lookback_requires_supported_sixty_minutes(lookback: int) -> None:
+    with pytest.raises(ValueError):
+        OpenInterestConfig.model_validate(
+            {
+                "change_lookback_minutes": lookback,
+                "increase_threshold_pct": 5.0,
+                "decrease_threshold_pct": -5.0,
+            }
+        )
+
+
+def test_open_interest_lookback_accepts_sixty_minutes() -> None:
+    config = OpenInterestConfig(
+        change_lookback_minutes=60,
+        increase_threshold_pct=5.0,
+        decrease_threshold_pct=-5.0,
+    )
+
+    assert config.change_lookback_minutes == 60

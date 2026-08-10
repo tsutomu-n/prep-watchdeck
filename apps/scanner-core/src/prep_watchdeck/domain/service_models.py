@@ -52,6 +52,14 @@ class TickerLatestRecord(ServiceModel):
     updated_at_ms: int
 
 
+class OpenInterestSampleRecord(ServiceModel):
+    symbol: str
+    bucket_ts_ms: int = Field(gt=0)
+    holding_amount: float = Field(gt=0, allow_inf_nan=False)
+    source_ts_ms: int = Field(gt=0)
+    updated_at_ms: int = Field(gt=0)
+
+
 class Candle1mRecord(ServiceModel):
     symbol: str
     ts_ms: int

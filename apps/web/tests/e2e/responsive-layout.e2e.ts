@@ -643,7 +643,11 @@ test("mobile candidate ranking keeps every symbol identity readable", async ({ p
   for (const metric of metricIds) {
     const ranking = snapshot.rankings.timeframes["15m"]?.[metric];
     if (!ranking?.[0]) throw new Error(`15m ${metric} ranking fixture is missing`);
-    ranking[0] = { ...ranking[0], symbol: longSymbol };
+    const shortItem = ranking[0];
+    ranking.splice(0, ranking.length, { ...shortItem, symbol: longSymbol }, shortItem);
+    const meta = snapshot.rankings.meta.timeframes["15m"]?.[metric];
+    if (!meta) throw new Error(`15m ${metric} ranking meta fixture is missing`);
+    meta.totalEligible = 2;
   }
 
   writeJsonAtomically(e2ePaths.snapshotPath, snapshot);

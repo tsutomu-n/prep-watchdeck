@@ -201,6 +201,9 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   await expect(categories.getByRole("button", { name: /注意\s+1/ })).toBeVisible();
   await expect(categories.getByRole("button", { name: /監視除外候補\s+1/ })).toBeVisible();
   await expect(categories.getByRole("button", { name: /低優先\s+1/ })).toBeVisible();
+  await expect(
+    page.getByText("74h条件: 価格±4%以上 かつ 24h売買代金+15%以上（合致1 / 未一致0 / 判定不能3）", { exact: true })
+  ).toBeVisible();
 
   const rankings = page.getByRole("region", { name: "15m ランキング" });
   const changeUpPanel = rankings
@@ -213,15 +216,15 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
     .locator(".rank-panel")
     .filter({ has: page.getByRole("heading", { name: "15分出来高倍率" }) });
   await expect(changeUpPanel.getByRole("link", { name: /ALT\s+2\.1%/ })).toBeVisible();
-  await expect(changeUpPanel.getByText("表示 4/4")).toBeVisible();
-  await expect(volumePanel.getByRole("link", { name: /DUMP\s+410,000/ })).toBeVisible();
-  await expect(volumePanel.getByText("表示 4/4")).toBeVisible();
-  await expect(volumeRatioPanel.getByRole("link", { name: /NEWALT\s+6\.4/ })).toBeVisible();
-  await expect(volumeRatioPanel.getByRole("link", { name: /NEWALT\s+6\.4/ })).toHaveAttribute(
+  await expect(changeUpPanel.getByText("表示 1/1")).toBeVisible();
+  await expect(volumePanel.getByRole("link", { name: /ALT\s+89,000/ })).toBeVisible();
+  await expect(volumePanel.getByText("表示 1/1")).toBeVisible();
+  await expect(volumeRatioPanel.getByRole("link", { name: /ALT\s+3\.4/ })).toBeVisible();
+  await expect(volumeRatioPanel.getByRole("link", { name: /ALT\s+3\.4/ })).toHaveAttribute(
     "href",
-    /\/symbols\/NEWALTUSDT\?tf=15m$/
+    /\/symbols\/ALTUSDT\?tf=15m$/
   );
-  await expect(volumeRatioPanel.getByText("表示 4/4")).toBeVisible();
+  await expect(volumeRatioPanel.getByText("表示 1/1")).toBeVisible();
 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
   await expect(watchlist.getByRole("heading", { name: "精密監視リスト" })).toBeVisible();
@@ -306,10 +309,39 @@ test("ignores a malformed VPI summary without breaking the dashboard", async ({ 
   await expect(page.getByRole("region", { name: "VPI-Lite+ 実験表示" })).toHaveCount(0);
 });
 
+test("falls back to the generic 74h candidate rule when summary metadata is malformed", async ({
+  page
+}) => {
+  generateSnapshot("basic");
+  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8"));
+  snapshot.summary.candidateRule74h = { operator: "AND", priceAbsPct: "4" };
+  writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
+
+  await page.goto("/");
+
+  await expect(
+    page.getByText("74h候補条件の詳細を取得できません。snapshot更新後に再確認してください。", {
+      exact: true
+    })
+  ).toBeVisible();
+});
+
 test("labels mixed-sign change rankings by sort order and colors each value by actual sign", async ({
   page
 }) => {
   generateSnapshot("basic");
+  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8"));
+  snapshot.rankings.timeframes["15m"].changeUp = [
+    { symbol: "ALTUSDT", value: 2.1 },
+    { symbol: "DUMPUSDT", value: -2.4 }
+  ];
+  snapshot.rankings.timeframes["15m"].changeDown = [
+    { symbol: "DUMPUSDT", value: -2.4 },
+    { symbol: "ALTUSDT", value: 2.1 }
+  ];
+  snapshot.rankings.meta.timeframes["15m"].changeUp.totalEligible = 2;
+  snapshot.rankings.meta.timeframes["15m"].changeDown.totalEligible = 2;
+  writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
   await page.goto("/");
 
   const rankings = page.getByRole("region", { name: "15m ランキング" });
@@ -362,10 +394,10 @@ test("can switch ranking timeframe and display view filters", async ({ page }) =
     .filter({ has: page.getByRole("heading", { name: "15分出来高倍率" }) });
 
   await expect(changeUpPanel.getByRole("link", { name: /ALT\s+2\.2%/ })).toBeVisible();
-  await expect(volumePanel.getByRole("link", { name: /DUMP\s+2,100,000/ })).toBeVisible();
-  await expect(volumeRatioPanel.getByRole("link", { name: /NEWALT\s+6\.4/ })).toHaveAttribute(
+  await expect(volumePanel.getByRole("link", { name: /ALT\s+820,000/ })).toBeVisible();
+  await expect(volumeRatioPanel.getByRole("link", { name: /ALT\s+3\.4/ })).toHaveAttribute(
     "href",
-    /\/symbols\/NEWALTUSDT\?tf=15m$/
+    /\/symbols\/ALTUSDT\?tf=15m$/
   );
 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
@@ -541,7 +573,7 @@ test("selects a dashboard row before opening its chart-first symbol analysis", a
   await expect(page.getByRole("complementary", { name: "監視材料" })).toBeVisible();
   await expect(page.getByText("ランキング位置")).toBeVisible();
   await expect(page.getByText("選択時間軸の掲載範囲")).toBeVisible();
-  await expect(page.getByText("4件中 1位")).toBeVisible();
+  await expect(page.getByText("1件中 1位")).toHaveCount(4);
   await expect(page.getByRole("region", { name: "ALT 分析" }).getByText("出来高確認済み上昇")).toBeVisible();
   await expect(page.getByRole("region", { name: "補助情報" }).getByText("8.4%")).toBeVisible();
 

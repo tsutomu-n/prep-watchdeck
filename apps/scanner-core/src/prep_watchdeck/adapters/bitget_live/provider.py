@@ -15,7 +15,7 @@ from prep_watchdeck.domain.dto import (
 from prep_watchdeck.domain.enums import DataSource, SnapshotStatus
 from prep_watchdeck.domain.features.long_horizon import compute_74h_features
 from prep_watchdeck.domain.features.time_grid import normalize_5m_grid
-from prep_watchdeck.domain.screening.rankings import build_rankings
+from prep_watchdeck.domain.screening.rankings import build_rankings, candidate_rule_counts
 from prep_watchdeck.models import CandleBar, ContractInfo, ScannerRow, TickerInfo
 from prep_watchdeck.screening.pipeline import PipelineResult, run_live_pipeline
 from prep_watchdeck.settings import Settings
@@ -83,11 +83,26 @@ def snapshot_from_pipeline(
     if config is not None:
         config_hash = f"{template}:v{config.version}"
 
+    summary: dict[str, object] = {
+        "counts": counts,
+        "contracts": len(result.contracts),
+        "tickers": len(result.tickers),
+        "candleErrors": result.candle_errors,
+    }
+    if config is not None:
+        summary["candidateRule74h"] = {
+            "operator": "AND",
+            "priceAbsPct": config.user_rule.price_74h_abs_pct,
+            "turnoverIncreasePct": config.user_rule.volume_74h_min_increase_pct,
+            "turnoverMode": config.user_rule.volume_74h_mode,
+            **candidate_rule_counts(rows),
+        }
+
     return SnapshotDTO(
         schema_version=SCHEMA_VERSION,
         engine_version="0.1.0",
-        feature_version="2",
-        ruleset_version="2",
+        feature_version="3",
+        ruleset_version="3",
         config_hash=config_hash,
         run_id=result.run_id,
         generated_at=result.generated_at_ms,
@@ -99,12 +114,7 @@ def snapshot_from_pipeline(
             template_name=template,
             data_source=DataSource.LIVE,
         ),
-        summary={
-            "counts": counts,
-            "contracts": len(result.contracts),
-            "tickers": len(result.tickers),
-            "candleErrors": result.candle_errors,
-        },
+        summary=summary,
         rankings=build_rankings(
             rows,
             top_n=config.ranking.top_n if config is not None else 10,
@@ -147,6 +157,12 @@ def _row_to_dto(
             for timeframe, chart_bars in (chart_bars_by_timeframe or {}).items()
         }
 
+    reason_codes = [row.label]
+    if long_horizon.price_condition_matched is True:
+        reason_codes.append("USER_74H_PRICE_MATCH")
+    if long_horizon.turnover_condition_matched is True:
+        reason_codes.append("USER_74H_VOLUME_MATCH")
+
     return ScannerRowDTO(
         symbol=row.symbol,
         ts=row.ts,
@@ -184,7 +200,7 @@ def _row_to_dto(
         coverage_ratio=quality.coverage_ratio,
         missing_bar_count=quality.missing_bar_count,
         zero_volume_bar_ratio=quality.zero_volume_bar_ratio,
-        reason_codes=[row.label],
+        reason_codes=reason_codes,
         risk_tag_codes=row.risk_tags,
         sparkline=sparkline,
     )

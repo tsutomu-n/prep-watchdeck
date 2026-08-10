@@ -2,7 +2,13 @@
   import SymbolChip from "$lib/components/symbol/SymbolChip.svelte";
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatNumber as fmt } from "$lib/market/format";
-  import { categoryLabel, codeLabel, dataQualityClass, dataQualityLabel } from "$lib/market/labels";
+  import {
+    categoryLabel,
+    codeLabel,
+    dataQualityClass,
+    dataQualityLabel,
+    openInterestStateLabel
+  } from "$lib/market/labels";
   import type { RankingPositionResult } from "$lib/market/rankings";
   import type { MovementSignal } from "$lib/market/row-analysis";
 
@@ -53,6 +59,10 @@
       <div>
         <dt>時間軸</dt>
         <dd>{selectedTimeframe}</dd>
+      </div>
+      <div>
+        <dt>OI 60分</dt>
+        <dd>{openInterestStateLabel(row.openInterestState)}</dd>
       </div>
     </dl>
   </section>

@@ -1,0 +1,13 @@
+checkpoint_id,status,goal,acceptance_criteria_ids,dependencies,next_action
+CP-001,not_started,"Establish baseline, repository contracts and synchronized living plans",AC-P1-012,,inspect git state and repository instructions
+CP-002,not_started,Add only the focused failing tests needed to fix the confirmed contracts,AC-P1-001|AC-P1-002|AC-P1-003|AC-P1-004|AC-P1-005|AC-P1-006|AC-P1-007|AC-P1-008|AC-P1-009|AC-P1-010|AC-P1-013,CP-001,reuse existing tests where sufficient
+CP-003,not_started,Implement three-valued 74h AND semantics and reason codes,AC-P1-001|AC-P1-002|AC-P1-003,CP-002,update long-horizon feature
+CP-004,not_started,Gate Candidate rankings only and publish active rule metadata,AC-P1-004|AC-P1-008,CP-003,separate all rows from candidate source
+CP-005,not_started,Add bounded additive OI sample storage,AC-P1-005|AC-P1-010|AC-P1-013,CP-002,resolve concrete service store
+CP-006,not_started,Wire exact 60-minute OI references into service snapshots and scoring,AC-P1-006|AC-P1-007|AC-P1-013,CP-005,validate current ticker freshness
+CP-007,not_started,Expose minimal UI semantics and bump versions,AC-P1-008|AC-P1-009,CP-004|CP-006,Candidate help from summary
+CP-008,not_started,"Reach focused green, synchronize docs and run full gate",AC-P1-009|AC-P1-010|AC-P1-011|AC-P1-012|AC-P1-013,CP-007,run focused green
+CP-009,not_started,Verify one-command fixture startup and isolated finite live smoke,AC-RQ-001|AC-RQ-002,CP-008,execute runtime qualification RQ-01/RQ-02
+CP-010,not_started,Verify OI runtime storage and restart persistence,AC-RQ-003|AC-RQ-004,CP-009,store valid runtime sample
+CP-011,not_started,Verify reconnect path and artifact semantics,AC-RQ-005|AC-RQ-006,CP-010,run or add focused reconnect test
+CP-012,not_started,Perform final audit and synchronize final result,AC-RQ-007,CP-011,reuse full gate if source unchanged or rerun

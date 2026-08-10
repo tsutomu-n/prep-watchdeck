@@ -114,3 +114,20 @@ export function rowExclusionLabels(row: {
   ].filter((value): value is string => Boolean(value));
   return [...new Set(labels)];
 }
+
+export function openInterestStateLabel(value: string | null | undefined) {
+  const labels: Record<string, string> = {
+    INCREASING: "増加",
+    RISING: "増加",
+    STABLE: "横ばい",
+    DECREASING: "減少",
+    FALLING: "減少"
+  };
+  return value ? (labels[value] ?? "不明") : "不明";
+}
+
+export function userRule74hLabel(value: boolean | null | undefined) {
+  if (value === true) return "一致";
+  if (value === false) return "未一致";
+  return "判定不能";
+}

@@ -85,16 +85,17 @@ async def test_ingest_ws_shards_reconnects_and_persists_stream_health(tmp_path) 
         store,
         shards,
         payload_source_factory=source,
-        max_records_per_shard=1,
+        max_records_per_shard=2,
         runtime=ShardRuntimeConfig(max_reconnects=1, base_backoff_seconds=0),
     )
 
     assert source.calls == 2
+    assert source.specs_by_call == [shards[0], shards[0]]
     assert result == WsShardIngestResult(
         shard_count=1,
-        payload_count=1,
+        payload_count=2,
         ticker_count=1,
-        candle_1m_count=0,
+        candle_1m_count=1,
         reconnect_count=1,
     )
     with duckdb.connect(str(tmp_path / "watchdeck.duckdb")) as con:
@@ -106,7 +107,10 @@ async def test_ingest_ws_shards_reconnects_and_persists_stream_health(tmp_path) 
             """
         ).fetchone()
 
-    assert row == ("ws-000", "mixed", 2, False, 1_781_000_000_456, 1, 0, None)
+    assert row == ("ws-000", "mixed", 2, False, 1_781_000_040_500, 1, 0, None)
+    diagnostics = store.diagnostics()
+    assert diagnostics.ticker_count == 1
+    assert diagnostics.candle_1m_count == 1
 
 
 async def test_ingest_ws_shards_reconnects_after_stream_close(tmp_path) -> None:
@@ -312,12 +316,14 @@ class RecordingTickerSink:
 class FlakyPayloadSource:
     def __init__(self) -> None:
         self.calls = 0
+        self.specs_by_call: list[list[ChannelSpec]] = []
 
     def __call__(
         self,
         specs: Sequence[ChannelSpec],
     ) -> AsyncIterable[dict[str, Any]]:
         self.calls += 1
+        self.specs_by_call.append(list(specs))
 
         async def payloads() -> AsyncIterator[dict[str, Any]]:
             if self.calls == 1:
@@ -331,6 +337,27 @@ class FlakyPayloadSource:
                 },
                 "data": [{"symbol": symbol, "ts": "1781000000123", "lastPr": "101.5"}],
                 "ts": "1781000000456",
+            }
+            yield {
+                "arg": {
+                    "instType": "USDT-FUTURES",
+                    "channel": "candle1m",
+                    "instId": symbol,
+                },
+                "data": [
+                    [
+                        "1781000040000",
+                        "101.5",
+                        "102.0",
+                        "101.0",
+                        "101.8",
+                        "10.0",
+                        "1018.0",
+                        "1018.0",
+                        "1",
+                    ]
+                ],
+                "ts": "1781000040500",
             }
 
         return payloads()

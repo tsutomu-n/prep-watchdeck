@@ -8,12 +8,14 @@
 
   let {
     rankings,
+    candidateRuleText,
     selectedTimeframe,
     timeframes,
     metrics,
     onTimeframeSelect
   }: {
     rankings: RankingTree | undefined;
+    candidateRuleText: string;
     selectedTimeframe: RankingTimeframe;
     timeframes: readonly RankingTimeframe[];
     metrics: readonly RankingMetric[];
@@ -56,6 +58,7 @@
   <div class="toolbar">
     <div>
       <h2>候補の動き</h2>
+      <p class="candidate-rule">{candidateRuleText}</p>
     </div>
     <div class="timeframe-strip" role="group" aria-label="時間軸">
       {#each timeframes as timeframe}
@@ -115,6 +118,13 @@
   .toolbar h2 {
     margin: 0;
     font-size: 16px;
+  }
+
+  .candidate-rule {
+    margin: 4px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.35;
   }
 
   .timeframe-strip {

@@ -26,6 +26,7 @@
     type DashboardRankingTimeframe as RankingTimeframe,
     type DashboardViewMode as ViewMode
   } from "$lib/market/dashboard-filters";
+  import { formatCandidateRule74h } from "$lib/market/candidate-rule";
   import { sortRowsByRawSort } from "$lib/market/raw-sort";
   import { rawSortStateForTimeframe } from "$lib/market/raw-sort-presets";
   import {
@@ -158,6 +159,9 @@
   let visibleRows = $derived(sortRowsByRawSort(filteredRows, rawSortState, selectedTimeframe));
   let selection = $derived(resolveDashboardSelection(selectedSymbol, visibleRows));
   let selected = $derived(selection.row);
+  let candidateRuleText = $derived(
+    formatCandidateRule74h(snapshot?.summary?.candidateRule74h)
+  );
   let vpiSummary = $derived(parseVpiLitePlusSummary(snapshot?.summary?.vpiLitePlus));
   let selectedVpi = $derived(
     vpiSummary && selected
@@ -712,6 +716,7 @@
         <DashboardRankingArea
           rankings={snapshot?.rankings}
           {selectedTimeframe}
+          {candidateRuleText}
           timeframes={rankingTimeframes}
           {metrics}
           onTimeframeSelect={selectRankingTimeframe}

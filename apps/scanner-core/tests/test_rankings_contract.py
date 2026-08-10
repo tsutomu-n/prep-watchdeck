@@ -23,6 +23,7 @@ def test_rankings_exclude_no_trade_and_sort() -> None:
         "totalEligible": 2,
         "excludedNoTrade": True,
     }
+    assert [item["symbol"] for item in rankings["noTrade"]] == ["THINUSDT"]
 
 
 def test_rankings_limit_items_but_keep_total_eligible() -> None:
@@ -56,7 +57,12 @@ def test_rankings_total_eligible_counts_metric_values_only() -> None:
 
 
 def _row(
-    symbol: str, category: Category, change_15m: float, volume_15m: float | None
+    symbol: str,
+    category: Category,
+    change_15m: float,
+    volume_15m: float | None,
+    *,
+    matched: bool | None = True,
 ) -> ScannerRowDTO:
     return ScannerRowDTO(
         symbol=symbol,
@@ -69,5 +75,21 @@ def _row(
         volume_ratio_by_tf={"15m": volume_15m},
         data_quality=DataQuality.OK,
         reason_codes=["TEST"],
+        user_rule_74h_matched=matched,
         risk_tag_codes=[],
     )
+
+
+def test_rankings_gate_timeframes_but_preserve_no_trade_diagnostics() -> None:
+    rows = [
+        _row("MATCHUSDT", Category.WATCH, 5.0, 5.0, matched=True),
+        _row("MISSUSDT", Category.CAUTION, 4.0, 4.0, matched=False),
+        _row("UNKNOWNUSDT", Category.WATCH, 3.0, 3.0, matched=None),
+        _row("THINUSDT", Category.NO_TRADE, 20.0, 99.0, matched=None),
+    ]
+
+    rankings = build_rankings(rows, top_n=5)
+
+    assert [item["symbol"] for item in rankings["timeframes"]["15m"]["changeUp"]] == ["MATCHUSDT"]
+    assert rankings["meta"]["timeframes"]["15m"]["changeUp"]["totalEligible"] == 1
+    assert [item["symbol"] for item in rankings["noTrade"]] == ["THINUSDT"]

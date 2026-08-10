@@ -2,7 +2,7 @@
   import SymbolChip from "$lib/components/symbol/SymbolChip.svelte";
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatNumber as fmt } from "$lib/market/format";
-  import { changeTone, codeLabel } from "$lib/market/labels";
+  import { changeTone, codeLabel, userRule74hLabel } from "$lib/market/labels";
   import type { Range24h } from "$lib/market/row-analysis";
 
   let { row, range }: { row: ScannerRowDTO; range: Range24h | null } = $props();
@@ -58,7 +58,7 @@
     </div>
     <div>
       <dt>ユーザー条件</dt>
-      <dd>{row.userRule74hMatched ? "一致" : "未一致"}</dd>
+      <dd>{userRule74hLabel(row.userRule74hMatched)}</dd>
     </div>
   </dl>
 </section>
@@ -85,10 +85,6 @@
     <div>
       <dt>funding</dt>
       <dd>{String(row.fundingBias ?? "未取得")}</dd>
-    </div>
-    <div>
-      <dt>open interest</dt>
-      <dd>{String(row.openInterestState ?? "未取得")}</dd>
     </div>
   </dl>
 </section>

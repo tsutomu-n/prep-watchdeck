@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
-- 文書更新作業: `2026-08-02_22:00`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -291,3 +291,12 @@ bun run build
 - Webがscanner-coreと異なるstate rootを表示する。
 
 この場合は旧stateを削除せず、環境変数を外してrepo `var/`へ戻す。
+
+## OI sample運用
+
+`watchdeck service` startup時に`open_interest_samples`をadditive初期化する。DDL/init失敗は
+serviceを起動済み扱いにしない。各snapshot cycleのOI保存・読込・prune失敗はsnapshot発行を
+継続するが、`summary.oiDiagnostics`をdegradedにし、全OIを`UNKNOWN`として加点しない。
+
+OI sampleはsource時刻の5分bucketで24時間だけ保持する。service再起動後は同じstate rootの
+履歴を再利用する。同一DuckDBへ別writerを起動しない既存運用を維持する。

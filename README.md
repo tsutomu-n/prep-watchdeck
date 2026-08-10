@@ -1,9 +1,9 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
-- 文書更新作業: `2026-08-02_22:00`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -303,3 +303,12 @@ bash scripts/maintenance/finalize-reorganization.sh \
 - API key、secret、残高、position、注文機能を追加しない。
 - local write APIとruntime commandはlocalhostだけに許可する。
 - `git clean -fdx`や`git clean -fdX`を使わない。ignored stateを削除する危険がある。
+
+## Candidate 74h / OI 60分
+
+Candidateの各timeframeランキングは、74h価格条件と24h USDT売買代金増加条件の両方に
+一致した監視対象だけを表示します。履歴不足中はCandidateが空でも正常です。Watchlist、
+Raw Sort、Smart Rank、監視除外診断は全監視対象を維持します。
+
+serviceはBitget public tickerのOpen Interestを5分bucketで24時間だけDuckDBへ保持し、
+exact 60分前と比較します。履歴不足・古い値・不正値は「不明」で、注目度へ加点しません。

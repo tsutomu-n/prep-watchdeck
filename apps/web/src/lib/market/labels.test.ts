@@ -6,10 +6,12 @@ import {
   dataQualityClass,
   dataQualityLabel,
   dataSourceLabel,
+  openInterestStateLabel,
   rowExclusionLabels,
   rowQualityClass,
   snapshotStatusLabel,
-  templateLabel
+  templateLabel,
+  userRule74hLabel
 } from "./labels";
 
 describe("market label helpers", () => {
@@ -26,6 +28,11 @@ describe("market label helpers", () => {
     expect(codeLabel("DATA_HISTORY_SHORT")).toBe("履歴不足");
     expect(codeLabel("DATA_ZERO_VOLUME")).toBe("ゼロ出来高注意");
   });
+    expect(openInterestStateLabel("INCREASING")).toBe("増加");
+    expect(openInterestStateLabel("STABLE")).toBe("横ばい");
+    expect(openInterestStateLabel("DECREASING")).toBe("減少");
+    expect(openInterestStateLabel("UNKNOWN")).toBe("不明");
+    expect(userRule74hLabel(null)).toBe("判定不能");
 
   it("keeps unknown codes visible unless a fallback is explicitly provided", () => {
     expect(codeLabel("NEW_CODE")).toBe("NEW_CODE");

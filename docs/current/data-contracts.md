@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
-- 文書更新作業: `2026-08-02_22:00`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -170,3 +170,21 @@ GET、POST、PATCH、PUT、DELETEはいずれも404であり、CSV exportも提�
 `PREP_WATCHDECK_RUNTIME_TARGET=cloudflare`では有効化しない。
 同時requestは1つへ集約する。DuckDB lockだけは失敗にせず既存latest snapshotを返し、
 `fallback.reason=DUCKDB_LOCK`で再発行されなかったことを明示する。それ以外の実行失敗は503とする。
+
+## Candidate 74h / OI 60分
+
+`featureVersion`と`rulesetVersion`は`3`、`schemaVersion`は`1`である。74h価格・売買代金
+componentと`userRule74hMatched`は`true | false | null`で、componentのどちらかが`null`なら
+複合値も`null`になる。
+
+`summary.candidateRule74h`は`operator=AND`、価格閾値、turnover閾値、
+`turnoverMode=current_24h_vs_74h_ago_24h`、`eligible/notMatched/unknown`件数を持つ。
+Candidateの`rankings.timeframes`は複合値`true`かつ非`NO_TRADE`だけを含み、
+`rankings.noTrade`は全rows由来の診断を維持する。
+
+`open_interest_samples`は`(symbol,bucket_ts_ms)`主キー、`holding_amount`、`source_ts_ms`、
+`updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは
+より新しいsource時刻だけ更新し、24時間より古いrowだけを削除する。OI cycle障害は
+`summary.oiDiagnostics.status=degraded`と`code=OI_HISTORY_UNAVAILABLE`で可視化する。
+公開する状態名とUIは60分比較に固定されているため、`change_lookback_minutes`の現在の許容値も
+`60`だけとする。

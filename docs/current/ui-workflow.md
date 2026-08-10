@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
-- 文書更新作業: `2026-08-02_22:00`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -311,3 +311,14 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 UI変更時は`DESIGN.md`を先に読み、Dashboard、Symbol page、Desktop、Mobileのどこへ
 影響するかを明示する。変更後は対象に近いunit/E2Eに加え、`bun run check`、`bun test`、
 `bun run build`を実行する。情報を減らす変更は、Mobile対応や簡素化という理由だけでは認めない。
+
+## Candidate条件とOI表示
+
+Candidate見出し下はsnapshot summaryをvalidationし、74h価格AND売買代金条件と
+`合致 / 未一致 / 判定不能`件数を表示する。不正または欠損summaryでは数値を推測せず、
+条件metadataを取得できないこととsnapshot更新後の再確認を案内する。旧snapshotのランキングが
+現行74h gate済みであるとは断定しない。
+
+Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で表示する。
+74h条件の複合結果は`一致 / 未一致 / 判定不能`で表示する。VPI-Lite+のOI availabilityは
+別契約なので維持し、重複していた非VPIのraw open interest表示だけを置かない。
