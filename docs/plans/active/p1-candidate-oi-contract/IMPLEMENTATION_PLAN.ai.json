@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-10T11:59:58+09:00",
+  "updated_at": "2026-08-10T14:45:00+09:00",
   "plan_id": "PLAN-P1-CANDIDATE-OI-001",
-  "revision": 6,
+  "revision": 7,
   "target_repository": "tsutomu-n/prep-watchdeck",
   "baseline_commit": "8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583",
   "objective": "候補選定の74h複合条件とOI 60分変化について、設定・計算・ランキング・UI・runtimeの意味を一致させる。",
@@ -800,6 +800,11 @@
   },
   "decision_log": [
     {
+      "at": "2026-08-10T14:38:00+09:00",
+      "decision": "Revision 7 records the completed runtime-readiness follow-up and retires the service SIGKILL residual risk.",
+      "reason": "Graceful stop, bounded snapshot/cache behavior, reproducible user-systemd configuration, restart OI reuse and the final live/full-gate evidence now supersede the Revision 6 stop-timeout observation without changing the P1 contract."
+    },
+    {
       "at": "2026-08-10T11:34:05+09:00",
       "decision": "Revision 6 addresses both blocking PR review threads without expanding scope.",
       "reason": "Legacy metadata cannot prove Candidate gating, and the implemented UI, state names and retention contract support exactly a 60-minute OI lookback."
@@ -931,6 +936,13 @@
       "working_directory": "/home/tn/projects/prep-watchdeck",
       "exit_code": 0,
       "result": "Service 3450385->3667379 and Web 3450397->3667390 active; dataAsOf 1786330200000->1786330500000; versions 3/3/schema 1; Candidate counts, OI 60m, Watchlist, Raw Sort, Smart Rank and VPI-Lite+ visible; state hashes unchanged; one DuckDB writer; no orphan process. Service stop exceeded 30 seconds and systemd used SIGKILL before a clean replacement started."
+    },
+    {
+      "checkpoint_id": "CP-012-RUNTIME-READINESS-REV7",
+      "command": "focused periodic ticker recovery test; bash scripts/verify-local.sh; controlled systemd stop/start; DuckDB read-only audit; health/snapshot/UI/hash/process audits",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 0,
+      "result": "Focused ticker recovery 2 passed. Final diff review added non-Cancellation cleanup error propagation with focused 6 passed. Source-final full gate: maintenance 82, scanner 234, web unit 174, Playwright 56 and all static/build checks passed. Final source restart completed in 51.836s without SIGKILL, PID 376489->473720, dataAsOf advanced to 1786340400000, OI history reused at 739/739 with schema 1 and feature/ruleset 3, service/Web active with one writer, unchanged sentinels and no orphan."
     }
   ],
   "current_checkpoint": "COMPLETE",
@@ -949,7 +961,8 @@
     "remaining_work": [],
     "residual_risks": [
       "Natural 24-hour WebSocket disconnect remains an operational observation; deterministic reconnect coverage passed.",
-      "The 2026-08-10 controlled service restart exceeded the user-unit 30-second stop timeout and systemd used SIGKILL; the replacement service was healthy with forward dataAsOf, unchanged sentinels, one writer and no orphan."
+      "A failed Bitget public ticker cycle intentionally exposes OI as UNKNOWN instead of falling back to stale data; the periodic recovery regression and subsequent live 740/740 recovery passed.",
+      "The 8.2GB pre-compaction DuckDB remains in the state root as an explicit rollback backup until separately approved for deletion."
     ]
   },
   "goal_gap": "none",

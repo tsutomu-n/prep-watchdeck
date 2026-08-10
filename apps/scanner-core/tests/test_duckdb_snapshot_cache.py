@@ -1,9 +1,34 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from pathlib import Path
+
+import duckdb
 
 from prep_watchdeck.adapters.duckdb.snapshot_cache import DuckDbSnapshotCache
+from prep_watchdeck.adapters.fixture import FixtureProvider
 from prep_watchdeck.models import CandleBar
+
+
+def test_save_snapshot_retains_only_latest_cache_entry(tmp_path) -> None:
+    cache_path = tmp_path / "watchdeck.duckdb"
+    cache = DuckDbSnapshotCache(cache_path)
+    first = FixtureProvider(Path("../../fixtures")).build_snapshot(
+        template="balanced", fixture_set="basic"
+    )
+    second = first.model_copy(
+        update={"run_id": "newer-run", "generated_at": first.generated_at + 1},
+        deep=True,
+    )
+
+    cache.save(first)
+    cache.save(second)
+
+    latest = cache.latest()
+    assert latest is not None
+    assert latest.run_id == "newer-run"
+    with duckdb.connect(str(cache_path), read_only=True) as con:
+        assert con.execute("SELECT COUNT(*) FROM snapshots").fetchone() == (1,)
 
 
 def test_save_candles_5m_loads_saved_bars(tmp_path) -> None:

@@ -58,12 +58,18 @@ async def backfill_1m_candles(
 
     tasks = [asyncio.create_task(fetch_symbol(symbol)) for symbol in normalized_symbols]
     symbol_results: list[BackfillSymbolResult] = []
-    for task in asyncio.as_completed(tasks):
-        symbol_result, records = await task
-        store.upsert_candles_1m(records)
-        if on_symbol_result is not None:
-            on_symbol_result(symbol_result)
-        symbol_results.append(symbol_result)
+    try:
+        for task in asyncio.as_completed(tasks):
+            symbol_result, records = await task
+            store.upsert_candles_1m(records)
+            if on_symbol_result is not None:
+                on_symbol_result(symbol_result)
+            symbol_results.append(symbol_result)
+    finally:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     order = {symbol: index for index, symbol in enumerate(normalized_symbols)}
     symbol_results = sorted(symbol_results, key=lambda item: order[item.symbol])

@@ -1,0 +1,20 @@
+[Unit]
+Description=prep-watchdeck local web
+After=network-online.target prep-watchdeck-service.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO_ROOT@
+Environment=HOME=@HOME_DIR@
+Environment=PATH=@HOME_DIR@/.local/bin:@HOME_DIR@/.local/share/bun/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PREP_WATCHDECK_STATE_DIR=@STATE_ROOT@
+Environment=SNAPSHOT_SOURCE=skip
+Environment=PORT=5173
+ExecStart=/usr/bin/bash @REPO_ROOT@/scripts/start-all.sh
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=30s
+
+[Install]
+WantedBy=default.target

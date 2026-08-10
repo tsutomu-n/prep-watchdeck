@@ -13,7 +13,10 @@ from prep_watchdeck.application.service_backfill import (
     BackfillProgressTracker,
     backfill_1m_candles,
 )
-from prep_watchdeck.application.service_bootstrap import bootstrap_universe
+from prep_watchdeck.application.service_bootstrap import (
+    bootstrap_universe,
+    refresh_ticker_latest_periodically,
+)
 from prep_watchdeck.application.service_plan import build_subscription_plan
 from prep_watchdeck.application.service_runtime import ServiceRunResult
 from prep_watchdeck.application.service_watchdog import ServiceStalledError
@@ -151,6 +154,7 @@ def test_service_cli_runs_stream_without_network(monkeypatch) -> None:
         reconcile_interval_sec: float,
         reconcile_limit: int,
         reconcile_concurrency: int,
+        ticker_refresh_interval_sec: float,
         watchdog_interval_sec: float,
         watchdog_stall_sec: float,
         watchdog_confirmations: int,
@@ -174,6 +178,7 @@ def test_service_cli_runs_stream_without_network(monkeypatch) -> None:
         assert reconcile_interval_sec == 60.0
         assert reconcile_limit == 60
         assert reconcile_concurrency == 2
+        assert ticker_refresh_interval_sec == 60.0
         assert watchdog_interval_sec == 60.0
         assert watchdog_stall_sec == 300.0
         assert watchdog_confirmations == 3
@@ -269,6 +274,61 @@ async def test_backfill_1m_candles_saves_explicit_symbols(tmp_path) -> None:
         "MISSINGUSDT": None,
     }
     assert counts_by_symbol == {"ALTUSDT": 2, "BTCUSDT": 2, "MISSINGUSDT": 0}
+
+
+async def test_backfill_parent_cancellation_cancels_and_awaits_children() -> None:
+    all_started = asyncio.Event()
+    child_tasks: list[asyncio.Task[object]] = []
+    cancelled_symbols: set[str] = set()
+
+    class Store:
+        def upsert_candles_1m(self, candles: list[Candle1mRecord]) -> None:
+            _ = candles
+            raise AssertionError("cancelled fetches must not write")
+
+    async def fetcher(
+        symbol: str,
+        product_type: str,
+        granularity: str,
+        limit: int,
+    ) -> list[CandleBar]:
+        _ = (product_type, granularity, limit)
+        task = asyncio.current_task()
+        assert task is not None
+        child_tasks.append(task)
+        if len(child_tasks) == 2:
+            all_started.set()
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError:
+            cancelled_symbols.add(symbol)
+            raise
+        raise AssertionError("fetch unexpectedly resumed")
+
+    parent = asyncio.create_task(
+        backfill_1m_candles(
+            store=Store(),
+            fetcher=fetcher,
+            symbols=["ALTUSDT", "BTCUSDT"],
+            product_type="USDT-FUTURES",
+            limit=2,
+            concurrency=2,
+        )
+    )
+    await all_started.wait()
+
+    try:
+        parent.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await parent
+        await asyncio.sleep(0)
+
+        assert cancelled_symbols == {"ALTUSDT", "BTCUSDT"}
+        assert all(task.done() for task in child_tasks)
+    finally:
+        for task in child_tasks:
+            task.cancel()
+        await asyncio.gather(*child_tasks, return_exceptions=True)
 
 
 def test_backfill_progress_tracker_summarizes_symbol_results() -> None:
@@ -500,6 +560,7 @@ async def test_service_background_cleanup_cancels_and_awaits_all_task_kinds() ->
             "state",
             "snapshot",
             "ticker",
+            "ticker_refresh",
             "backfill",
             "reconcile",
             "deep_backfill",
@@ -522,6 +583,51 @@ async def test_service_background_cleanup_cancels_and_awaits_all_task_kinds() ->
 
     assert cancelled == list(started)
     assert all(task.done() for task in tasks)
+
+
+async def test_service_background_cleanup_signals_all_tasks_before_awaiting() -> None:
+    second_cancelled = asyncio.Event()
+
+    async def first_task() -> None:
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError:
+            await second_cancelled.wait()
+            raise
+
+    async def second_task() -> None:
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError:
+            second_cancelled.set()
+            raise
+
+    tasks = [asyncio.create_task(first_task()), asyncio.create_task(second_task())]
+    await asyncio.sleep(0)
+
+    started_at = asyncio.get_running_loop().time()
+    await asyncio.wait_for(cli._cancel_service_tasks(*tasks), timeout=0.1)
+    elapsed = asyncio.get_running_loop().time() - started_at
+
+    assert second_cancelled.is_set()
+    assert all(task.done() for task in tasks)
+    assert elapsed < 0.05
+
+
+async def test_service_background_cleanup_does_not_hide_task_failure() -> None:
+    async def task_failing_during_cancel() -> None:
+        try:
+            await asyncio.Future()
+        except asyncio.CancelledError as exc:
+            raise RuntimeError("background cleanup failed") from exc
+
+    task = asyncio.create_task(task_failing_during_cancel())
+    await asyncio.sleep(0)
+
+    with pytest.raises(RuntimeError, match="background cleanup failed"):
+        await cli._cancel_service_tasks(task)
+
+    assert task.done()
 
 
 @pytest.mark.parametrize(("has_candle", "expected"), [(True, True), (False, False)])
@@ -657,6 +763,92 @@ async def test_bootstrap_universe_excludes_unsupported_symbols_from_storage_and_
     assert result.valid_symbols == ["ALTUSDT"]
     assert [item.symbol for item in store.load_instruments()] == ["ALTUSDT"]
     assert [item.symbol for item in store.load_ticker_latest()] == ["ALTUSDT"]
+
+
+async def test_periodic_ticker_refresh_persists_fresh_open_interest() -> None:
+    stored: list[TickerLatestRecord] = []
+    collected: list[TickerLatestRecord] = []
+
+    class Store:
+        def upsert_instruments(self, instruments: list[InstrumentRecord]) -> None:
+            _ = instruments
+
+        def upsert_ticker_latest(self, tickers: list[TickerLatestRecord]) -> None:
+            stored.extend(tickers)
+
+    async def fetcher(product_type: str) -> list[TickerInfo]:
+        assert product_type == "USDT-FUTURES"
+        return [ticker("ALTUSDT", "1000000")]
+
+    async def stop_after_refresh(_seconds: float) -> None:
+        raise asyncio.CancelledError
+
+    with pytest.raises(asyncio.CancelledError):
+        await refresh_ticker_latest_periodically(
+            store=Store(),
+            fetcher=fetcher,
+            product_type="USDT-FUTURES",
+            interval_seconds=60.0,
+            publish_immediately=True,
+            ticker_sink=collected.extend,
+            on_error=lambda exc: pytest.fail(f"unexpected refresh error: {exc}"),
+            now_ms_provider=lambda: 1_781_000_000_500,
+            sleep=stop_after_refresh,
+        )
+
+    assert stored == collected
+    assert len(stored) == 1
+    assert stored[0].symbol == "ALTUSDT"
+    assert stored[0].holding_amount == 12345.0
+    assert stored[0].ts_ms == 1_781_000_000_000
+    assert stored[0].updated_at_ms == 1_781_000_000_500
+
+
+async def test_periodic_ticker_refresh_recovers_after_transient_fetch_failure() -> None:
+    stored: list[TickerLatestRecord] = []
+    errors: list[Exception] = []
+    fetch_count = 0
+    sleep_count = 0
+
+    class Store:
+        def upsert_instruments(self, instruments: list[InstrumentRecord]) -> None:
+            _ = instruments
+
+        def upsert_ticker_latest(self, tickers: list[TickerLatestRecord]) -> None:
+            stored.extend(tickers)
+
+    async def fetcher(product_type: str) -> list[TickerInfo]:
+        nonlocal fetch_count
+        assert product_type == "USDT-FUTURES"
+        fetch_count += 1
+        if fetch_count == 1:
+            raise RuntimeError("temporary public ticker failure")
+        return [ticker("ALTUSDT", "1000000")]
+
+    async def stop_after_second_cycle(_seconds: float) -> None:
+        nonlocal sleep_count
+        sleep_count += 1
+        if sleep_count == 2:
+            raise asyncio.CancelledError
+
+    with pytest.raises(asyncio.CancelledError):
+        await refresh_ticker_latest_periodically(
+            store=Store(),
+            fetcher=fetcher,
+            product_type="USDT-FUTURES",
+            interval_seconds=60.0,
+            publish_immediately=True,
+            ticker_sink=None,
+            on_error=errors.append,
+            now_ms_provider=lambda: 1_781_000_000_500,
+            sleep=stop_after_second_cycle,
+        )
+
+    assert fetch_count == 2
+    assert [type(error) for error in errors] == [RuntimeError]
+    assert len(stored) == 1
+    assert stored[0].symbol == "ALTUSDT"
+    assert stored[0].holding_amount == 12345.0
 
 
 def test_build_subscription_plan_counts_channels_and_shards() -> None:

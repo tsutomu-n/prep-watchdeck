@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-09T20:30:00+09:00`
-- 検証: `2026-08-09T20:30:00+09:00`
-- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
+- 更新: `2026-08-10T14:13:39+09:00`
+- 検証: `2026-08-10T14:13:39+09:00`
+- 文書更新作業: `2026-08-10_14:13`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -59,6 +59,59 @@ uv run watchdeck doctor
 service実行中に同じDBへ別writerを起動しない。画面からのsnapshot更新は
 `publish-service`経路を使う。
 
+### 正式なuser systemd設定
+
+正式なunit templateは`config/systemd/`、安全な生成・導入入口は
+`scripts/ops/install-user-services.sh`である。通常の確認はdry-runで、unitを変更しない。
+
+```bash
+cd /home/tn/projects/prep-watchdeck
+bash scripts/ops/install-user-services.sh --dry-run
+bash scripts/ops/install-user-services.sh --check
+```
+
+`--check`は導入済みunitとrender結果が同一の場合だけexit 0になる。意図した差分を確認して
+導入する場合だけ`--apply`を使う。
+
+```bash
+bash scripts/ops/install-user-services.sh --apply
+```
+
+applyは既存unitを同じdirectoryへ`.bak.<timestamp>.<pid>`として保存し、atomic replace、
+`daemon-reload`、`enable`まで行う。service/Webをstart・restartしない。表示されたbackup pathは
+rollback完了まで保持する。
+
+serviceはSIGTERM時にbackground taskをcancel/gatherし、最終`service-state.json`だけを発行する。
+既存のperiodic snapshotを正本として使い、終了時に重複したfull snapshotを新規生成しない。
+live規模のfull snapshot実測に対し、進行中snapshotの安全な完了余裕としてservice unitの
+`TimeoutStopSec`は90秒とする。通常の停止目標はin-flight snapshot時も60秒以内であり、
+90秒は異常時のSIGKILLを避けるための上限であって、強制終了を通常の停止経路にしない。
+
+DuckDBの`snapshots` tableはlatest cacheであり、履歴Archiveではない。save成功時に最新run 1件だけを
+保持する。過去versionで蓄積した削除済みrowによりDB fileが肥大した場合は、全writerを停止し、
+[DuckDB公式のreclaiming space手順](https://duckdb.org/docs/current/operations_manual/footprint_of_duckdb/reclaiming_space)
+に従って新規DBへ`COPY FROM DATABASE`する。元/新DBの全table件数、column、constraintを照合し、
+旧DBをrollback backupとして保持してから同一filesystem上で入れ替える。`VACUUM`をfile縮小手段として
+扱わない。
+
+service unitは通常の直近60本reconcileとは別に、74h判定に必要な5885本を低優先で構築する。
+
+```text
+--backfill-limit 0
+--reconcile-concurrency 1
+--ticker-refresh-interval-sec 60
+--deep-backfill-limit 5885
+--deep-backfill-batch-size 1
+--deep-backfill-concurrency 1
+--deep-backfill-cooldown-sec 5
+--deep-backfill-retry-delay-sec 60
+--deep-backfill-rate-limit-per-second 1
+```
+
+同じstate rootに別の`watchdeck service`を起動せず、full local gateとunit diff確認後に
+正式unitを1回だけcontrolled restartする。deep backfillはrestart後も進捗を
+`service-state.json`の`deepBackfill`へ出す。
+
 ### 更新停止watchdog
 
 既定値:
@@ -90,8 +143,8 @@ terminalから起動した場合も、検知時は非0終了するだけで自�
 
 ### 確認とrollback
 
-切替は初期backfillが`completed`または`failed`のterminal状態になり、focused/full gateが
-成功した後に1回だけ再起動する。再起動前後でMainPIDを記録し、再起動後は次を確認する。
+切替はfocused/full gateが成功し、unit dry-run差分を確認した後に1回だけ再起動する。
+再起動前後でMainPIDを記録し、再起動後は次を確認する。
 
 ```bash
 repo_root="$(git rev-parse --show-toplevel)"
@@ -101,7 +154,7 @@ state_root="$(realpath -m "${PREP_WATCHDECK_STATE_DIR:-var}")"
 systemctl --user show prep-watchdeck-service.service \
   -p ActiveState -p SubState -p MainPID -p NRestarts -p Restart
 
-jq '{generatedAtMs,dataAsOfMs,diagnostics,backfill,reconcile}' \
+jq '{generatedAtMs,dataAsOfMs,diagnostics,backfill,reconcile,deepBackfill}' \
   "$state_root/snapshots/service-state.json"
 
 curl --fail http://127.0.0.1:5173/api/health
@@ -113,6 +166,14 @@ writerが1つだけであることを確認する。異常時はserviceの起動
 `--watchdog-interval-sec 0`を追加して1回だけ再起動する。code自体を戻す場合は変更前commitへ
 戻して1回だけ再起動する。DB migrationとschema変更はないため、state dataの逆変換は不要。
 Bitget障害中に再起動を繰り返さない。
+
+unit設定を戻す場合は、`--apply`が表示したservice/Webそれぞれのbackupを元のunit pathへ
+`install -m 0644`で戻し、`systemctl --user daemon-reload`後に1回だけcontrolled restartする。
+deep backfillがupsertした正常なpublic candleは削除しない。
+
+serviceはbootstrap後もBitget public all-tickerを60秒ごとに1回取得し、`holdingAmount`と
+provider `ts`をfreshなOI current sampleへ使う。取得失敗はwarningとして次cycleへ継続し、
+private APIや古い値へのfallbackは行わない。
 
 ## State root
 

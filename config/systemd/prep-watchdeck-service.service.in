@@ -1,0 +1,19 @@
+[Unit]
+Description=prep-watchdeck market data service
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO_ROOT@/apps/scanner-core
+Environment=HOME=@HOME_DIR@
+Environment=PATH=@HOME_DIR@/.local/bin:@HOME_DIR@/.local/share/bun/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PREP_WATCHDECK_STATE_DIR=@STATE_ROOT@
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@UV_BIN@ run watchdeck service --backfill-limit 0 --reconcile-concurrency 1 --ticker-refresh-interval-sec 60 --deep-backfill-limit 5885 --deep-backfill-batch-size 1 --deep-backfill-concurrency 1 --deep-backfill-cooldown-sec 5 --deep-backfill-retry-delay-sec 60 --deep-backfill-rate-limit-per-second 1
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=90s
+
+[Install]
+WantedBy=default.target
