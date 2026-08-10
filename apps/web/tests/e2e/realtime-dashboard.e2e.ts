@@ -709,9 +709,9 @@ test("a Hot ticker delta does not recompute the Cold VPI-Lite+ display", async (
   writeTickerRuntime(1, initialUpdates, []);
 
   await waitForClientRuntime(page);
-  const panel = page.getByRole("region", { name: "VPI-Lite+ 実験表示" });
+  const panel = page.getByRole("region", { name: "市場活動（VPI-Lite+）" });
   const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });
-  const selectedVpi = detail.getByRole("region", { name: "選択銘柄 VPI補助詳細" });
+  const selectedVpi = detail.getByRole("region", { name: "選択銘柄 市場活動詳細" });
   await expect(panel).toBeVisible();
   await expect(selectedVpi).toBeVisible();
   const panelBefore = await panel.innerText();

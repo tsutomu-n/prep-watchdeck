@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-09T20:30:00+09:00`
-- 検証: `2026-08-09T20:30:00+09:00`
-- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
+- 更新: `2026-08-10T20:19:08+09:00`
+- 検証: `2026-08-10T20:19:08+09:00`
+- 文書更新作業: `2026-08-10_20:19`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -23,7 +23,7 @@ process状態の正本ではない。これらは実画面、state file、servic
 2. Candidateのtimeframeとrankingを確認する。ranking itemは個別分析への明示的なlinkである。
 3. Watchlistのカテゴリ、view、Raw Sortを使って確認対象を絞る。
 4. Watchlist rowを選択し、同じDashboard内のSelected detailを更新する。
-5. Selected detailで分類、理由、risk、24h range、VPI補助情報、Past Noteを確認する。
+5. Selected detailで分類、理由、risk、24h range、市場活動、Past Noteを確認する。
 6. より深く確認する時だけ、Selected detailの「個別分析を開く」linkからSymbol画面へ進む。
 7. Symbol画面のMonitoring Rail、chart、時間軸別データ、市場条件を確認する。
 8. 後日の監視に必要な時だけ、Past Noteを60日有効の銘柄annotationとして保存する。
@@ -60,14 +60,14 @@ Topbarの後にあるworkspaceのDOM順は、breakpointにかかわらず次で�
 1. Candidate (`data-dashboard-section="candidate"`)
 2. Watchlist (`data-dashboard-section="watchlist"`)
 3. Selected detail (`data-dashboard-section="detail"`)
-4. Smart Rank (`data-dashboard-section="smart-rank"`)
+4. 補正順位 (`data-dashboard-section="smart-rank"`)
 
 通常の`Tab`移動も、このsource order内で各sectionの操作要素を順に通る。Desktopの
 `85rem`以上ではSelected detailを右列へ置くが、CSS gridによる見た目の配置だけを変え、
 DOM、読み上げ順、keyboard順を入れ替えない。正の`tabindex`による順序の上書きもしない。
 
 Watchlist row群は後述のroving tab stopにより1つだけがTab順へ入り、そのrowから`Tab`で
-Selected detailの個別分析linkへ進める。Smart Rankはdetailの後に続く。
+Selected detailの個別分析linkへ進める。補正順位はdetailの後に続く。
 
 ### row選択と個別分析navigationの分離
 
@@ -86,9 +86,10 @@ filterやview変更で選択symbolが一時的に非表示になっても、別s
 Selected detailは「選択銘柄を保持中」を表示し、入力中の下書きを保持する。対象が再表示
 されるまでは保存不可であることも隠さず表示する。
 
-### VPI-Lite+ 実験表示
+### 市場活動（VPI-Lite+）
 
-Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Selected detail内へ実験表示を置く。
+Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Selected detail内へ市場活動を置く。
+利用者が最初に見る見出しは`市場活動`とし、技術名`VPI-Lite+`は小さく併記する。
 Dashboardの概要panelはBenchmark / Targetのstateとdata qualityだけを表示し、scoreを出さない。
 選択rowに一致する`row.display.vpiLitePlus`がある時だけ、選択銘柄の補助詳細としてscore、
 reason、risk、funding、open interest、data timestampを表示する。常に「実験中の補助指標で、
@@ -129,7 +130,7 @@ keyboard helpは「上下キーで銘柄を移動、EnterまたはSpaceで選択
 - 出来高増（`量増`）
 
 各chipは短縮labelを視覚表示し、`aria-label`には完全なlabelを持つ。さらにrow選択buttonの
-`aria-label`へ、分類、表示label、選択時間軸の変化と代金、15分出来高倍率、品質、注記、
+`aria-label`へ、分類、表示label、選択時間軸の変化と代金、15分量倍率、品質、注記、
 全signalの完全labelを連結する。色だけでsignalを区別しない。
 
 ### Hot価格のstale
@@ -174,11 +175,11 @@ Desktopは高密度な主分析surface、Mobileは短い確認、候補review、
 
 幅`960px`以下では次のbounded scrollを使う。
 
-- Candidateのranking body: `min(48svh, 28rem)`を上限に縦scrollする。
+- Candidateのmobile ranking body: `min(48svh, 28rem)`を上限に縦scrollする。
 - Watchlistのrow領域: `min(60svh, 36rem)`を上限に縦scrollする。
 - 両方とも`touch-action: pan-y`、`overscroll-behavior-y: auto`を使う。
 - ranking linkと表示対象rowは全件DOMに残し、各領域内で末尾まで到達可能にする。
-- Candidateは`960px`以下で2列、`560px`以下で1列にする。panelやitemを削らない。
+- Candidateは`561px`以上で連続した4列、`560px`以下で4つのautomatic activation tabにする。Desktop/Mobile表現は両方SSRし、CSS breakpointで切り替える。ArrowLeft/ArrowRightは循環し、Home/Endを含めてfocus移動とpanel切替を同時に行う。
 - ranking linkの整形済みsymbol名は省略しない。rank列と値列を縮退させ、`320px`でも
   `1000000BABYDOGE`級のsymbol列がellipsisや1文字だけにならず、必要なら途中でwrapする。
 - 変化rankingの見出しはsignの断定ではなくsort契約を表す`上昇順` / `下落順`とする。
@@ -322,3 +323,8 @@ Candidate見出し下はsnapshot summaryをvalidationし、74h価格AND売買代
 Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で表示する。
 74h条件の複合結果は`一致 / 未一致 / 判定不能`で表示する。VPI-Lite+のOI availabilityは
 別契約なので維持し、重複していた非VPIのraw open interest表示だけを置かない。
+
+`summary.volumeRatio15m`をvalidationできた場合だけ、`15分量倍率`へ
+`直近約24h中央値比`のような基準説明を付ける。値は有限時に`3.4×`、欠損時に`—`とする。
+metadataが不正・欠損ならsample数や期間を推測せず、基準詳細を取得できないfallbackを表示する。
+Symbol時間軸boardでは15mだけ量倍率行を生成し、他timeframeではDOMを生成しない。

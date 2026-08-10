@@ -95,6 +95,14 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
         "notMatched": 0,
         "unknown": 0,
     }
+    assert snapshot.summary["volumeRatio15m"] == {
+        "windowMinutes": 15,
+        "sampleStepMinutes": 5,
+        "baselineSampleCount": 288,
+        "approxBaselineSpanMinutes": 1440,
+        "statistic": "median",
+        "floorUsdt": 1000.0,
+    }
     assert snapshot.rows[0].symbol == "ALTUSDT"
     assert snapshot.rows[0].last_price == 1.19
     assert snapshot.rows[0].range_24h_high == 1.4
@@ -168,6 +176,40 @@ def test_snapshot_from_pipeline_uses_ranking_top_n_from_config() -> None:
 
     assert [item["symbol"] for item in snapshot.rankings["noTrade"]] == ["THINUSDT"]
     assert snapshot.summary["candidateRule74h"]["eligible"] == 2
+
+
+def test_snapshot_from_pipeline_volume_ratio_metadata_follows_active_config() -> None:
+    config = load_template(Path("../../config/scanner-filters"), "balanced")
+    config = config.model_copy(
+        update={
+            "volume": config.volume.model_copy(
+                update={"baseline_window_bars": 96, "volume_ratio_floor_usdt": 2500.0}
+            )
+        }
+    )
+    result = PipelineResult(
+        run_id="volume-ratio-meta-test",
+        generated_at_ms=1_781_000_000_000,
+        rows=[],
+        contracts=[],
+        tickers=[],
+        candles_by_symbol={},
+        chart_candles_by_symbol={},
+        candle_errors={},
+    )
+
+    snapshot = snapshot_from_pipeline(
+        result, template="balanced", config=config, product_type="USDT-FUTURES"
+    )
+
+    assert snapshot.summary["volumeRatio15m"] == {
+        "windowMinutes": 15,
+        "sampleStepMinutes": 5,
+        "baselineSampleCount": 96,
+        "approxBaselineSpanMinutes": 480,
+        "statistic": "median",
+        "floorUsdt": 2500.0,
+    }
 
 
 def scanner_row(symbol: str, category: Category, change_15m: float) -> ScannerRow:

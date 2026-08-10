@@ -176,12 +176,7 @@
     height: 8px;
     margin: 12px 0 8px;
     border: 1px solid var(--chip-line);
-    background: linear-gradient(
-      90deg,
-      var(--down) 0%,
-      var(--warning) 50%,
-      var(--up) 100%
-    );
+    background: var(--line-strong);
   }
 
   .range-marker {
@@ -313,13 +308,12 @@
   }
 
   .codes span {
-    border: 1px solid var(--chip-line);
-    padding: 5px 7px;
+    border: 0;
+    padding: 0;
     font-size: 11px;
   }
 
   .codes .risk-chip {
-    border-color: var(--warning-border);
     color: var(--warning);
   }
 </style>

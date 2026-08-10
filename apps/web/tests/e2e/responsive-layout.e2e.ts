@@ -665,16 +665,18 @@ test("mobile candidate ranking keeps every symbol identity readable", async ({ p
           .getByRole("button", { name: "15m", exact: true })
           .click();
         const candidateRanking = page.getByRole("region", { name: "15m ランキング" });
-        await expect(
-          candidateRanking.getByRole("heading", { name: "上昇順", exact: true })
-        ).toBeVisible();
-        await expect(
-          candidateRanking.getByRole("heading", { name: "下落順", exact: true })
-        ).toBeVisible();
+        const tabs = candidateRanking.getByRole("tab");
+        await expect(tabs).toHaveCount(4);
+        for (const tabName of ["上昇", "下落", "売買代金", "15分量倍率"]) {
+          await candidateRanking.getByRole("tab", { name: tabName, exact: true }).click();
+          const activePanel = candidateRanking.getByRole("tabpanel");
+          await expect(activePanel.locator(`.rank-row > span[title="${longSymbol}"]`)).toBeVisible();
+        }
+        await candidateRanking.getByRole("tab", { name: "上昇", exact: true }).click();
         await exposeHorizontalOverflow(page);
 
-        const rankingBody = page.locator(".ranking-body");
-        const symbols = rankingBody.locator(".rank-row > span[title]");
+        const rankingBody = page.locator(".mobile-rankings");
+        const symbols = rankingBody.locator(".rank-panel:not([hidden]) .rank-row > span[title]");
         const longSymbols = rankingBody.locator(`.rank-row > span[title="${longSymbol}"]`);
         await expect(longSymbols).toHaveCount(metricIds.length);
         const measurements = await symbols.evaluateAll((nodes) =>
@@ -726,23 +728,32 @@ test("mobile candidate ranking keeps every symbol identity readable", async ({ p
 
         const root = await measureRootOverflow(page);
         expect(root.overflowPx, `${viewport.width}px root overflow: ${JSON.stringify(root)}`).toBe(0);
-        const rankingGeometry = await rankingBody.evaluate((element) => ({
-          clientHeight: element.clientHeight,
-          scrollHeight: element.scrollHeight,
-          overflowY: getComputedStyle(element).overflowY,
-          touchAction: getComputedStyle(element).touchAction
-        }));
-        expect(
-          rankingGeometry.scrollHeight,
-          `${viewport.width}px bounded candidate ranking: ${JSON.stringify(rankingGeometry)}`
-        ).toBeGreaterThan(rankingGeometry.clientHeight);
-        expect(rankingGeometry.overflowY).toBe("auto");
-        expect(rankingGeometry.touchAction).toContain("pan-y");
       });
     }
   } finally {
     writeFileSync(e2ePaths.snapshotPath, originalText, "utf-8");
   }
+});
+
+test("mobile candidate tabs use automatic roving activation", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+
+  const ranking = page.getByRole("region", { name: "15m ランキング" });
+  const up = ranking.getByRole("tab", { name: "上昇", exact: true });
+  const down = ranking.getByRole("tab", { name: "下落", exact: true });
+  const ratio = ranking.getByRole("tab", { name: "15分量倍率", exact: true });
+  await expect(up).toHaveAttribute("tabindex", "0");
+  await up.focus();
+  await up.press("ArrowRight");
+  await expect(down).toBeFocused();
+  await expect(down).toHaveAttribute("aria-selected", "true");
+  await down.press("End");
+  await expect(ratio).toBeFocused();
+  await expect(ratio).toHaveAttribute("aria-selected", "true");
+  await ratio.press("ArrowRight");
+  await expect(up).toBeFocused();
+  await expect(up).toHaveAttribute("aria-selected", "true");
 });
 
 test("320px timeframe controls form balanced three-by-two groups", async ({ page }) => {
@@ -1698,7 +1709,7 @@ test("mobile keeps all ranking links and 400 rows reachable before the selected 
       "smart-rank"
     ]);
 
-    const rankingBody = page.locator('[data-dashboard-section="candidate"] .ranking-body');
+    const rankingBody = page.locator('[data-dashboard-section="candidate"] .mobile-rankings');
     const rows = page.locator(
       '[data-dashboard-section="watchlist"] [data-market-row][data-symbol]'
     );
@@ -1707,7 +1718,7 @@ test("mobile keeps all ranking links and 400 rows reachable before the selected 
     await expect(rows).toHaveCount(400);
 
     const geometry = await page.evaluate(() => {
-      const ranking = document.querySelector<HTMLElement>(".ranking-body");
+      const ranking = document.querySelector<HTMLElement>(".mobile-rankings");
       const rows = document.querySelector<HTMLElement>('[aria-label="精密監視リスト"] .rows');
       const detail = document.querySelector<HTMLElement>('[data-dashboard-section="detail"]');
       if (!ranking || !rows || !detail) throw new Error("bounded mobile section missing");
@@ -1733,8 +1744,9 @@ test("mobile keeps all ranking links and 400 rows reachable before the selected 
     expect(geometry.rowsOverscroll).toBe("auto");
     expect(geometry.rowsTouchAction).toContain("pan-y");
 
-    await rankingBody.locator("a.rank-row").last().scrollIntoViewIfNeeded();
-    await expect(rankingBody.locator("a.rank-row").last()).toBeVisible();
+    const activeRankingLinks = rankingBody.getByRole("tabpanel").locator("a.rank-row");
+    await activeRankingLinks.last().scrollIntoViewIfNeeded();
+    await expect(activeRankingLinks.last()).toBeVisible();
     await rows.last().locator("[data-row-select]").scrollIntoViewIfNeeded();
     await expect(rows.last()).toBeVisible();
 

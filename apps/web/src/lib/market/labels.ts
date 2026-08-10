@@ -9,6 +9,16 @@ export function categoryLabel(value: string) {
   return labels[value] ?? "未分類";
 }
 
+export function categoryCompactLabel(value: string) {
+  const labels: Record<string, string> = {
+    WATCH: "注視",
+    CAUTION: "注意",
+    NO_TRADE: "除外",
+    LOW_PRIORITY: "低優"
+  };
+  return labels[value] ?? "未分類";
+}
+
 export function dataQualityLabel(value: string) {
   const labels: Record<string, string> = {
     OK: "正常",

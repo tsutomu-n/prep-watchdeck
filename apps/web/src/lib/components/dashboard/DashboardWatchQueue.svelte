@@ -38,6 +38,8 @@
     tickerOverlay,
     tickerStatus,
     tickerError,
+    volumeRatioBaseline,
+    volumeRatioHelp,
     onCategorySelect,
     onViewSelect,
     onSymbolSelect,
@@ -76,6 +78,8 @@
     tickerOverlay: TickerOverlay;
     tickerStatus: TickerPollController["status"];
     tickerError: string | null;
+    volumeRatioBaseline: string;
+    volumeRatioHelp: string;
     onCategorySelect: (category: string) => void;
     onViewSelect: (viewId: string) => void;
     onSymbolSelect: (symbol: string) => void;
@@ -126,6 +130,8 @@
     {tickerOverlay}
     {tickerStatus}
     {tickerError}
+    {volumeRatioBaseline}
+    {volumeRatioHelp}
     onViewSelect={onViewSelect}
     onSymbolSelect={onSymbolSelect}
     onTimeframeSelect={onTimeframeSelect}

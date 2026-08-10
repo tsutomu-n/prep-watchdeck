@@ -3,6 +3,7 @@
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatCompactNumber as fmtCompact, formatNumber as fmt } from "$lib/market/format";
   import {
+    categoryCompactLabel,
     categoryLabel,
     changeTone,
     codeLabel,
@@ -20,6 +21,7 @@
     selectedTimeframe,
     rankingTimeframes,
     noteBadge,
+    volumeRatioHelp,
     isRekindle,
     tabIndex,
     onSymbolSelect,
@@ -32,6 +34,7 @@
     selectedTimeframe: string;
     rankingTimeframes: readonly string[];
     noteBadge: string | null;
+    volumeRatioHelp: string;
     isRekindle: boolean;
     tabIndex: 0 | -1;
     onSymbolSelect: (symbol: string) => void;
@@ -42,6 +45,11 @@
   let signals = $derived(movementSignals(row, selectedTimeframe));
   let displaySymbol = $derived(formatDisplaySymbol(row.symbol));
   let volumeRatio15m = $derived(row.volumeRatioByTf?.["15m"]);
+  let volumeRatioText = $derived(
+    typeof volumeRatio15m === "number" && Number.isFinite(volumeRatio15m)
+      ? `${fmt(volumeRatio15m)}×`
+      : "—"
+  );
   let price = $derived(tickerOverlay.priceFor(row.symbol, row.lastPrice, row.analysisPrice));
   let priceDescriptionId = $derived(`market-row-price-${encodeURIComponent(row.symbol)}`);
   let accessibleSummary = $derived(
@@ -54,7 +62,7 @@
         .join("、")}`,
       `${selectedTimeframe}変化 ${fmtCompact(row.changePctByTf?.[selectedTimeframe], "%")}`,
       `${selectedTimeframe}代金 ${fmtCompact(row.turnoverUsdtByTf?.[selectedTimeframe])}`,
-      `15分出来高倍率 ${fmt(volumeRatio15m)}`,
+      `15分量倍率 ${volumeRatioText}`,
       `品質 ${dataQualityLabel(row.dataQuality)}`,
       noteBadge ? `注記 ${noteBadge}` : null,
       signals.length > 0
@@ -97,9 +105,8 @@
       {#if price.stale}<small>STALE</small>{/if}
     </span>
     <DashboardMiniSparkline {row} {selectedTimeframe} />
-    <span class="category" aria-hidden="true">{categoryLabel(row.category)}</span>
     <span class="label" title={codeLabel(row.label)}>
-      <span>{codeLabel(row.label)}</span>
+      <span><small class="category">{categoryCompactLabel(row.category)} · </small>{codeLabel(row.label)}</span>
       {#if signals.length > 0}
         <span class="row-signals">
           {#each signals as signal}
@@ -112,8 +119,8 @@
         </span>
       {/if}
     </span>
-    <span class="volume-ratio" title={`15分出来高倍率 ${fmt(volumeRatio15m)}`}
-      >{fmt(volumeRatio15m)}</span
+    <span class="volume-ratio" title={`15分量倍率 ${volumeRatioText}。${volumeRatioHelp}`}
+      >{volumeRatioText}</span
     >
     {#each rankingTimeframes as timeframe, index}
       <span
@@ -302,8 +309,8 @@
     display: inline-flex;
     align-items: center;
     min-height: 18px;
-    border: 1px solid var(--chip-line);
-    padding: 1px var(--space-xs);
+    border: 0;
+    padding: 1px 0;
     color: var(--chip-neutral);
     font-size: 10px;
     line-height: 1.2;
@@ -311,28 +318,27 @@
   }
 
   .signal-chip.up {
-    border-color: color-mix(in srgb, var(--up) 68%, var(--surface));
     color: var(--up);
   }
 
   .signal-chip.down {
-    border-color: color-mix(in srgb, var(--down) 68%, var(--surface));
     color: var(--down);
   }
 
   .signal-chip.warn {
-    border-color: var(--warning-border);
     color: var(--warning);
   }
 
   .signal-chip.neutral {
-    border-color: var(--chip-line);
     color: var(--chip-neutral);
   }
 
   .category {
-    display: none;
+    display: inline;
+    flex: 0 0 auto;
+    color: var(--subtle);
     font-size: var(--type-label-caps-size);
+    font-weight: 800;
   }
 
   .note-badge {
@@ -440,8 +446,5 @@
       display: block;
     }
 
-    .category {
-      display: none;
-    }
   }
 </style>

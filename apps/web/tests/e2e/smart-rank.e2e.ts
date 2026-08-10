@@ -31,7 +31,7 @@ function generateSnapshot(fixtureSet: string) {
   );
 }
 
-test("Raw Sort controls feed manual Smart Rank without persistence", async ({ page }) => {
+test("Raw Sort controls feed manual corrected ranking without persistence", async ({ page }) => {
   generateSnapshot("basic");
   await page.goto("/");
 
@@ -58,12 +58,13 @@ test("Raw Sort controls feed manual Smart Rank without persistence", async ({ pa
   await expect(watchlist.getByText("Raw Sort: 74h 価格変化 小さい順")).toBeVisible();
   await expect(watchlist.getByText("74h: 独自ルール用。72hではない。")).toBeVisible();
 
-  const smartRank = page.getByRole("region", { name: "Smart Rank" });
+  const smartRank = page.getByRole("region", { name: "補正順位" });
   await expect(smartRank.getByText("未実行。Raw Sortで絞った後、必要な時だけ押してください。")).toBeVisible();
   await expect(smartRank.getByText(/監視優先度とデータ品質で並べ直す補助表示/)).toBeVisible();
 
-  await smartRank.getByLabel("Smart Rank対象上限").fill("2");
-  await smartRank.getByRole("button", { name: "この上位をSmart Rank" }).click();
+  await smartRank.getByLabel("補正順位対象上限").fill("2");
+  await smartRank.getByRole("button", { name: "上位を補正" }).click();
+  await expect(smartRank.getByText(/Raw #\d+ → 補正 #1/)).toBeVisible();
 
   await expect(smartRank.getByText("対象 2 / 表示 5")).toBeVisible();
   await expect(smartRank.locator(".smart-rank-list li")).toHaveCount(2);

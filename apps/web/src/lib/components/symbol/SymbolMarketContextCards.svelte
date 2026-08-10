@@ -179,12 +179,7 @@
     height: 10px;
     margin: 14px 0 10px;
     border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent);
-    background: linear-gradient(
-      90deg,
-      var(--down) 0%,
-      var(--warning) 50%,
-      var(--up) 100%
-    );
+    background: var(--line-strong);
   }
 
   .range-marker {

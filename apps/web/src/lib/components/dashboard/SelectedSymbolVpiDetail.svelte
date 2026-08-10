@@ -13,11 +13,12 @@
   let { item }: { item: VpiLitePlusItem } = $props();
 </script>
 
-<section class="vpi-detail" aria-label="選択銘柄 VPI補助詳細">
+<section class="vpi-detail" aria-label="選択銘柄 市場活動詳細">
   <header>
     <div>
-      <h3>選択銘柄 VPI補助</h3>
-      <p>VPI補助値 {fmt(item.score)} / 100</p>
+      <h3>市場活動</h3>
+      <small class="technical-name">VPI-Lite+</small>
+      <p>補助値 {fmt(item.score)} / 100</p>
     </div>
     <strong>{vpiStateLabel(item.state)}</strong>
   </header>
@@ -32,11 +33,11 @@
       <dd>{vpiFundingStateLabel(item.fundingState)}</dd>
     </div>
     <div>
-      <dt>Open Interest</dt>
+      <dt>OI availability</dt>
       <dd>{vpiOpenInterestStateLabel(item.openInterestState)}</dd>
     </div>
     <div>
-      <dt>data as of</dt>
+      <dt>データ時点</dt>
       <dd>{item.dataAsOf === null ? "未取得" : fmtDate(item.dataAsOf)}</dd>
     </div>
   </dl>
@@ -86,6 +87,13 @@
 
   h3 {
     font-size: 12px;
+  }
+
+  .technical-name {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 9px;
   }
 
   header p {
@@ -143,15 +151,14 @@
   }
 
   .code-group span {
-    border: 1px solid var(--chip-line);
-    padding: 2px 5px;
+    border: 0;
+    padding: 0;
     color: var(--chip-neutral);
     font-size: 10px;
     line-height: 1.25;
   }
 
   .code-group.risk span {
-    border-color: var(--warning-border);
     color: var(--warning);
   }
 </style>

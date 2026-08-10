@@ -32,19 +32,19 @@
       ? `再実行まで${cooldownSeconds}秒です`
       : availableRows <= 0
         ? "現在の表示条件に対象銘柄がないため実行できません"
-        : "現在のRaw Sort上位を監視優先度で並べ直します"
+        : "現在のRaw Sort上位を補正順位へ並べ直します"
   );
 </script>
 
-<section class="smart-rank" aria-label="Smart Rank">
+<section class="smart-rank" aria-label="補正順位">
   <div class="smart-rank-head">
     <div>
-      <h2>Smart Rank</h2>
+      <h2>補正順位</h2>
     </div>
     <label>
       <span>対象上限</span>
       <input
-        aria-label="Smart Rank対象上限"
+        aria-label="補正順位対象上限"
         inputmode="numeric"
         min="1"
         max={maxTargetLimit}
@@ -60,14 +60,14 @@
       onclick={onRun}
       disabled={!canRun}
     >
-      {cooldownSeconds > 0 ? `${cooldownSeconds}s` : "この上位をSmart Rank"}
+      {cooldownSeconds > 0 ? `${cooldownSeconds}s` : "上位を補正"}
     </button>
   </div>
 
   <p id="smart-rank-run-status" class="run-status">{runStatus}</p>
 
   <p class="smart-rank-note">
-    Smart Rankは、現在のRaw Sort上位候補を監視優先度とデータ品質で並べ直す補助表示です。
+    補正順位は、現在のRaw Sort上位候補を監視優先度とデータ品質で並べ直す補助表示です。
   </p>
 
   {#if state}
@@ -77,15 +77,15 @@
       <span>{new Date(state.base.createdAt).toLocaleTimeString("ja-JP")}</span>
     </div>
     <ol class="smart-rank-list">
-      {#each state.rows.slice(0, 8) as item}
+      {#each state.rows.slice(0, 8) as item, index}
         <li>
           <a href={`/symbols/${encodeURIComponent(item.row.symbol)}?tf=${state.base.timeframe}`}>
             <span>
               <strong>{item.row.symbol}</strong>
-              <em>raw #{item.sourceRank} / {codeLabel(item.row.label)}</em>
+              <em>Raw #{item.sourceRank} → 補正 #{index + 1} / {codeLabel(item.row.label)}</em>
             </span>
             <span class="priority">
-              <small>監視優先度</small>
+              <small>補助値</small>
               <b>{fmt(item.smartScore)}</b>
             </span>
             <span>{item.warningCount}警戒</span>

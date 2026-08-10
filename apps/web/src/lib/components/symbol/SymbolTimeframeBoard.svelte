@@ -18,6 +18,10 @@
     selectedTimeframe: string;
     rows: TimeframeRow[];
   } = $props();
+
+  function volumeRatioText(value: number | null | undefined) {
+    return typeof value === "number" && Number.isFinite(value) ? `${fmtCompact(value)}×` : "—";
+  }
 </script>
 
 <section id="symbol-timeframes" class="timeframe-board" aria-label="時間軸別データ" tabindex="-1">
@@ -34,7 +38,9 @@
         <span>{item.timeframe}</span>
         <strong class={changeTone(item.change)}>{fmtCompact(item.change, "%")}</strong>
         <small>{fmtCompact(item.turnover)} USDT</small>
-        <em>vol ratio {fmtCompact(item.volumeRatio)}</em>
+        {#if item.timeframe === "15m"}
+          <em>15分量倍率 {volumeRatioText(item.volumeRatio)}</em>
+        {/if}
       </a>
     {/each}
   </div>

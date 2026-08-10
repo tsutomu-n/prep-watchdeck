@@ -16,12 +16,12 @@ export const dashboardRankingMetrics = [
   ["上昇順", "changeUp"],
   ["下落順", "changeDown"],
   ["売買代金", "turnoverTop"],
-  ["15分出来高倍率", "volumeUp"]
+  ["15分量倍率", "volumeUp"]
 ] as const;
 export const dashboardRawSortKeys = [
   { id: "changePct", label: "価格変化" },
   { id: "turnoverUsdt", label: "売買代金" },
-  { id: "volumeRatio", label: "15分出来高倍率" },
+  { id: "volumeRatio", label: "15分量倍率" },
   { id: "attentionScore", label: "注目度" },
   { id: "riskTagCount", label: "警戒数" },
   { id: "dataQuality", label: "データ品質" }

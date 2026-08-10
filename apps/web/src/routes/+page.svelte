@@ -27,6 +27,10 @@
     type DashboardViewMode as ViewMode
   } from "$lib/market/dashboard-filters";
   import { formatCandidateRule74h } from "$lib/market/candidate-rule";
+  import {
+    formatVolumeRatioBaseline,
+    formatVolumeRatioHelp
+  } from "$lib/market/volume-ratio-meta";
   import { sortRowsByRawSort } from "$lib/market/raw-sort";
   import { rawSortStateForTimeframe } from "$lib/market/raw-sort-presets";
   import {
@@ -162,6 +166,10 @@
   let candidateRuleText = $derived(
     formatCandidateRule74h(snapshot?.summary?.candidateRule74h)
   );
+  let volumeRatioBaseline = $derived(
+    formatVolumeRatioBaseline(snapshot?.summary?.volumeRatio15m)
+  );
+  let volumeRatioHelp = $derived(formatVolumeRatioHelp(snapshot?.summary?.volumeRatio15m));
   let vpiSummary = $derived(parseVpiLitePlusSummary(snapshot?.summary?.vpiLitePlus));
   let selectedVpi = $derived(
     vpiSummary && selected
@@ -717,6 +725,8 @@
           rankings={snapshot?.rankings}
           {selectedTimeframe}
           {candidateRuleText}
+          {volumeRatioBaseline}
+          {volumeRatioHelp}
           timeframes={rankingTimeframes}
           {metrics}
           onTimeframeSelect={selectRankingTimeframe}
@@ -750,6 +760,8 @@
           {tickerOverlay}
           {tickerStatus}
           {tickerError}
+          {volumeRatioBaseline}
+          {volumeRatioHelp}
           onCategorySelect={selectCategoryFilter}
           onViewSelect={selectViewMode}
           onSymbolSelect={selectDashboardSymbol}
@@ -777,7 +789,13 @@
             </section>
           {/if}
           {@const range = range24h(selected)}
-          <SelectedSymbolOverview row={selected} {selectedTimeframe} {range} />
+          <SelectedSymbolOverview
+            row={selected}
+            {selectedTimeframe}
+            {range}
+            {volumeRatioBaseline}
+            {volumeRatioHelp}
+          />
           {#if vpiSummary}
             <DashboardVpiExperimentPanel summary={vpiSummary} />
           {/if}
@@ -860,7 +878,7 @@
     line-height: 1.45;
   }
 
-  /* Hallmark macrostructure: candidate → watchlist → selected context → Smart Rank.
+  /* Hallmark macrostructure: candidate → watchlist → selected context → corrected ranking.
    * DESIGN.md locked terminal palette; flat surfaces, bounded mobile lists, no information removal.
    */
   .terminal {
