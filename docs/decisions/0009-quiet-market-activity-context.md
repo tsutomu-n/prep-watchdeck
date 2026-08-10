@@ -1,7 +1,7 @@
 # Decision 0009: Quiet Market activity context
 
 - 作成: `2026-08-10T23:10:43+09:00`
-- 更新: `2026-08-10T23:10:43+09:00`
+- 更新: `2026-08-11T05:16:48+09:00`
 - 状態: `設計判断`
 
 ---
@@ -22,8 +22,9 @@ attention scoreを変更しない。公開snapshotは`featureVersion=4`、`rules
 
 既存`summary.vpiLitePlus.targets`だけをCandidate近傍の発見laneへ使う。Benchmark、Watchlist全銘柄、
 新しいVPI計算は対象にしない。活動増加と要注意へ分類し、score降順で各5件まで表示するが、scoreは
-laneへ表示しない。coverageと3つの空状態を明示する。選択銘柄detailのscore、reason、risk、funding、
-OI availabilityは維持する。
+laneへ表示しない。発見buttonは現在のWatchlist表示条件に含まれ、そのまま選択できるTargetに限定する。
+coverageと、対象なし・表示条件該当なし・活動急増なし・データ不足の4つの空状態を明示する。
+選択銘柄detailのscore、reason、risk、funding、OI availabilityは維持する。
 
 ## 互換性とrollback
 

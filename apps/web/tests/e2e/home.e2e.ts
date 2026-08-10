@@ -314,6 +314,15 @@ test("shows VPI experiment states without turning the dashboard into a score ran
   await expect(panel.getByRole("heading", { name: "活動増加" })).toBeVisible();
   await expect(panel).not.toContainText("48.5");
 
+  const categories = page.getByRole("complementary", { name: "分類" });
+  await categories.getByRole("button", { name: /注視\s+2/ }).click();
+  await expect(
+    panel.getByText("現在の表示条件に該当するVPI対象なし", { exact: true })
+  ).toBeVisible();
+  await expect(panel.getByText("VPI表示 0 / 対象 1 / Watchlist 5銘柄", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("button", { name: "THINUSDT、活動増加を選択" })).toHaveCount(0);
+  await categories.getByRole("button", { name: /すべて\s+5/ }).click();
+
   await panel.getByRole("button", { name: "THINUSDT、活動増加を選択" }).click();
 
   const detail = page.getByRole("complementary", { name: "選択銘柄の詳細" });

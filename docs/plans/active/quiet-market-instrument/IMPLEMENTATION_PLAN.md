@@ -1,8 +1,8 @@
 # Quiet Market Instrument 実装計画
 
 - 作成: `2026-08-10T22:18:28+09:00`
-- 更新: `2026-08-10T23:24:00+09:00`
-- 検証: `2026-08-10T23:24:00+09:00`
+- 更新: `2026-08-11T05:16:48+09:00`
+- 検証: `2026-08-11T05:16:48+09:00`
 - 状態: `実装計画`
 
 ---
@@ -34,7 +34,7 @@ Profileは`EXECPLAN`、riskは`MEDIUM`。正本checkoutは`/home/tn/projects/pre
 - 15mの現行値をgoldenとして保持する。5m/24h/74hは`None`のまま。
 - activity phaseは`UNKNOWN -> COOLING -> SUSTAINED -> EXPANDING -> BURST -> NORMAL`の順。内部値は`BURST | EXPANDING | SUSTAINED | COOLING | NORMAL | UNKNOWN`。
 - phaseは方向・売買推奨・Score・category・rankingを意味しない。
-- VPI laneは既存summary sidecarのみを分類し、`EARLY_ACTIVITY/ACTIVE_MOVE`を活動増加、`THIN_VOLATILITY/SINGLE_BAR_SUSPECT`を要注意として各score降順最大5件。対象0、valid該当0、全件判定不能を別表示する。
+- VPI laneは既存summary sidecarのみを分類し、`EARLY_ACTIVITY/ACTIVE_MOVE`を活動増加、`THIN_VOLATILITY/SINGLE_BAR_SUSPECT`を要注意として各score降順最大5件。現在のWatchlist表示条件で選択できる対象だけを操作可能にし、対象0、表示条件該当0、valid該当0、全件判定不能を別表示する。
 - snapshotはadditive optional field `activityPhase`をrowへ追加する。`featureVersion=4`、`rulesetVersion=3`、`schemaVersion=1`。
 
 ## 2. Baseline evidence
@@ -68,9 +68,9 @@ Windows共有側の最初のWeb baselineはLinux用`node_modules`を解決でき
 | AC-QMI-012 | passed | Mobile automatic tabs、ARIA/keyboard、4 tabs、selection保持をresponsive E2Eと390/320pxで再検証。 |
 | AC-QMI-013 | passed | Watchlist category、15m倍率、phase、異常品質、3 viewport overflow 0を証明。 |
 | AC-QMI-014 | passed | Inspectorの15m/1h/4h、phase、OI、74h、理由をE2Eと3銘柄実測で証明。 |
-| AC-QMI-015 | passed | VPI Target限定、coverage、分類/sort/limit、3 empty状態をunit/E2Eで証明。 |
+| AC-QMI-015 | passed | VPI Target限定、coverage、分類/sort/limit、4 empty状態と表示条件外targetの非操作化をunit/E2Eで証明。 |
 | AC-QMI-016 | passed | VPI score/対象計算とSmart Rank algorithmは無変更。Hot非再計算と品質補正理由E2E PASS。 |
-| AC-QMI-017 | passed | focused、check/build、E2E 59、performance 2、full gate 249/185/60 PASS。 |
+| AC-QMI-017 | passed | focused、check/build、E2E 59、performance 2、review修正後full gate 249/186/60 PASS。 |
 | AC-QMI-018 | passed_on_commit | DESIGN/current docs/ADR/plans、visual evidence、final diff、未解決P0/P1なし。対象fileだけを含む本commit自身で完了し、正確なHEAD/cleanはignored stateと最終報告へ記録する。 |
 
 ## 4. Checkpoints
@@ -81,7 +81,7 @@ Windows共有側の最初のWeb baselineはLinux用`node_modules`を解決でき
 4. `CP-QMI-004` completed: activity phase、DTO/schema/fixture/versionを同期。
 5. `CP-QMI-005` completed: 品質label/helperと正常品質非表示を実装。
 6. `CP-QMI-006` completed: Watchlist/Inspectorへ倍率・phaseを追加。既存Candidate/tabsを再検証。
-7. `CP-QMI-007` completed: VPI discovery helper/unit/panelを追加し既存detailを維持。
+7. `CP-QMI-007` completed: VPI discovery helper/unit/panelを追加し既存detailを維持。PR #5 reviewで判明した表示条件外targetのno-opを最小修正し、選択可能targetだけをlaneへ残した。
 8. `CP-QMI-008` completed: focused/full/performance gate PASS。
 9. `CP-QMI-009` completed_on_commit: 1440/390/320 visual QA、docs/ADR/final diff、選択的local commit/clean。
 
@@ -105,8 +105,8 @@ rollbackは今回commitをrevert可能なadditive field/UI差分に保つ。DB m
 | Web unit | `apps/web` | exit 0、27 passed |
 | Web focused E2E | `apps/web` | exit 0、59 passed |
 | Web check/build | `apps/web` | exit 0、0 errors/warnings、build PASS |
-| Full local gate | Repo root | exit 0、scanner 249、Web unit 185、Playwright 60、maintenance/Ruff/Pyrefly/check/build PASS |
-| Performance | `apps/web` | exit 0、2 passed。Hot apply p95 1.2ms、Raw Sort p95 24.9ms、Cold max 56.3ms、transport budget内 |
+| Full local gate | Repo root | exit 0、scanner 249、Web unit 186、Playwright 60、maintenance/Ruff/Pyrefly/check/build PASS |
+| Performance | `apps/web` | review修正後exit 0、2 passed。Hot apply p95 3.7ms、Raw Sort p95 19.3ms、Cold 51.6ms、transport budget内 |
 | DesignMD | Repo root | exit 0、errors 0 / warnings 0 / infos 1 |
 | Docs/JSON/schema | Repo root | JSON parse、metadata/link 17、schema再生成cmp、generated Web type、diff check PASS |
 | Visual QA | isolated port 4190 | 1440/390/320pxでscrollWidth=clientWidth、Candidate/VPI/Watchlist/Inspector/補正順位/銘柄注記、mobile 4 tabs PASS |
@@ -117,6 +117,11 @@ Full gateの途中失敗は2回とも今回差分のformat gateだった。1回�
 `test_domain_features.py` formatでexit 1。局所整形後、同じfull gateを最初から再実行してexit 0を得た。
 一時previewは親停止後にVite子が残ったため、port 4190を保持する今回のPIDだけを確認して停止し、listener/orphan 0を確認した。production processには触れていない。
 
+PR #5 review thread `PRRT_kwDOTqwzwM6YBKtf`は、filter後の`visibleRows`に存在しないVPI targetを
+選択buttonとして表示できる不整合を指摘した。unit RED（旧実装は1 failed）後、lane入力を現在選択可能な
+symbol集合で絞り、専用empty stateを追加した。unit 9 passed、home E2E 24 passed、full gateとperformanceを
+source修正後に再実行して上記GREENを得た。VPI producer、対象判定、score、rankingは変更していない。
+
 Visual evidenceはGit外の
 `/home/tn/.local/share/prep-watchdeck/tmp/quiet-market-instrument-activity/final/`にある。
 小fixtureのMobile Watchlistは400-row reachability用の既存bounded scroll高を保つため空きが大きいが、
@@ -126,8 +131,8 @@ overflow/clip/操作不能はなく、今回差分起因のP0/P1ではない。
 
 - Current checkpoint: `CP-QMI-009 completed_on_commit`
 - Mandatory passed: `18 / 18`（AC-QMI-018はこのplanを含むcommit自身で成立）
-- Final head: `this plan commit itself`。parent HEADは`79f5e8d939dddb3948ead270c2eff7a1350daab2`。正確なcommit/treeはignored `.ai-work/state.md`と最終報告へ記録する。
+- Final head: `this plan commit itself`。parent HEADは`3a8bfecc1d6ca087d70bb07b55facf0a9fe78dbf`。正確なcommit/treeはignored `.ai-work/state.md`と最終報告へ記録する。
 - Goal gap: なし。
 - Remaining work: なし。
 - Unresolved P0/P1: なし。
-- Residual risk: old feature 3 snapshotではoptional `activityPhase`がないためUIは`判定不能`。production反映・restartは今回の明示scope外で未実施。
+- Residual risk: old feature 3 snapshotではoptional `activityPhase`がないためUIは`判定不能`。production反映・restartはmerge後の正式運用手順で別証拠化する。

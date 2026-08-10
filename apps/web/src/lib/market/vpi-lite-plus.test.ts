@@ -177,4 +177,26 @@ describe("VPI-Lite+ discovery lane", () => {
     expect(buildVpiDiscoveryLane(calm, 4).status).toBe("no-match");
     expect(buildVpiDiscoveryLane(unavailable, 4).status).toBe("unavailable");
   });
+
+  it("exposes buttons only for targets selectable under the current Watchlist view", () => {
+    const summary = parseVpiLitePlusSummary({
+      schemaVersion: 1,
+      mode: "lite_plus_v0",
+      generatedAt: 1,
+      benchmarks: [],
+      targets: [
+        { ...validItem, symbol: "VISIBLE", state: "EARLY_ACTIVITY", score: 40 },
+        { ...validItem, symbol: "HIDDEN", state: "ACTIVE_MOVE", score: 80 }
+      ]
+    });
+    if (!summary) throw new Error("valid VPI summary was rejected");
+
+    const visible = buildVpiDiscoveryLane(summary, 20, new Set(["VISIBLE"]));
+    const noneVisible = buildVpiDiscoveryLane(summary, 20, new Set());
+
+    expect(visible.coverageLabel).toBe("VPI表示 1 / 対象 2 / Watchlist 20銘柄");
+    expect(visible.activity.map((item) => item.symbol)).toEqual(["VISIBLE"]);
+    expect(noneVisible.status).toBe("no-visible-targets");
+    expect(noneVisible.coverageLabel).toBe("VPI表示 0 / 対象 2 / Watchlist 20銘柄");
+  });
 });

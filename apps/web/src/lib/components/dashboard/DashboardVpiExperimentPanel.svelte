@@ -10,14 +10,18 @@
   let {
     summary,
     watchlistCount,
+    selectableSymbols,
     onSymbolSelect
   }: {
     summary: VpiLitePlusSummary;
     watchlistCount: number;
+    selectableSymbols: readonly string[];
     onSymbolSelect: (symbol: string) => void;
   } = $props();
 
-  let lane = $derived(buildVpiDiscoveryLane(summary, watchlistCount));
+  let lane = $derived(
+    buildVpiDiscoveryLane(summary, watchlistCount, new Set(selectableSymbols))
+  );
 
   function itemLabel(item: VpiLitePlusItem) {
     return `${item.symbol}、${vpiStateLabel(item.state)}を選択`;
@@ -36,6 +40,8 @@
 
   {#if lane.status === "no-targets"}
     <p class="lane-status">VPI判定対象なし</p>
+  {:else if lane.status === "no-visible-targets"}
+    <p class="lane-status">現在の表示条件に該当するVPI対象なし</p>
   {:else if lane.status === "unavailable"}
     <p class="lane-status risk">VPIデータ不足</p>
   {:else if lane.status === "no-match"}

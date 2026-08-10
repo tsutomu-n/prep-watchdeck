@@ -735,6 +735,7 @@
           <DashboardVpiExperimentPanel
             summary={vpiSummary}
             watchlistCount={rows.length}
+            selectableSymbols={visibleRows.map((row) => row.symbol)}
             onSymbolSelect={selectDashboardSymbol}
           />
         {/if}

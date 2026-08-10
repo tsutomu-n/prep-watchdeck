@@ -33,7 +33,7 @@ export type VpiLitePlusSummary = {
 };
 
 export type VpiDiscoveryLane = {
-  status: "ready" | "no-match" | "no-targets" | "unavailable";
+  status: "ready" | "no-match" | "no-targets" | "no-visible-targets" | "unavailable";
   coverageLabel: string;
   activity: VpiLitePlusItem[];
   caution: VpiLitePlusItem[];
@@ -126,14 +126,22 @@ export function resolveVpiLitePlusRowItem(
 
 export function buildVpiDiscoveryLane(
   summary: VpiLitePlusSummary,
-  watchlistCount?: number | null
+  watchlistCount?: number | null,
+  selectableSymbols?: ReadonlySet<string> | null
 ): VpiDiscoveryLane {
   const targetCount = summary.targets.length;
+  const selectableTargets = selectableSymbols
+    ? summary.targets.filter((item) => selectableSymbols.has(item.symbol))
+    : summary.targets;
+  const baseCoverage =
+    selectableSymbols && selectableTargets.length !== targetCount
+      ? `VPI表示 ${selectableTargets.length} / 対象 ${targetCount}`
+      : `VPI対象 ${targetCount}`;
   const coverageLabel =
     typeof watchlistCount === "number" && Number.isSafeInteger(watchlistCount) && watchlistCount >= 0
-      ? `VPI対象 ${targetCount} / Watchlist ${watchlistCount}銘柄`
-      : `VPI対象 ${targetCount}銘柄`;
-  const validTargets = summary.targets.filter(
+      ? `${baseCoverage} / Watchlist ${watchlistCount}銘柄`
+      : `${baseCoverage}銘柄`;
+  const validTargets = selectableTargets.filter(
     (item) =>
       item.dataQuality === "OK" &&
       !["DATA_INSUFFICIENT", "DATA_STALE", "UNKNOWN"].includes(item.state)
@@ -150,6 +158,8 @@ export function buildVpiDiscoveryLane(
   const status =
     targetCount === 0
       ? "no-targets"
+      : selectableTargets.length === 0
+        ? "no-visible-targets"
       : validTargets.length === 0
         ? "unavailable"
         : activity.length === 0 && caution.length === 0

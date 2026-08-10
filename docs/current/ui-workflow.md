@@ -92,8 +92,9 @@ Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Candidate直�
 発見laneを置く。利用者が最初に見る見出しは`市場活動`とし、技術名`VPI-Lite+`は小さく併記する。
 `EARLY_ACTIVITY / ACTIVE_MOVE`を「活動増加」、`THIN_VOLATILITY / SINGLE_BAR_SUSPECT`を
 「要注意」へ分け、各groupはscore降順で最大5件とする。score自体はlaneへ表示しない。
-coverageは`VPI対象 N / Watchlist M銘柄`で明示し、`VPI判定対象なし / 活動急増なし /
-VPIデータ不足`を別の空状態として表示する。Benchmarkは発見laneの対象にしない。
+coverageは`VPI対象 N / Watchlist M銘柄`で明示する。発見buttonは現在のWatchlist表示条件に含まれ、
+そのまま選択できるTargetだけに限定する。`VPI判定対象なし / 現在の表示条件に該当するVPI対象なし /
+活動急増なし / VPIデータ不足`を別の空状態として表示する。Benchmarkは発見laneの対象にしない。
 選択rowに一致する`row.display.vpiLitePlus`がある時だけ、選択銘柄の補助詳細としてscore、
 reason、risk、funding、open interest、data timestampを表示する。常に「実験中の補助指標で、
 売買シグナルではない」と明記する。
