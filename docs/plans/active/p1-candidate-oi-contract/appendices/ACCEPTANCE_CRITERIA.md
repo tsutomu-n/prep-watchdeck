@@ -146,4 +146,3 @@
 - 条件: Final full gate and diff audit pass with no unresolved P0/P1.
 - 検証: `commands and final audit`
 - AC状態: `not_verified`
-
