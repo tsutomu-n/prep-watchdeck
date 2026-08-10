@@ -10,6 +10,7 @@ from prep_watchdeck.config.vpi_config import VpiConfig, load_vpi_config
 from prep_watchdeck.domain.service_models import (
     Candle1mRecord,
     InstrumentRecord,
+    OpenInterestSampleRecord,
     TickerLatestRecord,
 )
 
@@ -242,6 +243,7 @@ class MemoryServiceStore:
         self.instruments = instruments
         self.tickers = tickers
         self.candles = candles
+        self.oi_samples: list[OpenInterestSampleRecord] = []
 
     def load_instruments(self) -> list[InstrumentRecord]:
         return self.instruments
@@ -267,3 +269,16 @@ class MemoryServiceStore:
             for candle in self.candles
             if candle.symbol in wanted and start_ts_ms <= candle.ts_ms <= end_ts_ms
         ]
+
+    def upsert_open_interest_samples(self, samples: list[OpenInterestSampleRecord]) -> None:
+        self.oi_samples = samples
+
+    def load_open_interest_samples(
+        self, start_ts_ms: int, end_ts_ms: int
+    ) -> list[OpenInterestSampleRecord]:
+        _ = (start_ts_ms, end_ts_ms)
+        return []
+
+    def delete_open_interest_samples_before(self, cutoff_ts_ms: int) -> int:
+        _ = cutoff_ts_ms
+        return 0

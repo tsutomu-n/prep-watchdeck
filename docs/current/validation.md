@@ -1,9 +1,9 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-03T10:04:16+09:00`
-- 検証: `2026-08-03T10:04:16+09:00`
-- 文書更新作業: `2026-08-03_10:04`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -215,3 +215,14 @@ root以外の旧handoffを再開正本にしない。
 test greenだけでは完了にしない。変更内容に応じてcode、schema、CLI help、current docs、
 runtime path、monitoring state、performance/soak、未実行項目を監査する。実行できない必須gate、
 sourceとの不一致、単一writer違反、未照合の削除対象がある場合は未完了とする。
+
+## Candidate / OI focused verification
+
+74h三値AND、Candidate-only gate、noTrade診断、OI out-of-order upsert、exact lookback、
+24時間retention、restart再利用、cycle劣化、UNKNOWN無加点、WS ticker/candle再取得は
+scanner-core focused testsで確認する。exact 60分、retention、restartはseed済み一時DuckDBの
+deterministic integration testを正本とし、finite live smokeの経過時間では代用しない。
+
+Web focused verificationは有効summaryと不正summary fallback、Candidate空状態、OI四状態、
+74h三状態、VPI-Lite+ availability維持を含む。最終判定はfocused test後に
+`bash scripts/verify-local.sh`を実行する。

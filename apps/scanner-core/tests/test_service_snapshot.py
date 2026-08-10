@@ -18,6 +18,7 @@ from prep_watchdeck.domain.enums import DataSource
 from prep_watchdeck.domain.service_models import (
     Candle1mRecord,
     InstrumentRecord,
+    OpenInterestSampleRecord,
     TickerLatestRecord,
 )
 from prep_watchdeck.interfaces.cli import app
@@ -562,6 +563,7 @@ class MemoryServiceStore:
         self.instruments = instruments
         self.tickers = tickers
         self.candles = candles
+        self.oi_samples: list[OpenInterestSampleRecord] = []
 
     def load_instruments(self) -> list[InstrumentRecord]:
         return self.instruments
@@ -599,3 +601,192 @@ class MemoryServiceStore:
             ],
             key=lambda item: (item.symbol, item.ts_ms),
         )
+
+    def upsert_open_interest_samples(self, samples: list[OpenInterestSampleRecord]) -> None:
+        by_key = {(sample.symbol, sample.bucket_ts_ms): sample for sample in self.oi_samples}
+        for sample in samples:
+            key = (sample.symbol, sample.bucket_ts_ms)
+            current = by_key.get(key)
+            if current is None or sample.source_ts_ms > current.source_ts_ms:
+                by_key[key] = sample
+        self.oi_samples = list(by_key.values())
+
+    def load_open_interest_samples(
+        self, start_ts_ms: int, end_ts_ms: int
+    ) -> list[OpenInterestSampleRecord]:
+        return sorted(
+            [
+                sample
+                for sample in self.oi_samples
+                if start_ts_ms <= sample.bucket_ts_ms <= end_ts_ms
+            ],
+            key=lambda sample: (sample.symbol, sample.bucket_ts_ms),
+        )
+
+    def delete_open_interest_samples_before(self, cutoff_ts_ms: int) -> int:
+        before = len(self.oi_samples)
+        self.oi_samples = [
+            sample for sample in self.oi_samples if sample.bucket_ts_ms >= cutoff_ts_ms
+        ]
+        return before - len(self.oi_samples)
+
+
+class FailingOiMemoryServiceStore(MemoryServiceStore):
+    def upsert_open_interest_samples(self, samples: list[OpenInterestSampleRecord]) -> None:
+        _ = samples
+        raise RuntimeError("oi write failed")
+
+
+def test_service_snapshot_uses_exact_seeded_60m_oi_and_restart_state(tmp_path) -> None:
+    generated_at_ms = 1_781_001_800_000
+    source_ts_ms = generated_at_ms - 30_000
+    current_bucket_ts_ms = source_ts_ms - (source_ts_ms % 300_000)
+    target_bucket_ts_ms = current_bucket_ts_ms - 60 * 60 * 1000
+    db_path = tmp_path / "watchdeck.duckdb"
+    store = service_store_with_market_data(tmp_path)
+    store.upsert_ticker_latest(
+        [
+            ticker("ALTUSDT").model_copy(
+                update={
+                    "ts_ms": source_ts_ms,
+                    "updated_at_ms": source_ts_ms + 1_000,
+                    "holding_amount": 120.0,
+                }
+            ),
+            ticker("BTCUSDT").model_copy(
+                update={
+                    "ts_ms": source_ts_ms,
+                    "updated_at_ms": source_ts_ms + 1_000,
+                    "holding_amount": 200.0,
+                }
+            ),
+        ]
+    )
+    store.upsert_open_interest_samples(
+        [
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=target_bucket_ts_ms,
+                holding_amount=100.0,
+                source_ts_ms=target_bucket_ts_ms + 1_000,
+                updated_at_ms=generated_at_ms,
+            )
+        ]
+    )
+    config = load_template(Path("../../config/scanner-filters"), "balanced")
+
+    first = snapshot_from_service_store(
+        store,
+        template="balanced",
+        config=config,
+        generated_at_ms=generated_at_ms,
+        run_id="oi-first",
+    )
+    restarted_store = DuckDbServiceStore(db_path)
+    second = snapshot_from_service_store(
+        restarted_store,
+        template="balanced",
+        config=config,
+        generated_at_ms=generated_at_ms,
+        run_id="oi-restart",
+    )
+    samples = restarted_store.load_open_interest_samples(target_bucket_ts_ms, current_bucket_ts_ms)
+
+    assert next(row for row in first.rows if row.symbol == "ALTUSDT").open_interest_state == (
+        "INCREASING"
+    )
+    assert next(row for row in second.rows if row.symbol == "ALTUSDT").open_interest_state == (
+        "INCREASING"
+    )
+    assert first.summary["oiDiagnostics"]["status"] == "ok"
+    assert {(sample.symbol, sample.bucket_ts_ms) for sample in samples} == {
+        ("ALTUSDT", target_bucket_ts_ms),
+        ("ALTUSDT", current_bucket_ts_ms),
+        ("BTCUSDT", current_bucket_ts_ms),
+    }
+
+
+def test_service_snapshot_requires_exact_oi_bucket(tmp_path) -> None:
+    generated_at_ms = 1_781_001_800_000
+    source_ts_ms = generated_at_ms - 30_000
+    current_bucket_ts_ms = source_ts_ms - (source_ts_ms % 300_000)
+    target_bucket_ts_ms = current_bucket_ts_ms - 60 * 60 * 1000
+    store = service_store_with_market_data(tmp_path)
+    store.upsert_ticker_latest(
+        [
+            ticker("ALTUSDT").model_copy(
+                update={
+                    "ts_ms": source_ts_ms,
+                    "updated_at_ms": source_ts_ms,
+                    "holding_amount": 120.0,
+                }
+            )
+        ]
+    )
+    store.upsert_open_interest_samples(
+        [
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=target_bucket_ts_ms + 300_000,
+                holding_amount=100.0,
+                source_ts_ms=target_bucket_ts_ms + 301_000,
+                updated_at_ms=generated_at_ms,
+            )
+        ]
+    )
+
+    snapshot = snapshot_from_service_store(
+        store,
+        template="balanced",
+        config=load_template(Path("../../config/scanner-filters"), "balanced"),
+        generated_at_ms=generated_at_ms,
+        run_id="oi-exact-missing",
+    )
+
+    assert next(row for row in snapshot.rows if row.symbol == "ALTUSDT").open_interest_state == (
+        "UNKNOWN"
+    )
+
+
+def test_service_snapshot_continues_with_diagnostic_when_oi_cycle_fails() -> None:
+    generated_at_ms = 1_781_001_800_000
+    candles = [
+        candle(
+            "ALTUSDT",
+            1_781_000_000_000 + index * 60_000,
+            1.0,
+            1.2,
+            0.9,
+            1.0,
+            1000.0,
+        )
+        for index in range(30)
+    ]
+    store = FailingOiMemoryServiceStore(
+        instruments=[instrument("ALTUSDT", "ALT")],
+        tickers=[
+            ticker("ALTUSDT").model_copy(
+                update={
+                    "ts_ms": generated_at_ms - 30_000,
+                    "updated_at_ms": generated_at_ms - 20_000,
+                    "holding_amount": 120.0,
+                }
+            )
+        ],
+        candles=candles,
+    )
+
+    snapshot = snapshot_from_service_store(
+        store,
+        template="balanced",
+        config=load_template(Path("../../config/scanner-filters"), "balanced"),
+        generated_at_ms=generated_at_ms,
+        run_id="oi-degraded",
+    )
+
+    assert snapshot.summary["oiDiagnostics"] == {
+        "status": "degraded",
+        "code": "OI_HISTORY_UNAVAILABLE",
+        "errorType": "RuntimeError",
+    }
+    assert all(row.open_interest_state == "UNKNOWN" for row in snapshot.rows)

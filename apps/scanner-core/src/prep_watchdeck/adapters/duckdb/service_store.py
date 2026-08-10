@@ -10,6 +10,7 @@ import duckdb
 from prep_watchdeck.domain.service_models import (
     Candle1mRecord,
     InstrumentRecord,
+    OpenInterestSampleRecord,
     ServiceDiagnostics,
     StreamHealthRecord,
     TickerLatestRecord,
@@ -90,6 +91,71 @@ class DuckDbServiceStore:
                     for item in tickers
                 ],
             )
+
+    def upsert_open_interest_samples(self, samples: list[OpenInterestSampleRecord]) -> None:
+        if not samples:
+            return
+
+        with self._lock, self._connect() as con:
+            con.executemany(
+                """
+                INSERT INTO open_interest_samples VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (symbol, bucket_ts_ms) DO UPDATE SET
+                  holding_amount = excluded.holding_amount,
+                  source_ts_ms = excluded.source_ts_ms,
+                  updated_at_ms = excluded.updated_at_ms
+                WHERE excluded.source_ts_ms > open_interest_samples.source_ts_ms
+                """,
+                [
+                    (
+                        item.symbol,
+                        item.bucket_ts_ms,
+                        item.holding_amount,
+                        item.source_ts_ms,
+                        item.updated_at_ms,
+                    )
+                    for item in samples
+                ],
+            )
+
+    def load_open_interest_samples(
+        self, start_ts_ms: int, end_ts_ms: int
+    ) -> list[OpenInterestSampleRecord]:
+        if end_ts_ms < start_ts_ms:
+            raise ValueError("end_ts_ms must be >= start_ts_ms")
+        with self._lock, self._connect() as con:
+            rows = con.execute(
+                """
+                SELECT symbol, bucket_ts_ms, holding_amount, source_ts_ms, updated_at_ms
+                FROM open_interest_samples
+                WHERE bucket_ts_ms >= ? AND bucket_ts_ms <= ?
+                ORDER BY symbol, bucket_ts_ms
+                """,
+                [start_ts_ms, end_ts_ms],
+            ).fetchall()
+        return [
+            OpenInterestSampleRecord(
+                symbol=str(row[0]),
+                bucket_ts_ms=int(row[1]),
+                holding_amount=float(row[2]),
+                source_ts_ms=int(row[3]),
+                updated_at_ms=int(row[4]),
+            )
+            for row in rows
+        ]
+
+    def delete_open_interest_samples_before(self, cutoff_ts_ms: int) -> int:
+        with self._lock, self._connect() as con:
+            row = con.execute(
+                "SELECT COUNT(*) FROM open_interest_samples WHERE bucket_ts_ms < ?",
+                [cutoff_ts_ms],
+            ).fetchone()
+            deleted = int(row[0]) if row is not None else 0
+            con.execute(
+                "DELETE FROM open_interest_samples WHERE bucket_ts_ms < ?",
+                [cutoff_ts_ms],
+            )
+        return deleted
 
     def upsert_candles_1m(self, candles: list[Candle1mRecord]) -> None:
         if not candles:
@@ -453,6 +519,18 @@ class DuckDbServiceStore:
         )
         con.execute(
             """
+            CREATE TABLE IF NOT EXISTS open_interest_samples (
+              symbol TEXT NOT NULL,
+              bucket_ts_ms BIGINT NOT NULL,
+              holding_amount DOUBLE NOT NULL,
+              source_ts_ms BIGINT NOT NULL,
+              updated_at_ms BIGINT NOT NULL,
+              PRIMARY KEY (symbol, bucket_ts_ms)
+            )
+            """
+        )
+        con.execute(
+            """
             CREATE TABLE IF NOT EXISTS candles_1m (
               symbol TEXT NOT NULL,
               ts_ms BIGINT NOT NULL,
@@ -512,6 +590,7 @@ class DuckDbServiceStore:
         return {
             "instruments",
             "ticker_latest",
+            "open_interest_samples",
             "candles_1m",
             "stream_health",
             "snapshot_runs",

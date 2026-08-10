@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-09T15:39:47+09:00",
+  "updated_at": "2026-08-10T00:05:00+09:00",
   "plan_id": "PLAN-P1-CANDIDATE-OI-001",
-  "revision": 2,
+  "revision": 5,
   "target_repository": "tsutomu-n/prep-watchdeck",
-  "baseline_commit": "47839c33466f970f1c31d665df73e5d24ba77e6c",
+  "baseline_commit": "8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583",
   "objective": "候補選定の74h複合条件とOI 60分変化について、設定・計算・ランキング・UI・runtimeの意味を一致させる。",
   "broader_goal": "Bitget Public market dataだけを使うlocal-first監視専用watchdeckをコード完成候補かつ初期runtime適格へ進める。",
   "plan_goal": "74h三値ANDをCandidateだけへ接続し、Watchlistの広い監視面を維持する。OIを5分bucket・24時間retentionで既存DuckDBへ保存しexact 60分前bucketから状態を算出し、欠損はUNKNOWN、UNKNOWNは無加点とする。最小UI/version/docs/testsを同期し、one-command startup、finite live、restart、reconnect、artifact semanticsの初期runtime qualificationまで完了する。",
@@ -24,160 +24,200 @@
       "description": "74h component conditions use three-valued logic and composite is true only when both are true.",
       "mandatory": true,
       "verification_method": "parameterized long-horizon unit test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-002",
       "description": "Single-condition matches, insufficient history and zero baseline never produce composite true.",
       "mandatory": true,
       "verification_method": "long-horizon unit test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-003",
       "description": "Price and turnover match reasons are independently present in reasonCodes.",
       "mandatory": true,
       "verification_method": "DTO/provider unit test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-004",
       "description": "Candidate rankings include only composite true rows while Watchlist rows and noTrade diagnostics remain available.",
       "mandatory": true,
       "verification_method": "ranking test and focused E2E",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-005",
       "description": "OI samples are idempotently stored in 5-minute buckets and older than 24 hours are pruned.",
       "mandatory": true,
       "verification_method": "DuckDB store test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-006",
       "description": "OI compares to the exact 60-minute target bucket and missing reference yields UNKNOWN.",
       "mandatory": true,
       "verification_method": "resolver and service snapshot test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-007",
       "description": "UNKNOWN OI receives no positive Attention Score contribution.",
       "mandatory": true,
       "verification_method": "priority unit test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-008",
       "description": "Candidate displays active thresholds and selected-symbol OI 60m state without a Watchlist column.",
       "mandatory": true,
       "verification_method": "focused E2E",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused Web E2E 23 passed, including valid/fallback Candidate copy, OI label, 74h state and preserved VPI availability."
+      ]
     },
     {
       "id": "AC-P1-009",
       "description": "featureVersion and rulesetVersion are 3 while schemaVersion remains unchanged.",
       "mandatory": true,
       "verification_method": "snapshot unit test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-010",
       "description": "Existing DB initialization is additive and rollback does not require dropping the new table.",
       "mandatory": true,
       "verification_method": "store migration test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-P1-011",
       "description": "Existing monitoring behavior passes the full local verification gate.",
       "mandatory": true,
       "verification_method": "bash scripts/verify-local.sh",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "bash scripts/verify-local.sh; cwd=/home/tn/projects/prep-watchdeck; exit=0; scanner 225, web unit 174, Playwright 56, all maintenance/lint/format/type/build passed."
+      ]
     },
     {
       "id": "AC-P1-012",
       "description": "Current docs, ADR and living plans match final implementation and evidence.",
       "mandatory": true,
       "verification_method": "document and plan validation",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "ADR 0008 plus README/current docs and both living plans synchronized; metadata/link/JSON/diff checks exit 0."
+      ]
     },
     {
       "id": "AC-P1-013",
       "description": "Stale or invalid current ticker OI is not sampled or compared and produces UNKNOWN.",
       "mandatory": true,
       "verification_method": "OI/service snapshot test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Focused scanner suite 85 passed and final full scanner suite 225 passed; see IMPLEMENTATION_PLAN.md command evidence."
+      ]
     },
     {
       "id": "AC-RQ-001",
       "description": "One-command fixture startup renders the principal monitoring workflow and new semantics.",
       "mandatory": true,
       "verification_method": "runtime smoke",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Isolated fixture start-all wrapper exit 0; health/pages/rule text/artifact contract/sentinels/orphan listener checks passed."
+      ]
     },
     {
       "id": "AC-RQ-002",
       "description": "Isolated finite live smoke succeeds without modifying production state.",
       "mandatory": true,
       "verification_method": "CLI and doctor evidence",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Isolated public Bitget finite service/publish/doctor wrapper exit 0; sentinel hashes unchanged."
+      ]
     },
     {
       "id": "AC-RQ-003",
       "description": "Runtime stores at least one valid OI sample and same-bucket writes are idempotent.",
       "mandatory": true,
       "verification_method": "runtime DB evidence",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Live read-only DuckDB audit: 1480 positive finite samples across 2 buckets, duplicate buckets 0."
+      ]
     },
     {
       "id": "AC-RQ-004",
       "description": "Controlled restart reuses additive OI history and preserves monitoring state.",
       "mandatory": true,
       "verification_method": "restart evidence",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Seeded deterministic restart/retention tests passed; live service --once and repeated publish reused additive table."
+      ]
     },
     {
       "id": "AC-RQ-005",
       "description": "Reconnect, resubscribe and ticker/candle ingest recovery are proven by focused test.",
       "mandatory": true,
       "verification_method": "reconnect regression test",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "WS reconnect test re-supplied identical ticker+candle specs and persisted both after reconnect; focused scanner suite passed."
+      ]
     },
     {
       "id": "AC-RQ-006",
       "description": "Artifacts prove Candidate/Watchlist/null-history responsibility separation.",
       "mandatory": true,
       "verification_method": "fixture or live assertion",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "Fixture artifact: Candidate ALT only, Watchlist rows 5, noTrade THIN, null history rows preserved."
+      ]
     },
     {
       "id": "AC-RQ-007",
       "description": "Final full gate and diff audit pass with no unresolved P0/P1.",
       "mandatory": true,
       "verification_method": "commands and final audit",
-      "status": "not_verified",
-      "evidence": []
+      "status": "passed",
+      "evidence": [
+        "bash scripts/verify-local.sh; cwd=/home/tn/projects/prep-watchdeck; exit=0; scanner 225, web unit 174, Playwright 56, all maintenance/lint/format/type/build passed."
+      ]
     }
   ],
   "non_goals": [
@@ -200,12 +240,12 @@
   ],
   "current_state": {
     "product_boundary": "monitoring-only",
-    "current_74h_composite": "OR",
+    "current_74h_composite": "three-valued AND",
     "intended_74h_composite": "three-valued AND",
-    "candidate_gate_wired": false,
+    "candidate_gate_wired": true,
     "oi_lookback_minutes": 60,
-    "oi_history_wired": false,
-    "plan_status": "plan_only"
+    "oi_history_wired": true,
+    "plan_status": "complete"
   },
   "scope_in": [
     "74h semantics/reasons/candidate gate",
@@ -233,14 +273,22 @@
     "Candidate means primary-rule matches and Watchlist means broad monitoring universe",
     "holdingAmount remains the public OI source"
   ],
-  "unknowns": [
-    "current HEAD drift",
-    "actual DuckDB service store path and API",
-    "existing OI history",
-    "repository plan schema/template",
-    "current reconnect test coverage",
-    "specific ticker freshness contract"
-  ],
+  "conditional_approval_contract": {
+    "rankings": "Apply the 74h gate only to rankings.timeframes Candidate lists; build rankings.noTrade from all NO_TRADE rows.",
+    "long_horizon": "Components are bool or null; any null makes the composite null; zero or nonfinite baselines are null.",
+    "candidate_counts": "candidateRule74h counts eligible, notMatched and unknown within the non-NO_TRADE Candidate universe; an empty Candidate during warmup is valid.",
+    "oi_bucket": "Floor Bitget source_ts_ms to five-minute buckets.",
+    "oi_upsert": "Update an existing symbol/bucket only when incoming source_ts_ms is newer.",
+    "lookback_validation": "change_lookback_minutes must be positive and divisible by five.",
+    "failure_semantics": "DDL/init failure stops service startup; per-cycle OI failure publishes all OI as UNKNOWN with zero contribution and an explicit snapshot diagnostic.",
+    "ui_copy": "OI UNKNOWN is 不明; 74h null is 判定不能.",
+    "vpi_boundary": "Do not change or remove VPI-Lite+ OI availability; only confirmed equivalent non-VPI duplication may be removed.",
+    "qualification": "Finite live smoke is separate from seeded deterministic exact-60m, retention and restart integration tests.",
+    "baseline": "cwd apps/scanner-core; HEAD 8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583; focused command exit 0; 58 passed in 4.31s.",
+    "adr": "Create ADR 0008 and do not rewrite ADR 0007.",
+    "basic_fixture": "Balanced thresholds and non-NO_TRADE artifact values yield eligible=1, notMatched=0, unknown=3, ALTUSDT; adopt E2E 1/1 only after FixtureProvider computation proves it."
+  },
+  "unknowns": [],
   "options": [
     {
       "id": "A",
@@ -268,7 +316,7 @@
   "checkpoints": [
     {
       "id": "CP-001",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Establish baseline, repository contracts and synchronized living plans",
       "work": [
         "inspect git state and repository instructions",
@@ -296,11 +344,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-002",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Add only the focused failing tests needed to fix the confirmed contracts",
       "work": [
         "reuse existing tests where sufficient",
@@ -338,11 +388,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-003",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Implement three-valued 74h AND semantics and reason codes",
       "work": [
         "update long-horizon feature",
@@ -373,11 +425,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-004",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Gate Candidate rankings only and publish active rule metadata",
       "work": [
         "separate all rows from candidate source",
@@ -407,11 +461,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-005",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Add bounded additive OI sample storage",
       "work": [
         "resolve concrete service store",
@@ -443,11 +499,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-006",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Wire exact 60-minute OI references into service snapshots and scoring",
       "work": [
         "validate current ticker freshness",
@@ -479,11 +537,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-007",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Expose minimal UI semantics and bump versions",
       "work": [
         "Candidate help from summary",
@@ -515,11 +575,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-008",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Reach focused green, synchronize docs and run full gate",
       "work": [
         "run focused green",
@@ -553,11 +615,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-009",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Verify one-command fixture startup and isolated finite live smoke",
       "work": [
         "execute runtime qualification RQ-01/RQ-02",
@@ -586,11 +650,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-010",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Verify OI runtime storage and restart persistence",
       "work": [
         "store valid runtime sample",
@@ -621,11 +687,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-011",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Verify reconnect path and artifact semantics",
       "work": [
         "run or add focused reconnect test",
@@ -654,11 +722,13 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     },
     {
       "id": "CP-012",
-      "status": "not_started",
+      "status": "passed",
       "goal": "Perform final audit and synchronize final result",
       "work": [
         "reuse full gate if source unchanged or rerun",
@@ -687,7 +757,9 @@
         "fabricated or incomplete evidence"
       ],
       "recovery_method": "Revert only current checkpoint changes; preserve unrelated work and additive tables; record recovery evidence.",
-      "evidence": []
+      "evidence": [
+        "See verification_evidence and synchronized IMPLEMENTATION_PLAN.md final evidence."
+      ]
     }
   ],
   "critical_risks": [
@@ -710,10 +782,33 @@
     "external write, secret or irreversible operation required"
   ],
   "progress": {
-    "status": "plan_only",
-    "completed_checkpoint_ids": []
+    "status": "complete",
+    "completed_checkpoint_ids": [
+      "CP-001",
+      "CP-002",
+      "CP-003",
+      "CP-004",
+      "CP-005",
+      "CP-006",
+      "CP-007",
+      "CP-008",
+      "CP-009",
+      "CP-010",
+      "CP-011",
+      "CP-012"
+    ]
   },
   "decision_log": [
+    {
+      "at": "2026-08-09T19:35:00+09:00",
+      "decision": "Revision 4 incorporates all thirteen conditional-approval contracts before RED tests.",
+      "reason": "The user clarified noTrade preservation, strict three-valued logic, OI ordering and failure semantics, UI copy, deterministic qualification, baseline evidence, ADR and fixture acceptance boundaries."
+    },
+    {
+      "at": "2026-08-09T19:05:00+09:00",
+      "decision": "Synchronize revision 3 to clean HEAD 8c3ecd4 and use repository-confirmed store, ranking and freshness contracts.",
+      "reason": "The existing two-minute freshness limit is reused for current OI; the later conditional approval supersedes the preliminary noTrade interpretation."
+    },
     {
       "at": "2026-08-09T15:39:47+09:00",
       "decision": "Revision 2 adds mandatory initial runtime qualification after P1 implementation.",
@@ -733,6 +828,11 @@
       "at": "2026-08-09T15:39:47+09:00",
       "decision": "Natural 24-hour disconnect is residual operational observation, not a blocking synchronous gate.",
       "reason": "A deterministic reconnect regression test provides reproducible evidence without turning the implementation session into a 24-hour wait."
+    },
+    {
+      "at": "2026-08-10T00:05:00+09:00",
+      "decision": "Complete revision 5 with all mandatory ACs passed and no remaining work.",
+      "reason": "Focused tests, deterministic DuckDB qualification, isolated fixture/live runtime checks, full local gate and final scope audit all passed."
     }
   ],
   "findings": [
@@ -755,23 +855,74 @@
       "status": "confirmed"
     }
   ],
-  "verification_evidence": [],
-  "current_checkpoint": "CP-001",
-  "next_action": "Inspect current repository and synchronize this plan to the actual HEAD before any implementation.",
-  "final_result": null,
-  "goal_gap": "All implementation and runtime qualification remain outstanding.",
-  "remaining_work": [
-    "CP-001",
-    "CP-002",
-    "CP-003",
-    "CP-004",
-    "CP-005",
-    "CP-006",
-    "CP-007",
-    "CP-008",
-    "CP-009",
-    "CP-010",
-    "CP-011",
-    "CP-012"
-  ]
+  "verification_evidence": [
+    {
+      "checkpoint_id": "CP-001",
+      "command": "git status --short && git branch --show-current && git rev-parse HEAD && git diff --stat",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 0,
+      "result": "Dedicated branch ai/p1-candidate-oi-20260809-1818 at 8c3ecd4 with a clean initial worktree."
+    },
+    {
+      "checkpoint_id": "CP-001",
+      "command": "uv run python -m pytest -q tests/test_domain_features.py tests/test_rankings_contract.py tests/test_bitget_live_provider.py tests/test_service_snapshot.py tests/test_service_runtime.py tests/test_ws_shards.py tests/test_vpi_service_integration.py",
+      "working_directory": "/home/tn/projects/prep-watchdeck/apps/scanner-core",
+      "head": "8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583",
+      "exit_code": 0,
+      "result": "58 passed in 4.31s"
+    },
+    {
+      "checkpoint_id": "CP-002-CP-007",
+      "command": "uv run python -m pytest -q tests/test_domain_features.py tests/test_rankings_contract.py tests/test_bitget_live_provider.py tests/test_snapshot_contract.py tests/test_config_and_models.py tests/test_service_snapshot.py tests/test_service_runtime.py tests/test_ws_shards.py tests/test_vpi_service_integration.py",
+      "working_directory": "/home/tn/projects/prep-watchdeck/apps/scanner-core",
+      "exit_code": 0,
+      "result": "85 passed in 4.69s; subsequent lint/format/pyrefly passed."
+    },
+    {
+      "checkpoint_id": "CP-007",
+      "command": "bun run test:e2e tests/e2e/home.e2e.ts tests/e2e/monitoring-symbol.e2e.ts",
+      "working_directory": "/home/tn/projects/prep-watchdeck/apps/web",
+      "exit_code": 0,
+      "result": "23 passed in 17.4s."
+    },
+    {
+      "checkpoint_id": "CP-009",
+      "command": "isolated PREP_WATCHDECK_STATE_DIR + SNAPSHOT_SOURCE=fixture bash scripts/start-all.sh; curl health/home/symbol; controlled SIGINT",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 0,
+      "result": "Health, Candidate, Watchlist, Symbol, Smart Rank, rule text, sentinel hashes and no orphan listener verified."
+    },
+    {
+      "checkpoint_id": "CP-009-CP-010",
+      "command": "isolated public Bitget watchdeck service --max-symbols 1 --stop-after-records 2; publish-service; doctor; DuckDB read-only audit",
+      "working_directory": "/home/tn/projects/prep-watchdeck/apps/scanner-core",
+      "exit_code": 0,
+      "result": "Finite service stopped; schema ready; 1480 positive samples across 2 buckets; duplicate buckets 0; sentinel hashes unchanged."
+    },
+    {
+      "checkpoint_id": "CP-008-CP-012",
+      "command": "bash scripts/verify-local.sh",
+      "working_directory": "/home/tn/projects/prep-watchdeck",
+      "exit_code": 0,
+      "result": "Maintenance 81, scanner pytest 225, web unit 174, Playwright 56; Ruff, format, pyrefly, Svelte check and build passed."
+    }
+  ],
+  "current_checkpoint": "COMPLETE",
+  "next_action": "None.",
+  "final_result": {
+    "status": "PASS",
+    "head": "self (the final local commit containing this plan; resolve with git rev-parse HEAD)",
+    "baseline_head": "8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583",
+    "branch": "ai/p1-candidate-oi-20260809-1818",
+    "working_tree": "Only the reviewed implementation payload is selectively staged and saved in the final local commit containing this plan.",
+    "mandatory_ac_passed": 20,
+    "mandatory_ac_failed": 0,
+    "unresolved_p0_p1": 0,
+    "scope_out_changes": 0,
+    "full_gate": "PASS",
+    "remaining_work": []
+  },
+  "goal_gap": "none",
+  "remaining_work": [],
+  "status": "complete"
 }

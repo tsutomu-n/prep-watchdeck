@@ -6,6 +6,7 @@ import time
 from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import Decimal
+from math import isfinite
 from typing import Any, Protocol
 
 from prep_watchdeck.adapters.bitget_live.provider import snapshot_from_pipeline
@@ -22,6 +23,7 @@ from prep_watchdeck.domain.dto import SnapshotDTO
 from prep_watchdeck.domain.service_models import (
     Candle1mRecord,
     InstrumentRecord,
+    OpenInterestSampleRecord,
     TickerLatestRecord,
 )
 from prep_watchdeck.domain.symbols import is_safe_public_symbol
@@ -37,6 +39,7 @@ ONE_SECOND_MS = 1_000
 ONE_MINUTE_MS = 60 * ONE_SECOND_MS
 FIVE_MINUTES_MS = 5 * ONE_MINUTE_MS
 DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS = 2 * ONE_MINUTE_MS
+OPEN_INTEREST_RETENTION_MS = 24 * 60 * ONE_MINUTE_MS
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +49,17 @@ class ServiceSnapshotStore(Protocol):
 
     def load_ticker_latest(self) -> list[TickerLatestRecord]:
         """Load latest service ticker records."""
+
+    def upsert_open_interest_samples(self, samples: list[OpenInterestSampleRecord]) -> None:
+        """Persist current OI samples."""
+
+    def load_open_interest_samples(
+        self, start_ts_ms: int, end_ts_ms: int
+    ) -> list[OpenInterestSampleRecord]:
+        """Load OI samples from an inclusive bucket range."""
+
+    def delete_open_interest_samples_before(self, cutoff_ts_ms: int) -> int:
+        """Delete OI samples older than the retention cutoff."""
 
     def load_recent_candles_1m(self, limit_per_symbol: int) -> list[Candle1mRecord]:
         """Load recent 1m candle records."""
@@ -124,11 +138,28 @@ def build_service_snapshot(
         generated_at_ms=generated_at_ms,
     )
     candles_by_symbol = aggregate_1m_to_5m(candles_1m)
+    try:
+        previous_oi_by_symbol, oi_diagnostics = _prepare_open_interest_history(
+            store,
+            ticker_records=ticker_records,
+            allowed_symbols={contract.symbol for contract in contracts},
+            generated_at_ms=generated_at_ms,
+            lookback_minutes=config.open_interest.change_lookback_minutes,
+        )
+    except Exception as exc:
+        logger.warning("OI history cycle failed: %s", type(exc).__name__)
+        previous_oi_by_symbol = {}
+        oi_diagnostics = {
+            "status": "degraded",
+            "code": "OI_HISTORY_UNAVAILABLE",
+            "errorType": type(exc).__name__,
+        }
     rows = build_scanner_rows(
         config=config,
         contracts=contracts,
         tickers=tickers,
         candles_by_symbol=candles_by_symbol,
+        previous_oi_by_symbol=previous_oi_by_symbol,
     )
     _append_service_gap_risk_tags(
         rows,
@@ -159,6 +190,7 @@ def build_service_snapshot(
     )
     snapshot.summary["serviceSource"] = "duckdb-service"
     snapshot.summary["serviceCandles1m"] = len(candles_1m)
+    snapshot.summary["oiDiagnostics"] = oi_diagnostics
     if vpi_block is not None:
         snapshot.summary["vpiLitePlus"] = vpi_block
         items_by_symbol = {
@@ -266,6 +298,76 @@ async def publish_service_snapshot_periodically(
             config=config,
             vpi_config=vpi_config,
         )
+
+
+def _prepare_open_interest_history(
+    store: ServiceSnapshotStore,
+    *,
+    ticker_records: list[TickerLatestRecord],
+    allowed_symbols: set[str],
+    generated_at_ms: int,
+    lookback_minutes: int,
+) -> tuple[dict[str, float], dict[str, object]]:
+    samples: list[OpenInterestSampleRecord] = []
+    target_bucket_by_symbol: dict[str, int] = {}
+    lookback_ms = lookback_minutes * ONE_MINUTE_MS
+    for ticker in ticker_records:
+        if ticker.symbol not in allowed_symbols or not _is_valid_current_oi(
+            ticker, generated_at_ms=generated_at_ms
+        ):
+            continue
+        holding_amount = ticker.holding_amount
+        assert holding_amount is not None
+        bucket_ts_ms = ticker.ts_ms - (ticker.ts_ms % FIVE_MINUTES_MS)
+        samples.append(
+            OpenInterestSampleRecord(
+                symbol=ticker.symbol,
+                bucket_ts_ms=bucket_ts_ms,
+                holding_amount=float(holding_amount),
+                source_ts_ms=ticker.ts_ms,
+                updated_at_ms=generated_at_ms,
+            )
+        )
+        target_bucket_by_symbol[ticker.symbol] = bucket_ts_ms - lookback_ms
+
+    store.upsert_open_interest_samples(samples)
+    reference_rows: list[OpenInterestSampleRecord] = []
+    if target_bucket_by_symbol:
+        reference_rows = store.load_open_interest_samples(
+            min(target_bucket_by_symbol.values()),
+            max(target_bucket_by_symbol.values()),
+        )
+    reference_by_key = {(sample.symbol, sample.bucket_ts_ms): sample for sample in reference_rows}
+    previous_oi_by_symbol = {
+        symbol: reference.holding_amount
+        for symbol, target_bucket_ts_ms in target_bucket_by_symbol.items()
+        if (reference := reference_by_key.get((symbol, target_bucket_ts_ms))) is not None
+    }
+    pruned = store.delete_open_interest_samples_before(generated_at_ms - OPEN_INTEREST_RETENTION_MS)
+    return previous_oi_by_symbol, {
+        "status": "ok",
+        "lookbackMinutes": lookback_minutes,
+        "sampled": len(samples),
+        "references": len(previous_oi_by_symbol),
+        "pruned": pruned,
+    }
+
+
+def _is_valid_current_oi(ticker: TickerLatestRecord, *, generated_at_ms: int) -> bool:
+    holding_amount = ticker.holding_amount
+    if (
+        holding_amount is None
+        or not isfinite(holding_amount)
+        or holding_amount <= 0
+        or ticker.ts_ms <= 0
+        or ticker.updated_at_ms <= 0
+    ):
+        return False
+    return (
+        max(0, generated_at_ms - ticker.ts_ms) <= DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS
+        and max(0, generated_at_ms - ticker.updated_at_ms)
+        <= DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS
+    )
 
 
 def _build_vpi_block(

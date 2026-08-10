@@ -23,7 +23,7 @@ def priority_score(
         btc_relative_15m,
         0.2,
     )
-    oi_score = {"INCREASING": 1.0, "STABLE": 0.5, "DECREASING": 0.3}.get(open_interest_state, 0.2)
+    oi_score = {"INCREASING": 1.0, "STABLE": 0.5, "DECREASING": 0.3}.get(open_interest_state, 0.0)
     data_score = 1.0 if data_quality == "OK" else 0.0
     penalty = 0.0
     for tag in risk_tags:

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
-- 検証: `2026-08-02T22:00:39+09:00`
-- 文書更新作業: `2026-08-02_22:00`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -105,3 +105,12 @@ E2E、performance、soakはstate rootの`tmp/<gate>/runtime`を各gateのstate r
 state migrationはv2 active filesだけをtargetへcopyし、source全体をRepo外Archiveへ保持する。
 `STATE_LAYOUT_VERSION`がない既存Archiveはv1、厳密な`2` markerはv2として検証し、未知versionは
 拒否する。日次サマリーはschema v2を`ops/daily/v2/`へ書き、既存schema v1を変更しない。
+
+## Candidate / OI lane
+
+Candidateのtimeframeランキングだけは74h三値ANDの`True`をeligibilityに使う。Watchlist、
+Raw Sort、Smart Rank、snapshot rows、`rankings.noTrade`診断はこのgateの外に置く。
+
+service snapshot cycleはpublic tickerのOIを`open_interest_samples`へbulk upsertし、exact lookback
+bucketを一括loadする。table初期化失敗はstartup失敗、cycle中のOI store失敗はsnapshotを
+degraded diagnostic付きで継続し、全OIを`UNKNOWN`にする。

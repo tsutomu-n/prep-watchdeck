@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-03T00:41:44+09:00`
-- 検証: `2026-08-03T00:41:44+09:00`
-- 文書更新作業: `2026-08-03_00:41`（Asia/Tokyo）
+- 更新: `2026-08-09T20:30:00+09:00`
+- 検証: `2026-08-09T20:30:00+09:00`
+- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -38,13 +38,14 @@
 - [0005 自動売買を含めない](decisions/0005-no-automatic-trading.md)
 - [0006 VPI-Lite+ Cold sidecar](decisions/0006-vpi-lite-plus-cold-sidecar.md)
 - [0007 市場監視専用の製品境界](decisions/0007-monitoring-only-product-boundary.md)
+- [0008 Candidate 74h ANDとOI 60分契約](decisions/0008-candidate-oi-contract.md)
 
 ## 実装・検証計画
 
 - [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 74h Candidate条件、OI 60分変化、最小UI・テスト・初期runtime qualificationの進行中living plan。
 
 監視専用化の完了計画と過去検証証拠はRepo外Archiveへ退避し、
-現行仕様は`docs/current/`、有効な判断はADR 0007を正本とする。
+現行仕様は`docs/current/`、有効な判断はADR 0007とADR 0008を正本とする。
 
 ## 正本の優先順位
 

@@ -20,6 +20,24 @@ def test_fixture_snapshot_validates() -> None:
     assert any(row.category.value == "NO_TRADE" for row in snapshot.rows)
 
 
+def test_basic_fixture_computes_candidate_74h_contract() -> None:
+    snapshot = FixtureProvider(Path("../../fixtures")).build_snapshot(
+        template="balanced", fixture_set="basic"
+    )
+
+    candidate_rule = snapshot.summary["candidateRule74h"]
+    assert candidate_rule["eligible"] == 1
+    assert candidate_rule["notMatched"] == 0
+    assert candidate_rule["unknown"] == 3
+    assert [item["symbol"] for item in snapshot.rankings["timeframes"]["15m"]["changeUp"]] == [
+        "ALTUSDT"
+    ]
+    assert [item["symbol"] for item in snapshot.rankings["noTrade"]] == ["THINUSDT"]
+    assert snapshot.feature_version == "3"
+    assert snapshot.ruleset_version == "3"
+    assert snapshot.schema_version == 1
+
+
 def test_fixture_provider_uses_template_ranking_top_n(tmp_path) -> None:
     config_dir = tmp_path / "scanner-filters"
     config_dir.mkdir()

@@ -25,6 +25,7 @@ from prep_watchdeck.domain.service_models import (
     BootstrapResult,
     Candle1mRecord,
     InstrumentRecord,
+    OpenInterestSampleRecord,
     StreamHealthRecord,
     TickerLatestRecord,
 )
@@ -833,3 +834,80 @@ def ticker(symbol: str, usdt_volume: str) -> TickerInfo:
             "holdingAmount": "12345",
         }
     )
+
+
+def test_open_interest_store_is_idempotent_ordered_bounded_and_restart_safe(tmp_path) -> None:
+    db_path = tmp_path / "watchdeck.duckdb"
+    store = DuckDbServiceStore(db_path)
+    bucket_ts_ms = 1_781_000_000_000 - (1_781_000_000_000 % 300_000)
+    cutoff_ts_ms = bucket_ts_ms - 24 * 60 * 60 * 1000
+    old_bucket_ts_ms = cutoff_ts_ms - 300_000
+
+    store.initialize()
+    store.upsert_open_interest_samples(
+        [
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=bucket_ts_ms,
+                holding_amount=100.0,
+                source_ts_ms=bucket_ts_ms + 1_000,
+                updated_at_ms=bucket_ts_ms + 2_000,
+            ),
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=cutoff_ts_ms,
+                holding_amount=80.0,
+                source_ts_ms=cutoff_ts_ms + 1_000,
+                updated_at_ms=bucket_ts_ms,
+            ),
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=old_bucket_ts_ms,
+                holding_amount=70.0,
+                source_ts_ms=old_bucket_ts_ms + 1_000,
+                updated_at_ms=bucket_ts_ms,
+            ),
+        ]
+    )
+    store.upsert_open_interest_samples(
+        [
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=bucket_ts_ms,
+                holding_amount=50.0,
+                source_ts_ms=bucket_ts_ms + 500,
+                updated_at_ms=bucket_ts_ms + 3_000,
+            ),
+            OpenInterestSampleRecord(
+                symbol="ALTUSDT",
+                bucket_ts_ms=bucket_ts_ms,
+                holding_amount=110.0,
+                source_ts_ms=bucket_ts_ms + 1_500,
+                updated_at_ms=bucket_ts_ms + 4_000,
+            ),
+        ]
+    )
+
+    rows = store.load_open_interest_samples(old_bucket_ts_ms, bucket_ts_ms)
+    current = next(row for row in rows if row.bucket_ts_ms == bucket_ts_ms)
+    assert current.holding_amount == 110.0
+    assert current.source_ts_ms == bucket_ts_ms + 1_500
+
+    assert store.delete_open_interest_samples_before(cutoff_ts_ms) == 1
+    restarted = DuckDbServiceStore(db_path)
+    restarted.initialize()
+    retained = restarted.load_open_interest_samples(old_bucket_ts_ms, bucket_ts_ms)
+
+    assert {row.bucket_ts_ms for row in retained} == {cutoff_ts_ms, bucket_ts_ms}
+
+
+def test_service_store_schema_failure_is_startup_failure(tmp_path, monkeypatch) -> None:
+    store = DuckDbServiceStore(tmp_path / "watchdeck.duckdb")
+
+    def fail_schema(_connection) -> None:
+        raise RuntimeError("schema failed")
+
+    monkeypatch.setattr(store, "_ensure_schema", fail_schema)
+
+    with pytest.raises(RuntimeError, match="schema failed"):
+        store.initialize()
