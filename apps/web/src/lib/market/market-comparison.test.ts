@@ -5,7 +5,7 @@ const source = (name: "bitget" | "hyperliquid" | "bybit", price: number) => ({
   source: name,
   status: "ok",
   sourceSymbol: name === "hyperliquid" ? "BTC" : "BTCUSDT",
-  quote: name === "hyperliquid" ? "USD" : "USDT",
+  quote: "USDT",
   markPrice: price,
   observedAt: 1_780_000_000_000,
   sourceAt: name === "hyperliquid" ? null : 1_780_000_000_000,
@@ -33,6 +33,11 @@ describe("market comparison payload guard", () => {
 
     expect(summary).not.toBeNull();
     expect(findMarketComparisonItem(summary, "BTCUSDT")?.medianMarkPrice).toBe(101);
+    expect(
+      findMarketComparisonItem(summary, "BTCUSDT")?.sources.find(
+        (item) => item.source === "hyperliquid"
+      )?.quote
+    ).toBe("USDT");
   });
 
   it("accepts incomplete coverage only without a median", () => {

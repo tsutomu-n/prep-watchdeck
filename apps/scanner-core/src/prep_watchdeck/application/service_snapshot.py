@@ -110,6 +110,7 @@ def snapshot_from_service_store(
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
     market_comparison: dict[str, object] | None = None,
+    perp_venue_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
 ) -> SnapshotDTO:
@@ -119,6 +120,7 @@ def snapshot_from_service_store(
         config=config,
         vpi_config=vpi_config,
         market_comparison=market_comparison,
+        perp_venue_comparison=perp_venue_comparison,
         generated_at_ms=generated_at_ms,
         run_id=run_id,
     ).snapshot
@@ -131,6 +133,7 @@ def build_service_snapshot(
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
     market_comparison: dict[str, object] | None = None,
+    perp_venue_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
 ) -> ServiceSnapshotBuild:
@@ -229,6 +232,8 @@ def build_service_snapshot(
     snapshot.summary["oiDiagnostics"] = oi_diagnostics
     if market_comparison is not None:
         snapshot.summary["marketComparison"] = market_comparison
+    if perp_venue_comparison is not None:
+        snapshot.summary["perpVenueComparison"] = perp_venue_comparison
     if vpi_block is not None:
         snapshot.summary["vpiLitePlus"] = vpi_block
         items_by_symbol = {
@@ -253,6 +258,7 @@ def publish_service_snapshot_once(
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
     market_comparison: dict[str, object] | None = None,
+    perp_venue_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
     max_data_lag_ms: int | None = None,
@@ -263,6 +269,7 @@ def publish_service_snapshot_once(
         config=config,
         vpi_config=vpi_config,
         market_comparison=market_comparison,
+        perp_venue_comparison=perp_venue_comparison,
         generated_at_ms=generated_at_ms,
         run_id=run_id,
     )
@@ -313,6 +320,7 @@ async def publish_service_snapshot_periodically(
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
     market_comparison_provider: Callable[[], dict[str, object] | None] | None = None,
+    perp_venue_comparison_provider: Callable[[], dict[str, object] | None] | None = None,
     interval_seconds: float,
     publish_immediately: bool = True,
 ) -> None:
@@ -330,6 +338,11 @@ async def publish_service_snapshot_periodically(
             market_comparison=(
                 market_comparison_provider() if market_comparison_provider is not None else None
             ),
+            perp_venue_comparison=(
+                perp_venue_comparison_provider()
+                if perp_venue_comparison_provider is not None
+                else None
+            ),
         )
     while True:
         await asyncio.sleep(interval_seconds)
@@ -343,6 +356,11 @@ async def publish_service_snapshot_periodically(
             vpi_config=vpi_config,
             market_comparison=(
                 market_comparison_provider() if market_comparison_provider is not None else None
+            ),
+            perp_venue_comparison=(
+                perp_venue_comparison_provider()
+                if perp_venue_comparison_provider is not None
+                else None
             ),
         )
 

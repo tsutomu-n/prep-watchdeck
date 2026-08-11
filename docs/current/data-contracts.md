@@ -80,8 +80,8 @@ serviceと`publish-service`が生成するCold snapshotは、optionalな
 
 各source itemは`source`、`status`、nullableな`sourceSymbol`、`quote`、`markPrice`、
 `observedAt`、`sourceAt`、`error`を持つ。Hyperliquidはsource timestampを返さないため
-`sourceAt: null`とし、取得時刻をsource時刻として偽装しない。BitgetとBybitはUSDT、
-HyperliquidはUSD表現なので、集約値は参考比較としてだけ扱う。
+`sourceAt: null`とし、取得時刻をsource時刻として偽装しない。3市場とも標準契約の価格はUSDT建てで、
+HyperliquidはUSDC証拠金である。通貨換算は行わず、集約値は参考比較としてだけ扱う。
 
 symbol itemは`coverage.valid/required`、`status`、nullableな`medianMarkPrice`と`spreadPct`を持つ。
 同じrefresh cycleで3sourceすべてが正数かつ10分以内の時だけ`status: ready`とし、中央値と
@@ -90,6 +90,27 @@ symbol itemは`coverage.valid/required`、`status`、nullableな`medianMarkPrice
 
 このsidecarはDB、snapshot schemaのrequired field、ranking、filter、Candidate、VPI、
 Hot tickerへ入力しない。
+
+### Bitget / Hyperliquid Perp会場比較 sidecar
+
+serviceと`publish-service`が生成するCold snapshotは、optionalな
+`summary.perpVenueComparison`を持てる。`schemaVersion: 1`、
+`mode: "perp_venue_comparison_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、`items`を持つ。
+
+対象はBitgetの取引中・非RWA・USDT無期限契約とdefault Hyperliquid Coreの非delisted標準Perpで、
+`Bitget.baseCoin`とHyperliquid `name`が完全一致する暗号資産だけである。HYPE、PURR、HIP-3、
+`1000`接頭辞、別名・倍率変換を必要とする銘柄はmappingしない。Bitgetは価格・証拠金ともUSDT、
+Hyperliquid標準Coreは価格USDT・証拠金USDCとして保持し、USDT/USDC換算や会場合算を行わない。
+
+各itemはscanner側`symbol`、`asset`、`ready | partial | unavailable`の`status`、nullableな
+`markSpreadPct`、Bitget/Hyperliquidの`source` itemを持つ。各source itemは会場、source symbol、
+quote、collateral、mark、funding原値・周期・1時間換算、基軸通貨建玉、mark換算建玉想定元本、
+24時間notional出来高、`observedAt`、nullableな`sourceAt`、欠損理由を保持する。
+
+`markSpreadPct`は両会場が正数かつ取得時刻と提供元時刻が10分以内の時だけ
+`(Hyperliquid mark / Bitget mark - 1) * 100`で生成する。Hyperliquidはsource timestampを返さないため
+`sourceAt: null`を維持する。片側欠損では取得済み会場だけを公開し、spreadを`null`にする。
+このsidecarはDB、required snapshot schema、ranking、Candidate、filter、VPI、Hot tickerへ入力しない。
 
 ## Data quality
 

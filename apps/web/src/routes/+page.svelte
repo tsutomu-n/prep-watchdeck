@@ -50,6 +50,10 @@
   import {
     parseMarketComparisonSummary
   } from "$lib/market/market-comparison";
+  import {
+    findPerpVenueComparisonItem,
+    parsePerpVenueComparisonSummary
+  } from "$lib/market/perp-venue-comparison";
   import { shouldAutoRefreshDashboard } from "$lib/market/dashboard-refresh.svelte";
   import {
     TickerOverlay,
@@ -68,6 +72,7 @@
   import SelectedSymbolContext from "$lib/components/dashboard/SelectedSymbolContext.svelte";
   import SelectedSymbolOverview from "$lib/components/dashboard/SelectedSymbolOverview.svelte";
   import SelectedSymbolVpiDetail from "$lib/components/dashboard/SelectedSymbolVpiDetail.svelte";
+  import SelectedSymbolVenueComparison from "$lib/components/dashboard/SelectedSymbolVenueComparison.svelte";
   import SmartRankControl from "$lib/components/dashboard/SmartRankControl.svelte";
   import DashboardTopbar from "$lib/components/dashboard/DashboardTopbar.svelte";
 
@@ -178,9 +183,17 @@
   let marketComparisonSummary = $derived(
     parseMarketComparisonSummary(snapshot?.summary?.marketComparison)
   );
+  let perpVenueComparisonSummary = $derived(
+    parsePerpVenueComparisonSummary(snapshot?.summary?.perpVenueComparison)
+  );
   let selectedVpi = $derived(
     vpiSummary && selected
       ? resolveVpiLitePlusRowItem(vpiSummary, selected.symbol, selected.display?.vpiLitePlus)
+      : null
+  );
+  let selectedVenueComparison = $derived(
+    selected
+      ? findPerpVenueComparisonItem(perpVenueComparisonSummary, selected.symbol)
       : null
   );
   let availableSymbols = $derived(rows.map((row) => row.symbol));
@@ -816,6 +829,9 @@
           />
           {#if selectedVpi}
             <SelectedSymbolVpiDetail item={selectedVpi} />
+          {/if}
+          {#if selectedVenueComparison}
+            <SelectedSymbolVenueComparison item={selectedVenueComparison} />
           {/if}
           <SelectedSymbolContext
             row={selected}

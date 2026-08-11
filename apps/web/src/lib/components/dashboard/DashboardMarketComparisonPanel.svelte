@@ -65,7 +65,7 @@
   </div>
 
   <p class="caveat">
-    USD / USDT建てを横断する参考値です。ランキングや売買判定には使いません。
+    USDT建ての参考値です。HyperliquidはUSDC証拠金で、通貨換算はしていません。ランキングや売買判定には使いません。
   </p>
 </section>
 

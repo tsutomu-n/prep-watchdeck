@@ -53,6 +53,8 @@ Webは要求したtimeframeだけを返し、snapshotの`runId`とchartの`snaps
 - `application/`: service runtime、publish、reconcile、backfill、chart、ticker
 - `application/market_comparison.py`: 3市場価格比較pilotのin-memory更新
 - `adapters/multisource_public.py`: 3社public RESTのmark price取得
+- `adapters/perp_venue_public.py`: Bitget USDT Perpとdefault Hyperliquid Coreのpublic契約・市場値取得
+- `application/perp_venue_comparison.py`: 5分周期の独立in-memory比較collector
 - `vpi/`: VPI-Lite+のpure計算、state分類、公開payload serializer
 - `adapters/duckdb/`: snapshot cacheとservice store
 - `adapters/local_snapshot/`: atomic file publish

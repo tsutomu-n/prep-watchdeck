@@ -126,9 +126,21 @@ VPIはWatchlist row、ranking、sort、Candidate順へ入れない。Hot ticker 
 coverage、3/3時だけの参考中央値と最大乖離幅を示す。欠損sourceは隠さず、3/3未満では中央値を
 表示しない。対象銘柄がscanner rowsや現在のWatchlist表示条件に含まれなくてもpanelを維持する。
 
-USD / USDT建てを横断する参考値であること、rankingや売買判定に使わないことを明記する。
+USDT建ての参考値であり、HyperliquidはUSDC証拠金で通貨換算をしないこと、rankingや売買判定に
+使わないことを明記する。
 Watchlist row、Candidate ranking、sort、chart、Hot ticker更新には接続しない。payloadが不正なら
 比較panelだけを非表示にし、既存Dashboardを継続する。
+
+### Bitget / Hyperliquid Perp会場比較
+
+有効な`summary.perpVenueComparison`に選択中scanner symbolと一致するitemがある時だけ、Selected detailへ
+折りたたみ式の会場比較を表示する。BitgetとHyperliquidのsource symbol、quote、collateral、mark、
+funding、建玉想定元本、24時間出来高、観測時刻を会場別に示す。片側欠損は取得済み値と欠損理由を
+残し、両会場がfreshな場合だけ符号付きmark差を示す。
+
+unmapped銘柄では比較group自体を表示しない。USDTとUSDCの換算、中央値、会場合算、ranking、通知、
+売買・裁定判断へ接続しない。Candidate→Watchlist→Selected detail→Smart RankのDOM/keyboard順、
+bounded scroll、既存の色・font契約を維持する。
 
 ### Watchlist rowのroving keyboard
 
@@ -352,6 +364,7 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 | shared theme、色、密度、compact status、誤推奨防止 | `DESIGN.md`, `apps/web/src/routes/+layout.svelte`, `apps/web/src/lib/styles/watchdeck-theme.css` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | VPI-Lite+実験表示、optional payload、Hot非影響 | `apps/web/src/lib/market/vpi-lite-plus.ts`, `apps/web/src/lib/components/dashboard/DashboardVpiExperimentPanel.svelte`, `apps/web/src/lib/components/dashboard/SelectedSymbolVpiDetail.svelte` | `apps/web/src/lib/market/vpi-lite-plus.test.ts`, `apps/web/tests/e2e/home.e2e.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
 | 3市場mark price比較pilot、optional payload、3/3集約 | `apps/web/src/lib/market/market-comparison.ts`, `apps/web/src/lib/components/dashboard/DashboardMarketComparisonPanel.svelte` | `apps/web/src/lib/market/market-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
+| Bitget / Hyperliquid Perp会場比較、optional payload、選択銘柄限定 | `apps/web/src/lib/market/perp-venue-comparison.ts`, `apps/web/src/lib/components/dashboard/SelectedSymbolVenueComparison.svelte` | `apps/web/src/lib/market/perp-venue-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
 
 UI変更時は`DESIGN.md`を先に読み、Dashboard、Symbol page、Desktop、Mobileのどこへ
 影響するかを明示する。変更後は対象に近いunit/E2Eに加え、`bun run check`、`bun test`、

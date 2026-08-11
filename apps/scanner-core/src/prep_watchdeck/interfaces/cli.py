@@ -23,6 +23,13 @@ from prep_watchdeck.application.market_comparison import (
     refresh_market_comparison_once,
     refresh_market_comparison_periodically,
 )
+from prep_watchdeck.application.perp_venue_comparison import (
+    PERP_VENUE_COMPARISON_INTERVAL_SECONDS,
+    PerpVenueComparisonCollector,
+    collect_perp_venue_comparison_once,
+    refresh_perp_venue_comparison_once,
+    refresh_perp_venue_comparison_periodically,
+)
 from prep_watchdeck.application.rekindle import (
     DEFAULT_LOOKBACK_DAYS,
     DEFAULT_MIN_ABS_CHANGE_PCT,
@@ -332,6 +339,7 @@ def publish_service(
     )
     try:
         market_comparison = collect_market_comparison_once()
+        perp_venue_comparison = collect_perp_venue_comparison_once()
         snapshot = publish_service_snapshot_once(
             store,
             build_service_snapshot_writer(settings),
@@ -340,6 +348,7 @@ def publish_service(
             config=config,
             vpi_config=vpi_config,
             market_comparison=market_comparison,
+            perp_venue_comparison=perp_venue_comparison,
             max_data_lag_ms=DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS,
         )
     except ValueError as exc:
@@ -881,6 +890,7 @@ async def run_service_from_bitget(
     ticker_collector = TickerRuntimeCollector(store.load_ticker_latest())
     ticker_writer = build_ticker_runtime_writer(settings)
     market_comparison_collector = MarketComparisonCollector()
+    perp_venue_comparison_collector = PerpVenueComparisonCollector()
     ticker_refresh_task = (
         asyncio.create_task(
             _run_service_ticker_refresh_from_bitget(
@@ -935,7 +945,10 @@ async def run_service_from_bitget(
     def deep_backfill_progress():
         return deep_backfill_tracker.snapshot() if deep_backfill_tracker is not None else None
 
-    await refresh_market_comparison_once(market_comparison_collector)
+    await asyncio.gather(
+        refresh_market_comparison_once(market_comparison_collector),
+        refresh_perp_venue_comparison_once(perp_venue_comparison_collector),
+    )
     publish_service_state_once(
         store,
         state_writer,
@@ -953,6 +966,7 @@ async def run_service_from_bitget(
         config=config,
         vpi_config=vpi_config,
         market_comparison=market_comparison_collector.snapshot(),
+        perp_venue_comparison=perp_venue_comparison_collector.snapshot(),
     )
     publish_ticker_runtime_once(ticker_collector, ticker_writer)
     publish_task = (
@@ -982,6 +996,7 @@ async def run_service_from_bitget(
                 config=config,
                 vpi_config=vpi_config,
                 market_comparison_provider=market_comparison_collector.snapshot,
+                perp_venue_comparison_provider=perp_venue_comparison_collector.snapshot,
                 interval_seconds=settings.service_publish_interval_seconds,
                 publish_immediately=False,
             )
@@ -993,6 +1008,13 @@ async def run_service_from_bitget(
         refresh_market_comparison_periodically(
             market_comparison_collector,
             interval_seconds=MARKET_COMPARISON_INTERVAL_SECONDS,
+            refresh_immediately=False,
+        )
+    )
+    perp_venue_comparison_task = asyncio.create_task(
+        refresh_perp_venue_comparison_periodically(
+            perp_venue_comparison_collector,
+            interval_seconds=PERP_VENUE_COMPARISON_INTERVAL_SECONDS,
             refresh_immediately=False,
         )
     )
@@ -1098,6 +1120,7 @@ async def run_service_from_bitget(
                 config=config,
                 vpi_config=vpi_config,
                 market_comparison=market_comparison_collector.snapshot(),
+                perp_venue_comparison=perp_venue_comparison_collector.snapshot(),
             )
         watchdog_coro = (
             run_service_watchdog(
@@ -1126,6 +1149,7 @@ async def run_service_from_bitget(
             ticker_task,
             ticker_refresh_task,
             market_comparison_task,
+            perp_venue_comparison_task,
             backfill_task,
             reconcile_task,
             deep_backfill_task,

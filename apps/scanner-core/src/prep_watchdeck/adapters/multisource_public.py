@@ -15,6 +15,7 @@ from prep_watchdeck.domain.market_comparison import (
 BITGET_PRICE_URL = "https://api.bitget.com/api/v2/mix/market/symbol-price"
 BYBIT_TICKERS_URL = "https://api.bybit.com/v5/market/tickers"
 HYPERLIQUID_INFO_URL = "https://api.hyperliquid.xyz/info"
+HYPERLIQUID_QUOTE = "USDT"
 
 
 async def fetch_market_comparison_observations() -> tuple[
@@ -114,7 +115,7 @@ async def _fetch_hyperliquid(client: pybotters.Client) -> list[MarketPriceObserv
             source="hyperliquid",
             symbol=symbol,
             source_symbol=coin,
-            quote="USD",
+            quote=HYPERLIQUID_QUOTE,
             mark_price=_positive_float(by_name[coin]["markPx"]),
             observed_at_ms=observed_at_ms,
             source_at_ms=None,

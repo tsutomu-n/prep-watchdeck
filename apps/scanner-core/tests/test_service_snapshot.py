@@ -74,18 +74,29 @@ def test_snapshot_from_service_store_reuses_scanner_contract(tmp_path) -> None:
 def test_snapshot_from_service_store_includes_optional_market_comparison(tmp_path) -> None:
     store = service_store_with_market_data(tmp_path)
     config = load_template(Path("../../config/scanner-filters"), "balanced")
-    comparison = {"schemaVersion": 1, "mode": "mark_price_pilot_v1", "symbols": []}
+    comparison: dict[str, object] = {
+        "schemaVersion": 1,
+        "mode": "mark_price_pilot_v1",
+        "symbols": [],
+    }
+    venue_comparison: dict[str, object] = {
+        "schemaVersion": 1,
+        "mode": "perp_venue_comparison_v1",
+        "items": [],
+    }
 
     snapshot = snapshot_from_service_store(
         store,
         template="balanced",
         config=config,
         market_comparison=comparison,
+        perp_venue_comparison=venue_comparison,
         generated_at_ms=1_781_000_900_000,
         run_id="service-market-comparison-test",
     )
 
     assert snapshot.summary["marketComparison"] == comparison
+    assert snapshot.summary["perpVenueComparison"] == venue_comparison
 
 
 def test_snapshot_from_service_store_excludes_unsupported_symbols(tmp_path) -> None:
@@ -494,6 +505,10 @@ def test_publish_service_cli_rejects_unavailable_recent_candles_and_keeps_latest
         "prep_watchdeck.interfaces.cli.collect_market_comparison_once",
         lambda: None,
     )
+    monkeypatch.setattr(
+        "prep_watchdeck.interfaces.cli.collect_perp_venue_comparison_once",
+        lambda: None,
+    )
 
     result = runner.invoke(app, ["publish-service", "--template", "balanced"])
 
@@ -517,9 +532,18 @@ def test_publish_service_cli_writes_state_and_latest_json(tmp_path, monkeypatch)
         lambda: 1_781_001_800.0,
     )
     comparison = {"schemaVersion": 1, "mode": "mark_price_pilot_v1", "symbols": []}
+    venue_comparison = {
+        "schemaVersion": 1,
+        "mode": "perp_venue_comparison_v1",
+        "items": [],
+    }
     monkeypatch.setattr(
         "prep_watchdeck.interfaces.cli.collect_market_comparison_once",
         lambda: comparison,
+    )
+    monkeypatch.setattr(
+        "prep_watchdeck.interfaces.cli.collect_perp_venue_comparison_once",
+        lambda: venue_comparison,
     )
 
     result = runner.invoke(app, ["publish-service", "--template", "balanced"])
@@ -530,6 +554,7 @@ def test_publish_service_cli_writes_state_and_latest_json(tmp_path, monkeypatch)
     state = json.loads((out_dir / "service-state.json").read_text())
     assert latest["summary"]["serviceSource"] == "duckdb-service"
     assert latest["summary"]["marketComparison"] == comparison
+    assert latest["summary"]["perpVenueComparison"] == venue_comparison
     assert state["diagnostics"]["tickerCount"] == 2
 
 

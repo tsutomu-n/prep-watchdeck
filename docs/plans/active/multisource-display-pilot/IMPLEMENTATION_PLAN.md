@@ -1,19 +1,19 @@
-# ExecPlan: 3市場mark price表示pilot
+# ExecPlan: 3市場mark price表示pilotとPerp venue限定拡張
 
 - 作成: `2026-08-11T19:48:00+09:00`
-- 更新: `2026-08-11T21:46:55+09:00`
+- 更新: `2026-08-11T23:58:00+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-11-multisource-display-pilot`
 - Profile / risk: `EXECPLAN / MEDIUM`
 - Base revision: `953589b744cc083fb41c7e2845fb5ac4517b68cd`
-- Current checkpoint: `CP-05 complete`
+- Current checkpoint: `CP-10 in progress`
 
 ## 0. 結論と現在地
 
-- **Target**: Bitget・Hyperliquid・BybitのBTC/ETH/SOL mark priceを5分RESTで比較し、raw値、鮮度、coverage、spread、3/3時だけのmedianをDashboardへ表示する。
-- **現在地**: 3社取得、3/3集約、optional snapshot sidecar、scanner rowsから独立したDashboard panelまで実装済み。focused test、check、build、live API smoke、system ChromeによるE2Eは成功した。
-- **次の行動**: implementation checkpoint外のdeliveryとしてcommit/pushとcontrolled restartを行う。24時間観測は任意の後続作業とする。
-- **最大のRisk / Blocker**: HyperliquidのUSD建てと2社のUSDT建ては完全同一ではない。UIでは参考値と明示し、rankingや売買判定には使わない。
+- **Target**: 完了済みBTC/ETH/SOL pilotのHyperliquid quoteを正し、契約同等性を確認できたBitget USDT Perpとdefault Hyperliquid Core Perpについて、会場別mark、funding、OI、24h notional volumeをoptional sidecarで選択銘柄へ表示する。rankingや売買判定には接続しない。
+- **現在地**: 旧pilotのquote訂正、完全一致mapping、2会場public adapter、optional sidecar、選択銘柄限定UI、Desktop/Mobile E2Eまで実装済み。CP-10の最終gateとruntime反映が残る。
+- **次の行動**: full local gate、live smoke、最終diffを確認し、commit/push後にserviceとWebを一度だけ再起動して実画面を検証する。
+- **最大のRisk / Blocker**: 同名symbolでもquote、collateral、倍率、OI単位、funding interval、oracleが一致するとは限らない。必須単位を確認できない契約はmappingせず、比較値を生成しない。
 
 ## 1. 作業契約
 
@@ -165,6 +165,125 @@
 - **Recovery / rollback**: pilotを削除または既定無効化し、Bitget-onlyを維持する。
 - **Evidence**: —
 
+## 3.1 承認済み後続限定拡張
+
+### Objective
+
+- BitgetまたはHyperliquidを全体の主系に固定せず、会場別Perp契約を独立した観測単位として扱う。
+- 現行Bitget scannerのCandidateを変えず、同等性を確認できたdefault Hyperliquid Core契約の会場情報を選択銘柄へ追加する。
+- 全銘柄化、会場横断ranking、Hyperliquid専用履歴laneへ進む前に、mapping、単位、取得継続性、表示価値を検証する。
+
+### Target
+
+- 旧pilotのBTC/ETH/SOLについてHyperliquid quoteを`USDT`へ訂正し、`USD / USDT` caveatを修正する。
+- 新しいoptional `summary.perpVenueComparison` sidecarを追加し、BitgetとHyperliquid Coreの会場別raw値と比較可否を保持する。
+- 対象はBitget USDT perpetualとdefault Hyperliquid Coreの暗号資産Perpだけとし、契約同等性を説明できるものだけmappingする。
+- Webは全mapping一覧ではなく、現在選択中のscanner rowに一致する会場情報だけをSelected detailへ表示する。
+- 取得周期は現行pilotと同じ300秒とし、source単位の失敗を既存scannerから隔離する。
+
+### Preserve
+
+- 旧`summary.marketComparison` v1と3/3 fail-closed契約。quote/copy修正以外は意味を変更しない。
+- Bitgetを使う既存Candidate、Watchlist、Raw Sort、Smart Rank、VPI、74h/OI、category、Hot ticker、chart。
+- snapshot required schema、DB schema、state layout、single writer、service shutdown。
+- public data only、注文・残高・position・wallet・API keyなしの製品境界。
+
+### Non-goals / Deferred
+
+- Hyperliquid専用銘柄のcandles、履歴、data quality、Candidate、ranking。
+- HIP-3、RWA、株式、商品、指数、現物、期日物。
+- Bybit比較の全銘柄化、TradingView取得、3市場medianのranking接続。
+- 板を同一notionalで歩かせるslippage比較、裁定機会判定、通知、注文。
+- DB永続化、migration、別writer、新規production dependency。
+- `Bitget / Hyperliquid / 両会場`でscanner universeを切り替えるfilter。Hyperliquid専用laneがない段階では意味が不完全なため後続判断とする。
+
+### Acceptance criteria
+
+| ID | Mandatory | Condition | Source | Verification | Status | Evidence |
+|---|---:|---|---|---|---|---|
+| AC-10 | yes | BTC/ETH/SOLのHyperliquid quoteとUI/docsが`USDT`へ訂正され、旧3/3 fail-closed契約を維持する | user / primary spec | Python、Vitest、E2E、docs diff | verified | quote unit/Vitest/E2E成功 |
+| AC-11 | yes | mapped契約ごとにunderlying、quote、collateral、倍率またはOI単位、funding interval、listing statusを説明でき、曖昧な契約を自動統合しない | user / unresolved | primary-spec probe、pure mapping tests | verified | 公式仕様、live 745/232 probe、fail-closed mapping test |
+| AC-12 | yes | optional `summary.perpVenueComparison`がBitget/Hyperliquidのsource symbol、単位、mark、比較可能なfunding/OI/volume、observedAt、nullable sourceAt、欠損理由を保持する | user | serializer/parser tests、live smoke | verified | live 161 mapping、serializer/parser test |
+| AC-13 | yes | Webは選択中scanner symbolの会場情報だけを表示し、unmapped、stale、片側欠損を誤って比較しない | user / repo | Vitest、1440px/390px E2E | verified | 関連E2E 2 passed |
+| AC-14 | yes | 新collectorの失敗が既存scanner、snapshot発行、shutdownへ波及せず、DB、required schema、ranking、Candidateを変更しない | repo / default | service/snapshot tests、final diff | verified | focused service/snapshot 48 passed、schema/DB差分なし |
+| AC-15 | yes | focused test、Ruff、Pyrefly、Web check/build、関連E2E、live public API smoke、docs/diff checkが成功する | repo | recorded commands and exit codes | pending | — |
+| AC-16 | no | 最低72時間・864予定cycleでsource別成功、欠損、stale、応答時間、field充足、mapping、snapshot遅延を隔離観測する | follow-up | qualification artifact | deferred | 実装完了とは分離 |
+
+### CP-06: Contract and unit probe
+
+- **Status**: completed
+- **Goal**: BitgetとHyperliquid Coreの対応可否と比較可能なfieldを一次仕様・実応答で確定する。
+- **Linked ACs**: AC-10、AC-11、AC-12
+- **Dependencies**: public endpointsへのnetwork access。
+- **Targets**: official docs、read-only probe output、plan。production code変更なし。
+- **Work**: underlying、quote、collateral、倍率またはOI単位、funding interval、listing status、source timestamp、24h volume定義を照合する。
+- **Preserve / Do not change**: symbol名だけでmappingしない。確認不能fieldを推測しない。
+- **Completion criteria**: mandatory payload fieldと除外条件に未解決の意味差がない。解消できなければ対象または指標を縮小する。
+- **Verification**: Bitget contract/tickerとHyperliquid meta/contextのfixture化可能なresponse shapeを記録する。
+- **Expected failure modes**: multiplier不明、volume窓不一致、quote例外、source timestamp欠損。
+- **Recovery / rollback**: 比較不能fieldまたは契約を対象外にし、mark-onlyまたは旧pilotへ戻す。
+- **Evidence**: —
+
+### CP-07: Pure mapping and public adapters
+
+- **Status**: completed
+- **Goal**: 会場別契約を観測単位、canonical assetを表示groupとするfail-closed mappingとpublic fetchを実装する。
+- **Linked ACs**: AC-11、AC-12
+- **Dependencies**: CP-06。
+- **Targets**: `domain/perp_venue_comparison.py`、`adapters/perp_venue_public.py`、focused Python tests。
+- **Work**: mapped/unmapped、stale、片側欠損、quote/multiplier例外をpure testsから実装し、Bitget/Hyperliquidをsource別に取得する。
+- **Preserve / Do not change**: Bybit、HIP-3、private API、WebSocket、新規dependencyを接続しない。raw OIを合算しない。
+- **Completion criteria**: 比較可能なfieldだけを公開し、曖昧な契約はunmappedまたはfield nullになる。
+- **Verification**: `uv run pytest -q tests/test_perp_venue_comparison.py tests/test_market_comparison.py`、Ruff、Pyrefly。
+- **Expected failure modes**: upstream field drift、重複canonical key、全source失敗、過大payload。
+- **Recovery / rollback**: 新domain/adapterを削除すれば旧pilotへ戻せる。
+- **Evidence**: —
+
+### CP-08: Optional service sidecar
+
+- **Status**: completed
+- **Goal**: 300秒の独立in-memory collectorをservice lifecycleへ追加し、Cold snapshotへoptional blockを載せる。
+- **Linked ACs**: AC-12、AC-14
+- **Dependencies**: CP-07。
+- **Targets**: `application/perp_venue_comparison.py`、`service_snapshot.py`、`cli.py`、service/snapshot tests。
+- **Work**: 起動、manual publish、periodic refresh、cancel/await、optional injectionを追加する。
+- **Preserve / Do not change**: DB、required schema、single writer、既存marketComparison、ranking、Candidateを変更しない。
+- **Completion criteria**: 新collector全失敗でも旧snapshotが発行され、shutdown時にtask leakがない。
+- **Verification**: focused service/snapshot testsとisolated stop。
+- **Expected failure modes**: timeout、task leak、snapshot肥大、旧blockの長期残存。
+- **Recovery / rollback**: taskとoptional injectionを外して旧pilotへ戻す。
+- **Evidence**: —
+
+### CP-09: Selected-symbol display
+
+- **Status**: completed
+- **Goal**: 選択中scanner symbolだけに会場別raw値、単位、鮮度、比較不能理由を表示する。
+- **Linked ACs**: AC-10、AC-13
+- **Dependencies**: CP-08。
+- **Targets**: Web parser、`SelectedSymbolVenueComparison.svelte`、Dashboard route、Vitest、E2E、current docs。
+- **Work**: parserをfail-closedにし、Selected detailへ局所接続する。固定全銘柄cardやuniverse filterは追加しない。
+- **Preserve / Do not change**: Candidate→Watchlist→Selected detail→Smart RankのDOM/keyboard順、bounded scroll、color/font契約。
+- **Completion criteria**: mapped、片側欠損、stale、unmappedについて期待どおり表示または非表示になる。
+- **Verification**: Vitest、Svelte check/build、1440px/390px関連E2E。
+- **Expected failure modes**: detail過密、単位誤認、モバイルoverflow、invalid payload表示。
+- **Recovery / rollback**: 新component/route接続を外し、sidecarはWebから無視できる。
+- **Evidence**: —
+
+### CP-10: Final gate and optional qualification
+
+- **Status**: pending
+- **Goal**: 実装のmandatory ACを検証し、72時間観測は別のqualificationとして扱う。
+- **Linked ACs**: AC-15、AC-16
+- **Dependencies**: CP-09。
+- **Targets**: focused/full gate、live smoke、docs、final diff、任意の隔離qualification artifact。
+- **Work**: test/check/build/E2E/live smoke/final diffを確認し、必要な場合だけ72時間観測を開始する。
+- **Preserve / Do not change**: 現役DuckDBへ別writerを接続しない。観測未実施を成功扱いしない。
+- **Completion criteria**: mandatory ACに再現可能な証拠があり、final diffがAllowedFilesとTargetに一致する。
+- **Verification**: `.codex/SP_STATE.md`のTestCommand、関連E2E、live public API smoke、docs checker、`git diff --check`。
+- **Expected failure modes**: intermittent API欠損、既存snapshot遅延、payload肥大、利用価値なし。
+- **Recovery / rollback**: 新sidecarを無効化または除去し、旧pilot/Bitget scannerを維持する。
+- **Evidence**: —
+
 ## 4. Critical risks and stop conditions
 
 | ID | Risk / Stop condition | Detection | Mitigation / Resume requirement | Status |
@@ -175,7 +294,13 @@
 | R-04 | DB/schema migrationまたは別writerが必要 | final design/diff | scope超過として停止し再計画 | open |
 | R-05 | 2/3以下やstaleからmedianを生成してしまう | pure/parser tests | fail-closedをmandatoryに維持 | open |
 | R-06 | 画面情報量が判断を悪化させる | responsive/E2E/利用観察 | panel縮小またはpilot終了 | open |
-| R-07 | 24時間観測で比較価値が見えない | spreadと利用結果 | 全銘柄化せず計画終了 | open |
+| R-07 | 72時間限定観測で比較価値が見えない | source継続性と表示利用結果 | 全銘柄化せず限定拡張を維持または終了 | open |
+| R-08 | symbol名一致だけでは契約同等性を確定できない | CP-06 probe、mapping test | unmappedにして対象外。明示規則の根拠が必要 | open |
+| R-09 | quote、collateral、倍率、OI単位、funding intervalを確定できない | primary spec/responseに根拠なし | 対象fieldまたは契約を除外。推測で補わない | open |
+| R-10 | source timestamp欠損から鮮度を偽装する | Hyperliquid responseにtimeなし | `sourceAt: null`を維持し、observedAtと区別 | open |
+| R-11 | 新sidecarがsnapshot肥大またはservice遅延を起こす | focused runtime/performance、publish duration | payloadをmapping済みに限定するかsidecarを撤回 | open |
+| R-12 | Selected detailが過密化し監視判断を悪化させる | 1440px/390px E2Eと利用観察 | componentを縮小または非表示化 | open |
+| R-13 | Hyperliquid専用lane、DB migration、別writerが必要になる | CP-06〜09でscope越境を検出 | 今回停止し、別EXECPLANと明示承認が必要 | open |
 
 ## 5. Progress, decisions, findings, evidence
 
@@ -184,12 +309,14 @@
 - 2026-08-11 19:48 — 新規dependencyなし、既存pybotters、3銘柄、5分REST、表示専用、ranking非接続を確定。
 - 2026-08-11 21:39 — 初回runtime確認で比較sidecarは3銘柄3/3だったが、live scanner rowsにBTC/ETH/SOLがなくSelected detailへ到達不能と判明。
 - 2026-08-11 21:46 — scanner rowsから独立したDashboard panelへ修正し、同条件のE2EをREDからGREENへした。
+- 2026-08-11 22:56 — ユーザーが会場を全体の主系に固定せず、旧pilot訂正と検証済み重複銘柄へのHyperliquid Core sidecarだけを次に実装する限定方針を承認。CP-06〜10とAC-10〜16を追加した。
+- 2026-08-11 23:58 — 一次仕様とlive responseを照合し、Bitget 745、Hyperliquid Core 232から完全一致・除外規則で161件をmapping。quote訂正、collector、optional sidecar、Selected detail、関連unit/E2Eを実装した。
 
 ## 6. Final result
 
-- **Result**: runnable
-- **Actual state**: 3社public REST、3/3中央値、optional snapshot sidecar、scanner rows非依存のDashboard panelを実装。live collectorは3銘柄すべて3/3、実ブラウザE2Eも成功した。
-- **Goal gap**: runnable化のmandatory implementation gapはなし。Git publicationとruntime反映はdelivery手順として別に実施する。
-- **Verification summary**: Python関連50 passed、Ruff/Pyrefly、Web全227 passed、Svelte check/build、追加E2E 1 passed、live API smoke、docs checker、`git diff --check`成功。
-- **Residual risks**: USD/USDT差と長時間のAPI安定性は未評価。値は表示専用でrankingや売買判定へ使わない。
-- **Remaining work / Resume requirement**: implementation作業なし。必要なら別作業として24時間観測を行う。
+- **Result**: partial（旧pilotはrunnable、後続限定拡張は未実装）
+- **Actual state**: 旧pilotは3社public REST、3/3中央値、optional snapshot sidecar、scanner rows非依存のDashboard panelを実装済み。新しい契約mapping、会場別funding/OI/volume sidecar、Selected detailは存在しない。
+- **Goal gap**: AC-10〜15とCP-06〜10が未着手。旧pilotの実装成功を後続限定拡張の完了証拠にしない。
+- **Verification summary**: 旧pilotについてPython関連50 passed、Ruff/Pyrefly、Web全227 passed、Svelte check/build、追加E2E 1 passed、live API smoke、docs checker、`git diff --check`成功。後続限定拡張のtestは未実行。
+- **Residual risks**: quote誤表記、契約同等性、単位差、source timestamp欠損、API継続性、Selected detailの情報量は未解決。値は表示専用でrankingや売買判定へ使わない。
+- **Remaining work / Resume requirement**: `.codex/SP_STATE.md`をreviewし、TASK 11 / CP-06のread-only probeから開始する。72時間観測はmandatory実装完了と分離する。

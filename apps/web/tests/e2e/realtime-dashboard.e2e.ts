@@ -132,6 +132,75 @@ function addMarketComparisonSnapshotPayload() {
   return snapshot.rows;
 }
 
+function addPerpVenueComparisonSnapshotPayload() {
+  const snapshot = JSON.parse(readFileSync(e2eSnapshotPath, "utf-8")) as SnapshotFixture & {
+    generatedAt: number;
+  };
+  const [readyRow, partialRow] = snapshot.rows;
+  if (!readyRow || !partialRow) throw new Error("Perp venue fixture requires two scanner rows");
+  snapshot.summary.perpVenueComparison = {
+    schemaVersion: 1,
+    mode: "perp_venue_comparison_v1",
+    generatedAt: snapshot.generatedAt,
+    refreshIntervalSeconds: 300,
+    items: [
+      perpVenueComparisonItem(readyRow.symbol, "ready", snapshot.generatedAt),
+      perpVenueComparisonItem(partialRow.symbol, "partial", snapshot.generatedAt)
+    ]
+  };
+  writeJsonAtomically(e2eSnapshotPath, snapshot);
+  return snapshot.rows;
+}
+
+function perpVenueComparisonItem(
+  symbol: string,
+  status: "ready" | "partial",
+  observedAt: number
+) {
+  const asset = symbol.replace(/USDT$/, "");
+  return {
+    symbol,
+    asset,
+    status,
+    markSpreadPct: status === "ready" ? 0.25 : null,
+    sources: [
+      perpVenueSource("bitget", symbol, "ok", observedAt),
+      perpVenueSource(
+        "hyperliquid",
+        asset,
+        status === "ready" ? "ok" : "unavailable",
+        observedAt
+      )
+    ]
+  };
+}
+
+function perpVenueSource(
+  venue: "bitget" | "hyperliquid",
+  sourceSymbol: string,
+  status: "ok" | "unavailable",
+  observedAt: number
+) {
+  const ok = status === "ok";
+  return {
+    venue,
+    status,
+    sourceSymbol,
+    quote: "USDT",
+    collateral: venue === "bitget" ? "USDT" : "USDC",
+    markPrice: ok ? (venue === "bitget" ? 100 : 100.25) : null,
+    fundingRate: ok ? 0.0001 : null,
+    fundingIntervalHours: venue === "bitget" ? 8 : 1,
+    fundingRatePerHour: ok ? (venue === "bitget" ? 0.0000125 : 0.0001) : null,
+    openInterestBase: ok ? 10 : null,
+    openInterestNotional: ok ? 1000 : null,
+    volume24hNotional: ok ? 1_000_000 : null,
+    observedAt: ok ? observedAt : null,
+    sourceAt: ok && venue === "bitget" ? observedAt : null,
+    error: ok ? null : "TimeoutError"
+  };
+}
+
 function marketComparisonItem(symbol: string, medianPrice: number, observedAt: number) {
   const coin = symbol.replace(/USDT$/, "");
   return {
@@ -142,7 +211,7 @@ function marketComparisonItem(symbol: string, medianPrice: number, observedAt: n
     spreadPct: 1.98,
     sources: [
       marketComparisonSource("bitget", symbol, "USDT", medianPrice - 1, observedAt),
-      marketComparisonSource("hyperliquid", coin, "USD", medianPrice, observedAt),
+      marketComparisonSource("hyperliquid", coin, "USDT", medianPrice, observedAt),
       marketComparisonSource("bybit", symbol, "USDT", medianPrice + 1, observedAt)
     ]
   };
@@ -801,5 +870,44 @@ test("three-market comparison remains visible without matching scanner rows", as
   await expect(comparison).toContainText("Bitget");
   await expect(comparison).toContainText("Hyperliquid");
   await expect(comparison).toContainText("Bybit");
-  await expect(comparison).toContainText("USD / USDT建て");
+  await expect(comparison).not.toContainText("USD / USDT建て");
+  await expect(comparison).toContainText("USDT建ての参考値");
+});
+
+test("selected symbol shows only its mapped Perp venues on desktop and mobile", async ({ page }) => {
+  generateBasicSnapshot();
+  const rows = addPerpVenueComparisonSnapshotPayload();
+  writeTickerRuntime(1, tickerUpdates(rows, Date.now() + 60_000), []);
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await waitForClientRuntime(page);
+  await page.locator(`[data-market-row][data-symbol="${rows[0].symbol}"]`).click();
+  let group = page.locator('[data-detail-group="perp-venue-comparison"]');
+  await expect(group).toBeVisible();
+  await group.locator("summary").click();
+  const comparison = page.getByRole("region", { name: "選択銘柄 Perp会場比較" });
+  await expect(comparison).toContainText("Bitget");
+  await expect(comparison).toContainText("Hyperliquid");
+  await expect(comparison).toContainText("証拠金 USDC");
+  await expect(comparison).toContainText("建玉想定元本");
+
+  await page.locator(`[data-market-row][data-symbol="${rows[1].symbol}"]`).click();
+  group = page.locator('[data-detail-group="perp-venue-comparison"]');
+  await expect(page.getByRole("region", { name: "選択銘柄 Perp会場比較" })).toContainText(
+    "取得不能: TimeoutError"
+  );
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  group = page.locator('[data-detail-group="perp-venue-comparison"]');
+  await expect(group).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)
+  ).toBe(true);
+
+  if (rows[2]) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.locator(`[data-market-row][data-symbol="${rows[2].symbol}"]`).click();
+    await expect(page.locator('[data-detail-group="perp-venue-comparison"]')).toHaveCount(0);
+  }
+
 });
