@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-10T23:10:43+09:00`
-- 検証: `2026-08-10T23:10:43+09:00`
-- 文書更新作業: `2026-08-10_23:10`（Asia/Tokyo）
+- 更新: `2026-08-11T10:54:58+09:00`
+- 検証: `2026-08-11T10:54:58+09:00`
+- 文書更新作業: `2026-08-11_10:54`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -90,11 +90,8 @@ Selected detailは「選択銘柄を保持中」を表示し、入力中の下�
 
 Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Candidate直下へ既存Target限定の
 発見laneを置く。利用者が最初に見る見出しは`市場活動`とし、技術名`VPI-Lite+`は小さく併記する。
-`EARLY_ACTIVITY / ACTIVE_MOVE`を「活動増加」、`THIN_VOLATILITY / SINGLE_BAR_SUSPECT`を
-「要注意」へ分け、各groupはscore降順で最大5件とする。score自体はlaneへ表示しない。
-coverageは`VPI対象 N / Watchlist M銘柄`で明示する。発見buttonは現在のWatchlist表示条件に含まれ、
-そのまま選択できるTargetだけに限定する。`VPI判定対象なし / 現在の表示条件に該当するVPI対象なし /
-活動急増なし / VPIデータ不足`を別の空状態として表示する。Benchmarkは発見laneの対象にしない。
+各groupはscore降順で最大5件とするが、score自体はlaneへ表示しない。coverage、state分類、empty state、
+Benchmark除外の意味は[`data-contracts.md`](data-contracts.md)を正本とする。
 選択rowに一致する`row.display.vpiLitePlus`がある時だけ、選択銘柄の補助詳細としてscore、
 reason、risk、funding、open interest、data timestampを表示する。常に「実験中の補助指標で、
 売買シグナルではない」と明記する。
@@ -144,9 +141,9 @@ Hot ticker価格が5秒を超えて更新されていない時は、価格をqua
 読み上げでも価格値と`STALE`を取得できる。stale化によってrow高を変えたり、他のfieldを
 隠したりしない。
 
-row品質`OK`は表示しない。`PARTIAL`は`一部データ不足`、`STALE`は`更新遅延`、
-`MISSING`および未知値は`判定不能`として視覚表示し、rowのaccessible nameへ異常時だけ
-品質labelを含める。snapshot全体の状態はsource bannerで引き続き可視化する。
+row qualityのlabel mappingは[`data-contracts.md`](data-contracts.md)を正本とする。通常品質は省略し、
+異常時だけ視覚表示とrowのaccessible nameへ品質labelを含める。snapshot全体の状態はsource bannerで
+引き続き可視化する。
 Hot ticker updateは対象symbolの現在価格DOMだけを更新し、ranking順、Watchlist順、選択、
 filter、入力中の下書きを変えない。
 
@@ -329,13 +326,12 @@ Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で�
 74h条件の複合結果は`一致 / 未一致 / 判定不能`で表示する。VPI-Lite+のOI availabilityは
 別契約なので維持し、重複していた非VPIのraw open interest表示だけを置かない。
 
-`summary.volumeRatio15m`をvalidationできた場合だけ、`15分量倍率`へ
-`直近約24h中央値比`のような基準説明を付ける。値は有限時に`3.4×`、欠損時に`—`とする。
-metadataが不正・欠損ならsample数や期間を推測せず、基準詳細を取得できないfallbackを表示する。
+`summary.volumeRatio15m`をvalidationできた場合だけ、`15分量倍率`へ検証済みの基準説明を付ける。
+値は有限時に`3.4×`、欠損時に`—`とする。metadataが不正・欠損ならsample数や期間を推測せず、
+基準詳細を取得できないfallbackを表示する。計算とmetadataの厳密な契約は
+[`data-contracts.md`](data-contracts.md)を正本とする。
 Symbol時間軸boardでは15mだけ量倍率行を生成し、他timeframeではDOMを生成しない。
 
-Scanner rowは同じrolling turnover定義で`15m / 1h / 4h`量倍率を持つ。1hと4hはSelected detailの
-文脈表示だけに使い、Candidate、Raw Sort、補正順位、attention score、categoryを変更しない。
-`activityPhase`は`BURST / EXPANDING / SUSTAINED / COOLING / NORMAL / UNKNOWN`で、Watchlistは
-`急増 / 拡大 / 持続 / 失速 / 判定不能`だけを量倍率の近くへ表示し、`NORMAL`は省略する。
-Selected detailとMonitoring Railは活動phaseを表示するが、売買方向の意味は持たせない。
+1hと4hの量倍率はSelected detailの文脈表示だけに使う。Watchlistは非normalのactivity phaseを
+量倍率の近くへ表示し、Selected detailとMonitoring Railにも活動phaseを表示するが、売買方向の意味は
+持たせない。enum、label、判定順、ranking非影響は[`data-contracts.md`](data-contracts.md)を正本とする。

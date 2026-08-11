@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-10T23:10:43+09:00`
-- 検証: `2026-08-10T23:10:43+09:00`
-- 文書更新作業: `2026-08-10_23:10`（Asia/Tokyo）
+- 更新: `2026-08-11T10:54:58+09:00`
+- 検証: `2026-08-11T10:54:58+09:00`
+- 文書更新作業: `2026-08-11_10:54`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -59,11 +59,26 @@ VPI stateは`CALM | EARLY_ACTIVITY | ACTIVE_MOVE | THIN_VOLATILITY |
 SINGLE_BAR_SUSPECT | DATA_INSUFFICIENT | DATA_STALE | UNKNOWN`、data qualityは
 `OK | INSUFFICIENT | STALE | ERROR`である。これはscanner rowの`dataQuality`とは別契約である。
 
+Dashboard discovery laneでの分類とempty state契約:
+
+- `EARLY_ACTIVITY | ACTIVE_MOVE`は`活動増加`、`THIN_VOLATILITY | SINGLE_BAR_SUSPECT`は
+  `要注意`へ分類する。
+- `VPI対象 N / Watchlist M銘柄`の`N`はvalidなTarget item数、`M`は現在のWatchlist表示条件に
+  含まれるrow数である。discovery buttonは両方に含まれるTargetだけを選択対象にする。
+- valid summaryにTargetがなければ`VPI判定対象なし`、Targetはあるが現在の表示条件に該当しなければ
+  `現在の表示条件に該当するVPI対象なし`、対象はあるが活動増加・要注意がなければ`活動急増なし`、
+  payloadが欠損またはinvalidなら`VPIデータ不足`とする。
+- Benchmarkはdiscovery laneのcoverageと選択対象へ含めない。
+
 ## Data quality
 
 rowの`dataQuality`は`OK | STALE | MISSING | PARTIAL`、snapshotの`snapshotStatus`は
 `OK | STALE | PARTIAL | ERROR`である。stale、gap、coverage、unsupported symbolをUIで隠さず、
 価格方向やrankingとは別の意味として扱う。
+
+row qualityの表示labelは`PARTIAL`=`一部データ不足`、`STALE`=`更新遅延`、`MISSING`=`判定不能`で、
+未知値もfail-closedで`判定不能`とする。`OK`は通常rowで常時表示しない。snapshot全体の状態は
+source bannerで別に示す。
 
 ## Service state
 
@@ -199,6 +214,9 @@ rowのoptional `activityPhase`は`BURST | EXPANDING | SUSTAINED | COOLING | NORM
 判定順はUNKNOWN、COOLING、SUSTAINED、EXPANDING、BURST、NORMALを固定し、required ratioが欠ける時は
 UNKNOWNとする。これはdisplay-only契約であり、attention score、category、Candidate ranking、
 Raw Sort、補正順位、VPI-Lite+計算へ入力しない。
+
+表示labelは`BURST`=`急増`、`EXPANDING`=`拡大`、`SUSTAINED`=`持続`、`COOLING`=`失速`、
+`UNKNOWN`=`判定不能`とする。`NORMAL`は通常状態のnoiseを避けるためrowでは省略する。
 
 `open_interest_samples`は`(symbol,bucket_ts_ms)`主キー、`holding_amount`、`source_ts_ms`、
 `updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは
