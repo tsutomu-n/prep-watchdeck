@@ -52,6 +52,12 @@
     return `candidate-panel-${metric}`;
   }
 
+  function metricTabClass(metric: string) {
+    if (metric === "changeUp") return "metric-up";
+    if (metric === "changeDown") return "metric-down";
+    return "metric-neutral";
+  }
+
   function activateTab(metric: string, target?: HTMLButtonElement) {
     activeMetric = metric;
     target?.focus();
@@ -111,6 +117,7 @@
     <div class="candidate-tabs" role="tablist" aria-label="候補ランキング種別">
       {#each metrics as [label, metric], index}
         <button
+          class={metricTabClass(metric)}
           id={tabId(metric)}
           type="button"
           role="tab"
@@ -186,6 +193,22 @@
     background: var(--focus);
     color: var(--focus-on);
     font-weight: 800;
+  }
+
+  .candidate-tabs button.metric-up {
+    box-shadow: inset 0 3px 0 var(--up);
+  }
+
+  .candidate-tabs button.metric-down {
+    box-shadow: inset 0 3px 0 var(--down);
+  }
+
+  .candidate-tabs button.metric-up:not([aria-selected="true"]) {
+    color: var(--up);
+  }
+
+  .candidate-tabs button.metric-down:not([aria-selected="true"]) {
+    color: var(--down);
   }
 
   button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }

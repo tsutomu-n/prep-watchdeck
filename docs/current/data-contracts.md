@@ -217,6 +217,8 @@ Raw Sort、補正順位、VPI-Lite+計算へ入力しない。
 
 表示labelは`BURST`=`急増`、`EXPANDING`=`拡大`、`SUSTAINED`=`持続`、`COOLING`=`失速`、
 `UNKNOWN`=`判定不能`とする。`NORMAL`は通常状態のnoiseを避けるためrowでは省略する。
+Watchlist rowで`UNKNOWN`と異常なrow品質が重なる場合は、品質側の`判定不能`を表示し、活動phase側の
+重複labelだけを省略する。選択銘柄の詳細ではactivity phase自体を`判定不能`として確認できる。
 
 `open_interest_samples`は`(symbol,bucket_ts_ms)`主キー、`holding_amount`、`source_ts_ms`、
 `updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは

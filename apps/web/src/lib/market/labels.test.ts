@@ -40,6 +40,9 @@ describe("market label helpers", () => {
     expect(activityPhaseLabel(null)).toBe("判定不能");
     expect(activityPhaseWatchlistLabel("NORMAL")).toBeNull();
     expect(activityPhaseWatchlistLabel("UNKNOWN")).toBe("判定不能");
+    expect(activityPhaseWatchlistLabel("UNKNOWN", "MISSING")).toBeNull();
+    expect(activityPhaseWatchlistLabel("UNKNOWN", "OK")).toBe("判定不能");
+    expect(activityPhaseWatchlistLabel("EXPANDING", "MISSING")).toBe("拡大");
     expect(snapshotStatusLabel("STALE")).toBe("古い");
     expect(dataSourceLabel("fixture")).toBe("検証データ");
     expect(templateLabel("thin-spike")).toBe("薄商い急変");

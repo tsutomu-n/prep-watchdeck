@@ -1,9 +1,9 @@
 # Prep Watchdeck Design Constitution
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-11T10:54:58+09:00`
-- 検証: `2026-08-11T10:54:58+09:00`
-- 文書更新作業時刻: `2026-08-11_10:54`
+- 更新: `2026-08-11T17:26:25+09:00`
+- 検証: `2026-08-11T17:26:25+09:00`
+- 文書更新作業時刻: `2026-08-11_17:26`
 - 状態: `現行`
 
 ---
@@ -11,7 +11,7 @@
 ```yaml
 version: alpha
 name: Prep Watchdeck
-description: "Dark market-monitoring-terminal visual identity for a local crypto watchdeck."
+description: "Dark-first market-monitoring-terminal visual identity with an optional low-glare light scheme."
 colors:
   bg: "#070908"
   bgAlt: "#090C0D"
@@ -237,7 +237,8 @@ components:
 
 Prep Watchdeck is a local crypto market monitoring watchdeck. It is not a trading bot.
 
-The identity is a **Dark Market Monitoring Terminal**: dense, flat, rectangular, data-first, and restrained.
+The identity is a **Dark-first Market Monitoring Terminal** with an optional low-glare light scheme: dense, flat,
+rectangular, data-first, and restrained.
 The interface helps the user:
 
 1. find fast-moving symbols;
@@ -274,6 +275,80 @@ chart token の単一 source であり、全 route が `+layout.svelte` から�
 raw hexadecimal / `rgb()` / `rgba()` を置かず、semantic token または token 由来の
 `color-mix()` を使う。
 
+## Selectable Color Schemes
+
+YAMLの`colors`は既定の`watchdeck`（画面表示は`標準`）を固定する。利用者は同じsemantic roleを
+保ったまま、3つのDark themeと4つのLight themeへ切り替えられる。配色変更で
+movement、warning、quality、focusの意味、typography、shape、spacing、densityを変更しない。
+selectorは閉じた状態でも現在の種別を`DARK` / `LIGHT`の文字で示し、展開時は
+「ダークテーマ」「ライトテーマ」のnative groupへ4件ずつ分ける。色だけで種別を伝えない。
+
+### Dark themes
+
+| runtime token | Carbon Aurora | Forest Amber | Plum Signal |
+| --- | --- | --- | --- |
+| `bg` | `#0B0D10` | `#1E2326` | `#141421` |
+| `bgAlt` | `#101216` | `#232A2E` | `#191927` |
+| `surface` | `#151922` | `#272E33` | `#1E1E2E` |
+| `panel` | `rgba(24, 29, 39, 0.94)` | `rgba(45, 53, 59, 0.94)` | `rgba(36, 36, 58, 0.94)` |
+| `panelSolid` | `#181D27` | `#2D353B` | `#24243A` |
+| `panelStrong` | `#202735` | `#343F44` | `#2B2B46` |
+| `panelSelected` | `#1D3040` | `#3A4947` | `#332A4F` |
+| `text` | `#F4F7FA` | `#D3C6AA` | `#F8F8F2` |
+| `muted` | `#9BA7B4` | `#9DA9A0` | `#9399B2` |
+| `subtle` | `#B8C2CC` | `#B3B9AD` | `#BAC2DE` |
+| `line` | `#2B3440` | `#384B55` | `#35354F` |
+| `lineStrong` | `#3C4A59` | `#4F5F60` | `#494A68` |
+| `focus` / `primary` | `#33B1FF` | `#DBBC7F` | `#AB9DF2` |
+| `focusOn` | `#071018` | `#1E2326` | `#151421` |
+| `up` | `#42BE65` | `#A7C080` | `#A6E3A1` |
+| `down` | `#F78166` | `#E67E80` | `#FF6188` |
+| `warning` | `#FFE97B` | `#DFA000` | `#F9E2AF` |
+| `warningBorder` | `#E3B341` | `#D8A657` | `#FC9867` |
+| `qualityGood` | `#3DDBD9` | `#7FBBB3` | `#89B4FA` |
+| `qualityRisk` | `#EE5396` | `#D699B6` | `#E558A9` |
+| `chipLine` | `#4A5A6A` | `#52605D` | `#585B70` |
+| `chipNeutral` / `chartText` | `#C8D1DA` | `#C7C4B5` | `#CDD6F4` |
+| `chartSurface` | `#11151C` | `#20272B` | `#191927` |
+| `chartGrid` | `#252D38` | `#344048` | `#313146` |
+
+### Light themes
+
+| runtime token | Paper Ledger | Arctic Terminal | Sage Field | Lilac Current |
+| --- | --- | --- | --- | --- |
+| `bg` | `#F3EAD3` | `#F3F5F7` | `#EEF1E8` | `#F4F1F8` |
+| `bgAlt` | `#EAE4CA` | `#E8EAED` | `#E4E9DC` | `#EAE5F1` |
+| `surface` | `#FBF7E9` | `#FFFFFF` | `#FAFBF6` | `#FCFAFD` |
+| `panel` | `rgba(247, 241, 221, 0.94)` | `rgba(248, 250, 252, 0.94)` | `rgba(244, 246, 238, 0.94)` | `rgba(247, 243, 250, 0.94)` |
+| `panelSolid` | `#F7F1DD` | `#F8FAFC` | `#F4F6EE` | `#F7F3FA` |
+| `panelStrong` | `#E5DFC5` | `#E9EEF4` | `#DEE5D5` | `#E5DDED` |
+| `panelSelected` | `#E1E7DD` | `#E4EEFC` | `#DDEAE2` | `#E8E0F4` |
+| `text` | `#26313A` | `#202124` | `#24333A` | `#2D2933` |
+| `muted` | `#667069` | `#5F6368` | `#5C6A72` | `#6A6372` |
+| `subtle` | `#4F5D65` | `#4E5968` | `#48605F` | `#514A5B` |
+| `line` | `#D0C6AA` | `#D7DCE2` | `#CBD3C4` | `#D6CEDD` |
+| `lineStrong` | `#9A927C` | `#9BA5B1` | `#89988A` | `#9A90A4` |
+| `focus` / `primary` | `#1E6FCC` | `#1967D2` | `#2B6E9E` | `#6D46B8` |
+| `focusOn` | `#FFFFFF` | `#FFFFFF` | `#FFFFFF` | `#FFFFFF` |
+| `up` | `#216609` | `#188038` | `#4E7300` | `#26734D` |
+| `down` | `#B33120` | `#D93025` | `#B53C3C` | `#B53D56` |
+| `warning` | `#8A5A00` | `#8A5A00` | `#8A6200` | `#8A5A00` |
+| `warningBorder` | `#A06D00` | `#A86200` | `#A16A00` | `#A76400` |
+| `qualityGood` | `#14746F` | `#087F8C` | `#14796C` | `#216A8A` |
+| `qualityRisk` | `#8B3F7A` | `#7E3FB2` | `#9A3E6B` | `#9A3D80` |
+| `chipLine` | `#9A927C` | `#9BA5B1` | `#89988A` | `#9A90A4` |
+| `chipNeutral` / `chartText` | `#46545A` | `#4E5968` | `#42585B` | `#514A5B` |
+| `chartSurface` | `#F7F1DD` | `#F8FAFC` | `#F5F7F0` | `#F8F5FA` |
+| `chartGrid` | `#D8D0BC` | `#DCE2E8` | `#D8DED2` | `#DDD5E3` |
+
+`chartBorder`は`lineStrong`、`chartUp` / `chartDown` / `chartFocus`はそれぞれ
+`up` / `down` / `focus`と同じ値を使う。chart volumeは対応するmovement色をalpha `0.45`で使う。
+Plum Signalの`qualityRisk`は参照案の色相を保ち、小さい品質labelが`panelSolid`上で4.5:1以上に
+なる最小の明度補正を含む。
+Light themeは本文と状態labelを`panelSolid`上で4.5:1以上、focus ringを`bgAlt`上で3:1以上に保ち、
+各IDへ`color-scheme: light`を適用する。Paper Ledgerは低輝度の温色、Arctic Terminalは明快な無彩色、
+Sage Fieldは低刺激なセージ、Lilac Currentは選択状態を識別しやすい紫灰色を基調とする。
+
 ## Typography
 
 `Watchdeck Sans` は local-first で解決する。source order は `IBM Plex Sans`、`Nimbus Sans Narrow`、
@@ -297,6 +372,20 @@ decorative font、consumer-app の丸い書体、過剰な letter spacing、view
 反復 all-caps eyebrow を避ける。named size、weight、alignment、divider で monitoring instrument
 としての階層を作る。
 
+### Selectable font schemes
+
+YAMLのfont familyは既定の`watchdeck`を固定する。利用者は全画面共通fontを次の2つから選べる。
+追加fontのdownloadや外部配信は行わず、先頭候補がない環境では同じ分類のlocal font、最後に
+generic familyへfallbackする。font変更でsize、weight、line-height、spacing、row高を変更しない。
+
+| ID | 表示名 | local-first stackの先頭 | 用途 |
+| --- | --- | --- | --- |
+| `watchdeck` | 標準（コンパクト） | `Watchdeck Sans` | 既定。Desktopの高密度走査 |
+| `terminal` | 等幅（ターミナル） | `Cascadia Mono` / `IBM Plex Mono` | 数値、timestamp、短いcodeの桁を揃える |
+
+DashboardとSymbol Pageのheaderに同じnative selectを置く。選択は本文、control、data、chart axisへ
+同時に適用し、chart instance、series、request、observerを作り直さない。
+
 ## Shape and Depth
 
 基本形状は rectangular で `0px` radius とする。input affordance に必要な場合だけ小さな radius を
@@ -316,7 +405,7 @@ Watchlistをprimary surface、Inspectorをcontext surface、corrected rankingと
 として、短いeye travelと高いDesktop密度を保つ。`85rem`以上ではInspectorをright railへ置けるが、
 DOM、読み上げ、keyboard順は[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
 
-page shellはflat dark backgroundとし、装飾gridやpage-level color washを使わない。normal service stateを
+page shellはflat theme backgroundとし、装飾gridやpage-level color washを使わない。normal service stateを
 過剰に強調せず、error、stale、incomplete backfillを見落としにくくする。
 
 ## Dashboard Visual Contract

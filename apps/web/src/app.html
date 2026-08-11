@@ -3,6 +3,40 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script>
+      (() => {
+        const fallback = "watchdeck";
+        const schemes = new Set([
+          "watchdeck",
+          "carbon-aurora",
+          "forest-amber",
+          "plum-signal",
+          "paper-ledger",
+          "arctic-terminal",
+          "sage-field",
+          "lilac-current"
+        ]);
+        let selected = fallback;
+        try {
+          const stored = localStorage.getItem("prep-watchdeck:color-scheme");
+          if (schemes.has(stored)) selected = stored;
+        } catch {
+          selected = fallback;
+        }
+        document.documentElement.setAttribute("data-color-scheme", selected);
+
+        const fontFallback = "watchdeck";
+        const fontSchemes = new Set(["watchdeck", "terminal"]);
+        let selectedFont = fontFallback;
+        try {
+          const storedFont = localStorage.getItem("prep-watchdeck:font-scheme");
+          if (fontSchemes.has(storedFont)) selectedFont = storedFont;
+        } catch {
+          selectedFont = fontFallback;
+        }
+        document.documentElement.setAttribute("data-font-scheme", selectedFont);
+      })();
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T10:54:58+09:00`
-- 検証: `2026-08-11T10:54:58+09:00`
-- 文書更新作業: `2026-08-11_10:54`（Asia/Tokyo）
+- 更新: `2026-08-11T17:26:25+09:00`
+- 検証: `2026-08-11T17:26:25+09:00`
+- 文書更新作業: `2026-08-11_17:26`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -35,6 +35,24 @@ process状態の正本ではない。これらは実画面、state file、servic
 chart tokenのruntime正本はこのshared themeだけである。productionのroute/component styleにある
 raw hexadecimalおよび`rgb()` / `rgba()`色literalは0件で、componentはsemantic tokenか、そのtokenを
 入力にした`color-mix()`だけを使う。raw値はshared themeとcolor adapterのtest fixtureに限定する。
+
+DashboardとSymbol Pageのheaderは同じnative selectを`配色`label付きで表示する。選択可能なIDは
+`watchdeck`、`carbon-aurora`、`forest-amber`、`plum-signal`、`paper-ledger`、`arctic-terminal`、
+`sage-field`、`lilac-current`の8つで、`watchdeck`を既定値とする。
+閉じた状態では現在の種別を`DARK` / `LIGHT`として常時表示し、select内では
+「ダークテーマ」「ライトテーマ」のnative `optgroup`へ4件ずつ分ける。
+選択値は`prep-watchdeck:color-scheme`としてbrowserの`localStorage`だけへ保存し、DB、snapshot、
+Dashboard view設定、URLへ含めない。初回描画前に有効な保存値を`html[data-color-scheme]`へ適用し、
+reloadとroute移動で維持する。不明値、空値、storage読取失敗は`watchdeck`へfail closedする。
+4つのLight themeは明示選択型とし、native controlへ`color-scheme: light`を適用する。
+別tabとの即時同期とOS theme自動連動は行わない。
+
+両headerは全画面共通のnative `フォント`selectも表示する。選択可能なIDは`watchdeck`と
+`terminal`で、表示名は「標準（コンパクト）」「等幅（ターミナル）」とする。
+選択値は`prep-watchdeck:font-scheme`として`localStorage`だけへ保存し、
+初回描画前に`html[data-font-scheme]`へ適用する。不明値、空値、storage失敗は`watchdeck`へ戻す。
+font変更は同じchart instanceへfont familyだけを適用し、chart、`ResizeObserver`、bars requestを
+作り直さない。追加fontのdownload、外部配信、OS設定の変更は行わない。
 
 semantic colorの役割は次で固定する。
 
@@ -136,6 +154,9 @@ keyboard helpは「上下キーで銘柄を移動、EnterまたはSpaceで選択
 
 ### Hot価格のstale
 
+現在価格は価格専用の可変精度で表示し、1未満の正の価格を汎用の小数2桁丸めによって`0`と
+表示しない。高価格帯は小数2桁、1以上1000未満は小数3桁、1未満は最大4有効桁を基準にする。
+
 Hot ticker価格が5秒を超えて更新されていない時は、価格をquality-risk色にし、同じ価格欄へ
 `STALE`を文字で表示する。row選択buttonの`aria-describedby`は価格欄の`id`を参照するため、
 読み上げでも価格値と`STALE`を取得できる。stale化によってrow高を変えたり、他のfieldを
@@ -144,6 +165,11 @@ Hot ticker価格が5秒を超えて更新されていない時は、価格をqua
 row qualityのlabel mappingは[`data-contracts.md`](data-contracts.md)を正本とする。通常品質は省略し、
 異常時だけ視覚表示とrowのaccessible nameへ品質labelを含める。snapshot全体の状態はsource bannerで
 引き続き可視化する。
+
+Mobile Candidateの上昇・下落tabは、文言に加えてそれぞれ`up` / `down`の文字色と上辺markerを使う。
+選択中はfocus背景と`focus-on`文字色を優先し、方向markerは維持する。Watchlist rowで活動phaseが
+`UNKNOWN`かつrow品質も異常の場合、品質の`判定不能`を残し、活動phase側の同じ文言だけを省略する。
+活動phaseが判定済みなら、row品質が異常でも`急増 / 拡大 / 持続 / 失速`を表示する。
 Hot ticker updateは対象symbolの現在価格DOMだけを更新し、ranking順、Watchlist順、選択、
 filter、入力中の下書きを変えない。
 
@@ -243,6 +269,8 @@ Symbolのchartは、初期時点でembedded candleもAPI candleも0件でも、1
 - 表示可能なcandleもline dataもない間はcontainer上へ「ローソク足データなし」をoverlay表示する。
 - candle到着後はoverlayを外し、同じcontainerへcanvasを表示する。
 - theme tokenが欠損または不正ならtoken名を含むerrorとしてfail closedし、silent fallbackしない。
+- 配色変更時は同じchart instanceとseriesへ新しいtheme tokenを適用し、volume dataの表示色も更新する。
+  theme変更だけでchart、`ResizeObserver`、bars request、library chunkを作り直さない。
 - componentがmodule load完了前にunmountされた場合はchartを作らない。作成済みなら
   `ResizeObserver`をdisconnectし、chart instanceをremoveし、active bars requestをabortする。
 
@@ -306,6 +334,8 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 | Mobile bounded all-item scroll | `apps/web/src/lib/components/dashboard/DashboardRankingArea.svelte`, `apps/web/src/lib/components/dashboard/DashboardWatchlist.svelte` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | Symbol DOM順、Monitoring Rail、flat workspace | `apps/web/src/routes/symbols/[symbol]/+page.svelte`, `apps/web/src/lib/components/symbol/SymbolMonitoringRail.svelte` | `apps/web/tests/e2e/symbol-workspace.e2e.ts`, `apps/web/tests/e2e/monitoring-symbol.e2e.ts`, `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | chart instance、late bars、要約 | `apps/web/src/lib/MarketChart.svelte`, `apps/web/src/lib/market/chart-data.ts`, `apps/web/src/lib/market/chart-theme.ts` | `apps/web/tests/e2e/realtime-dashboard.e2e.ts`, `apps/web/src/lib/market/chart-data.test.ts`, `apps/web/src/lib/market/chart-theme.test.ts` |
+| 配色選択、browser保存、chart再配色 | `apps/web/src/lib/components/ThemeSelector.svelte`, `apps/web/src/lib/theme/color-scheme.ts`, `apps/web/src/lib/styles/watchdeck-theme.css`, `apps/web/src/lib/MarketChart.svelte` | `apps/web/src/lib/theme/color-scheme.test.ts`, `apps/web/src/lib/theme/color-scheme-css.test.ts`, `apps/web/tests/e2e/color-schemes.e2e.ts` |
+| font選択、browser保存、chart font再適用 | `apps/web/src/lib/components/FontSelector.svelte`, `apps/web/src/lib/theme/font-scheme.ts`, `apps/web/src/lib/styles/watchdeck-theme.css`, `apps/web/src/lib/MarketChart.svelte` | `apps/web/src/lib/theme/font-scheme.test.ts`, `apps/web/src/lib/market/chart-theme.test.ts`, `apps/web/tests/e2e/font-schemes.e2e.ts` |
 | Past Note mutation、symbol scope、revision保持 | `apps/web/src/routes/+page.svelte`, `apps/web/src/routes/symbols/[symbol]/+page.svelte`, `apps/web/src/lib/past-note/` | `apps/web/src/lib/past-note/*.test.ts`, `apps/web/tests/e2e/home.e2e.ts`, `apps/web/tests/e2e/symbol-workspace.e2e.ts` |
 | 監視専用production境界 | `apps/web/src/routes/`, `apps/web/src/lib/`, `scripts/maintenance/monitoring-only-boundary.test.mjs` | `apps/web/tests/e2e/retired-routes.e2e.ts`, `scripts/maintenance/monitoring-only-boundary.test.mjs` |
 | shared theme、色、密度、compact status、誤推奨防止 | `DESIGN.md`, `apps/web/src/routes/+layout.svelte`, `apps/web/src/lib/styles/watchdeck-theme.css` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |

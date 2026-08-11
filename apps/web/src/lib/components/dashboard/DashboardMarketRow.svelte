@@ -1,7 +1,11 @@
 <script lang="ts">
   import DashboardMiniSparkline from "$lib/components/dashboard/DashboardMiniSparkline.svelte";
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
-  import { formatCompactNumber as fmtCompact, formatNumber as fmt } from "$lib/market/format";
+  import {
+    formatCompactNumber as fmtCompact,
+    formatMarketPrice,
+    formatNumber as fmt
+  } from "$lib/market/format";
   import {
     abnormalDataQualityLabel,
     activityPhaseWatchlistLabel,
@@ -51,7 +55,9 @@
       ? `${fmt(volumeRatio15m)}×`
       : "—"
   );
-  let activityPhaseText = $derived(activityPhaseWatchlistLabel(row.activityPhase));
+  let activityPhaseText = $derived(
+    activityPhaseWatchlistLabel(row.activityPhase, row.dataQuality)
+  );
   let qualityText = $derived(abnormalDataQualityLabel(row.dataQuality));
   let price = $derived(tickerOverlay.priceFor(row.symbol, row.lastPrice, row.analysisPrice));
   let priceDescriptionId = $derived(`market-row-price-${encodeURIComponent(row.symbol)}`);
@@ -103,9 +109,9 @@
       class:stale={price.stale}
       class="current-price"
       data-price-source={price.source}
-      title={`${fmtCompact(price.value)}、${price.stale ? "Hot価格: 5秒超更新なし" : `価格source: ${price.source}`}`}
+      title={`${formatMarketPrice(price.value)}、${price.stale ? "Hot価格: 5秒超更新なし" : `価格source: ${price.source}`}`}
     >
-      <span>{fmtCompact(price.value)}</span>
+      <span>{formatMarketPrice(price.value)}</span>
       {#if price.stale}<small>STALE</small>{/if}
     </span>
     <DashboardMiniSparkline {row} {selectedTimeframe} />
@@ -261,8 +267,8 @@
     justify-items: end;
     min-width: 0;
     color: var(--text);
-    font-size: var(--type-body-sm-size);
-    font-weight: 800;
+    font-size: var(--type-data-md-size);
+    font-weight: var(--type-data-md-weight);
     font-variant-numeric: tabular-nums;
     line-height: 1.05;
   }
@@ -271,11 +277,12 @@
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .current-price small {
     color: var(--quality-risk);
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 800;
   }
 

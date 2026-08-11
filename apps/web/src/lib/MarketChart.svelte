@@ -10,8 +10,16 @@
     buildVolumeData,
     type ChartCandle
   } from "$lib/market/chart-data";
-  import { readChartThemePalette, type ChartThemePalette } from "$lib/market/chart-theme";
+  import {
+    applyChartFontFamily,
+    applyChartThemePalette,
+    readChartFontFamily,
+    readChartThemePalette,
+    type ChartThemePalette
+  } from "$lib/market/chart-theme";
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
+  import { COLOR_SCHEME_CHANGE_EVENT } from "$lib/theme/color-scheme";
+  import { FONT_SCHEME_CHANGE_EVENT } from "$lib/theme/font-scheme";
 
   type ChartModule = typeof import("lightweight-charts");
 
@@ -35,6 +43,8 @@
   let volumeSeries = $state<ISeriesApi<"Histogram"> | null>(null);
   let lineSeries = $state<ISeriesApi<"Line"> | null>(null);
   let resizeObserver: ResizeObserver | null = null;
+  let colorSchemeChangeListener: (() => void) | null = null;
+  let fontSchemeChangeListener: (() => void) | null = null;
   let chartInstrumentationReported = false;
   let destroyed = false;
   let loadError = $state<string | null>(null);
@@ -60,9 +70,13 @@
 
     let nextChart: IChartApi | null = null;
     try {
-      const palette = readChartThemePalette(getComputedStyle(mountedContainer));
+      let palette = readChartThemePalette(getComputedStyle(mountedContainer));
+      let fontFamily = readChartFontFamily(getComputedStyle(mountedContainer));
       const chartModule = await loadChartModule();
       if (destroyed || container !== mountedContainer) return;
+
+      palette = readChartThemePalette(getComputedStyle(mountedContainer));
+      fontFamily = readChartFontFamily(getComputedStyle(mountedContainer));
 
       chartPalette = palette;
       const { CandlestickSeries, ColorType, HistogramSeries, LineSeries, createChart } = chartModule;
@@ -70,7 +84,8 @@
         autoSize: true,
         layout: {
           background: { type: ColorType.Solid, color: palette.surface },
-          textColor: palette.text
+          textColor: palette.text,
+          fontFamily
         },
         grid: {
           vertLines: { color: palette.grid },
@@ -133,19 +148,51 @@
       chartInstrumentation()?.chartResizeObserverCreated?.();
       chartInstrumentation()?.chartCreated?.();
       chartInstrumentationReported = true;
+
+      colorSchemeChangeListener = () => {
+        if (!container || !chart || !candleSeries || !lineSeries) return;
+        try {
+          const nextPalette = readChartThemePalette(getComputedStyle(container));
+          applyChartThemePalette(
+            { chart, candlestick: candleSeries, line: lineSeries },
+            nextPalette
+          );
+          chartPalette = nextPalette;
+        } catch (error) {
+          loadError =
+            error instanceof Error && /^(Missing|Invalid) chart theme token:/.test(error.message)
+              ? `チャートを表示できません: ${error.message}`
+              : "チャートを表示できません";
+        }
+      };
+      window.addEventListener(COLOR_SCHEME_CHANGE_EVENT, colorSchemeChangeListener);
+      fontSchemeChangeListener = () => {
+        if (!container || !chart) return;
+        try {
+          applyChartFontFamily(chart, readChartFontFamily(getComputedStyle(container)));
+        } catch (error) {
+          loadError = chartStyleError(error);
+        }
+      };
+      window.addEventListener(FONT_SCHEME_CHANGE_EVENT, fontSchemeChangeListener);
     } catch (error) {
       cleanupChart(nextChart);
       if (!destroyed) {
-        loadError =
-          error instanceof Error && /^(Missing|Invalid) chart theme token:/.test(error.message)
-            ? `チャートを表示できません: ${error.message}`
-            : "チャートを表示できません";
+        loadError = chartStyleError(error);
       }
     }
   });
 
   onDestroy(() => {
     destroyed = true;
+    if (colorSchemeChangeListener) {
+      window.removeEventListener(COLOR_SCHEME_CHANGE_EVENT, colorSchemeChangeListener);
+      colorSchemeChangeListener = null;
+    }
+    if (fontSchemeChangeListener) {
+      window.removeEventListener(FONT_SCHEME_CHANGE_EVENT, fontSchemeChangeListener);
+      fontSchemeChangeListener = null;
+    }
     cleanupChart();
   });
 
@@ -239,6 +286,14 @@
   function loadChartModule() {
     const loadDefault = () => import("lightweight-charts");
     return chartInstrumentation()?.loadChartModule?.(loadDefault) ?? loadDefault();
+  }
+
+  function chartStyleError(error: unknown) {
+    return error instanceof Error &&
+      (/^(Missing|Invalid) chart theme token:/.test(error.message) ||
+        /^Missing chart font token:/.test(error.message))
+      ? `チャートを表示できません: ${error.message}`
+      : "チャートを表示できません";
   }
 
 </script>
