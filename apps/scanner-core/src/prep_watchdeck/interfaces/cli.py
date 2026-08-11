@@ -25,6 +25,7 @@ from prep_watchdeck.application.market_comparison import (
     refresh_market_comparison_periodically,
 )
 from prep_watchdeck.application.perp_venue_comparison import (
+    PERP_VENUE_COMPARISON_INITIAL_DELAY_SECONDS,
     PERP_VENUE_COMPARISON_INTERVAL_SECONDS,
     PerpVenueComparisonCollector,
     collect_perp_venue_comparison_once,
@@ -1023,6 +1024,7 @@ async def run_service_from_bitget(
         refresh_perp_venue_comparison_periodically(
             perp_venue_comparison_collector,
             interval_seconds=PERP_VENUE_COMPARISON_INTERVAL_SECONDS,
+            initial_delay_seconds=PERP_VENUE_COMPARISON_INITIAL_DELAY_SECONDS,
             refresh_immediately=False,
             on_refresh=_log_perp_venue_comparison_refresh,
             on_error=lambda exc: logger.warning(

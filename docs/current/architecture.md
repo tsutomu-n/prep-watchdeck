@@ -79,7 +79,8 @@ watchdogはsystemdの`WatchdogSec`/`sd_notify`実装ではない。自動再起�
 DuckDB storeは引き続きservice process内の1 instanceだけを全taskで共有する。
 Perp会場比較のperiodic loopはrefresh内部例外をsource task内に閉じて次周期を継続し、会場別status、
 error、item件数、所要時間をservice logへ記録する。契約catalogと比較blockはin-memoryだけで、
-DB writerや永続schemaを追加しない。
+DB writerや永続schemaを追加しない。snapshot生成と旧3市場refreshとの同時実行を避けるため、起動後の
+最初のperiodic refreshだけ30秒遅らせ、その後は300秒間隔を維持する。
 
 ## Web
 

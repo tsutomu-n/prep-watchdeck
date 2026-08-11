@@ -15,6 +15,7 @@ from prep_watchdeck.domain.perp_venue_comparison import (
 )
 
 PERP_VENUE_COMPARISON_INTERVAL_SECONDS = 300.0
+PERP_VENUE_COMPARISON_INITIAL_DELAY_SECONDS = 30.0
 PERP_VENUE_COMPARISON_TIMEOUT_SECONDS = 20.0
 PERP_VENUE_CONTRACT_CATALOG_TTL_MS = 30 * 60 * 1_000
 
@@ -156,6 +157,7 @@ async def refresh_perp_venue_comparison_periodically(
     collector: PerpVenueComparisonCollector,
     *,
     interval_seconds: float = PERP_VENUE_COMPARISON_INTERVAL_SECONDS,
+    initial_delay_seconds: float = 0.0,
     refresh_immediately: bool = True,
     fetcher: PerpVenueFetcher = fetch_perp_venue_inputs,
     on_refresh: PerpVenueRefreshCallback | None = None,
@@ -163,6 +165,8 @@ async def refresh_perp_venue_comparison_periodically(
 ) -> None:
     if interval_seconds <= 0:
         raise ValueError("interval_seconds must be positive")
+    if initial_delay_seconds < 0:
+        raise ValueError("initial_delay_seconds must be non-negative")
 
     async def refresh() -> None:
         started_at = time.monotonic()
@@ -178,6 +182,8 @@ async def refresh_perp_venue_comparison_periodically(
         if on_refresh is not None:
             on_refresh(block, time.monotonic() - started_at)
 
+    if initial_delay_seconds > 0:
+        await asyncio.sleep(initial_delay_seconds)
     if refresh_immediately:
         await refresh()
     while True:

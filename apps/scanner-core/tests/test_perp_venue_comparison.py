@@ -203,6 +203,7 @@ async def test_perp_venue_periodic_refresh_continues_after_internal_error() -> N
         refresh_perp_venue_comparison_periodically(
             collector,
             interval_seconds=0.001,
+            initial_delay_seconds=0,
             refresh_immediately=True,
             fetcher=fetcher,
             on_refresh=lambda _block, _duration: refresh_completed.set(),
