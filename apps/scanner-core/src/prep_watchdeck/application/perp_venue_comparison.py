@@ -118,6 +118,13 @@ def collect_perp_venue_comparison_once() -> dict[str, object] | None:
     return collector.snapshot()
 
 
+def _refresh_perp_venue_comparison_in_thread(
+    collector: PerpVenueComparisonCollector,
+    fetcher: PerpVenueFetcher,
+) -> dict[str, object]:
+    return asyncio.run(refresh_perp_venue_comparison_once(collector, fetcher=fetcher))
+
+
 async def refresh_perp_venue_comparison_once(
     collector: PerpVenueComparisonCollector,
     *,
@@ -171,7 +178,11 @@ async def refresh_perp_venue_comparison_periodically(
     async def refresh() -> None:
         started_at = time.monotonic()
         try:
-            block = await refresh_perp_venue_comparison_once(collector, fetcher=fetcher)
+            block = await asyncio.to_thread(
+                _refresh_perp_venue_comparison_in_thread,
+                collector,
+                fetcher,
+            )
         except asyncio.CancelledError:
             raise
         except Exception as exc:

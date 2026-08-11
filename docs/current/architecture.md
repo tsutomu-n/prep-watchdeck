@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-12T00:26:25+09:00`
-- 検証: `2026-08-12T00:26:25+09:00`
-- 文書更新作業: `2026-08-12_00:26`（Asia/Tokyo）
+- 更新: `2026-08-12T00:57:18+09:00`
+- 検証: `2026-08-12T00:57:18+09:00`
+- 文書更新作業: `2026-08-12_00:57`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -80,7 +80,9 @@ DuckDB storeは引き続きservice process内の1 instanceだけを全taskで共
 Perp会場比較のperiodic loopはrefresh内部例外をsource task内に閉じて次周期を継続し、会場別status、
 error、item件数、所要時間をservice logへ記録する。契約catalogと比較blockはin-memoryだけで、
 DB writerや永続schemaを追加しない。snapshot生成と旧3市場refreshとの同時実行を避けるため、起動後の
-最初のperiodic refreshだけ30秒遅らせ、その後は300秒間隔を維持する。
+最初のperiodic refreshだけ30秒遅らせ、その後は300秒間隔を維持する。periodic HTTP fetchは
+同processのworker thread内に独立event loopを作り、snapshot生成や分析処理が使うmain event loopの
+遅延をAPI timeoutへ波及させない。
 
 ## Web
 

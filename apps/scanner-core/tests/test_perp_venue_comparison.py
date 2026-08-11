@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import threading
 from typing import cast
 
 import pytest
@@ -197,6 +198,11 @@ async def test_perp_venue_periodic_refresh_continues_after_internal_error() -> N
     )
     refresh_completed = asyncio.Event()
     errors: list[Exception] = []
+    fetch_thread_ids: list[int] = []
+
+    async def threaded_fetcher() -> PerpVenueFetchResult:
+        fetch_thread_ids.append(threading.get_ident())
+        return await fetcher()
 
     collector = PerpVenueComparisonCollector()
     task = asyncio.create_task(
@@ -205,7 +211,7 @@ async def test_perp_venue_periodic_refresh_continues_after_internal_error() -> N
             interval_seconds=0.001,
             initial_delay_seconds=0,
             refresh_immediately=True,
-            fetcher=fetcher,
+            fetcher=threaded_fetcher,
             on_refresh=lambda _block, _duration: refresh_completed.set(),
             on_error=errors.append,
         )
@@ -218,6 +224,9 @@ async def test_perp_venue_periodic_refresh_continues_after_internal_error() -> N
             await task
 
     assert [type(error).__name__ for error in errors] == ["AttributeError"]
+    assert fetch_thread_ids and all(
+        thread_id != threading.get_ident() for thread_id in fetch_thread_ids
+    )
     recovered = cast(dict[str, object], collector.snapshot())
     assert cast(list[dict[str, object]], recovered["items"])[0]["status"] == "unavailable"
 

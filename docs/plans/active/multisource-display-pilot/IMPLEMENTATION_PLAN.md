@@ -1,7 +1,7 @@
 # ExecPlan: 3市場mark price表示pilotとPerp venue限定拡張
 
 - 作成: `2026-08-11T19:48:00+09:00`
-- 更新: `2026-08-12T00:45:15+09:00`
+- 更新: `2026-08-12T00:57:18+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-11-multisource-display-pilot`
 - Profile / risk: `EXECPLAN / MEDIUM`
@@ -298,7 +298,7 @@
 - **Verification**: focused pytest、Ruff、Pyrefly、Web parser/check/build、full local gate、live snapshot 3 cycle、single writer、unit health。
 - **Expected failure modes**: catalog期限切れ、両source障害、periodic task終了、error非公開、回復値未反映。
 - **Recovery / rollback**: P0 commitをrevertして旧実装へ戻せるが、0件化を既知riskとして残すためmergeしない。
-- **Evidence**: 2026-08-12 00:12 snapshotは`perpGeneratedAt=1786461001061`、`items=0`。同時刻帯の隔離probeはBitget 745、Hyperliquid 232を取得でき、恒久的なAPI停止ではなかった。success→failure→recovery、30分失効、periodic内部例外継続のfocused test 4件とfull local gateが成功した。初回再起動後のcycle 2は両source `TimeoutError`だったが、161件を消さず全件unavailableで維持した。
+- **Evidence**: 2026-08-12 00:12 snapshotは`perpGeneratedAt=1786461001061`、`items=0`。同時刻帯の隔離probeはBitget 745、Hyperliquid 232を取得でき、恒久的なAPI停止ではなかった。success→failure→recovery、30分失効、periodic内部例外継続のfocused test 4件とfull local gateが成功した。初回再起動後のcycle 2は両source `TimeoutError`だったが、161件を消さず全件unavailableで維持した。30秒offset後もtimeoutしたため位相競合仮説を棄却し、periodic fetchをworker thread内の独立event loopへ隔離した。
 
 ## 4. Critical risks and stop conditions
 
@@ -334,6 +334,7 @@
 - 2026-08-12 00:12 — 後続snapshotで`perpVenueComparison.items=[]`への退行を確認。service/Webは`active/running`だったため、初回成功だけでは継続利用を証明できないと判断し、AC-17 / CP-11を追加した。
 - 2026-08-12 00:33 — 契約catalogだけの30分TTL、各周期のfresh観測、会場別source状態、periodic内部例外のfail-closed継続、service logを実装。Python 258、Web 230、E2E 70を含む`verify-local.sh`とisolated live 161件取得が成功した。
 - 2026-08-12 00:43 — cycle 2で両sourceが20秒timeoutしたが、修正後はmapping 161件を全件unavailableとして維持した。snapshot生成・旧3市場refreshと同一位相の負荷競合を避けるため、Perp periodicの初回だけ30秒offsetを追加した。
+- 2026-08-12 00:54 — 30秒offset後もcycle 2が両source timeoutしたため仮説を棄却。Context7でpybotters Client利用形を再確認し、periodic HTTP fetchをworker thread内の独立event loopへ隔離するRED→GREENを追加した。
 
 ## 6. Final result
 
