@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 from math import isfinite
@@ -109,6 +109,7 @@ def snapshot_from_service_store(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
 ) -> SnapshotDTO:
@@ -117,6 +118,7 @@ def snapshot_from_service_store(
         template=template,
         config=config,
         vpi_config=vpi_config,
+        market_comparison=market_comparison,
         generated_at_ms=generated_at_ms,
         run_id=run_id,
     ).snapshot
@@ -128,6 +130,7 @@ def build_service_snapshot(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
 ) -> ServiceSnapshotBuild:
@@ -224,6 +227,8 @@ def build_service_snapshot(
     snapshot.summary["serviceSource"] = "duckdb-service"
     snapshot.summary["serviceCandles1m"] = candle_window.candle_1m_count
     snapshot.summary["oiDiagnostics"] = oi_diagnostics
+    if market_comparison is not None:
+        snapshot.summary["marketComparison"] = market_comparison
     if vpi_block is not None:
         snapshot.summary["vpiLitePlus"] = vpi_block
         items_by_symbol = {
@@ -247,6 +252,7 @@ def publish_service_snapshot_once(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
     max_data_lag_ms: int | None = None,
@@ -256,6 +262,7 @@ def publish_service_snapshot_once(
         template=template,
         config=config,
         vpi_config=vpi_config,
+        market_comparison=market_comparison,
         generated_at_ms=generated_at_ms,
         run_id=run_id,
     )
@@ -305,6 +312,7 @@ async def publish_service_snapshot_periodically(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison_provider: Callable[[], dict[str, object] | None] | None = None,
     interval_seconds: float,
     publish_immediately: bool = True,
 ) -> None:
@@ -319,6 +327,9 @@ async def publish_service_snapshot_periodically(
             template=template,
             config=config,
             vpi_config=vpi_config,
+            market_comparison=(
+                market_comparison_provider() if market_comparison_provider is not None else None
+            ),
         )
     while True:
         await asyncio.sleep(interval_seconds)
@@ -330,6 +341,9 @@ async def publish_service_snapshot_periodically(
             template=template,
             config=config,
             vpi_config=vpi_config,
+            market_comparison=(
+                market_comparison_provider() if market_comparison_provider is not None else None
+            ),
         )
 
 

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-09T20:30:00+09:00`
-- 検証: `2026-08-09T20:30:00+09:00`
-- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
+- 更新: `2026-08-11T20:06:52+09:00`
+- 検証: `2026-08-11T20:06:52+09:00`
+- 文書更新作業: `2026-08-11_20:06`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -28,6 +28,11 @@ VPI-Lite+ V0はこのCold laneだけで、既存scannerの5分足集約前にclo
 summaryと存在するrowのdisplayへ格納する。既存ranking、filter、category、attention score、
 Hot ticker、DuckDB writerを変更せず、symbol単位の計算失敗でsnapshot発行を止めない。
 
+BTC/ETH/SOLの3市場価格比較pilotは、Bitget、Hyperliquid、Bybitのpublic RESTから300秒ごとに
+mark priceを取得する独立in-memory collectorである。service起動時と`publish-service`時にも1回取得し、
+結果は`summary.marketComparison`だけへ格納する。取得失敗はsource単位で欠損にし、既存scanner、
+DuckDB、ranking、filter、category、Hot tickerを変更しない。
+
 ### Hot ticker
 
 `snapshots/ticker-runtime.json`は最新価格のfull stateと直近deltaを保持する。
@@ -46,6 +51,8 @@ Webは要求したtimeframeだけを返し、snapshotの`runId`とchartの`snaps
 - `composition.py`: provider、writer、DuckDB storeの組立
 - `interfaces/cli.py`: scan、service、doctor、publish-service等のCLI
 - `application/`: service runtime、publish、reconcile、backfill、chart、ticker
+- `application/market_comparison.py`: 3市場価格比較pilotのin-memory更新
+- `adapters/multisource_public.py`: 3社public RESTのmark price取得
 - `vpi/`: VPI-Lite+のpure計算、state分類、公開payload serializer
 - `adapters/duckdb/`: snapshot cacheとservice store
 - `adapters/local_snapshot/`: atomic file publish

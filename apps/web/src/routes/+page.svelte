@@ -47,6 +47,10 @@
     parseVpiLitePlusSummary,
     resolveVpiLitePlusRowItem
   } from "$lib/market/vpi-lite-plus";
+  import {
+    findMarketComparisonItem,
+    parseMarketComparisonSummary
+  } from "$lib/market/market-comparison";
   import { shouldAutoRefreshDashboard } from "$lib/market/dashboard-refresh.svelte";
   import {
     TickerOverlay,
@@ -62,6 +66,7 @@
   import DashboardVpiExperimentPanel from "$lib/components/dashboard/DashboardVpiExperimentPanel.svelte";
   import DashboardWatchQueue from "$lib/components/dashboard/DashboardWatchQueue.svelte";
   import SelectedSymbolContext from "$lib/components/dashboard/SelectedSymbolContext.svelte";
+  import SelectedSymbolMarketComparison from "$lib/components/dashboard/SelectedSymbolMarketComparison.svelte";
   import SelectedSymbolOverview from "$lib/components/dashboard/SelectedSymbolOverview.svelte";
   import SelectedSymbolVpiDetail from "$lib/components/dashboard/SelectedSymbolVpiDetail.svelte";
   import SmartRankControl from "$lib/components/dashboard/SmartRankControl.svelte";
@@ -171,6 +176,12 @@
   );
   let volumeRatioHelp = $derived(formatVolumeRatioHelp(snapshot?.summary?.volumeRatio15m));
   let vpiSummary = $derived(parseVpiLitePlusSummary(snapshot?.summary?.vpiLitePlus));
+  let marketComparisonSummary = $derived(
+    parseMarketComparisonSummary(snapshot?.summary?.marketComparison)
+  );
+  let selectedMarketComparison = $derived(
+    selected ? findMarketComparisonItem(marketComparisonSummary, selected.symbol) : null
+  );
   let selectedVpi = $derived(
     vpiSummary && selected
       ? resolveVpiLitePlusRowItem(vpiSummary, selected.symbol, selected.display?.vpiLitePlus)
@@ -804,6 +815,12 @@
             {volumeRatioBaseline}
             {volumeRatioHelp}
           />
+          {#if selectedMarketComparison && marketComparisonSummary}
+            <SelectedSymbolMarketComparison
+              item={selectedMarketComparison}
+              generatedAt={marketComparisonSummary.generatedAt}
+            />
+          {/if}
           {#if selectedVpi}
             <SelectedSymbolVpiDetail item={selectedVpi} />
           {/if}

@@ -113,6 +113,56 @@ function addVpiLitePlusSnapshotPayload() {
   return snapshot.rows;
 }
 
+function addMarketComparisonSnapshotPayload() {
+  const snapshot = JSON.parse(readFileSync(e2eSnapshotPath, "utf-8")) as SnapshotFixture & {
+    generatedAt: number;
+  };
+  const base = snapshot.rows.find((row) => row.symbol === "THINUSDT");
+  if (!base) throw new Error("THINUSDT fixture row not found");
+  snapshot.rows.push({ ...structuredClone(base), symbol: "SOLUSDT" });
+  snapshot.summary.marketComparison = {
+    schemaVersion: 1,
+    mode: "mark_price_pilot_v1",
+    generatedAt: snapshot.generatedAt,
+    refreshIntervalSeconds: 300,
+    symbols: [
+      {
+        symbol: "SOLUSDT",
+        status: "ready",
+        coverage: { valid: 3, required: 3 },
+        medianMarkPrice: 101,
+        spreadPct: 1.98,
+        sources: [
+          marketComparisonSource("bitget", "SOLUSDT", "USDT", 100, snapshot.generatedAt),
+          marketComparisonSource("hyperliquid", "SOL", "USD", 101, snapshot.generatedAt),
+          marketComparisonSource("bybit", "SOLUSDT", "USDT", 102, snapshot.generatedAt)
+        ]
+      }
+    ]
+  };
+  writeJsonAtomically(e2eSnapshotPath, snapshot);
+  return snapshot.rows;
+}
+
+function marketComparisonSource(
+  source: "bitget" | "hyperliquid" | "bybit",
+  sourceSymbol: string,
+  quote: string,
+  markPrice: number,
+  observedAt: number
+) {
+  return {
+    source,
+    status: "ok",
+    sourceSymbol,
+    quote,
+    markPrice,
+    observedAt,
+    sourceAt: source === "hyperliquid" ? null : observedAt,
+    error: null
+  };
+}
+
 function removeEmbeddedChartData(symbol: string) {
   const snapshot = JSON.parse(readFileSync(e2eSnapshotPath, "utf-8")) as SnapshotFixture;
   const row = snapshot.rows.find((candidate) => candidate.symbol === symbol);
@@ -730,4 +780,22 @@ test("a Hot ticker delta does not recompute the Cold VPI-Lite+ display", async (
   await expect(altPrice).toContainText("98,765.43");
   expect(await panel.innerText()).toBe(panelBefore);
   expect(await selectedVpi.innerText()).toBe(selectedVpiBefore);
+});
+
+test("selected pilot symbol shows the three-market mark price comparison", async ({ page }) => {
+  generateBasicSnapshot();
+  const rows = addMarketComparisonSnapshotPayload();
+  writeTickerRuntime(1, tickerUpdates(rows, Date.now() + 60_000), []);
+
+  await waitForClientRuntime(page);
+  const watchlist = page.getByRole("region", { name: "精密監視リスト" });
+  await watchlist.locator('[data-row-select][data-symbol="SOLUSDT"]').click();
+
+  const comparison = page.getByRole("region", { name: "選択銘柄 3市場価格比較" });
+  await expect(comparison).toBeVisible();
+  await expect(comparison).toContainText("3 / 3 市場");
+  await expect(comparison).toContainText("Bitget");
+  await expect(comparison).toContainText("Hyperliquid");
+  await expect(comparison).toContainText("Bybit");
+  await expect(comparison).toContainText("USD / USDT建て");
 });

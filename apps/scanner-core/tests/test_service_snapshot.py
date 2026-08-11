@@ -71,6 +71,23 @@ def test_snapshot_from_service_store_reuses_scanner_contract(tmp_path) -> None:
     }
 
 
+def test_snapshot_from_service_store_includes_optional_market_comparison(tmp_path) -> None:
+    store = service_store_with_market_data(tmp_path)
+    config = load_template(Path("../../config/scanner-filters"), "balanced")
+    comparison = {"schemaVersion": 1, "mode": "mark_price_pilot_v1", "symbols": []}
+
+    snapshot = snapshot_from_service_store(
+        store,
+        template="balanced",
+        config=config,
+        market_comparison=comparison,
+        generated_at_ms=1_781_000_900_000,
+        run_id="service-market-comparison-test",
+    )
+
+    assert snapshot.summary["marketComparison"] == comparison
+
+
 def test_snapshot_from_service_store_excludes_unsupported_symbols(tmp_path) -> None:
     store = service_store_with_market_data(tmp_path)
     store.upsert_instruments([instrument("龙虾USDT", "龙虾")])
@@ -473,6 +490,10 @@ def test_publish_service_cli_rejects_unavailable_recent_candles_and_keeps_latest
         "prep_watchdeck.application.service_snapshot.time.time",
         lambda: 1_781_900_000.0,
     )
+    monkeypatch.setattr(
+        "prep_watchdeck.interfaces.cli.collect_market_comparison_once",
+        lambda: None,
+    )
 
     result = runner.invoke(app, ["publish-service", "--template", "balanced"])
 
@@ -495,6 +516,11 @@ def test_publish_service_cli_writes_state_and_latest_json(tmp_path, monkeypatch)
         "prep_watchdeck.application.service_snapshot.time.time",
         lambda: 1_781_001_800.0,
     )
+    comparison = {"schemaVersion": 1, "mode": "mark_price_pilot_v1", "symbols": []}
+    monkeypatch.setattr(
+        "prep_watchdeck.interfaces.cli.collect_market_comparison_once",
+        lambda: comparison,
+    )
 
     result = runner.invoke(app, ["publish-service", "--template", "balanced"])
 
@@ -503,6 +529,7 @@ def test_publish_service_cli_writes_state_and_latest_json(tmp_path, monkeypatch)
     latest = json.loads((out_dir / "latest.json").read_text())
     state = json.loads((out_dir / "service-state.json").read_text())
     assert latest["summary"]["serviceSource"] == "duckdb-service"
+    assert latest["summary"]["marketComparison"] == comparison
     assert state["diagnostics"]["tickerCount"] == 2
 
 

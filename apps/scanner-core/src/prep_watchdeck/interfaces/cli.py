@@ -16,6 +16,13 @@ from rich.console import Console
 from rich.table import Table
 
 from prep_watchdeck.adapters.duckdb.snapshot_cache import DuckDbSnapshotCacheLockError
+from prep_watchdeck.application.market_comparison import (
+    MARKET_COMPARISON_INTERVAL_SECONDS,
+    MarketComparisonCollector,
+    collect_market_comparison_once,
+    refresh_market_comparison_once,
+    refresh_market_comparison_periodically,
+)
 from prep_watchdeck.application.rekindle import (
     DEFAULT_LOOKBACK_DAYS,
     DEFAULT_MIN_ABS_CHANGE_PCT,
@@ -324,6 +331,7 @@ def publish_service(
         subscription=subscription,
     )
     try:
+        market_comparison = collect_market_comparison_once()
         snapshot = publish_service_snapshot_once(
             store,
             build_service_snapshot_writer(settings),
@@ -331,6 +339,7 @@ def publish_service(
             template=template,
             config=config,
             vpi_config=vpi_config,
+            market_comparison=market_comparison,
             max_data_lag_ms=DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS,
         )
     except ValueError as exc:
@@ -871,6 +880,7 @@ async def run_service_from_bitget(
     snapshot_cache = build_snapshot_cache(settings)
     ticker_collector = TickerRuntimeCollector(store.load_ticker_latest())
     ticker_writer = build_ticker_runtime_writer(settings)
+    market_comparison_collector = MarketComparisonCollector()
     ticker_refresh_task = (
         asyncio.create_task(
             _run_service_ticker_refresh_from_bitget(
@@ -925,6 +935,7 @@ async def run_service_from_bitget(
     def deep_backfill_progress():
         return deep_backfill_tracker.snapshot() if deep_backfill_tracker is not None else None
 
+    await refresh_market_comparison_once(market_comparison_collector)
     publish_service_state_once(
         store,
         state_writer,
@@ -941,6 +952,7 @@ async def run_service_from_bitget(
         template=template,
         config=config,
         vpi_config=vpi_config,
+        market_comparison=market_comparison_collector.snapshot(),
     )
     publish_ticker_runtime_once(ticker_collector, ticker_writer)
     publish_task = (
@@ -969,12 +981,20 @@ async def run_service_from_bitget(
                 template=template,
                 config=config,
                 vpi_config=vpi_config,
+                market_comparison_provider=market_comparison_collector.snapshot,
                 interval_seconds=settings.service_publish_interval_seconds,
                 publish_immediately=False,
             )
         )
         if settings.service_publish_interval_seconds > 0
         else None
+    )
+    market_comparison_task = asyncio.create_task(
+        refresh_market_comparison_periodically(
+            market_comparison_collector,
+            interval_seconds=MARKET_COMPARISON_INTERVAL_SECONDS,
+            refresh_immediately=False,
+        )
     )
     ticker_task = (
         asyncio.create_task(
@@ -1077,6 +1097,7 @@ async def run_service_from_bitget(
                 template=template,
                 config=config,
                 vpi_config=vpi_config,
+                market_comparison=market_comparison_collector.snapshot(),
             )
         watchdog_coro = (
             run_service_watchdog(
@@ -1104,6 +1125,7 @@ async def run_service_from_bitget(
             snapshot_task,
             ticker_task,
             ticker_refresh_task,
+            market_comparison_task,
             backfill_task,
             reconcile_task,
             deep_backfill_task,

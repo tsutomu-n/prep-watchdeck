@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T17:26:25+09:00`
-- 検証: `2026-08-11T17:26:25+09:00`
-- 文書更新作業: `2026-08-11_17:26`（Asia/Tokyo）
+- 更新: `2026-08-11T20:06:52+09:00`
+- 検証: `2026-08-11T20:06:52+09:00`
+- 文書更新作業: `2026-08-11_20:06`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -118,6 +118,16 @@ VPIはWatchlist row、ranking、sort、Candidate順へ入れない。Hot ticker 
 更新し、Cold VPI表示を再計算しない。top-levelまたはitemが不正ならVPI部分だけを非表示にし、
 既存Dashboardを継続表示する。これはVPIの低品質状態を隠す処理ではなく、consumer契約を満たさない
 任意payloadをfail-closedで拒否する境界である。
+
+### 3市場価格比較pilot
+
+有効な`summary.marketComparison`に選択symbolと一致するitemがある時だけ、Selected detailへ
+3市場価格比較を表示する。対象はBTC/ETH/SOLで、各sourceのmark price、quote、取得時刻、coverage、
+3/3時だけの参考中央値と最大乖離幅を示す。欠損sourceは隠さず、3/3未満では中央値を表示しない。
+
+USD / USDT建てを横断する参考値であること、rankingや売買判定に使わないことを明記する。
+Watchlist row、Candidate、sort、chart、Hot ticker更新には接続しない。payloadが不正または対象外なら
+比較panelだけを非表示にし、既存Selected detailを継続する。
 
 ### Watchlist rowのroving keyboard
 
@@ -340,6 +350,7 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 | 監視専用production境界 | `apps/web/src/routes/`, `apps/web/src/lib/`, `scripts/maintenance/monitoring-only-boundary.test.mjs` | `apps/web/tests/e2e/retired-routes.e2e.ts`, `scripts/maintenance/monitoring-only-boundary.test.mjs` |
 | shared theme、色、密度、compact status、誤推奨防止 | `DESIGN.md`, `apps/web/src/routes/+layout.svelte`, `apps/web/src/lib/styles/watchdeck-theme.css` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | VPI-Lite+実験表示、optional payload、Hot非影響 | `apps/web/src/lib/market/vpi-lite-plus.ts`, `apps/web/src/lib/components/dashboard/DashboardVpiExperimentPanel.svelte`, `apps/web/src/lib/components/dashboard/SelectedSymbolVpiDetail.svelte` | `apps/web/src/lib/market/vpi-lite-plus.test.ts`, `apps/web/tests/e2e/home.e2e.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
+| 3市場mark price比較pilot、optional payload、3/3集約 | `apps/web/src/lib/market/market-comparison.ts`, `apps/web/src/lib/components/dashboard/SelectedSymbolMarketComparison.svelte` | `apps/web/src/lib/market/market-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
 
 UI変更時は`DESIGN.md`を先に読み、Dashboard、Symbol page、Desktop、Mobileのどこへ
 影響するかを明示する。変更後は対象に近いunit/E2Eに加え、`bun run check`、`bun test`、

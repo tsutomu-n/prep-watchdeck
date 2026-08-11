@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T10:54:58+09:00`
-- 検証: `2026-08-11T10:54:58+09:00`
-- 文書更新作業: `2026-08-11_10:54`（Asia/Tokyo）
+- 更新: `2026-08-11T20:06:52+09:00`
+- 検証: `2026-08-11T20:06:52+09:00`
+- 文書更新作業: `2026-08-11_20:06`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -69,6 +69,27 @@ Dashboard discovery laneでの分類とempty state契約:
   `現在の表示条件に該当するVPI対象なし`、対象はあるが活動増加・要注意がなければ`活動急増なし`、
   payloadが欠損またはinvalidなら`VPIデータ不足`とする。
 - Benchmarkはdiscovery laneのcoverageと選択対象へ含めない。
+
+### 3市場mark price比較pilot sidecar
+
+serviceと`publish-service`が生成するCold snapshotは、optionalな
+`summary.marketComparison`を持てる。`schemaVersion: 1`、
+`mode: "mark_price_pilot_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、
+`symbols`を持つ。対象symbolは`BTCUSDT | ETHUSDT | SOLUSDT`、sourceは
+`bitget | hyperliquid | bybit`である。
+
+各source itemは`source`、`status`、nullableな`sourceSymbol`、`quote`、`markPrice`、
+`observedAt`、`sourceAt`、`error`を持つ。Hyperliquidはsource timestampを返さないため
+`sourceAt: null`とし、取得時刻をsource時刻として偽装しない。BitgetとBybitはUSDT、
+HyperliquidはUSD表現なので、集約値は参考比較としてだけ扱う。
+
+symbol itemは`coverage.valid/required`、`status`、nullableな`medianMarkPrice`と`spreadPct`を持つ。
+同じrefresh cycleで3sourceすべてが正数かつ10分以内の時だけ`status: ready`とし、中央値と
+`(max - min) / median * 100`を公開する。それ以外は`status: incomplete`、中央値とspreadを
+`null`にする。Webは局所parserで不正block/itemを表示せず、既存Dashboardを継続する。
+
+このsidecarはDB、snapshot schemaのrequired field、ranking、filter、Candidate、VPI、
+Hot tickerへ入力しない。
 
 ## Data quality
 
