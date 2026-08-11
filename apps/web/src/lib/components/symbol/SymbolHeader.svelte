@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
+  import FontSelector from "$lib/components/FontSelector.svelte";
+  import ThemeSelector from "$lib/components/ThemeSelector.svelte";
   import { formatNumber as fmt } from "$lib/market/format";
   import { abnormalDataQualityLabel, categoryLabel, changeTone, codeLabel, dataQualityClass } from "$lib/market/labels";
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
@@ -16,8 +18,14 @@
 <header class="symbol-top">
   <a class="back-link" href="/" data-sveltekit-reload data-single-line-action>一覧へ</a>
   <div class="symbol-title">
-    <h1 title={row.symbol}>{displaySymbol}</h1>
-    <strong>{codeLabel(row.label)}</strong>
+    <div>
+      <h1 title={row.symbol}>{displaySymbol}</h1>
+      <strong>{codeLabel(row.label)}</strong>
+    </div>
+    <div class="display-controls" aria-label="表示設定">
+      <ThemeSelector />
+      <FontSelector />
+    </div>
   </div>
   <dl class="top-kpis">
     <div>
@@ -84,6 +92,10 @@
   }
 
   .symbol-title {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: var(--space-md);
     min-width: 0;
     padding: 10px 12px;
     border-right: 1px solid var(--line);
@@ -101,6 +113,13 @@
     margin-top: 5px;
     color: var(--warning);
     font-size: 14px;
+  }
+
+  .display-controls {
+    display: grid;
+    align-content: center;
+    gap: var(--space-xs);
+    min-width: 0;
   }
 
   .top-kpis {
@@ -176,6 +195,13 @@
 
     .top-kpis div:nth-child(n + 3) {
       border-top: 1px solid var(--line);
+    }
+  }
+
+  @media (max-width: 560px) {
+    .symbol-title {
+      display: grid;
+      grid-template-columns: 1fr;
     }
   }
 

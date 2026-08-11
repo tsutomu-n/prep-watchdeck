@@ -45,7 +45,11 @@ export function activityPhaseLabel(value: string | null | undefined) {
   return value ? (labels[value] ?? "判定不能") : "判定不能";
 }
 
-export function activityPhaseWatchlistLabel(value: string | null | undefined): string | null {
+export function activityPhaseWatchlistLabel(
+  value: string | null | undefined,
+  dataQuality?: string
+): string | null {
+  if (value === "UNKNOWN" && dataQuality && dataQuality !== "OK") return null;
   return value === "NORMAL" ? null : activityPhaseLabel(value);
 }
 

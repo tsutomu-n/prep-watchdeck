@@ -743,6 +743,33 @@ test("mobile candidate tabs use automatic roving activation", async ({ page }) =
   const up = ranking.getByRole("tab", { name: "上昇", exact: true });
   const down = ranking.getByRole("tab", { name: "下落", exact: true });
   const ratio = ranking.getByRole("tab", { name: "15分量倍率", exact: true });
+  await ratio.click();
+  const directionStyles = await Promise.all(
+    [up, down].map((tab) =>
+      tab.evaluate((element) => {
+        const normalizeColor = (value: string) => {
+          const probe = document.createElement("span");
+          probe.style.color = value;
+          document.body.append(probe);
+          const color = getComputedStyle(probe).color;
+          probe.remove();
+          return color;
+        };
+        const rootStyle = getComputedStyle(document.documentElement);
+        const token = element.textContent?.trim() === "上昇" ? "--up" : "--down";
+        return {
+          color: getComputedStyle(element).color,
+          marker: getComputedStyle(element).boxShadow,
+          expected: normalizeColor(rootStyle.getPropertyValue(token))
+        };
+      })
+    )
+  );
+  expect(directionStyles[0].color).toBe(directionStyles[0].expected);
+  expect(directionStyles[1].color).toBe(directionStyles[1].expected);
+  expect(directionStyles[0].marker).toContain(directionStyles[0].expected);
+  expect(directionStyles[1].marker).toContain(directionStyles[1].expected);
+  await up.click();
   await expect(up).toHaveAttribute("tabindex", "0");
   await up.focus();
   await up.press("ArrowRight");
@@ -1331,7 +1358,7 @@ test("market rows keep a stable 42px or 82px rhythm while exposing every signal"
 
         if (width === 320) {
           const staleTickerTs = Date.now() - 6_000;
-          const staleTickerUpdate = ["DUMPUSDT", 98_765.4321, staleTickerTs] as const;
+          const staleTickerUpdate = ["DUMPUSDT", 0.003575, staleTickerTs] as const;
           writeJsonAtomically(e2ePaths.tickerRuntimePath, {
             schemaVersion: 1,
             sequence: 2,
@@ -1339,6 +1366,7 @@ test("market rows keep a stable 42px or 82px rhythm while exposing every signal"
             fullUpdates: [staleTickerUpdate],
             deltaUpdates: [staleTickerUpdate]
           });
+          await expect(rowLocators[2].locator(".current-price > span")).toHaveText("0.003575");
           await expect(rowLocators[2].locator(".current-price small")).toHaveText("STALE");
           const staleBox = await measureElementBox(rowLocators[2]);
           expect(Math.abs(staleBox.height - beforeSelection), "320px stale height").toBeLessThanOrEqual(1);

@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { SnapshotSourceDTO } from "$lib/generated/scanner-snapshot";
   import type { ServiceStateView } from "$lib/service-state";
+  import FontSelector from "$lib/components/FontSelector.svelte";
+  import ThemeSelector from "$lib/components/ThemeSelector.svelte";
   import ServiceStatusBadge from "./ServiceStatusBadge.svelte";
   import SourceBanner from "./SourceBanner.svelte";
 
@@ -30,9 +32,15 @@
 </script>
 
 <header class="topbar">
-  <div>
-    <p class="kicker">準備監視板</p>
-    <h1>ローカル市場監視</h1>
+  <div class="identity">
+    <div>
+      <p class="kicker">準備監視板</p>
+      <h1>ローカル市場監視</h1>
+    </div>
+    <div class="display-controls" aria-label="表示設定">
+      <ThemeSelector />
+      <FontSelector />
+    </div>
   </div>
   <div class="status-stack">
     <SourceBanner
@@ -74,6 +82,20 @@
   .kicker,
   h1 {
     margin: 0;
+  }
+
+  .identity {
+    display: flex;
+    align-items: end;
+    gap: var(--space-md);
+    min-width: 0;
+  }
+
+  .display-controls {
+    display: flex;
+    align-items: end;
+    gap: var(--space-sm);
+    min-width: 0;
   }
 
   .kicker {
@@ -138,9 +160,24 @@
     .runtime-stack {
       min-width: 0;
     }
+
+    .identity,
+    .display-controls {
+      flex-wrap: wrap;
+    }
   }
 
   @media (max-width: 560px) {
+    .identity {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
+    .display-controls {
+      display: grid;
+      grid-template-columns: 1fr;
+    }
+
     .status-stack {
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: var(--space-xs);

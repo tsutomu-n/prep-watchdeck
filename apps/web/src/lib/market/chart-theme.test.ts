@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { chartThemeTokens, readChartThemePalette } from "./chart-theme";
+import {
+  applyChartFontFamily,
+  applyChartThemePalette,
+  chartFontToken,
+  chartThemeTokens,
+  readChartFontFamily,
+  readChartThemePalette
+} from "./chart-theme";
 
 function tokenSource(values: Record<string, string>): Pick<CSSStyleDeclaration, "getPropertyValue"> {
   return {
@@ -77,5 +84,68 @@ describe("chart theme palette", () => {
         supportsColor
       )
     ).toThrow("Invalid chart theme token: --chart-grid");
+  });
+
+  it("recolors an existing chart and series without recreating them", () => {
+    const applied = {
+      chart: [] as unknown[],
+      candlestick: [] as unknown[],
+      line: [] as unknown[]
+    };
+    const palette = readChartThemePalette(tokenSource(values), supportsColor);
+
+    applyChartThemePalette(
+      {
+        chart: { applyOptions: (options) => applied.chart.push(options) },
+        candlestick: { applyOptions: (options) => applied.candlestick.push(options) },
+        line: { applyOptions: (options) => applied.line.push(options) }
+      },
+      palette
+    );
+
+    expect(applied.chart).toEqual([
+      {
+        layout: {
+          background: { type: "solid", color: "#151813" },
+          textColor: "#cbd3c0"
+        },
+        grid: {
+          vertLines: { color: "#252b22" },
+          horzLines: { color: "#252b22" }
+        },
+        rightPriceScale: { borderColor: "#394034" },
+        timeScale: { borderColor: "#394034" }
+      }
+    ]);
+    expect(applied.candlestick).toEqual([
+      {
+        upColor: "#9beaa7",
+        downColor: "#ff9a8d",
+        borderUpColor: "#9beaa7",
+        borderDownColor: "#ff9a8d",
+        wickUpColor: "#9beaa7",
+        wickDownColor: "#ff9a8d"
+      }
+    ]);
+    expect(applied.line).toEqual([{ color: "#d8ff38" }]);
+  });
+
+  it("reads and applies the global font without recreating the chart", () => {
+    const applied: unknown[] = [];
+    expect(chartFontToken).toBe("--font-sans");
+    expect(readChartFontFamily(tokenSource({ "--font-sans": ' "Cascadia Mono", monospace ' }))).toBe(
+      '"Cascadia Mono", monospace'
+    );
+    applyChartFontFamily(
+      { applyOptions: (options) => applied.push(options) },
+      '"Cascadia Mono", monospace'
+    );
+    expect(applied).toEqual([{ layout: { fontFamily: '"Cascadia Mono", monospace' } }]);
+  });
+
+  it("fails closed when the global chart font token is missing", () => {
+    expect(() => readChartFontFamily(tokenSource({ "--font-sans": "   " }))).toThrow(
+      "Missing chart font token: --font-sans"
+    );
   });
 });

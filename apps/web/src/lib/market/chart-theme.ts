@@ -1,3 +1,5 @@
+import type { ColorType, IChartApi, ISeriesApi } from "lightweight-charts";
+
 export type ChartThemePalette = {
   surface: string;
   text: string;
@@ -8,6 +10,12 @@ export type ChartThemePalette = {
   focus: string;
   volumeUp: string;
   volumeDown: string;
+};
+
+export type ChartThemeTargets = {
+  chart: Pick<IChartApi, "applyOptions">;
+  candlestick: Pick<ISeriesApi<"Candlestick">, "applyOptions">;
+  line: Pick<ISeriesApi<"Line">, "applyOptions">;
 };
 
 export const chartThemeTokens = {
@@ -21,6 +29,8 @@ export const chartThemeTokens = {
   volumeUp: "--chart-volume-up",
   volumeDown: "--chart-volume-down"
 } as const satisfies Record<keyof ChartThemePalette, `--${string}`>;
+
+export const chartFontToken = "--font-sans";
 
 type CssTokenSource = Pick<CSSStyleDeclaration, "getPropertyValue">;
 type CssColorSupport = (value: string) => boolean;
@@ -40,6 +50,43 @@ export function readChartThemePalette(
     volumeUp: readRequiredColorToken(source, chartThemeTokens.volumeUp, supportsColor),
     volumeDown: readRequiredColorToken(source, chartThemeTokens.volumeDown, supportsColor)
   };
+}
+
+export function applyChartThemePalette(targets: ChartThemeTargets, palette: ChartThemePalette) {
+  targets.chart.applyOptions({
+    layout: {
+      background: { type: "solid" as ColorType.Solid, color: palette.surface },
+      textColor: palette.text
+    },
+    grid: {
+      vertLines: { color: palette.grid },
+      horzLines: { color: palette.grid }
+    },
+    rightPriceScale: { borderColor: palette.border },
+    timeScale: { borderColor: palette.border }
+  });
+  targets.candlestick.applyOptions({
+    upColor: palette.up,
+    downColor: palette.down,
+    borderUpColor: palette.up,
+    borderDownColor: palette.down,
+    wickUpColor: palette.up,
+    wickDownColor: palette.down
+  });
+  targets.line.applyOptions({ color: palette.focus });
+}
+
+export function readChartFontFamily(source: CssTokenSource) {
+  const value = source.getPropertyValue(chartFontToken).trim();
+  if (!value) throw new Error(`Missing chart font token: ${chartFontToken}`);
+  return value;
+}
+
+export function applyChartFontFamily(
+  chart: Pick<IChartApi, "applyOptions">,
+  fontFamily: string
+) {
+  chart.applyOptions({ layout: { fontFamily } });
 }
 
 function readRequiredColorToken(

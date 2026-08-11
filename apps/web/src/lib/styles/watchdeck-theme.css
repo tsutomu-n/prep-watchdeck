@@ -110,6 +110,272 @@
   --focus-ring-offset: 2px;
 }
 
+:root[data-font-scheme="terminal"] {
+  --font-sans:
+    "Cascadia Mono", "IBM Plex Mono", Consolas, "DejaVu Sans Mono", "Liberation Mono",
+    "WenQuanYi Zen Hei Mono", "IPAGothic", "IPAゴシック", monospace;
+}
+
+:root[data-color-scheme="carbon-aurora"] {
+  --bg: #0b0d10;
+  --bg-alt: #101216;
+  --surface: #151922;
+  --panel: rgba(24, 29, 39, 0.94);
+  --panel-solid: #181d27;
+  --panel-strong: #202735;
+  --panel-selected: #1d3040;
+  --line: #2b3440;
+  --line-strong: #3c4a59;
+  --text: #f4f7fa;
+  --muted: #9ba7b4;
+  --subtle: #b8c2cc;
+  --focus: #33b1ff;
+  --primary: var(--focus);
+  --focus-on: #071018;
+  --up: #42be65;
+  --down: #f78166;
+  --warning: #ffe97b;
+  --warning-border: #e3b341;
+  --quality-good: #3ddbd9;
+  --quality-risk: #ee5396;
+  --chip-line: #4a5a6a;
+  --chip-neutral: #c8d1da;
+
+  --chart-surface: #11151c;
+  --chart-text: #c8d1da;
+  --chart-grid: #252d38;
+  --chart-border: #3c4a59;
+  --chart-up: #42be65;
+  --chart-down: #f78166;
+  --chart-focus: #33b1ff;
+  --chart-volume-up: rgba(66, 190, 101, 0.45);
+  --chart-volume-down: rgba(247, 129, 102, 0.45);
+}
+
+:root[data-color-scheme="forest-amber"] {
+  --bg: #1e2326;
+  --bg-alt: #232a2e;
+  --surface: #272e33;
+  --panel: rgba(45, 53, 59, 0.94);
+  --panel-solid: #2d353b;
+  --panel-strong: #343f44;
+  --panel-selected: #3a4947;
+  --line: #384b55;
+  --line-strong: #4f5f60;
+  --text: #d3c6aa;
+  --muted: #9da9a0;
+  --subtle: #b3b9ad;
+  --focus: #dbbc7f;
+  --primary: var(--focus);
+  --focus-on: #1e2326;
+  --up: #a7c080;
+  --down: #e67e80;
+  --warning: #dfa000;
+  --warning-border: #d8a657;
+  --quality-good: #7fbbb3;
+  --quality-risk: #d699b6;
+  --chip-line: #52605d;
+  --chip-neutral: #c7c4b5;
+
+  --chart-surface: #20272b;
+  --chart-text: #c7c4b5;
+  --chart-grid: #344048;
+  --chart-border: #4f5f60;
+  --chart-up: #a7c080;
+  --chart-down: #e67e80;
+  --chart-focus: #dbbc7f;
+  --chart-volume-up: rgba(167, 192, 128, 0.45);
+  --chart-volume-down: rgba(230, 126, 128, 0.45);
+}
+
+:root[data-color-scheme="plum-signal"] {
+  --bg: #141421;
+  --bg-alt: #191927;
+  --surface: #1e1e2e;
+  --panel: rgba(36, 36, 58, 0.94);
+  --panel-solid: #24243a;
+  --panel-strong: #2b2b46;
+  --panel-selected: #332a4f;
+  --line: #35354f;
+  --line-strong: #494a68;
+  --text: #f8f8f2;
+  --muted: #9399b2;
+  --subtle: #bac2de;
+  --focus: #ab9df2;
+  --primary: var(--focus);
+  --focus-on: #151421;
+  --up: #a6e3a1;
+  --down: #ff6188;
+  --warning: #f9e2af;
+  --warning-border: #fc9867;
+  --quality-good: #89b4fa;
+  --quality-risk: #e558a9;
+  --chip-line: #585b70;
+  --chip-neutral: #cdd6f4;
+
+  --chart-surface: #191927;
+  --chart-text: #cdd6f4;
+  --chart-grid: #313146;
+  --chart-border: #494a68;
+  --chart-up: #a6e3a1;
+  --chart-down: #ff6188;
+  --chart-focus: #ab9df2;
+  --chart-volume-up: rgba(166, 227, 161, 0.45);
+  --chart-volume-down: rgba(255, 97, 136, 0.45);
+}
+
+:root[data-color-scheme="paper-ledger"] {
+  color-scheme: light;
+
+  --bg: #f3ead3;
+  --bg-alt: #eae4ca;
+  --surface: #fbf7e9;
+  --panel: rgba(247, 241, 221, 0.94);
+  --panel-solid: #f7f1dd;
+  --panel-strong: #e5dfc5;
+  --panel-selected: #e1e7dd;
+  --line: #d0c6aa;
+  --line-strong: #9a927c;
+  --text: #26313a;
+  --muted: #667069;
+  --subtle: #4f5d65;
+  --focus: #1e6fcc;
+  --primary: var(--focus);
+  --focus-on: #ffffff;
+  --up: #216609;
+  --down: #b33120;
+  --warning: #8a5a00;
+  --warning-border: #a06d00;
+  --quality-good: #14746f;
+  --quality-risk: #8b3f7a;
+  --chip-line: #9a927c;
+  --chip-neutral: #46545a;
+
+  --chart-surface: #f7f1dd;
+  --chart-text: #46545a;
+  --chart-grid: #d8d0bc;
+  --chart-border: #9a927c;
+  --chart-up: #216609;
+  --chart-down: #b33120;
+  --chart-focus: #1e6fcc;
+  --chart-volume-up: rgba(33, 102, 9, 0.45);
+  --chart-volume-down: rgba(179, 49, 32, 0.45);
+}
+
+:root[data-color-scheme="arctic-terminal"] {
+  color-scheme: light;
+
+  --bg: #f3f5f7;
+  --bg-alt: #e8eaed;
+  --surface: #ffffff;
+  --panel: rgba(248, 250, 252, 0.94);
+  --panel-solid: #f8fafc;
+  --panel-strong: #e9eef4;
+  --panel-selected: #e4eefc;
+  --line: #d7dce2;
+  --line-strong: #9ba5b1;
+  --text: #202124;
+  --muted: #5f6368;
+  --subtle: #4e5968;
+  --focus: #1967d2;
+  --primary: var(--focus);
+  --focus-on: #ffffff;
+  --up: #188038;
+  --down: #d93025;
+  --warning: #8a5a00;
+  --warning-border: #a86200;
+  --quality-good: #087f8c;
+  --quality-risk: #7e3fb2;
+  --chip-line: #9ba5b1;
+  --chip-neutral: #4e5968;
+
+  --chart-surface: #f8fafc;
+  --chart-text: #4e5968;
+  --chart-grid: #dce2e8;
+  --chart-border: #9ba5b1;
+  --chart-up: #188038;
+  --chart-down: #d93025;
+  --chart-focus: #1967d2;
+  --chart-volume-up: rgba(24, 128, 56, 0.45);
+  --chart-volume-down: rgba(217, 48, 37, 0.45);
+}
+
+:root[data-color-scheme="sage-field"] {
+  color-scheme: light;
+
+  --bg: #eef1e8;
+  --bg-alt: #e4e9dc;
+  --surface: #fafbf6;
+  --panel: rgba(244, 246, 238, 0.94);
+  --panel-solid: #f4f6ee;
+  --panel-strong: #dee5d5;
+  --panel-selected: #ddeae2;
+  --line: #cbd3c4;
+  --line-strong: #89988a;
+  --text: #24333a;
+  --muted: #5c6a72;
+  --subtle: #48605f;
+  --focus: #2b6e9e;
+  --primary: var(--focus);
+  --focus-on: #ffffff;
+  --up: #4e7300;
+  --down: #b53c3c;
+  --warning: #8a6200;
+  --warning-border: #a16a00;
+  --quality-good: #14796c;
+  --quality-risk: #9a3e6b;
+  --chip-line: #89988a;
+  --chip-neutral: #42585b;
+
+  --chart-surface: #f5f7f0;
+  --chart-text: #42585b;
+  --chart-grid: #d8ded2;
+  --chart-border: #89988a;
+  --chart-up: #4e7300;
+  --chart-down: #b53c3c;
+  --chart-focus: #2b6e9e;
+  --chart-volume-up: rgba(78, 115, 0, 0.45);
+  --chart-volume-down: rgba(181, 60, 60, 0.45);
+}
+
+:root[data-color-scheme="lilac-current"] {
+  color-scheme: light;
+
+  --bg: #f4f1f8;
+  --bg-alt: #eae5f1;
+  --surface: #fcfafd;
+  --panel: rgba(247, 243, 250, 0.94);
+  --panel-solid: #f7f3fa;
+  --panel-strong: #e5dded;
+  --panel-selected: #e8e0f4;
+  --line: #d6cedd;
+  --line-strong: #9a90a4;
+  --text: #2d2933;
+  --muted: #6a6372;
+  --subtle: #514a5b;
+  --focus: #6d46b8;
+  --primary: var(--focus);
+  --focus-on: #ffffff;
+  --up: #26734d;
+  --down: #b53d56;
+  --warning: #8a5a00;
+  --warning-border: #a76400;
+  --quality-good: #216a8a;
+  --quality-risk: #9a3d80;
+  --chip-line: #9a90a4;
+  --chip-neutral: #514a5b;
+
+  --chart-surface: #f8f5fa;
+  --chart-text: #514a5b;
+  --chart-grid: #ddd5e3;
+  --chart-border: #9a90a4;
+  --chart-up: #26734d;
+  --chart-down: #b53d56;
+  --chart-focus: #6d46b8;
+  --chart-volume-up: rgba(38, 115, 77, 0.45);
+  --chart-volume-down: rgba(181, 61, 86, 0.45);
+}
+
 body {
   margin: 0;
   background: var(--bg);
