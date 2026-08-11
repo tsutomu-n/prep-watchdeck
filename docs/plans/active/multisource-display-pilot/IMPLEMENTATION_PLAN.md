@@ -1,18 +1,18 @@
 # ExecPlan: 3市場mark price表示pilotとPerp venue限定拡張
 
 - 作成: `2026-08-11T19:48:00+09:00`
-- 更新: `2026-08-12T00:57:18+09:00`
+- 更新: `2026-08-12T01:14:00+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-11-multisource-display-pilot`
 - Profile / risk: `EXECPLAN / MEDIUM`
 - Base revision: `953589b744cc083fb41c7e2845fb5ac4517b68cd`
-- Current checkpoint: `CP-11 in progress`
+- Current checkpoint: `CP-11 completed`
 
 ## 0. 結論と現在地
 
 - **Target**: 完了済みBTC/ETH/SOL pilotのHyperliquid quoteを正し、契約同等性を確認できたBitget USDT Perpとdefault Hyperliquid Core Perpについて、会場別mark、funding、OI、24h notional volumeをoptional sidecarで選択銘柄へ表示する。rankingや売買判定には接続しない。
-- **現在地**: 初回runtimeでは161件readyだったが、次の一時的な片側取得障害で契約mappingごと失われ、`items=[]`が継続公開された。P0回復性修正を再開した。
-- **次の行動**: 成功→片側障害→回復のREDテストから、契約catalogの有期限保持、source状態公開、周期task継続を実装し、3回連続live cycleまで確認する。
+- **現在地**: P0回復性修正を完了した。一時的な取得障害でも検証済み契約mappingを最大30分維持し、観測値は再利用せず会場別`unavailable`を公開する。独立event loop化後の実serviceで3回連続161件readyとfresh snapshotを確認した。
+- **次の行動**: mandatory作業はない。任意の72時間qualificationは実装完了と分離している。
 - **最大のRisk / Blocker**: 同名symbolでもquote、collateral、倍率、OI単位、funding interval、oracleが一致するとは限らない。必須単位を確認できない契約はmappingせず、比較値を生成しない。
 
 ## 1. 作業契約
@@ -208,7 +208,7 @@
 | AC-14 | yes | 新collectorの失敗が既存scanner、snapshot発行、shutdownへ波及せず、DB、required schema、ranking、Candidateを変更しない | repo / default | service/snapshot tests、final diff | verified | focused service/snapshot 48 passed、schema/DB差分なし |
 | AC-15 | yes | focused test、Ruff、Pyrefly、Web check/build、関連E2E、live public API smoke、docs/diff checkが成功する | repo | recorded commands and exit codes | verified | `verify-local.sh`成功、Python 255、Web 230、E2E 70 passed。再起動後sidecar 161件、実画面Desktop/Mobile確認 |
 | AC-16 | no | 最低72時間・864予定cycleでsource別成功、欠損、stale、応答時間、field充足、mapping、snapshot遅延を隔離観測する | follow-up | qualification artifact | deferred | 実装完了とは分離 |
-| AC-17 | yes | 初回成功後の片側取得障害でmappingを消さず、観測値を再利用せず該当会場を`unavailable`にし、回復周期でfresh値へ戻る。契約catalogは最大30分で失効し、source status/error/observedAtを公開する | user / runtime regression | sequence unit test、3回連続live cycle、snapshot inspection | pending | 2026-08-12 runtimeで161件から0件への退行を確認 |
+| AC-17 | yes | 初回成功後の片側取得障害でmappingを消さず、観測値を再利用せず該当会場を`unavailable`にし、回復周期でfresh値へ戻る。契約catalogは最大30分で失効し、source status/error/observedAtを公開する | user / runtime regression | sequence unit test、3回連続live cycle、snapshot inspection | verified | sequence/TTL/periodic test成功。実serviceは00:58、01:05、01:11の3周期で161件ready。01:13公開snapshotへfresh値を反映 |
 
 ### CP-06: Contract and unit probe
 
@@ -287,7 +287,7 @@
 
 ### CP-11: P0 comparison recovery
 
-- **Status**: in progress
+- **Status**: completed
 - **Goal**: 一時的な片側取得障害を契約mapping消失へ波及させず、fresh観測だけでpartial/unavailableと回復を公開する。
 - **Linked ACs**: AC-17
 - **Dependencies**: CP-10、2026-08-12 runtime再現。
@@ -298,7 +298,7 @@
 - **Verification**: focused pytest、Ruff、Pyrefly、Web parser/check/build、full local gate、live snapshot 3 cycle、single writer、unit health。
 - **Expected failure modes**: catalog期限切れ、両source障害、periodic task終了、error非公開、回復値未反映。
 - **Recovery / rollback**: P0 commitをrevertして旧実装へ戻せるが、0件化を既知riskとして残すためmergeしない。
-- **Evidence**: 2026-08-12 00:12 snapshotは`perpGeneratedAt=1786461001061`、`items=0`。同時刻帯の隔離probeはBitget 745、Hyperliquid 232を取得でき、恒久的なAPI停止ではなかった。success→failure→recovery、30分失効、periodic内部例外継続のfocused test 4件とfull local gateが成功した。初回再起動後のcycle 2は両source `TimeoutError`だったが、161件を消さず全件unavailableで維持した。30秒offset後もtimeoutしたため位相競合仮説を棄却し、periodic fetchをworker thread内の独立event loopへ隔離した。
+- **Evidence**: 2026-08-12 00:12 snapshotは`perpGeneratedAt=1786461001061`、`items=0`。同時刻帯の隔離probeはBitget 745、Hyperliquid 232を取得でき、恒久的なAPI停止ではなかった。success→failure→recovery、30分失効、periodic内部例外継続、worker thread隔離のfocused testと、Python 258、Web 230、E2E 70を含むfull local gateが成功した。修正途中のcycle 2では両source `TimeoutError`でもmapping 161件を全件unavailableとして維持した。独立event loop化後は00:58:54、01:05:54、01:11:33の3回連続で161件すべてready、両source正常を確認し、01:13:12公開snapshotへcycle 2のfresh観測を反映した。serviceは`active/running`、`NRestarts=0`、DuckDB writerは1 processだった。
 
 ## 4. Critical risks and stop conditions
 
@@ -335,12 +335,15 @@
 - 2026-08-12 00:33 — 契約catalogだけの30分TTL、各周期のfresh観測、会場別source状態、periodic内部例外のfail-closed継続、service logを実装。Python 258、Web 230、E2E 70を含む`verify-local.sh`とisolated live 161件取得が成功した。
 - 2026-08-12 00:43 — cycle 2で両sourceが20秒timeoutしたが、修正後はmapping 161件を全件unavailableとして維持した。snapshot生成・旧3市場refreshと同一位相の負荷競合を避けるため、Perp periodicの初回だけ30秒offsetを追加した。
 - 2026-08-12 00:54 — 30秒offset後もcycle 2が両source timeoutしたため仮説を棄却。Context7でpybotters Client利用形を再確認し、periodic HTTP fetchをworker thread内の独立event loopへ隔離するRED→GREENを追加した。
+- 2026-08-12 00:58 — `7376093`をpush後、scanner unitを再起動。直前の30秒offset版では停止に90秒を要しsystemdが強制終了したが、独立event loop版への再起動は54秒で正常終了した。新MainPIDは`981452`、Web MainPIDは`910534`、両unit `active/running`、`NRestarts=0`、DuckDB writer 1 processを確認した。
+- 2026-08-12 01:11 — 独立event loop版で初回00:58:54、周期2 01:05:54、周期3 01:11:33の3回連続161件readyを確認。両sourceは全周期正常で、周期2/3の所要時間は52.406秒/39.045秒だった。
+- 2026-08-12 01:13 — 公開snapshot `runId=20260811T161001Z`が`perpGeneratedAt=1786464348273`、161件、両source正常へ更新された。local HEADとoriginは`7376093`で一致し、worktreeはcleanだった。
 
 ## 6. Final result
 
-- **Result**: PARTIAL（AC-10〜15は実装済み、runtime退行によりmandatory AC-17を追加して修正中）
-- **Actual state**: 初回は161件readyだったが、後続周期で比較itemsが0件になり、現在の実装は片側障害時の継続表示契約を満たさない。
-- **Goal gap**: AC-17 / CP-11。72時間qualification以前に、3回連続live cycleと障害回復を確認する必要がある。
-- **Verification summary**: Python 255 passed、Ruff/Pyrefly成功、Web unit 230 passed、Svelte check/build成功、Playwright E2E 70 passed、docs checker、`git diff --check`、live public API smoke成功。再起動後は両unit `active/running`、`NRestarts=0`、single DuckDB writer、sidecar 161件すべてready、実画面Desktop/Mobile表示を確認した。
-- **Residual risks**: 72時間連続のAPI継続性は未確認。既存scanner側には今回の変更外であるsnapshot遅延・データ品質低下が残る。比較値はUSDTとUSDCを換算せず、ranking、Candidate、売買・裁定判断へ接続していない。
-- **Remaining work / Resume requirement**: CP-11の最小RED→GREEN、full gate、commit/push、再起動、3回連続live cycle。完了後だけPASSへ戻す。
+- **Result**: PASS（mandatory AC-10〜15、AC-17を証拠付きで完了。任意AC-16は分離して延期）
+- **Actual state**: 一時的なsource障害では検証済みmappingを最大30分保持し、前回観測値を再利用せず該当会場を`unavailable`として公開する。周期taskは例外後も継続し、回復時はfresh値へ戻る。実serviceは3回連続161件readyで、公開snapshotにもfresh観測が反映された。
+- **Goal gap**: mandatory gapなし。72時間qualificationは任意の後続工程であり、今回の実装完了条件に含めない。
+- **Verification summary**: Python 258 passed、Ruff/Pyrefly成功、Web unit 230 passed、Svelte check/build成功、Playwright E2E 70 passed、docs checker、`git diff --check`、isolated live public API smoke成功。再起動後は両unit `active/running`、`NRestarts=0`、single DuckDB writer、3回連続sidecar 161件ready、fresh snapshot、実画面Desktop/Mobile表示を確認した。
+- **Residual risks**: 72時間連続のAPI継続性は未確認。周期2/3の取得に52.406秒/39.045秒を要し、既存scanner側には今回の変更外であるsnapshot生成遅延・高CPU・データ品質低下が残る。比較値はUSDTとUSDCを換算せず、ranking、Candidate、売買・裁定判断へ接続していない。
+- **Remaining work / Resume requirement**: mandatory作業なし。任意AC-16を行う場合は、現役DBへwriterを追加せず隔離artifactで72時間観測する。
