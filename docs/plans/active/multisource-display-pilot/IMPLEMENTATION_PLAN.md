@@ -1,7 +1,7 @@
 # ExecPlan: 3市場mark price表示pilot
 
 - 作成: `2026-08-11T19:48:00+09:00`
-- 更新: `2026-08-11T20:14:15+09:00`
+- 更新: `2026-08-11T21:46:55+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-11-multisource-display-pilot`
 - Profile / risk: `EXECPLAN / MEDIUM`
@@ -10,8 +10,8 @@
 
 ## 0. 結論と現在地
 
-- **Target**: Bitget・Hyperliquid・BybitのBTC/ETH/SOL mark priceを5分RESTで比較し、raw値、鮮度、coverage、spread、3/3時だけのmedianを選択銘柄detailへ表示する。
-- **現在地**: 3社取得、3/3集約、optional snapshot sidecar、Selected detail表示まで実装済み。focused test、check、build、live API smoke、system ChromeによるE2Eは成功した。
+- **Target**: Bitget・Hyperliquid・BybitのBTC/ETH/SOL mark priceを5分RESTで比較し、raw値、鮮度、coverage、spread、3/3時だけのmedianをDashboardへ表示する。
+- **現在地**: 3社取得、3/3集約、optional snapshot sidecar、scanner rowsから独立したDashboard panelまで実装済み。focused test、check、build、live API smoke、system ChromeによるE2Eは成功した。
 - **次の行動**: implementation checkpoint外のdeliveryとしてcommit/pushとcontrolled restartを行う。24時間観測は任意の後続作業とする。
 - **最大のRisk / Blocker**: HyperliquidのUSD建てと2社のUSDT建ては完全同一ではない。UIでは参考値と明示し、rankingや売買判定には使わない。
 
@@ -29,7 +29,7 @@
 - 取得はpublic REST、周期は300秒。WebSocket、長期履歴、DB永続化は追加しない。
 - 各sourceのmark price、source識別子、symbol、quote表現、observedAt、nullableなsourceAtを保持する。
 - 同一refresh cycleの3sourceが全てfreshかつ正数のときだけmedianとspreadを計算する。
-- optional Cold snapshot sidecarとして公開し、選択銘柄detailでだけ表示する。
+- optional Cold snapshot sidecarとして公開し、scanner rowsから独立したDashboard panelへ表示する。
 
 ### Preserve
 
@@ -55,7 +55,7 @@
 | AC-03 | yes | 5分周期の失敗がsource単位で閉じ、Bitget scanner、Cold snapshot、serviceを停止させない | default / repo | focused Python tests、code inspection | verified | collectorは例外を欠損blockへ変換 |
 | AC-04 | yes | median/spreadは同一cycleのfreshな3/3正数値だけで生成し、2/3以下ではnullになる | user / default | pure unit tests | verified | `test_market_comparison.py` 2 passed |
 | AC-05 | yes | sidecarはoptionalで、既存ranking、rows、category、VPI、Hot ticker、chartを変更しない | repo | snapshot regression test、final diff | verified | optional injection test passed |
-| AC-06 | yes | Dashboard detailにraw値、source、quote、時刻、coverage、spread、medianまたは明示的欠損理由を表示する | user | parser unit、build、browser smoke | verified | parser/check/buildとsystem Chrome E2E成功 |
+| AC-06 | yes | Dashboardにraw値、source、quote、時刻、coverage、spread、medianまたは明示的欠損理由を表示する | user | parser unit、build、browser smoke | verified | 対象scanner rowなしのparser/check/buildとsystem Chrome E2E成功 |
 | AC-07 | yes | DB schema、snapshot required schema、state layout、systemd unitを変更しない | repo / default | final diff | verified | 対象fileに変更なし |
 | AC-08 | yes | focused tests、Web check/build、live collector smoke、docs/diff checkが成功する | repo | recorded commands and exit codes | verified | Python 50、Web 227、E2E 1、check/build/docs/diff成功 |
 | AC-09 | no | 24時間または288 cycleの隔離観測でcoverage、age、spreadを記録する | follow-up | qualification artifact summary | deferred | runnable化後に価値判断が必要な場合だけ行う |
@@ -138,10 +138,10 @@
 ### CP-04: Fail-closed Dashboard display
 
 - **Status**: completed
-- **Goal**: 選択中のpilot銘柄へ比較情報を読みやすく表示する。
+- **Goal**: scanner rowsに依存せず、固定3銘柄の比較情報を読みやすく表示する。
 - **Linked ACs**: AC-04、AC-06
 - **Dependencies**: CP-03。
-- **Targets**: TypeScript parser、Svelte detail component、Dashboard route、tests。
+- **Targets**: TypeScript parser、Svelte Dashboard panel、Dashboard route、tests。
 - **Work**: local parser、Japanese labels、coverage/stale/error、raw/median/spread表示を追加する。
 - **Preserve / Do not change**: focus order、VPI、Watchlist、chart、color/font契約。
 - **Completion criteria**: 3/3、2/3、stale、対象外が期待どおり表示または非表示になる。
@@ -182,11 +182,13 @@
 - 2026-08-11 19:48 — ユーザーが限定案を承認。`main@953589b`はclean。
 - 2026-08-11 19:48 — `ai/multisource-display-pilot-20260811-1948`を作成。
 - 2026-08-11 19:48 — 新規dependencyなし、既存pybotters、3銘柄、5分REST、表示専用、ranking非接続を確定。
+- 2026-08-11 21:39 — 初回runtime確認で比較sidecarは3銘柄3/3だったが、live scanner rowsにBTC/ETH/SOLがなくSelected detailへ到達不能と判明。
+- 2026-08-11 21:46 — scanner rowsから独立したDashboard panelへ修正し、同条件のE2EをREDからGREENへした。
 
 ## 6. Final result
 
 - **Result**: runnable
-- **Actual state**: 3社public REST、3/3中央値、optional snapshot sidecar、Selected detailを実装。live collectorは3銘柄すべて3/3、実ブラウザE2Eも成功した。
+- **Actual state**: 3社public REST、3/3中央値、optional snapshot sidecar、scanner rows非依存のDashboard panelを実装。live collectorは3銘柄すべて3/3、実ブラウザE2Eも成功した。
 - **Goal gap**: runnable化のmandatory implementation gapはなし。Git publicationとruntime反映はdelivery手順として別に実施する。
 - **Verification summary**: Python関連50 passed、Ruff/Pyrefly、Web全227 passed、Svelte check/build、追加E2E 1 passed、live API smoke、docs checker、`git diff --check`成功。
 - **Residual risks**: USD/USDT差と長時間のAPI安定性は未評価。値は表示専用でrankingや売買判定へ使わない。
