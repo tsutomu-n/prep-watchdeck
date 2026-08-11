@@ -107,8 +107,52 @@ def build_perp_venue_comparison(
         "mode": "perp_venue_comparison_v1",
         "generatedAt": generated_at_ms,
         "refreshIntervalSeconds": 300,
+        "sources": _serialize_source_health(
+            observations,
+            source_errors=source_errors,
+            generated_at_ms=generated_at_ms,
+            max_age_ms=max_age_ms,
+        ),
         "items": sorted(items, key=lambda item: str(item["symbol"])),
     }
+
+
+def _serialize_source_health(
+    observations: list[PerpVenueObservation],
+    *,
+    source_errors: dict[str, str],
+    generated_at_ms: int,
+    max_age_ms: int,
+) -> list[dict[str, object]]:
+    health: list[dict[str, object]] = []
+    for venue in PERP_VENUES:
+        venue_observations = [item for item in observations if item.venue == venue]
+        valid_observations = [
+            item
+            for item in venue_observations
+            if _observation_error(
+                item,
+                generated_at_ms=generated_at_ms,
+                max_age_ms=max_age_ms,
+            )
+            is None
+        ]
+        error = source_errors.get(venue)
+        if error is None and not valid_observations:
+            error = "missing"
+        health.append(
+            {
+                "venue": venue,
+                "status": "ok" if error is None else "unavailable",
+                "observedAt": (
+                    max(item.observed_at_ms for item in valid_observations)
+                    if error is None
+                    else None
+                ),
+                "error": error,
+            }
+        )
+    return health
 
 
 def _eligible_contract(contract: PerpVenueContract) -> bool:

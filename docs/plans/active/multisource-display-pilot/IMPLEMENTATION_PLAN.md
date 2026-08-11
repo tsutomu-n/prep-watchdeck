@@ -1,18 +1,18 @@
 # ExecPlan: 3市場mark price表示pilotとPerp venue限定拡張
 
 - 作成: `2026-08-11T19:48:00+09:00`
-- 更新: `2026-08-11T23:48:17+09:00`
+- 更新: `2026-08-12T00:33:59+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-11-multisource-display-pilot`
 - Profile / risk: `EXECPLAN / MEDIUM`
 - Base revision: `953589b744cc083fb41c7e2845fb5ac4517b68cd`
-- Current checkpoint: `CP-10 completed`
+- Current checkpoint: `CP-11 in progress`
 
 ## 0. 結論と現在地
 
 - **Target**: 完了済みBTC/ETH/SOL pilotのHyperliquid quoteを正し、契約同等性を確認できたBitget USDT Perpとdefault Hyperliquid Core Perpについて、会場別mark、funding、OI、24h notional volumeをoptional sidecarで選択銘柄へ表示する。rankingや売買判定には接続しない。
-- **現在地**: 旧pilotのquote訂正、完全一致mapping、2会場public adapter、optional sidecar、選択銘柄限定UIを実装し、全gate、push、service/Web再起動、実画面のDesktop/Mobile確認まで完了した。
-- **次の行動**: mandatory実装についてはなし。72時間qualificationは実装完了とは分離した任意工程として残す。
+- **現在地**: 初回runtimeでは161件readyだったが、次の一時的な片側取得障害で契約mappingごと失われ、`items=[]`が継続公開された。P0回復性修正を再開した。
+- **次の行動**: 成功→片側障害→回復のREDテストから、契約catalogの有期限保持、source状態公開、周期task継続を実装し、3回連続live cycleまで確認する。
 - **最大のRisk / Blocker**: 同名symbolでもquote、collateral、倍率、OI単位、funding interval、oracleが一致するとは限らない。必須単位を確認できない契約はmappingせず、比較値を生成しない。
 
 ## 1. 作業契約
@@ -208,6 +208,7 @@
 | AC-14 | yes | 新collectorの失敗が既存scanner、snapshot発行、shutdownへ波及せず、DB、required schema、ranking、Candidateを変更しない | repo / default | service/snapshot tests、final diff | verified | focused service/snapshot 48 passed、schema/DB差分なし |
 | AC-15 | yes | focused test、Ruff、Pyrefly、Web check/build、関連E2E、live public API smoke、docs/diff checkが成功する | repo | recorded commands and exit codes | verified | `verify-local.sh`成功、Python 255、Web 230、E2E 70 passed。再起動後sidecar 161件、実画面Desktop/Mobile確認 |
 | AC-16 | no | 最低72時間・864予定cycleでsource別成功、欠損、stale、応答時間、field充足、mapping、snapshot遅延を隔離観測する | follow-up | qualification artifact | deferred | 実装完了とは分離 |
+| AC-17 | yes | 初回成功後の片側取得障害でmappingを消さず、観測値を再利用せず該当会場を`unavailable`にし、回復周期でfresh値へ戻る。契約catalogは最大30分で失効し、source status/error/observedAtを公開する | user / runtime regression | sequence unit test、3回連続live cycle、snapshot inspection | pending | 2026-08-12 runtimeで161件から0件への退行を確認 |
 
 ### CP-06: Contract and unit probe
 
@@ -284,6 +285,21 @@
 - **Recovery / rollback**: 新sidecarを無効化または除去し、旧pilot/Bitget scannerを維持する。
 - **Evidence**: `bash scripts/verify-local.sh`成功。再起動後の`perp_venue_comparison_v1`は161件すべてready。`0GUSDT`を1440pxと390pxで開き、2会場の価格、Funding、建玉想定元本、24h出来高、USDT/USDC表示と横overflowなしを確認。
 
+### CP-11: P0 comparison recovery
+
+- **Status**: in progress
+- **Goal**: 一時的な片側取得障害を契約mapping消失へ波及させず、fresh観測だけでpartial/unavailableと回復を公開する。
+- **Linked ACs**: AC-17
+- **Dependencies**: CP-10、2026-08-12 runtime再現。
+- **Targets**: Perp比較application/domain、focused tests、CLI logging、contract docs、active plan。
+- **Work**: 検証済み契約catalogだけを最大30分保持し、会場別status/error/observedAtをsidecarへ追加する。観測値は毎周期置換し、内部例外後もperiodic loopを継続する。
+- **Preserve / Do not change**: market値を再利用しない。DB、required schema、Candidate、ranking、Web表示順、新規dependencyを変更しない。
+- **Completion criteria**: success→片側障害→recovery testが通り、実serviceで3回連続のsidecar生成と非空mappingを確認する。
+- **Verification**: focused pytest、Ruff、Pyrefly、Web parser/check/build、full local gate、live snapshot 3 cycle、single writer、unit health。
+- **Expected failure modes**: catalog期限切れ、両source障害、periodic task終了、error非公開、回復値未反映。
+- **Recovery / rollback**: P0 commitをrevertして旧実装へ戻せるが、0件化を既知riskとして残すためmergeしない。
+- **Evidence**: 2026-08-12 00:12 snapshotは`perpGeneratedAt=1786461001061`、`items=0`。同時刻帯の隔離probeはBitget 745、Hyperliquid 232を取得でき、恒久的なAPI停止ではなかった。success→failure→recovery、30分失効、periodic内部例外継続のfocused test 4件とfull local gateが成功した。
+
 ## 4. Critical risks and stop conditions
 
 | ID | Risk / Stop condition | Detection | Mitigation / Resume requirement | Status |
@@ -315,12 +331,14 @@
 - 2026-08-11 23:40 — 実装を`66cb8be`としてcommitし、`origin/ai/multisource-display-pilot-20260811-1948`へpushした。
 - 2026-08-11 23:41 — `prep-watchdeck-service.service`と`prep-watchdeck-web.service`を各1回再起動。MainPIDはservice `194784`→`696007`、Web `228335`→`696008`、両unitとも`active/running`、`NRestarts=0`。DuckDB writerは1 processを維持した。
 - 2026-08-11 23:46 — fresh snapshotの`perp_venue_comparison_v1` 161件すべてreadyを確認し、実サービスの`0GUSDT`でDesktopと390×844の会場比較表示、USDT/USDC単位、横overflowなしを確認した。
+- 2026-08-12 00:12 — 後続snapshotで`perpVenueComparison.items=[]`への退行を確認。service/Webは`active/running`だったため、初回成功だけでは継続利用を証明できないと判断し、AC-17 / CP-11を追加した。
+- 2026-08-12 00:33 — 契約catalogだけの30分TTL、各周期のfresh観測、会場別source状態、periodic内部例外のfail-closed継続、service logを実装。Python 258、Web 230、E2E 70を含む`verify-local.sh`とisolated live 161件取得が成功した。
 
 ## 6. Final result
 
-- **Result**: PASS（mandatory AC-10〜15完了。任意AC-16はdeferred）
-- **Actual state**: 旧3市場pilotのHyperliquid quoteを`USDT`へ訂正し、Bitget USDT Perpとdefault Hyperliquid Core Perpの完全一致・除外済み161件について、会場別mark、funding、OI、24h notional volumeをoptional sidecarと選択銘柄detailへ実装、push、稼働反映した。
-- **Goal gap**: mandatory実装の未達なし。72時間・864予定cycleのqualificationだけを、長期信頼性を判断する任意工程として残す。
+- **Result**: PARTIAL（AC-10〜15は実装済み、runtime退行によりmandatory AC-17を追加して修正中）
+- **Actual state**: 初回は161件readyだったが、後続周期で比較itemsが0件になり、現在の実装は片側障害時の継続表示契約を満たさない。
+- **Goal gap**: AC-17 / CP-11。72時間qualification以前に、3回連続live cycleと障害回復を確認する必要がある。
 - **Verification summary**: Python 255 passed、Ruff/Pyrefly成功、Web unit 230 passed、Svelte check/build成功、Playwright E2E 70 passed、docs checker、`git diff --check`、live public API smoke成功。再起動後は両unit `active/running`、`NRestarts=0`、single DuckDB writer、sidecar 161件すべてready、実画面Desktop/Mobile表示を確認した。
 - **Residual risks**: 72時間連続のAPI継続性は未確認。既存scanner側には今回の変更外であるsnapshot遅延・データ品質低下が残る。比較値はUSDTとUSDCを換算せず、ranking、Candidate、売買・裁定判断へ接続していない。
-- **Remaining work / Resume requirement**: mandatory実装はなし。長期採用判断が必要になった場合だけ、AC-16を現役DBと分離したstate rootで実行する。
+- **Remaining work / Resume requirement**: CP-11の最小RED→GREEN、full gate、commit/push、再起動、3回連続live cycle。完了後だけPASSへ戻す。

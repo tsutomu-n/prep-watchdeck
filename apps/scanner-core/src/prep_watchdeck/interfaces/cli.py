@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 import json
 import signal
+import time
 from collections.abc import AsyncIterable, Callable, Coroutine, Mapping, Sequence
 from pathlib import Path
 from threading import RLock
@@ -945,10 +946,17 @@ async def run_service_from_bitget(
     def deep_backfill_progress():
         return deep_backfill_tracker.snapshot() if deep_backfill_tracker is not None else None
 
+    initial_comparison_started_at = time.monotonic()
     await asyncio.gather(
         refresh_market_comparison_once(market_comparison_collector),
         refresh_perp_venue_comparison_once(perp_venue_comparison_collector),
     )
+    initial_perp_venue_comparison = perp_venue_comparison_collector.snapshot()
+    if initial_perp_venue_comparison is not None:
+        _log_perp_venue_comparison_refresh(
+            initial_perp_venue_comparison,
+            time.monotonic() - initial_comparison_started_at,
+        )
     publish_service_state_once(
         store,
         state_writer,
@@ -1016,6 +1024,12 @@ async def run_service_from_bitget(
             perp_venue_comparison_collector,
             interval_seconds=PERP_VENUE_COMPARISON_INTERVAL_SECONDS,
             refresh_immediately=False,
+            on_refresh=_log_perp_venue_comparison_refresh,
+            on_error=lambda exc: logger.warning(
+                "perp venue comparison refresh failed: {}: {}",
+                type(exc).__name__,
+                str(exc)[:200],
+            ),
         )
     )
     ticker_task = (
@@ -1167,6 +1181,30 @@ async def run_service_from_bitget(
         bootstrap=bootstrap_result,
         subscription=subscription,
         stream=stream_result,
+    )
+
+
+def _log_perp_venue_comparison_refresh(
+    block: dict[str, object],
+    duration_seconds: float,
+) -> None:
+    raw_items = block.get("items")
+    items = raw_items if isinstance(raw_items, list) else []
+    status_counts = {
+        status: sum(isinstance(item, dict) and item.get("status") == status for item in items)
+        for status in ("ready", "partial", "unavailable")
+    }
+    raw_sources = block.get("sources")
+    sources = raw_sources if isinstance(raw_sources, list) else []
+    logger.info(
+        "perp venue comparison refreshed: items={} ready={} partial={} unavailable={} "
+        "sources={} durationMs={:.0f}",
+        len(items),
+        status_counts["ready"],
+        status_counts["partial"],
+        status_counts["unavailable"],
+        json.dumps(sources, ensure_ascii=False, separators=(",", ":")),
+        duration_seconds * 1_000,
     )
 
 

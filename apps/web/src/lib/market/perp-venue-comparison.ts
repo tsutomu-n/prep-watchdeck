@@ -18,6 +18,13 @@ export type PerpVenueSource = {
   error: string | null;
 };
 
+export type PerpVenueHealth = {
+  venue: PerpVenueName;
+  status: "ok" | "unavailable";
+  observedAt: number | null;
+  error: string | null;
+};
+
 export type PerpVenueComparisonItem = {
   symbol: string;
   asset: string;
@@ -31,6 +38,7 @@ export type PerpVenueComparisonSummary = {
   mode: "perp_venue_comparison_v1";
   generatedAt: number;
   refreshIntervalSeconds: number;
+  sources?: PerpVenueHealth[];
   items: PerpVenueComparisonItem[];
 };
 
@@ -49,16 +57,47 @@ export function parsePerpVenueComparisonSummary(
   ) {
     return null;
   }
+  const sources = value.sources === undefined ? undefined : parseHealthSources(value.sources);
+  if (value.sources !== undefined && sources === null) return null;
   return {
     schemaVersion: 1,
     mode: "perp_venue_comparison_v1",
     generatedAt: value.generatedAt,
     refreshIntervalSeconds: value.refreshIntervalSeconds,
+    ...(sources ? { sources } : {}),
     items: value.items.flatMap((item) => {
       const parsed = parseItem(item);
       return parsed ? [parsed] : [];
     })
   };
+}
+
+function parseHealthSources(value: unknown): PerpVenueHealth[] | null {
+  if (!Array.isArray(value) || value.length !== 2) return null;
+  const sources = value.flatMap((source) => {
+    if (
+      !isRecord(source) ||
+      !venueNames.has(source.venue as PerpVenueName) ||
+      (source.status !== "ok" && source.status !== "unavailable") ||
+      !isNullableNonNegativeSafeInteger(source.observedAt) ||
+      !(source.error === null || isNonEmptyString(source.error)) ||
+      (source.status === "ok" && (source.observedAt === null || source.error !== null)) ||
+      (source.status === "unavailable" && (source.observedAt !== null || source.error === null))
+    ) {
+      return [];
+    }
+    return [
+      {
+        venue: source.venue as PerpVenueName,
+        status: source.status,
+        observedAt: source.observedAt,
+        error: source.error,
+      } satisfies PerpVenueHealth,
+    ];
+  });
+  return sources.length === 2 && new Set(sources.map((source) => source.venue)).size === 2
+    ? sources
+    : null;
 }
 
 export function findPerpVenueComparisonItem(

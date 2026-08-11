@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T20:06:52+09:00`
-- 検証: `2026-08-11T20:06:52+09:00`
-- 文書更新作業: `2026-08-11_20:06`（Asia/Tokyo）
+- 更新: `2026-08-12T00:26:25+09:00`
+- 検証: `2026-08-12T00:26:25+09:00`
+- 文書更新作業: `2026-08-12_00:26`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -54,7 +54,8 @@ Webは要求したtimeframeだけを返し、snapshotの`runId`とchartの`snaps
 - `application/market_comparison.py`: 3市場価格比較pilotのin-memory更新
 - `adapters/multisource_public.py`: 3社public RESTのmark price取得
 - `adapters/perp_venue_public.py`: Bitget USDT Perpとdefault Hyperliquid Coreのpublic契約・市場値取得
-- `application/perp_venue_comparison.py`: 5分周期の独立in-memory比較collector
+- `application/perp_venue_comparison.py`: 5分周期の独立in-memory比較collector。検証済み契約catalog
+  だけを最大30分保持し、片側障害時も市場観測値を再利用せず`unavailable`を生成する
 - `vpi/`: VPI-Lite+のpure計算、state分類、公開payload serializer
 - `adapters/duckdb/`: snapshot cacheとservice store
 - `adapters/local_snapshot/`: atomic file publish
@@ -76,6 +77,9 @@ taskをcancel/awaitして非0終了する。
 watchdogはsystemdの`WatchdogSec`/`sd_notify`実装ではない。自動再起動はprocess managerの
 `Restart=on-failure`へ委ねるため、Bitget障害そのものでは再起動ループを作らない。
 DuckDB storeは引き続きservice process内の1 instanceだけを全taskで共有する。
+Perp会場比較のperiodic loopはrefresh内部例外をsource task内に閉じて次周期を継続し、会場別status、
+error、item件数、所要時間をservice logへ記録する。契約catalogと比較blockはin-memoryだけで、
+DB writerや永続schemaを追加しない。
 
 ## Web
 

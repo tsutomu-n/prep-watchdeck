@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T20:06:52+09:00`
-- 検証: `2026-08-11T20:06:52+09:00`
-- 文書更新作業: `2026-08-11_20:06`（Asia/Tokyo）
+- 更新: `2026-08-12T00:26:25+09:00`
+- 検証: `2026-08-12T00:26:25+09:00`
+- 文書更新作業: `2026-08-12_00:26`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -95,7 +95,9 @@ Hot tickerへ入力しない。
 
 serviceと`publish-service`が生成するCold snapshotは、optionalな
 `summary.perpVenueComparison`を持てる。`schemaVersion: 1`、
-`mode: "perp_venue_comparison_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、`items`を持つ。
+`mode: "perp_venue_comparison_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、会場別の
+`sources`、`items`を持つ。top-level `sources`は`venue`、`ok | unavailable`の`status`、nullableな
+`observedAt`、nullableな`error`を保持し、itemが0件でも取得失敗を正常な空集合と区別する。
 
 対象はBitgetの取引中・非RWA・USDT無期限契約とdefault Hyperliquid Coreの非delisted標準Perpで、
 `Bitget.baseCoin`とHyperliquid `name`が完全一致する暗号資産だけである。HYPE、PURR、HIP-3、
@@ -110,6 +112,10 @@ quote、collateral、mark、funding原値・周期・1時間換算、基軸通�
 `markSpreadPct`は両会場が正数かつ取得時刻と提供元時刻が10分以内の時だけ
 `(Hyperliquid mark / Bitget mark - 1) * 100`で生成する。Hyperliquidはsource timestampを返さないため
 `sourceAt: null`を維持する。片側欠損では取得済み会場だけを公開し、spreadを`null`にする。
+一度検証に成功した会場別契約catalogはprocess内だけで最大30分保持できる。取得障害周期では
+catalogだけをmappingに再利用し、mark、funding、OI、volume、observedAtなどの市場観測値は
+再利用しない。catalog期限内の片側障害はitemを消さず、その会場を`unavailable`にする。
+30分を超えて契約catalogを確認できない場合は失効させ、古いmappingを無期限に公開しない。
 このsidecarはDB、required snapshot schema、ranking、Candidate、filter、VPI、Hot tickerへ入力しない。
 
 ## Data quality

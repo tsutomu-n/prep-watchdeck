@@ -29,6 +29,15 @@ describe("perp venue comparison payload guard", () => {
       mode: "perp_venue_comparison_v1",
       generatedAt: 1_780_000_000_000,
       refreshIntervalSeconds: 300,
+      sources: [
+        { venue: "bitget", status: "ok", observedAt: 1_780_000_000_000, error: null },
+        {
+          venue: "hyperliquid",
+          status: "unavailable",
+          observedAt: null,
+          error: "TimeoutError"
+        }
+      ],
       items: [
         {
           symbol: "AAVEUSDT",
@@ -58,6 +67,7 @@ describe("perp venue comparison payload guard", () => {
     });
 
     expect(summary?.items.map((item) => item.symbol)).toEqual(["AAVEUSDT", "DOGEUSDT"]);
+    expect(summary?.sources?.map((item) => item.status)).toEqual(["ok", "unavailable"]);
     expect(findPerpVenueComparisonItem(summary, "AAVEUSDT")?.markSpreadPct).toBe(1);
     expect(findPerpVenueComparisonItem(summary, "MISSINGUSDT")).toBeNull();
   });
