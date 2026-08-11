@@ -1,18 +1,18 @@
 # ExecPlan: 3市場mark price表示pilotとPerp venue限定拡張
 
 - 作成: `2026-08-11T19:48:00+09:00`
-- 更新: `2026-08-11T23:58:00+09:00`
+- 更新: `2026-08-11T23:48:17+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-11-multisource-display-pilot`
 - Profile / risk: `EXECPLAN / MEDIUM`
 - Base revision: `953589b744cc083fb41c7e2845fb5ac4517b68cd`
-- Current checkpoint: `CP-10 in progress`
+- Current checkpoint: `CP-10 completed`
 
 ## 0. 結論と現在地
 
 - **Target**: 完了済みBTC/ETH/SOL pilotのHyperliquid quoteを正し、契約同等性を確認できたBitget USDT Perpとdefault Hyperliquid Core Perpについて、会場別mark、funding、OI、24h notional volumeをoptional sidecarで選択銘柄へ表示する。rankingや売買判定には接続しない。
-- **現在地**: 旧pilotのquote訂正、完全一致mapping、2会場public adapter、optional sidecar、選択銘柄限定UI、Desktop/Mobile E2Eまで実装済み。CP-10の最終gateとruntime反映が残る。
-- **次の行動**: full local gate、live smoke、最終diffを確認し、commit/push後にserviceとWebを一度だけ再起動して実画面を検証する。
+- **現在地**: 旧pilotのquote訂正、完全一致mapping、2会場public adapter、optional sidecar、選択銘柄限定UIを実装し、全gate、push、service/Web再起動、実画面のDesktop/Mobile確認まで完了した。
+- **次の行動**: mandatory実装についてはなし。72時間qualificationは実装完了とは分離した任意工程として残す。
 - **最大のRisk / Blocker**: 同名symbolでもquote、collateral、倍率、OI単位、funding interval、oracleが一致するとは限らない。必須単位を確認できない契約はmappingせず、比較値を生成しない。
 
 ## 1. 作業契約
@@ -206,7 +206,7 @@
 | AC-12 | yes | optional `summary.perpVenueComparison`がBitget/Hyperliquidのsource symbol、単位、mark、比較可能なfunding/OI/volume、observedAt、nullable sourceAt、欠損理由を保持する | user | serializer/parser tests、live smoke | verified | live 161 mapping、serializer/parser test |
 | AC-13 | yes | Webは選択中scanner symbolの会場情報だけを表示し、unmapped、stale、片側欠損を誤って比較しない | user / repo | Vitest、1440px/390px E2E | verified | 関連E2E 2 passed |
 | AC-14 | yes | 新collectorの失敗が既存scanner、snapshot発行、shutdownへ波及せず、DB、required schema、ranking、Candidateを変更しない | repo / default | service/snapshot tests、final diff | verified | focused service/snapshot 48 passed、schema/DB差分なし |
-| AC-15 | yes | focused test、Ruff、Pyrefly、Web check/build、関連E2E、live public API smoke、docs/diff checkが成功する | repo | recorded commands and exit codes | pending | — |
+| AC-15 | yes | focused test、Ruff、Pyrefly、Web check/build、関連E2E、live public API smoke、docs/diff checkが成功する | repo | recorded commands and exit codes | verified | `verify-local.sh`成功、Python 255、Web 230、E2E 70 passed。再起動後sidecar 161件、実画面Desktop/Mobile確認 |
 | AC-16 | no | 最低72時間・864予定cycleでsource別成功、欠損、stale、応答時間、field充足、mapping、snapshot遅延を隔離観測する | follow-up | qualification artifact | deferred | 実装完了とは分離 |
 
 ### CP-06: Contract and unit probe
@@ -271,7 +271,7 @@
 
 ### CP-10: Final gate and optional qualification
 
-- **Status**: pending
+- **Status**: completed
 - **Goal**: 実装のmandatory ACを検証し、72時間観測は別のqualificationとして扱う。
 - **Linked ACs**: AC-15、AC-16
 - **Dependencies**: CP-09。
@@ -282,7 +282,7 @@
 - **Verification**: `.codex/SP_STATE.md`のTestCommand、関連E2E、live public API smoke、docs checker、`git diff --check`。
 - **Expected failure modes**: intermittent API欠損、既存snapshot遅延、payload肥大、利用価値なし。
 - **Recovery / rollback**: 新sidecarを無効化または除去し、旧pilot/Bitget scannerを維持する。
-- **Evidence**: —
+- **Evidence**: `bash scripts/verify-local.sh`成功。再起動後の`perp_venue_comparison_v1`は161件すべてready。`0GUSDT`を1440pxと390pxで開き、2会場の価格、Funding、建玉想定元本、24h出来高、USDT/USDC表示と横overflowなしを確認。
 
 ## 4. Critical risks and stop conditions
 
@@ -310,13 +310,17 @@
 - 2026-08-11 21:39 — 初回runtime確認で比較sidecarは3銘柄3/3だったが、live scanner rowsにBTC/ETH/SOLがなくSelected detailへ到達不能と判明。
 - 2026-08-11 21:46 — scanner rowsから独立したDashboard panelへ修正し、同条件のE2EをREDからGREENへした。
 - 2026-08-11 22:56 — ユーザーが会場を全体の主系に固定せず、旧pilot訂正と検証済み重複銘柄へのHyperliquid Core sidecarだけを次に実装する限定方針を承認。CP-06〜10とAC-10〜16を追加した。
-- 2026-08-11 23:58 — 一次仕様とlive responseを照合し、Bitget 745、Hyperliquid Core 232から完全一致・除外規則で161件をmapping。quote訂正、collector、optional sidecar、Selected detail、関連unit/E2Eを実装した。
+- 2026-08-11 — 一次仕様とlive responseを照合し、Bitget 745、Hyperliquid Core 232から完全一致・除外規則で161件をmapping。quote訂正、collector、optional sidecar、Selected detail、関連unit/E2Eを実装した。
+- 2026-08-11 23:38 — `bash scripts/verify-local.sh`が成功。Python 255、Web unit 230、Playwright E2E 70 passed、Ruff、Pyrefly、Svelte check/build、文書検証を完了した。
+- 2026-08-11 23:40 — 実装を`66cb8be`としてcommitし、`origin/ai/multisource-display-pilot-20260811-1948`へpushした。
+- 2026-08-11 23:41 — `prep-watchdeck-service.service`と`prep-watchdeck-web.service`を各1回再起動。MainPIDはservice `194784`→`696007`、Web `228335`→`696008`、両unitとも`active/running`、`NRestarts=0`。DuckDB writerは1 processを維持した。
+- 2026-08-11 23:46 — fresh snapshotの`perp_venue_comparison_v1` 161件すべてreadyを確認し、実サービスの`0GUSDT`でDesktopと390×844の会場比較表示、USDT/USDC単位、横overflowなしを確認した。
 
 ## 6. Final result
 
-- **Result**: partial（旧pilotはrunnable、後続限定拡張は未実装）
-- **Actual state**: 旧pilotは3社public REST、3/3中央値、optional snapshot sidecar、scanner rows非依存のDashboard panelを実装済み。新しい契約mapping、会場別funding/OI/volume sidecar、Selected detailは存在しない。
-- **Goal gap**: AC-10〜15とCP-06〜10が未着手。旧pilotの実装成功を後続限定拡張の完了証拠にしない。
-- **Verification summary**: 旧pilotについてPython関連50 passed、Ruff/Pyrefly、Web全227 passed、Svelte check/build、追加E2E 1 passed、live API smoke、docs checker、`git diff --check`成功。後続限定拡張のtestは未実行。
-- **Residual risks**: quote誤表記、契約同等性、単位差、source timestamp欠損、API継続性、Selected detailの情報量は未解決。値は表示専用でrankingや売買判定へ使わない。
-- **Remaining work / Resume requirement**: `.codex/SP_STATE.md`をreviewし、TASK 11 / CP-06のread-only probeから開始する。72時間観測はmandatory実装完了と分離する。
+- **Result**: PASS（mandatory AC-10〜15完了。任意AC-16はdeferred）
+- **Actual state**: 旧3市場pilotのHyperliquid quoteを`USDT`へ訂正し、Bitget USDT Perpとdefault Hyperliquid Core Perpの完全一致・除外済み161件について、会場別mark、funding、OI、24h notional volumeをoptional sidecarと選択銘柄detailへ実装、push、稼働反映した。
+- **Goal gap**: mandatory実装の未達なし。72時間・864予定cycleのqualificationだけを、長期信頼性を判断する任意工程として残す。
+- **Verification summary**: Python 255 passed、Ruff/Pyrefly成功、Web unit 230 passed、Svelte check/build成功、Playwright E2E 70 passed、docs checker、`git diff --check`、live public API smoke成功。再起動後は両unit `active/running`、`NRestarts=0`、single DuckDB writer、sidecar 161件すべてready、実画面Desktop/Mobile表示を確認した。
+- **Residual risks**: 72時間連続のAPI継続性は未確認。既存scanner側には今回の変更外であるsnapshot遅延・データ品質低下が残る。比較値はUSDTとUSDCを換算せず、ranking、Candidate、売買・裁定判断へ接続していない。
+- **Remaining work / Resume requirement**: mandatory実装はなし。長期採用判断が必要になった場合だけ、AC-16を現役DBと分離したstate rootで実行する。
