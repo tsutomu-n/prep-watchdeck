@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
-- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
+- 更新: `2026-08-12T22:54:50+09:00`
+- 検証: `2026-08-12T22:54:50+09:00`
+- 文書更新作業: `2026-08-12_22:54`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -45,9 +45,12 @@
 
 ## 実装・検証計画
 
+- [Scanner CPU・snapshot遅延 P1計測](plans/active/scanner-cpu-snapshot-latency-p1/README.md):
+  74時間/deep backfillパージ後も残ったCPU高負荷を、同一workerの区間別時間・CPU・RSS・公開間隔で
+  原因特定する。計測前にchartや旧3市場比較を削除しない。
 - [74時間判定・deep backfillパージ](plans/active/purge-74h-deep-backfill/README.md):
   74時間Candidate契約と常駐deep backfillをproductionから除去し、snapshot、短期指標、
-  reconcile、chartを維持したままscanner/gap windowをchart sourceから分離する実装中計画。
+  reconcile、chartを維持したままscanner/gap windowをchart sourceから分離したArchive待ち計画。
 - [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 完了済みの実装履歴。
   Candidate/74h部分は0010で置換済み、OI 60分の履歴と契約だけを維持する。
 - [Quiet Market Instrument](plans/active/quiet-market-instrument/README.md): 15m/1h/4h量倍率、活動phase、

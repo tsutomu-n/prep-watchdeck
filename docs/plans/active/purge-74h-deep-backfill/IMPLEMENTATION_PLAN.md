@@ -1,12 +1,12 @@
 # ExecPlan: 74時間判定と常駐deep backfillのパージ
 
 - 作成: `2026-08-12T17:03:31+09:00`
-- 更新: `2026-08-12T22:15:38+09:00`
+- 更新: `2026-08-12T22:54:50+09:00`
 - 状態: `実装計画`
 - Plan ID: `2026-08-12-purge-74h-deep-backfill`
 - Profile / risk: `EXECPLAN / HIGH`
 - Base revision: `ad3364f6e3b0c30c85469a22da3789f19d3727b9`
-- Current checkpoint: `CP-06 in progress`
+- Current checkpoint: `CP-06 completed`
 
 ## 0. 結論と現在地
 
@@ -18,9 +18,8 @@
   scanner判定とgap auditは短期windowへ縮小し、chart source windowと全chart JSON生成は暫定的に残す。
 - **非結論**: このパージだけでscanner高CPUやsnapshot遅延が解決するとは扱わない。chart生成は全rowの
   JSONを毎cycle書き、旧3市場`marketComparison`も別collectorとして残るため、完了後も独立P1で測る。
-- **現在地**: CP-01〜05を完了し、current docs、ADR、旧P1 planを現行codeへ同期した。
-  service再起動と実unit反映は未実施。
-- **次の実装**: CP-06で実unitを同期し、runtime継続、CPU/RSS、実画面を確認する。
+- **現在地**: CP-01〜06を完了し、実unit同期、runtime継続、CPU/RSS、実画面を確認した。
+- **次の実装**: CPU高負荷を数値付きの独立P1で区間計測する。本計画へ最適化を追加しない。
 - **最大の実装risk**: Windows `U:` viewでは5つのshell scriptが`100755 → 100644`のmode-only差分に
   見える。内容差分は0行で、`core.fileMode=false`では消える。canonical Linux checkoutで再確認し、
   このmode noiseをstage/commitしない。内容差分が見つかった場合だけ停止する。
@@ -142,8 +141,8 @@ production負荷と保守対象を縮小する。
 | AC-07 | yes | Cold snapshot、Perp comparison、OI 60m、reconcile、chart、DB schema、schemaVersion 1を維持し、featureVersion 5/rulesetVersion 4を公開する | snapshot tests、schema diff、final diff | passed | scanner 253件、Web 224件、E2E 64件、schema/type diff reviewで維持を確認 |
 | AC-08 | yes | current docs、ADR 0008、active P1 planを実装後の事実へ同期し、歴史的判断を捏造せずsupersedeする | docs checker、link checker、diff review | passed | CP-05 docs同期、新ADR 0010、ADR 0007/0008と旧P1 planのanti-resumeを反映。metadata test 13件、link test 4件、両checker、DESIGN lint、diff-check成功 |
 | AC-09 | yes | focused tests、Ruff、Pyrefly、Web unit/check/build、関連E2E、`verify-local.sh`、`git diff --check`が成功する | command exit 0 | passed | `verify-local.sh` exit 0。maintenance 82、scanner 253、Web 224、E2E 64件、Ruff/format/Pyrefly/check/build成功 |
-| AC-10 | yes | runtimeでsingle DuckDB writer、fresh snapshot 3回、既存Bitget scanとPerp比較継続、restart loopなしを確認する | isolated/live qualification | pending | — |
-| AC-11 | yes | source変更前後のCPU、RSS、snapshot間隔、row/chart件数を同条件で記録する。取得不能な値は未確認とし、負荷問題が残れば独立P1へ分離する | before/after measurement | pending | — |
+| AC-10 | yes | runtimeでsingle DuckDB writer、fresh snapshot 3回、既存Bitget scanとPerp比較継続、restart loopなしを確認する | isolated/live qualification | passed | writer PID 3867036だけ。最初の3 snapshotはPerp各161 ready、OI reference 744/739/737。後続2周期のticker鮮度切れではOIがfail-closedでUNKNOWNとなり、その後2周期で744/742 referencesへ自動回復。両unit active/running・NRestarts 0、Web health OK |
+| AC-11 | yes | source変更前後で同じpidstatコマンドを使い、CPU、RSS、snapshot間隔、row/chart件数と測定時の処理状態を記録する。cycle位相を揃えられない値から因果を断定せず、負荷問題が残れば独立P1へ分離する | before/after measurement | passed | 20秒sampleはCPU 78.95%→93.25%、RSS 2,512,282→572,110 KiB、公開間隔194.810/220.894→105.225/126.055秒。変更後はreconcile実行中で、CPUの悪化・改善は判定不能。独立P1作成 |
 
 ## 5. Checkpoints
 
@@ -266,8 +265,6 @@ production負荷と保守対象を縮小する。
 ### CP-05: 文書・設計判断・最終local gate
 
 - **Status**: completed
-
-- **Status**: in progress（文書focused gate完了、全体gate待ち）
 - **Goal**: 実装と現行文書を同期し、歴史的記録と現行仕様を区別する。
 - **Linked ACs**: AC-08、AC-09。
 - **Dependencies**: CP-01〜04。
@@ -289,7 +286,7 @@ production負荷と保守対象を縮小する。
 
 ### CP-06: runtime qualificationとP1計測
 
-- **Status**: pending
+- **Status**: completed
 - **Goal**: パージ後の稼働継続と実負荷を確認し、performance改善を捏造しない。
 - **Linked ACs**: AC-10、AC-11。
 - **Dependencies**: CP-05、メインスレッドでのrestart承認。
@@ -378,7 +375,7 @@ chart判断と同じ次段で、panel、collector、Bybit adapter、tests、docs
 - 2026-08-12 — CP-05文書同期とfocused gate完了。README、DESIGN、docs index/current、filter READMEを
   現行codeへ同期し、ADR 0010を追加、ADR 0007/0008と旧P1 planへsupersession/anti-resumeを記録した。
   metadata test 13件、link test 4件、両checker、DESIGN lint（error/warning 0）、`git diff --check`が成功。
-  `verify-local.sh`は計画全体で1回に限定するため未実行で、統合担当が次に実行する。
+  このfocused gate時点では`verify-local.sh`未実行。後述のCP-05全体gateで1回実行した。
 - 2026-08-12 — CP-06 runbookを実unit driftへ同期。restart前に`systemctl --user cat`、installer
   `--check`、dry-run限定差分確認、`--apply`、再`--check`を行い、旧deep引数以外のdriftではrestartせず
   停止する。unit同期後にscanner/Webを各1回だけrestartする。
@@ -387,12 +384,41 @@ chart判断と同じ次段で、panel、collector、Bybit adapter、tests、docs
   `baseline_window_bars=96`と導出`min_required_bars=289`の不整合を検出したためtest fixtureを1行修正。
   修正後の`bash scripts/verify-local.sh`はexit 0で、maintenance 82件、scanner 253件、Web 224件、
   Playwright 64件、Ruff、format、Pyrefly、Svelte check、buildがすべて成功した。
+- 2026-08-12 — CP-06完了。installer dry-runで実unit driftが旧deep引数除去だけと確認し、backupを
+  作成してapply、再check成功後にscanner/Webを各1回restartした。MainPIDは`3867000`/`3867001`、
+  双方`active/running`、`NRestarts=0`。DuckDB writerはworker `3867036`だけだった。
+- 2026-08-12 — restart直後のfresh snapshotは`20260812T132007Z`、`20260812T132152Z`、
+  `20260812T132358Z`の3回で、間隔105.225秒/126.055秒、row/chartは337/337、336/336、336/336、
+  Perpは各161 ready、OI referenceは744/739/737、その時点のreconcileはerror 0で進行した。Web healthはOK。
+- 2026-08-12 — 同じpidstatコマンドによる20秒sampleはCPU平均78.95%→93.25%、RSS平均
+  2,512,282→572,110 KiB。変更後sampleはreconcile実行中でcycle位相を揃えていないため、CPUの悪化・改善や
+  パージとの因果は判定不能。CPU高負荷は未解決で、`scanner-cpu-snapshot-latency-p1`へ区間計測を分離した。
+- 2026-08-12 — Playwright CLIで1440x1000/390x844の実サービスを確認。AAVEのBitget/Hyperliquid
+  2/2、Mark price、Funding、建玉、24h出来高、USDT/USDCを表示し、Candidate/74h文言とconsole errorは0。
+  screenshotはstate rootの`tmp/purge-74h-qualification/desktop-1440.png`と`mobile-390.png`。
+- 2026-08-12 — Bitget public ticker refreshは22:27:15と22:33:31 JSTに2回失敗した。後続snapshot
+  `20260812T133313Z`と`20260812T133748Z`はtickerの2分鮮度条件によりOIを再利用せず、
+  `sampled=0 / references=0`、全336行`UNKNOWN`としてfail-closedで公開した。処理例外ではないため
+  `oiDiagnostics.status`は`ok`のままであり、これは監視上の残リスクである。
+- 2026-08-12 — ticker更新後、`20260812T134135Z`はOI `746/744`、`20260812T134446Z`は`744/742`へ
+  無介入で2周期連続回復した。ticker runtimeはsequence 10、full updates 753件、delta updates 746件まで
+  進み、22:41以降に同warningは追加されていない。purge差分はOI採取・ticker refresh経路を変更していない。
+  原因は一時的なBitget ticker更新失敗との強い相関まで確認したが、例外詳細は現在のlogから未確認である。
+- 2026-08-12 — 後続`20260812T134847Z`はcurrent OIを744件sampleしたが、exact 60分前bucketがなく
+  references 0、333行すべて`UNKNOWN`になった。次の`20260812T135233Z`は744/742へ戻った。これは
+  nearest値へfallbackせず欠損を`UNKNOWN`にする既存契約と一致する一方、OI状態の連続可用性は保証しない。
+- 2026-08-12 — reconcileは継続し、後続確認時点ではBitget timeout 2件（latest `CAPUSDT`）を記録した。
+  serviceは`active/running`、`NRestarts=0`でsnapshot更新も継続しており、今回のパージ回帰とは判定しない。
+- 2026-08-12 — 上記の後続runtime事実へ文書を同期し、metadata test 13件、link test 4件、両checker、
+  `git diff --check`を再実行して成功した。sourceを変更していないためfull gateは繰り返していない。
 
 ## 8. Final result
 
-- **Result**: PARTIAL
-- **Actual state**: CP-00〜05完了。専用branchと変更前計測を確定し、productionの常駐deep backfill接続、
+- **Result**: PASS
+- **Actual state**: CP-00〜06完了。専用branchと変更前計測を確定し、productionの常駐deep backfill接続、
   Candidate consumer、74時間producer・公開契約をsource/config/schemaから除去し、analysis/gapとchart
-  source windowを分離し、文書同期と全体local gateを完了した。live runtimeは再起動前のため変更前のまま。
-- **Goal gap**: CP-06 runtime acceptanceが未実施。
-- **Resume requirement**: runbook 8.1からCP-06のunit同期・runtime qualificationを実行する。
+  source windowを分離した。文書・full gate・unit同期・runtime・実画面まで確認済み。
+- **Goal gap**: mandatory gapはなし。CPU高負荷の原因特定と、current sample鮮度切れ・exact reference欠損の
+  どちらでもOIが全件`UNKNOWN`かつdiagnosticsが`ok`になり得る監視盲点は残るが、本計画のパージ範囲外である。
+- **Resume requirement**: 本計画の再実行は不要。次は独立P1の区間計測から開始し、ticker最終成功時刻と
+  OI sampled/reference数も同じ時系列へ記録する。

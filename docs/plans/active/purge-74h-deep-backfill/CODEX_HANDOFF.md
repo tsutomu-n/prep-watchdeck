@@ -1,23 +1,26 @@
 # メインスレッドへの実装引継ぎ
 
 - 作成: `2026-08-12T17:03:31+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
+- 更新: `2026-08-12T22:54:50+09:00`
 - 状態: `実装計画`
 
 ---
 
 ## 引継ぎ結論
 
-CP-01〜04の実装とCP-05の文書同期・focused gateは完了した。次は全体gateを1回実行し、CP-06で
-実unitを同期してruntimeを確認する。snapshot、短期candle、直近reconcile、detail chart、
-OI 60分は維持する。実unitには旧deep backfill引数が残るため、source完成だけで稼働反映済みと扱わない。
+CP-01〜06は完了した。実unitを同期してscanner/Webを各1回restartし、single writer、Bitget/Perp、
+Desktop/Mobileを確認した。restart直後の3 snapshotでOI 60分referenceを確認後、Bitget ticker更新失敗により
+2周期だけ全OIが`UNKNOWN`となったが、更新回復後の2周期でreference 744/742へ自動復旧した。その後も
+exact 60分前bucket欠損で1周期だけreference 0となり、次周期に742へ戻った。snapshot、短期candle、
+直近reconcile、detail chart、OI 60分の契約は維持しているが、OIの連続可用性は保証されない。CPU高負荷と
+OI diagnosticsの監視盲点は解決していないため、独立P1へ引き継いだ。
 
 正本:
 
 - [`IMPLEMENTATION_PLAN.md`](IMPLEMENTATION_PLAN.md)
 - [`EXECUTION_RUNBOOK.md`](EXECUTION_RUNBOOK.md)
 - [`PLAN_REVIEW.md`](PLAN_REVIEW.md)
-- Repo localの`.codex/SP_STATE.md`（CP-05を対象）
+- Repo localの`.codex/SP_STATE.md`（CP-06完了状態）
 
 ## 現在のRepo状態
 
@@ -25,8 +28,9 @@ OI 60分は維持する。実unitには旧deep backfill引数が残るため、s
 Repo: /home/tn/projects/prep-watchdeck
 Windows view: U:\projects\prep-watchdeck
 Branch: ai/purge-74h-deep-backfill-20260812-2004
-HEAD: ad3364f6e3b0c30c85469a22da3789f19d3727b9
-Worktree: CP-01〜04 source/testsとCP-05 docsが未コミット。service restartは未実施
+Implementation checkpoint: 2e23c52
+Runtime evidence: implementation checkpoint後のdocs-only commit
+HEAD / Worktree: 再開時に`git log -1`と`git status --short`で確認する
 ```
 
 Windows `U:` viewで文書作成前から表示されたmode-only変更:
@@ -47,26 +51,27 @@ canonical Linuxで再確認し、mode changeをstage/commitしない。内容差
 
 無関係なzip、mode-only noise、今回のAllowedFiles外の変更をstage、削除、上書きしない。
 
-`.codex/SP_STATE.md`はCP-05の文書同期とgateだけを対象にする。旧multisource planの任意72時間qualificationは
+`.codex/SP_STATE.md`はCP-06の完了証拠を記録する。旧multisource planの任意72時間qualificationは
 `docs/plans/active/multisource-display-pilot/IMPLEMENTATION_PLAN.md`のdeferred ACとして引き続き記録されている。
 
 ## メインスレッドへ渡す指示
 
-以下を現行の再開指示とする。
+CP-01〜06、full gate、unit同期、restartを再実行しない。次工程は
+[`scanner-cpu-snapshot-latency-p1`](../scanner-cpu-snapshot-latency-p1/README.md)だけである。
 
 ```text
 対象Repo: /home/tn/projects/prep-watchdeck
 branch: ai/purge-74h-deep-backfill-20260812-2004
-正本計画: docs/plans/active/purge-74h-deep-backfill/IMPLEMENTATION_PLAN.md
-実行手順: docs/plans/active/purge-74h-deep-backfill/EXECUTION_RUNBOOK.md
-実行状態: .codex/SP_STATE.md
+完了済み正本: docs/plans/active/purge-74h-deep-backfill/IMPLEMENTATION_PLAN.md
+次工程: docs/plans/active/scanner-cpu-snapshot-latency-p1/README.md
 
-CP-01〜04を再実装しない。CP-05の文書focused gate後、verify-localを計画全体で1回だけ実行する。
-CP-06ではrunbook 8.1の順に実unitをcatし、installer --checkの非0が旧deep引数除去だけによることを
-dry-runで確認する。別driftがあれば--applyせず停止する。限定差分だけなら--apply、再--checkを行い、
-scannerとWebを各1回だけrestartする。single writer、snapshot 3回、Bitget/Perp/OI/reconcile、
-1440px/390px、CPU/RSSを確認する。CPU改善は実測前に断定しない。
+最初に既存log/service stateだけでreconcile実行中と停止後のCPU duty cycleを各3分比較する。
+同じ時系列へticker refresh成否、OI sampled/references、snapshot公開時刻を記録する。
+原因区間が絞れない場合だけ低overheadなduration logを追加する。現役DBへ別writerを接続しない。
 ```
+
+OIの一時異常はpurge回帰とは判定していないが、全件`UNKNOWN`でも`oiDiagnostics.status="ok"`になる。再び
+`sampled=0`が複数周期続き、ticker更新後も回復しない場合は、P1計測より先にデータ鮮度障害として停止する。
 
 ### 作成時の旧指示（実行禁止）
 
@@ -116,23 +121,20 @@ push、PR、merge、service restartは、メインスレッドの現行ユーザ
 runtimeではsingle writer、Perp比較、Webの1440px/390pxも確認し、CPU改善は計測前に断定しないでください。
 ```
 
-## 再開時のコマンド
+## 次工程開始時のread-only確認
 
 ```bash
 cd /home/tn/projects/prep-watchdeck
 git status --short
 git branch --show-current
 git rev-parse HEAD
-bun test scripts/maintenance/document-metadata.test.mjs
-bun scripts/maintenance/check-document-metadata.mjs
-bun test scripts/maintenance/document-links.test.mjs
-bun scripts/maintenance/check-document-links.mjs
-npx -p @google/design.md designmd lint DESIGN.md
-git diff --check
-
-# 上がすべて成功してから、計画全体で1回だけ実行する。
-bash scripts/verify-local.sh
+systemctl --user show prep-watchdeck-service.service \
+  -p MainPID -p ActiveState -p SubState -p NRestarts
+jq '{runId,generatedAt,oiDiagnostics:.summary.oiDiagnostics}' \
+  /home/tn/.local/share/prep-watchdeck/snapshots/latest.json
 ```
+
+`verify-local.sh`とCP-06 restartは完了済みである。本計画の再確認だけを理由に繰り返さない。
 
 ## 完了条件
 
