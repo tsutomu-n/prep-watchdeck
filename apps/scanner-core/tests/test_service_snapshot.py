@@ -372,6 +372,25 @@ def test_duckdb_service_store_loads_compact_snapshot_candle_window(tmp_path) -> 
     assert float(first.quote_vol) == 220.0
 
 
+def test_duckdb_service_store_limits_compact_candles_to_requested_symbols(tmp_path) -> None:
+    store = DuckDbServiceStore(tmp_path / "watchdeck.duckdb")
+    bucket_start_ms = 1_781_000_100_000
+    store.upsert_candles_1m(
+        [
+            candle("ALTUSDT", bucket_start_ms, 1.0, 1.2, 0.9, 1.1, 100.0),
+            candle("BTCUSDT", bucket_start_ms, 100.0, 102.0, 99.0, 101.0, 200.0),
+            candle("OTHERUSDT", bucket_start_ms, 2.0, 2.2, 1.9, 2.1, 300.0),
+        ]
+    )
+
+    bars_by_symbol = store.load_candles_5m_since(
+        bucket_start_ms,
+        ["ALTUSDT", "BTCUSDT"],
+    )
+
+    assert sorted(bars_by_symbol) == ["ALTUSDT", "BTCUSDT"]
+
+
 def test_service_snapshot_separates_analysis_gap_and_chart_windows(monkeypatch) -> None:
     generated_at_ms = 1_800_000_000_000
     config = load_template(Path("../../config/scanner-filters"), "balanced")
@@ -411,6 +430,7 @@ def test_service_snapshot_separates_analysis_gap_and_chart_windows(monkeypatch) 
     assert captured_bar_counts == {"ALTUSDT": 383, "BTCUSDT": 383}
     assert len(build.chart_candles_by_symbol["ALTUSDT"]) == CHART_SOURCE_5M_BARS
     assert store.five_minute_starts[-1] == chart_start_ms
+    assert store.five_minute_symbols[-1] == ["ALTUSDT", "BTCUSDT"]
     assert store.count_starts[-1] == chart_start_ms
     assert store.range_calls == [(["ALTUSDT", "BTCUSDT"], gap_start_ms, gap_end_ms)]
     assert gap_end_ms - gap_start_ms == (1915 - 1) * 60_000
@@ -774,11 +794,17 @@ class RecordingCompactServiceStore(MemoryServiceStore):
         )
         self.generated_at_ms = generated_at_ms
         self.five_minute_starts: list[int] = []
+        self.five_minute_symbols: list[list[str]] = []
         self.count_starts: list[int] = []
         self.range_calls: list[tuple[list[str], int, int]] = []
 
-    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+    def load_candles_5m_since(
+        self,
+        start_ts_ms: int,
+        symbols: list[str],
+    ) -> dict[str, list[CandleBar]]:
         self.five_minute_starts.append(start_ts_ms)
+        self.five_minute_symbols.append(symbols)
         return {
             symbol: [
                 CandleBar(

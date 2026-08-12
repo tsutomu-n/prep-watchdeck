@@ -9,6 +9,8 @@ from decimal import Decimal
 from math import isfinite
 from typing import Any, Protocol, runtime_checkable
 
+from loguru import logger as runtime_logger
+
 from prep_watchdeck.adapters.bitget_live.provider import snapshot_from_pipeline
 from prep_watchdeck.adapters.local_snapshot import AtomicSnapshotWriter
 from prep_watchdeck.application.chart_artifacts import (
@@ -29,6 +31,7 @@ from prep_watchdeck.domain.service_models import (
 from prep_watchdeck.domain.symbols import is_safe_public_symbol
 from prep_watchdeck.models import CandleBar, ContractInfo, ScannerRow, TickerInfo
 from prep_watchdeck.ports.snapshot_cache import SnapshotCache
+from prep_watchdeck.screening.categories import universe_symbols
 from prep_watchdeck.screening.pipeline import PipelineResult, build_scanner_rows, make_run_id
 from prep_watchdeck.screening.reasons import build_reason
 from prep_watchdeck.vpi.compute import compute_vpi_lite_plus
@@ -80,7 +83,11 @@ class ServiceSnapshotStore(Protocol):
 
 @runtime_checkable
 class CompactServiceSnapshotStore(Protocol):
-    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+    def load_candles_5m_since(
+        self,
+        start_ts_ms: int,
+        symbols: list[str],
+    ) -> dict[str, list[CandleBar]]:
         """Load 5m bars aggregated inside DuckDB for the snapshot window."""
 
     def count_candles_1m_since(self, start_ts_ms: int) -> int:
@@ -150,6 +157,9 @@ def build_service_snapshot(
     tickers = [
         _ticker_from_latest(item) for item in ticker_records if is_safe_public_symbol(item.symbol)
     ]
+    snapshot_symbols = sorted(
+        set(universe_symbols(config, contracts, tickers)) | {config.universe.benchmark_symbol}
+    )
     analysis_5m_bars = required_analysis_5m_bars(config)
     analysis_1m_bars = analysis_5m_bars * 5
     chart_window_start_ms = _required_1m_window_start_ms(
@@ -162,6 +172,7 @@ def build_service_snapshot(
         start_ts_ms=chart_window_start_ms,
         end_ts_ms=generated_window_end_ms,
         vpi_config=vpi_config,
+        candle_symbols=snapshot_symbols,
     )
     analysis_window_end_ms = _service_gap_window_end_ms(
         candle_window.latest_candle_1m_ts_ms,
@@ -176,6 +187,7 @@ def build_service_snapshot(
             start_ts_ms=chart_window_start_ms,
             end_ts_ms=generated_window_end_ms,
             vpi_config=vpi_config,
+            candle_symbols=snapshot_symbols,
         )
     vpi_block = _build_vpi_block(
         candle_window.vpi_candles_1m,
@@ -276,6 +288,7 @@ def publish_service_snapshot_once(
     run_id: str | None = None,
     max_data_lag_ms: int | None = None,
 ) -> SnapshotDTO:
+    build_started = time.monotonic()
     build = build_service_snapshot(
         store,
         template=template,
@@ -293,6 +306,7 @@ def publish_service_snapshot_once(
             max_data_lag_ms=max_data_lag_ms,
         )
     snapshot = build.snapshot
+    build_finished = time.monotonic()
     publish_snapshot_artifacts(
         snapshot=snapshot,
         writer=writer,
@@ -301,6 +315,14 @@ def publish_service_snapshot_once(
             symbol: chart_timeframes_from_5m(bars)
             for symbol, bars in build.chart_candles_by_symbol.items()
         },
+    )
+    artifact_published = time.monotonic()
+    runtime_logger.info(
+        "service snapshot published: runId={} rows={} buildMs={} artifactPublishMs={}",
+        snapshot.run_id,
+        len(snapshot.rows),
+        round((build_finished - build_started) * 1000),
+        round((artifact_published - build_finished) * 1000),
     )
     return snapshot
 
@@ -513,6 +535,7 @@ def _load_service_candle_window(
     start_ts_ms: int,
     end_ts_ms: int,
     vpi_config: VpiConfig | None,
+    candle_symbols: list[str],
 ) -> ServiceCandleWindow:
     if isinstance(store, CompactServiceSnapshotStore):
         vpi_symbols = (
@@ -524,7 +547,7 @@ def _load_service_candle_window(
             store.load_candles_1m_range(vpi_symbols, start_ts_ms, end_ts_ms) if vpi_symbols else []
         )
         return ServiceCandleWindow(
-            candles_by_symbol=store.load_candles_5m_since(start_ts_ms),
+            candles_by_symbol=store.load_candles_5m_since(start_ts_ms, candle_symbols),
             vpi_candles_1m=vpi_candles,
             candle_1m_count=store.count_candles_1m_since(start_ts_ms),
             latest_candle_1m_ts_ms=store.latest_candle_1m_ts_since(start_ts_ms),

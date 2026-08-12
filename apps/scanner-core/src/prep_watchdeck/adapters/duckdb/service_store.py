@@ -417,10 +417,25 @@ class DuckDbServiceStore:
             for row in rows
         ]
 
-    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+    def load_candles_5m_since(
+        self,
+        start_ts_ms: int,
+        symbols: list[str] | None = None,
+    ) -> dict[str, list[CandleBar]]:
+        normalized_symbols = sorted(
+            {symbol.strip().upper() for symbol in symbols or [] if symbol.strip()}
+        )
+        if symbols is not None and not normalized_symbols:
+            return {}
+        symbol_filter = ""
+        parameters: list[object] = [start_ts_ms]
+        if normalized_symbols:
+            placeholders = ", ".join("?" for _ in normalized_symbols)
+            symbol_filter = f"AND symbol IN ({placeholders})"
+            parameters.extend(normalized_symbols)
         with self._lock, self._connect() as con:
             rows = con.execute(
-                """
+                f"""
                 SELECT
                   symbol,
                   ts_ms - (ts_ms % 300000) AS bucket_ts_ms,
@@ -432,10 +447,11 @@ class DuckDbServiceStore:
                   SUM(COALESCE(usdt_volume, quote_volume, 0))
                 FROM candles_1m
                 WHERE ts_ms >= ?
+                  {symbol_filter}
                 GROUP BY symbol, bucket_ts_ms
                 ORDER BY symbol, bucket_ts_ms
                 """,
-                [start_ts_ms],
+                parameters,
             ).fetchall()
         bars_by_symbol: dict[str, list[CandleBar]] = {}
         for row in rows:
