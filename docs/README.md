@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-12T22:54:50+09:00`
-- 検証: `2026-08-12T22:54:50+09:00`
-- 文書更新作業: `2026-08-12_22:54`（Asia/Tokyo）
+- 更新: `2026-08-13T01:35:16+09:00`
+- 検証: `2026-08-13T01:35:16+09:00`
+- 文書更新作業: `2026-08-13_01:35`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -46,8 +46,8 @@
 ## 実装・検証計画
 
 - [Scanner CPU・snapshot遅延 P1計測](plans/active/scanner-cpu-snapshot-latency-p1/README.md):
-  74時間/deep backfillパージ後も残ったCPU高負荷を、同一workerの区間別時間・CPU・RSS・公開間隔で
-  原因特定する。計測前にchartや旧3市場比較を削除しない。
+  snapshot対象銘柄だけを集計する限定改善を採用済み。約2分更新を実用上許容し、CPU高負荷と停止遅延を
+  残リスクとして閉じたArchive待ち計画。
 - [74時間判定・deep backfillパージ](plans/active/purge-74h-deep-backfill/README.md):
   74時間Candidate契約と常駐deep backfillをproductionから除去し、snapshot、短期指標、
   reconcile、chartを維持したままscanner/gap windowをchart sourceから分離したArchive待ち計画。
