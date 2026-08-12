@@ -156,7 +156,6 @@ class ServiceStateSnapshot(ServiceModel):
     diagnostics: ServiceDiagnostics
     backfill: BackfillProgress | None = None
     reconcile: BackfillProgress | None = None
-    deep_backfill: DeepBackfillProgress | None = None
 
 
 class BackfillSymbolResult(ServiceModel):

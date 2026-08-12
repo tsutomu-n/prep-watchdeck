@@ -18,6 +18,7 @@ from prep_watchdeck.ports.snapshot_cache import SnapshotCache
 FIVE_MINUTES_MS = 5 * 60_000
 DETAIL_CHART_SCHEMA_VERSION = 2
 DETAIL_CHART_BAR_LIMIT = 128
+DETAIL_CHART_SOURCE_5M_BARS = 1177
 
 
 @dataclass(frozen=True)

@@ -14,8 +14,7 @@ import {
   rowExclusionLabels,
   rowQualityClass,
   snapshotStatusLabel,
-  templateLabel,
-  userRule74hLabel
+  templateLabel
 } from "./labels";
 
 describe("market label helpers", () => {
@@ -55,7 +54,6 @@ describe("market label helpers", () => {
     expect(openInterestStateLabel("STABLE")).toBe("横ばい");
     expect(openInterestStateLabel("DECREASING")).toBe("減少");
     expect(openInterestStateLabel("UNKNOWN")).toBe("不明");
-    expect(userRule74hLabel(null)).toBe("判定不能");
 
   it("keeps unknown codes visible unless a fallback is explicitly provided", () => {
     expect(codeLabel("NEW_CODE")).toBe("NEW_CODE");

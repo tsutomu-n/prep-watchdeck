@@ -58,15 +58,6 @@ type LayoutSnapshotRow = {
 type LayoutSnapshot = {
   rows: LayoutSnapshotRow[];
   summary: { counts: Record<string, number>; [key: string]: unknown };
-  rankings: {
-    timeframes: Record<string, Record<string, Array<{ symbol: string; value: number }>>>;
-    meta: {
-      timeframes: Record<
-        string,
-        Record<string, { limit: number; totalEligible: number; [key: string]: unknown }>
-      >;
-    };
-  };
   [key: string]: unknown;
 };
 
@@ -619,7 +610,7 @@ test("fixture dashboard loads through the responsive layout harness", async ({ p
   expect(sections.some((section) => section.accessibleName === "選択銘柄の詳細")).toBe(true);
 });
 
-test("market row exposes all six visible timeframe values in its accessible name", async ({
+test("market row exposes all five visible timeframe values in its accessible name", async ({
   page
 }) => {
   await page.goto("/");
@@ -629,179 +620,26 @@ test("market row exposes all six visible timeframe values in its accessible name
   );
   await expect(altRow).toHaveAttribute(
     "aria-label",
-    /時間軸別変化 5m 0\.4%、15m 2\.1%、1h 0\.8%、4h 2\.2%、24h 3\.1%、74h 8\.4%/
+    /時間軸別変化 5m 0\.4%、15m 2\.1%、1h 0\.8%、4h 2\.2%、24h 3\.1%/
   );
 });
 
-test("mobile candidate ranking keeps every symbol identity readable", async ({ page }) => {
-  const originalText = readFileSync(e2ePaths.snapshotPath, "utf-8");
-  const snapshot = JSON.parse(originalText) as LayoutSnapshot;
-  const longSymbol = "1000000BABYDOGEUSDT";
-  const longDisplaySymbol = "1000000BABYDOGE";
-  const metricIds = ["changeUp", "changeDown", "turnoverTop", "volumeUp"] as const;
-
-  for (const metric of metricIds) {
-    const ranking = snapshot.rankings.timeframes["15m"]?.[metric];
-    if (!ranking?.[0]) throw new Error(`15m ${metric} ranking fixture is missing`);
-    const shortItem = ranking[0];
-    ranking.splice(0, ranking.length, { ...shortItem, symbol: longSymbol }, shortItem);
-    const meta = snapshot.rankings.meta.timeframes["15m"]?.[metric];
-    if (!meta) throw new Error(`15m ${metric} ranking meta fixture is missing`);
-    meta.totalEligible = 2;
-  }
-
-  writeJsonAtomically(e2ePaths.snapshotPath, snapshot);
-  try {
-    for (const viewport of [
-      { width: 320, height: 568 },
-      { width: 375, height: 667 },
-      { width: 414, height: 896 }
-    ]) {
-      await test.step(`${viewport.width}px`, async () => {
-        await page.setViewportSize(viewport);
-        await page.goto("/");
-        await page
-          .locator(".ranking-area")
-          .getByRole("button", { name: "15m", exact: true })
-          .click();
-        const candidateRanking = page.getByRole("region", { name: "15m ランキング" });
-        const tabs = candidateRanking.getByRole("tab");
-        await expect(tabs).toHaveCount(4);
-        for (const tabName of ["上昇", "下落", "売買代金", "15分量倍率"]) {
-          await candidateRanking.getByRole("tab", { name: tabName, exact: true }).click();
-          const activePanel = candidateRanking.getByRole("tabpanel");
-          await expect(activePanel.locator(`.rank-row > span[title="${longSymbol}"]`)).toBeVisible();
-        }
-        await candidateRanking.getByRole("tab", { name: "上昇", exact: true }).click();
-        await exposeHorizontalOverflow(page);
-
-        const rankingBody = page.locator(".mobile-rankings");
-        const symbols = rankingBody.locator(".rank-panel:not([hidden]) .rank-row > span[title]");
-        const longSymbols = rankingBody.locator(`.rank-row > span[title="${longSymbol}"]`);
-        await expect(longSymbols).toHaveCount(metricIds.length);
-        const measurements = await symbols.evaluateAll((nodes) =>
-          nodes.map((node) => {
-            const row = node.closest<HTMLElement>(".rank-row");
-            if (!row) throw new Error("candidate ranking row is missing");
-            const style = getComputedStyle(node);
-            const box = node.getBoundingClientRect();
-            const rowBox = row.getBoundingClientRect();
-            return {
-              symbol: node.getAttribute("title") ?? "",
-              text: node.textContent?.trim() ?? "",
-              clientWidth: node.clientWidth,
-              scrollWidth: node.scrollWidth,
-              textOverflow: style.textOverflow,
-              boxLeft: box.left,
-              boxRight: box.right,
-              rowLeft: rowBox.left,
-              rowRight: rowBox.right,
-              rowHeight: rowBox.height
-            };
-          })
-        );
-
-        expect(
-          measurements
-            .filter((measurement) => measurement.symbol === longSymbol)
-            .every((measurement) => measurement.text === longDisplaySymbol),
-          `${viewport.width}px incomplete candidate identity: ${JSON.stringify(measurements)}`
-        ).toBe(true);
-        expect(
-          measurements.some((measurement) => measurement.symbol !== longSymbol),
-          `${viewport.width}px short candidate fixture coverage: ${JSON.stringify(measurements)}`
-        ).toBe(true);
-        expect(
-          measurements.every(
-            (measurement) =>
-              measurement.scrollWidth <= measurement.clientWidth + 1 &&
-              measurement.textOverflow !== "ellipsis" &&
-              measurement.boxLeft >= measurement.rowLeft - 1 &&
-              measurement.boxRight <= measurement.rowRight + 1
-          ),
-          `${viewport.width}px truncated candidate identity: ${JSON.stringify(measurements)}`
-        ).toBe(true);
-        expect(
-          measurements.every((measurement) => measurement.rowHeight >= 44),
-          `${viewport.width}px candidate target height: ${JSON.stringify(measurements)}`
-        ).toBe(true);
-
-        const root = await measureRootOverflow(page);
-        expect(root.overflowPx, `${viewport.width}px root overflow: ${JSON.stringify(root)}`).toBe(0);
-      });
-    }
-  } finally {
-    writeFileSync(e2ePaths.snapshotPath, originalText, "utf-8");
-  }
-});
-
-test("mobile candidate tabs use automatic roving activation", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-
-  const ranking = page.getByRole("region", { name: "15m ランキング" });
-  const up = ranking.getByRole("tab", { name: "上昇", exact: true });
-  const down = ranking.getByRole("tab", { name: "下落", exact: true });
-  const ratio = ranking.getByRole("tab", { name: "15分量倍率", exact: true });
-  await ratio.click();
-  const directionStyles = await Promise.all(
-    [up, down].map((tab) =>
-      tab.evaluate((element) => {
-        const normalizeColor = (value: string) => {
-          const probe = document.createElement("span");
-          probe.style.color = value;
-          document.body.append(probe);
-          const color = getComputedStyle(probe).color;
-          probe.remove();
-          return color;
-        };
-        const rootStyle = getComputedStyle(document.documentElement);
-        const token = element.textContent?.trim() === "上昇" ? "--up" : "--down";
-        return {
-          color: getComputedStyle(element).color,
-          marker: getComputedStyle(element).boxShadow,
-          expected: normalizeColor(rootStyle.getPropertyValue(token))
-        };
-      })
-    )
-  );
-  expect(directionStyles[0].color).toBe(directionStyles[0].expected);
-  expect(directionStyles[1].color).toBe(directionStyles[1].expected);
-  expect(directionStyles[0].marker).toContain(directionStyles[0].expected);
-  expect(directionStyles[1].marker).toContain(directionStyles[1].expected);
-  await up.click();
-  await expect(up).toHaveAttribute("tabindex", "0");
-  await up.focus();
-  await up.press("ArrowRight");
-  await expect(down).toBeFocused();
-  await expect(down).toHaveAttribute("aria-selected", "true");
-  await down.press("End");
-  await expect(ratio).toBeFocused();
-  await expect(ratio).toHaveAttribute("aria-selected", "true");
-  await ratio.press("ArrowRight");
-  await expect(up).toBeFocused();
-  await expect(up).toHaveAttribute("aria-selected", "true");
-});
-
-test("320px timeframe controls form balanced three-by-two groups", async ({ page }) => {
-  const routesAndSelectors = [
-    ["/", ".ranking-area .timeframe-strip > button"],
-    ["/symbols/ALTUSDT?tf=15m", ".timeframe-bar > a"]
-  ] as const;
-
+test("320px symbol timeframe control lays out all five supported timeframes", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
-  for (const [route, selector] of routesAndSelectors) {
-    await page.goto(route);
-    const rowCounts = await page.locator(selector).evaluateAll((elements) => {
-      const counts = new Map<number, number>();
-      for (const element of elements) {
-        const top = Math.round(element.getBoundingClientRect().top);
-        counts.set(top, (counts.get(top) ?? 0) + 1);
-      }
-      return [...counts.values()].sort((left, right) => left - right);
-    });
-    expect(rowCounts, `${route} timeframe row counts`).toEqual([3, 3]);
-  }
+  await page.goto("/symbols/ALTUSDT?tf=15m");
+  const timeframes = page.locator(".timeframe-bar > a");
+  await expect(timeframes).toHaveCount(5);
+  await expect(timeframes).toHaveText(["5m", "15m", "1h", "4h", "24h"]);
+  const rowCounts = await timeframes.evaluateAll((elements) => {
+    const counts = new Map<number, number>();
+    for (const element of elements) {
+      const top = Math.round(element.getBoundingClientRect().top);
+      counts.set(top, (counts.get(top) ?? 0) + 1);
+    }
+    return [...counts.values()].sort((left, right) => left - right);
+  });
+  expect(rowCounts).toEqual([2, 3]);
+  expect((await measureRootOverflow(page)).overflowPx).toBe(0);
 });
 
 test("mobile dashboard compacts source service and runtime into one status strip", async ({ page }) => {
@@ -985,30 +823,27 @@ test("symbol page keeps one chart frame and compact mobile analysis context", as
 
       await expect(chart).toBeVisible();
       await expect(intel).toBeVisible();
-      await expect(timeframeBoard.getByRole("link")).toHaveCount(6);
+      await expect(timeframeBoard.getByRole("link")).toHaveCount(5);
       await expect(timeframeBoard.getByRole("link", { name: /15m/ })).toHaveAttribute(
         "aria-current",
         "page"
       );
 
       const mobileGrids = await page.evaluate(() => {
-        const rank = document.querySelector<HTMLElement>(".monitoring-rail .rank-context");
         const summary = document.querySelector<HTMLElement>(".monitoring-rail .monitoring-summary");
         const board = document.querySelector<HTMLElement>(".timeframe-board .tf-grid");
-        if (!rank || !summary || !board) throw new Error("symbol mobile grid missing");
+        if (!summary || !board) throw new Error("symbol mobile grid missing");
         const boardRows = new Set(
           Array.from(board.querySelectorAll("a")).map((link) =>
             Math.round(link.getBoundingClientRect().top)
           )
         );
         return {
-          rankColumns: getComputedStyle(rank).gridTemplateColumns.split(" ").length,
           summaryColumns: getComputedStyle(summary).gridTemplateColumns.split(" ").length,
           boardColumns: getComputedStyle(board).gridTemplateColumns.split(" ").length,
           boardRows: boardRows.size
         };
       });
-      expect(mobileGrids.rankColumns).toBe(2);
       expect(mobileGrids.summaryColumns).toBe(2);
       expect(mobileGrids.boardColumns).toBe(2);
       expect(mobileGrids.boardRows).toBeLessThanOrEqual(3);
@@ -1038,7 +873,10 @@ test("a wide coarse pointer surface keeps touch targets without inflating fine-p
       page.getByRole("complementary", { name: "分類" }).getByRole("button").first()
     ),
     timeframe: await measureElementBox(
-      page.getByRole("region", { name: /ランキング/ }).getByRole("button", { name: "15m" })
+      page
+        .getByRole("region", { name: "精密監視リスト" })
+        .getByRole("group", { name: "時間軸ショートカット" })
+        .getByRole("button", { name: "15m" })
     ),
     view: await measureElementBox(
       page.getByRole("region", { name: "精密監視リスト" }).getByRole("button", { name: "標準" })
@@ -1049,7 +887,7 @@ test("a wide coarse pointer surface keeps touch targets without inflating fine-p
   expect(fineDensity.view.height).toBeLessThanOrEqual(34);
 
   const coarseContext = await browser.newContext({
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: String(test.info().project.use.baseURL),
     viewport: { width: 1200, height: 900 },
     hasTouch: true
   });
@@ -1087,7 +925,7 @@ test("dashboard and symbol routes reflow at a browser-equivalent 200% zoom layou
   });
 
   const zoomContext = await browser.newContext({
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: String(test.info().project.use.baseURL),
     viewport: { width: 640, height: 500 },
     deviceScaleFactor: 2
   });
@@ -1250,7 +1088,7 @@ test("market rows keep a stable 42px or 82px rhythm while exposing every signal"
           await expect(locator).toBeVisible();
         }
         if (watchlistBox.width >= 994) {
-          await expect(rowLocators[2].locator(".tf-metric")).toHaveCount(6);
+          await expect(rowLocators[2].locator(".tf-metric")).toHaveCount(5);
           await expect(rowLocators[2].locator(".tf-metric").nth(1)).toBeVisible();
         } else {
           await expect(rowLocators[2].locator(".tf-change")).toBeVisible();
@@ -1681,7 +1519,7 @@ test("intermediate dashboard widths do not overflow and keep topbar edges aligne
   }
 });
 
-test("mobile keeps all ranking links and 400 rows reachable before the selected detail", async ({
+test("mobile keeps 400 rows reachable before the selected detail", async ({
   page
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -1713,16 +1551,6 @@ test("mobile keeps all ranking links and 400 rows reachable before the selected 
     LOW_PRIORITY: 1 + addedRows.length
   };
 
-  const metricIds = ["changeUp", "changeDown", "turnoverTop", "volumeUp"] as const;
-  for (const [metricIndex, metric] of metricIds.entries()) {
-    snapshot.rankings.timeframes["15m"][metric] = Array.from({ length: 10 }, (_, index) => ({
-      symbol: `RANK${metricIndex + 1}${String(index + 1).padStart(2, "0")}USDT`,
-      value: metric === "changeDown" ? -(index + 1) : (metricIndex + 1) * 100 + index
-    }));
-    snapshot.rankings.meta.timeframes["15m"][metric].limit = 10;
-    snapshot.rankings.meta.timeframes["15m"][metric].totalEligible = 10;
-  }
-
   writeJsonAtomically(e2ePaths.snapshotPath, snapshot);
   try {
     await page.reload();
@@ -1730,51 +1558,32 @@ test("mobile keeps all ranking links and 400 rows reachable before the selected 
     const sections = await page
       .locator("[data-dashboard-section]")
       .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-dashboard-section")));
-    expect(sections).toEqual([
-      "candidate",
-      "watchlist",
-      "detail",
-      "smart-rank"
-    ]);
+    expect(sections).toEqual(["watchlist", "detail", "smart-rank"]);
 
-    const rankingBody = page.locator('[data-dashboard-section="candidate"] .mobile-rankings');
     const rows = page.locator(
       '[data-dashboard-section="watchlist"] [data-market-row][data-symbol]'
     );
-    await expect(rankingBody.locator(".rank-panel")).toHaveCount(4);
-    await expect(rankingBody.locator("a.rank-row")).toHaveCount(40);
     await expect(rows).toHaveCount(400);
 
     const geometry = await page.evaluate(() => {
-      const ranking = document.querySelector<HTMLElement>(".mobile-rankings");
       const rows = document.querySelector<HTMLElement>('[aria-label="精密監視リスト"] .rows');
       const detail = document.querySelector<HTMLElement>('[data-dashboard-section="detail"]');
-      if (!ranking || !rows || !detail) throw new Error("bounded mobile section missing");
+      if (!rows || !detail) throw new Error("bounded mobile section missing");
       return {
         documentHeight: document.documentElement.scrollHeight,
         detailTop: detail.getBoundingClientRect().top + window.scrollY,
-        rankingClientHeight: ranking.clientHeight,
-        rankingScrollHeight: ranking.scrollHeight,
         rowsClientHeight: rows.clientHeight,
         rowsScrollHeight: rows.scrollHeight,
-        rankingOverscroll: getComputedStyle(ranking).overscrollBehaviorY,
-        rankingTouchAction: getComputedStyle(ranking).touchAction,
         rowsOverscroll: getComputedStyle(rows).overscrollBehaviorY,
         rowsTouchAction: getComputedStyle(rows).touchAction
       };
     });
     expect(geometry.documentHeight - basicDocumentHeight).toBeLessThan(844);
     expect(geometry.detailTop).toBeLessThanOrEqual(844 * 4);
-    expect(geometry.rankingScrollHeight).toBeGreaterThan(geometry.rankingClientHeight);
     expect(geometry.rowsScrollHeight).toBeGreaterThan(geometry.rowsClientHeight);
-    expect(geometry.rankingOverscroll).toBe("auto");
-    expect(geometry.rankingTouchAction).toContain("pan-y");
     expect(geometry.rowsOverscroll).toBe("auto");
     expect(geometry.rowsTouchAction).toContain("pan-y");
 
-    const activeRankingLinks = rankingBody.getByRole("tabpanel").locator("a.rank-row");
-    await activeRankingLinks.last().scrollIntoViewIfNeeded();
-    await expect(activeRankingLinks.last()).toBeVisible();
     await rows.last().locator("[data-row-select]").scrollIntoViewIfNeeded();
     await expect(rows.last()).toBeVisible();
 

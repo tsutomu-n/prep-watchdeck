@@ -105,7 +105,6 @@ export function timeframeSeconds(value: string) {
   if (value === "1h") return 60 * 60;
   if (value === "4h") return 4 * 60 * 60;
   if (value === "24h") return 24 * 60 * 60;
-  if (value === "74h") return 74 * 60 * 60;
   return 15 * 60;
 }
 

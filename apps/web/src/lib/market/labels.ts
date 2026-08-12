@@ -111,8 +111,6 @@ export function codeLabel(value: string, fallback = value) {
     BTC_LINKED: "BTC連動",
     BTC_RELATIVE_STRONG: "BTC比で強い",
     DOWN_SURGE: "急落",
-    USER_74H_PRICE_MATCH: "74時間価格条件",
-    USER_74H_VOLUME_MATCH: "74時間売買代金条件",
     MISSING: "欠損",
     NONE: "なし"
   };
@@ -158,10 +156,4 @@ export function openInterestStateLabel(value: string | null | undefined) {
     FALLING: "減少"
   };
   return value ? (labels[value] ?? "不明") : "不明";
-}
-
-export function userRule74hLabel(value: boolean | null | undefined) {
-  if (value === true) return "一致";
-  if (value === false) return "未一致";
-  return "判定不能";
 }

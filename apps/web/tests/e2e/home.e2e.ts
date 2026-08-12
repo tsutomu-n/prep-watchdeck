@@ -101,19 +101,6 @@ function marketRowButton(watchlist: Locator, symbol: string) {
   return marketRow(watchlist, symbol).locator("[data-row-select]");
 }
 
-async function expectTextColorToken(locator: Locator, tokenName: "--up" | "--down") {
-  await expect(locator).toBeVisible();
-  const colors = await locator.evaluate((element, token) => {
-    const probe = document.createElement("span");
-    probe.style.color = getComputedStyle(document.documentElement).getPropertyValue(token);
-    document.body.append(probe);
-    const expected = getComputedStyle(probe).color;
-    probe.remove();
-    return { actual: getComputedStyle(element).color, expected };
-  }, tokenName);
-  expect(colors.actual).toBe(colors.expected);
-}
-
 async function openDetailGroup(detail: Locator, group: "context") {
   const node = detail.locator(`details[data-detail-group="${group}"]`);
   if ((await node.getAttribute("open")) === null) {
@@ -223,36 +210,12 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   await expect(categories.getByRole("button", { name: /注意\s+1/ })).toBeVisible();
   await expect(categories.getByRole("button", { name: /監視除外候補\s+1/ })).toBeVisible();
   await expect(categories.getByRole("button", { name: /低優先\s+1/ })).toBeVisible();
-  await expect(
-    page.getByText("74h条件: 価格±4%以上 かつ 24h売買代金+15%以上（合致1 / 未一致0 / 判定不能3）", { exact: true })
-  ).toBeVisible();
-  await expect(page.getByText("15分量倍率: 直近約24h中央値比", { exact: true })).toBeVisible();
-
-  const rankings = page.getByRole("region", { name: "15m ランキング" });
-  const desktopRankings = rankings.locator('[data-candidate-representation="desktop"]');
-  const changeUpPanel = desktopRankings
-    .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "上昇順", exact: true }) });
-  const volumePanel = desktopRankings
-    .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "売買代金" }) });
-  const volumeRatioPanel = desktopRankings
-    .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "15分量倍率" }) });
-  await expect(changeUpPanel.getByRole("link", { name: /ALT\s+2\.1%/ })).toBeVisible();
-  await expect(changeUpPanel.getByText("表示 1/1")).toBeVisible();
-  await expect(volumePanel.getByRole("link", { name: /ALT\s+89,000/ })).toBeVisible();
-  await expect(volumePanel.getByText("表示 1/1")).toBeVisible();
-  await expect(volumeRatioPanel.getByRole("link", { name: /ALT\s+3\.4×/ })).toBeVisible();
-  await expect(volumeRatioPanel.getByRole("link", { name: /ALT\s+3\.4×/ })).toHaveAttribute(
-    "href",
-    /\/symbols\/ALTUSDT\?tf=15m$/
-  );
-  await expect(volumeRatioPanel.getByText("表示 1/1")).toBeVisible();
-
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
   await expect(watchlist.getByRole("heading", { name: "精密監視リスト" })).toBeVisible();
   await expect(watchlist.getByText("表示 5 / 全 5")).toBeVisible();
+  await expect(
+    watchlist.locator(".market-header").getByText("直近約24h中央値比", { exact: true })
+  ).toBeVisible();
   const altRow = marketRow(watchlist, "ALTUSDT");
   await expect(altRow).toBeVisible();
   await expect(altRow).toContainText("出来高確認済み上昇");
@@ -275,7 +238,7 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   const sections = await page
     .locator("[data-dashboard-section]")
     .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-dashboard-section")));
-  expect(sections).toEqual(["candidate", "watchlist", "detail", "smart-rank"]);
+  expect(sections).toEqual(["watchlist", "detail", "smart-rank"]);
 
   const monitoringMaterialBox = await detail.getByRole("region", { name: "監視材料" }).boundingBox();
   const statsBox = await detail.getByText("15分変化率").boundingBox();
@@ -291,7 +254,6 @@ test("fixture backed dashboard renders the current Japanese UI", async ({ page }
   await expect(detail.getByText("活動phase", { exact: true })).toBeVisible();
   await expect(detail.getByText("持続", { exact: true })).toBeVisible();
   await expect(detail.getByText("OI 60分", { exact: true })).toBeVisible();
-  await expect(detail.getByText("74h状態", { exact: true })).toBeVisible();
   await expect(detail.getByText("データ品質", { exact: true })).toHaveCount(0);
   await expect(detail.getByText("データ網羅率")).toBeVisible();
   await openDetailGroup(detail, "context");
@@ -306,9 +268,13 @@ test("shows VPI experiment states without turning the dashboard into a score ran
   addVpiLitePlusSnapshotPayload();
   await page.goto("/");
 
-  const candidate = page.locator('[data-dashboard-section="candidate"]');
-  const panel = candidate.getByRole("region", { name: "市場活動（VPI-Lite+）" });
+  const context = page.locator('[data-dashboard-section="context"]');
+  const panel = context.getByRole("region", { name: "市場活動（VPI-Lite+）" });
   await expect(panel).toBeVisible();
+  const sections = await page
+    .locator("[data-dashboard-section]")
+    .evaluateAll((nodes) => nodes.map((node) => node.getAttribute("data-dashboard-section")));
+  expect(sections).toEqual(["context", "watchlist", "detail", "smart-rank"]);
   await expect(panel.getByText("既存の限定対象だけを使う活動発見です。売買シグナルではありません。")).toBeVisible();
   await expect(panel.getByText("VPI対象 1 / Watchlist 5銘柄", { exact: true })).toBeVisible();
   await expect(panel.getByRole("heading", { name: "活動増加" })).toBeVisible();
@@ -378,23 +344,6 @@ test("ignores a malformed VPI summary without breaking the dashboard", async ({ 
   await expect(page.getByRole("region", { name: "市場活動（VPI-Lite+）" })).toHaveCount(0);
 });
 
-test("falls back to the generic 74h candidate rule when summary metadata is malformed", async ({
-  page
-}) => {
-  generateSnapshot("basic");
-  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8"));
-  snapshot.summary.candidateRule74h = { operator: "AND", priceAbsPct: "4" };
-  writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
-
-  await page.goto("/");
-
-  await expect(
-    page.getByText("74h候補条件の詳細を取得できません。snapshot更新後に再確認してください。", {
-      exact: true
-    })
-  ).toBeVisible();
-});
-
 test("falls back without guessing the 15m volume ratio baseline", async ({ page }) => {
   generateSnapshot("basic");
   const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8"));
@@ -410,104 +359,21 @@ test("falls back without guessing the 15m volume ratio baseline", async ({ page 
 
   await page.goto("/");
 
-  await expect(page.getByText("15分量倍率: 基準期間を取得できません", { exact: true })).toBeVisible();
+  const watchlist = page.getByRole("region", { name: "精密監視リスト" });
+  await expect(
+    watchlist.locator(".market-header").getByText("基準期間を取得できません", { exact: true })
+  ).toBeVisible();
   await expect(page.getByText("直近約24h中央値比", { exact: true })).toHaveCount(0);
 });
 
-test("keeps an empty Candidate ranking as a normal mobile tab state", async ({ page }) => {
-  generateSnapshot("basic");
-  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8"));
-  for (const timeframe of Object.values(snapshot.rankings.timeframes) as Array<Record<string, unknown[]>>) {
-    for (const metric of Object.keys(timeframe)) timeframe[metric] = [];
-  }
-  writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/");
-
-  const ranking = page.getByRole("region", { name: "15m ランキング" });
-  await expect(ranking.getByRole("tab")).toHaveCount(4);
-  await expect(ranking.getByRole("tabpanel").getByText("該当なし", { exact: true })).toBeVisible();
-  await ranking.getByRole("tab", { name: "15分量倍率", exact: true }).click();
-  await expect(ranking.getByRole("tabpanel").getByText("該当なし", { exact: true })).toBeVisible();
-});
-
-test("labels mixed-sign change rankings by sort order and colors each value by actual sign", async ({
-  page
-}) => {
-  generateSnapshot("basic");
-  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf-8"));
-  snapshot.rankings.timeframes["15m"].changeUp = [
-    { symbol: "ALTUSDT", value: 2.1 },
-    { symbol: "DUMPUSDT", value: -2.4 }
-  ];
-  snapshot.rankings.timeframes["15m"].changeDown = [
-    { symbol: "DUMPUSDT", value: -2.4 },
-    { symbol: "ALTUSDT", value: 2.1 }
-  ];
-  snapshot.rankings.meta.timeframes["15m"].changeUp.totalEligible = 2;
-  snapshot.rankings.meta.timeframes["15m"].changeDown.totalEligible = 2;
-  writeFileSync(snapshotPath, `${JSON.stringify(snapshot, null, 2)}\n`, "utf-8");
-  await page.goto("/");
-
-  const rankings = page.getByRole("region", { name: "15m ランキング" });
-  const changeUpPanel = rankings.locator(".rank-panel").filter({
-    has: page.getByRole("heading", { name: "上昇順", exact: true })
-  });
-  const changeDownPanel = rankings.locator(".rank-panel").filter({
-    has: page.getByRole("heading", { name: "下落順", exact: true })
-  });
-
-  await expect(changeUpPanel.getByRole("heading", { name: "上昇順", exact: true })).toBeVisible();
-  await expect(changeDownPanel.getByRole("heading", { name: "下落順", exact: true })).toBeVisible();
-  await expect(changeUpPanel.locator(".rank-row").first()).toContainText(/ALT\s+2\.1%/);
-  await expect(changeUpPanel.locator(".rank-row").last()).toContainText(/DUMP\s+-2\.4%/);
-  await expect(changeDownPanel.locator(".rank-row").first()).toContainText(/DUMP\s+-2\.4%/);
-  await expect(changeDownPanel.locator(".rank-row").last()).toContainText(/ALT\s+2\.1%/);
-
-  await expectTextColorToken(
-    changeUpPanel.getByRole("link", { name: /ALT\s+2\.1%/ }).locator("strong"),
-    "--up"
-  );
-  await expectTextColorToken(
-    changeUpPanel.getByRole("link", { name: /DUMP\s+-2\.4%/ }).locator("strong"),
-    "--down"
-  );
-  await expectTextColorToken(
-    changeDownPanel.getByRole("link", { name: /DUMP\s+-2\.4%/ }).locator("strong"),
-    "--down"
-  );
-  await expectTextColorToken(
-    changeDownPanel.getByRole("link", { name: /ALT\s+2\.1%/ }).locator("strong"),
-    "--up"
-  );
-});
-
-test("can switch ranking timeframe and display view filters", async ({ page }) => {
+test("can switch watchlist timeframe and display view filters", async ({ page }) => {
   generateSnapshot("basic");
   await page.goto("/");
-
-  await page.getByRole("group", { name: "時間軸" }).getByRole("button", { name: "4h", exact: true }).click();
-  const rankings = page.getByRole("region", { name: "4h ランキング" });
-  const changeUpPanel = rankings
-    .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "上昇順", exact: true }) });
-  const volumePanel = rankings
-    .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "売買代金" }) });
-  const volumeRatioPanel = rankings
-    .locator(".rank-panel")
-    .filter({ has: page.getByRole("heading", { name: "15分量倍率" }) });
-
-  await expect(changeUpPanel.getByRole("link", { name: /ALT\s+2\.2%/ })).toBeVisible();
-  await expect(volumePanel.getByRole("link", { name: /ALT\s+820,000/ })).toBeVisible();
-  await expect(volumeRatioPanel.getByRole("link", { name: /ALT\s+3\.4×/ })).toHaveAttribute(
-    "href",
-    /\/symbols\/ALTUSDT\?tf=15m$/
-  );
 
   const watchlist = page.getByRole("region", { name: "精密監視リスト" });
   await expect(watchlist.getByText("表示 5 / 全 5")).toBeVisible();
+  await watchlist.getByRole("button", { name: "4h価格変化で並び替え", exact: true }).click();
+  await expect(watchlist.getByText("Raw Sort: 4h 価格変化 大きい順")).toBeVisible();
 
   await page.getByRole("group", { name: "ビュー" }).getByRole("button", { name: "急落" }).click();
   await expect(watchlist.getByText("表示 1 / 全 5")).toBeVisible();
@@ -576,7 +442,6 @@ test("can raw sort the dashboard watchlist by initial movement, attention, and t
     .getByRole("button", { name: "1h", exact: true })
     .click();
   await expect(watchlist.getByText("Raw Sort: 1h 価格変化 大きい順")).toBeVisible();
-  await expect(page.getByRole("region", { name: "1h ランキング" })).toBeVisible();
   await marketRowButton(watchlist, "ALTUSDT").click();
   await expect(
     page
@@ -593,13 +458,6 @@ test("can raw sort the dashboard watchlist by initial movement, attention, and t
   await watchlist
     .getByRole("group", { name: "観点ショートカット" })
     .getByRole("button", { name: "15分量倍率", exact: true })
-    .click();
-  await expect(watchlist.getByText("Raw Sort: 15m 15分量倍率 大きい順")).toBeVisible();
-  await expect(page.getByRole("region", { name: "15m ランキング" })).toBeVisible();
-
-  await page
-    .getByRole("region", { name: "15m ランキング" })
-    .getByRole("button", { name: "15m", exact: true })
     .click();
   await expect(watchlist.getByText("Raw Sort: 15m 15分量倍率 大きい順")).toBeVisible();
 
@@ -677,11 +535,8 @@ test("selects a dashboard row before opening its chart-first symbol analysis", a
   await expect(page.getByRole("region", { name: "ALT チャート" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "時間軸別の変化と売買代金" })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "監視材料" })).toBeVisible();
-  await expect(page.getByText("ランキング位置")).toBeVisible();
-  await expect(page.getByText("選択時間軸の掲載範囲")).toBeVisible();
-  await expect(page.getByText("1件中 1位")).toHaveCount(4);
   await expect(page.getByRole("region", { name: "ALT 分析" }).getByText("出来高確認済み上昇")).toBeVisible();
-  await expect(page.getByRole("region", { name: "補助情報" }).getByText("8.4%")).toBeVisible();
+  await expect(page.getByRole("region", { name: "補助情報" }).getByText("品質と市場条件")).toBeVisible();
 
   await page.getByRole("region", { name: "主チャート" }).getByRole("link", { name: "4h", exact: true }).click();
   await expect(page).toHaveURL(/\/symbols\/ALTUSDT\?tf=4h$/);

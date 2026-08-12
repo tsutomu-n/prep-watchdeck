@@ -3,22 +3,24 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 from decimal import Decimal
 from math import isfinite
 from typing import Any, Protocol, runtime_checkable
 
+from loguru import logger as runtime_logger
+
 from prep_watchdeck.adapters.bitget_live.provider import snapshot_from_pipeline
 from prep_watchdeck.adapters.local_snapshot import AtomicSnapshotWriter
 from prep_watchdeck.application.chart_artifacts import (
+    DETAIL_CHART_SOURCE_5M_BARS,
     chart_timeframes_from_5m,
     publish_snapshot_artifacts,
 )
 from prep_watchdeck.application.service_gap_audit import SymbolGapAudit, audit_service_gaps
 from prep_watchdeck.config.filter_config import FilterConfig
 from prep_watchdeck.config.vpi_config import VpiConfig
-from prep_watchdeck.constants import TIMEFRAME_BARS
 from prep_watchdeck.domain.dto import SnapshotDTO
 from prep_watchdeck.domain.service_models import (
     Candle1mRecord,
@@ -29,6 +31,7 @@ from prep_watchdeck.domain.service_models import (
 from prep_watchdeck.domain.symbols import is_safe_public_symbol
 from prep_watchdeck.models import CandleBar, ContractInfo, ScannerRow, TickerInfo
 from prep_watchdeck.ports.snapshot_cache import SnapshotCache
+from prep_watchdeck.screening.categories import universe_symbols
 from prep_watchdeck.screening.pipeline import PipelineResult, build_scanner_rows, make_run_id
 from prep_watchdeck.screening.reasons import build_reason
 from prep_watchdeck.vpi.compute import compute_vpi_lite_plus
@@ -40,6 +43,8 @@ ONE_MINUTE_MS = 60 * ONE_SECOND_MS
 FIVE_MINUTES_MS = 5 * ONE_MINUTE_MS
 DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS = 2 * ONE_MINUTE_MS
 OPEN_INTEREST_RETENTION_MS = 24 * 60 * ONE_MINUTE_MS
+CHART_SOURCE_5M_BARS = DETAIL_CHART_SOURCE_5M_BARS
+CHART_SOURCE_1M_BARS = CHART_SOURCE_5M_BARS * 5
 logger = logging.getLogger(__name__)
 
 
@@ -78,7 +83,11 @@ class ServiceSnapshotStore(Protocol):
 
 @runtime_checkable
 class CompactServiceSnapshotStore(Protocol):
-    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+    def load_candles_5m_since(
+        self,
+        start_ts_ms: int,
+        symbols: list[str],
+    ) -> dict[str, list[CandleBar]]:
         """Load 5m bars aggregated inside DuckDB for the snapshot window."""
 
     def count_candles_1m_since(self, start_ts_ms: int) -> int:
@@ -91,7 +100,7 @@ class CompactServiceSnapshotStore(Protocol):
 @dataclass(frozen=True)
 class ServiceSnapshotBuild:
     snapshot: SnapshotDTO
-    candles_by_symbol: dict[str, list[CandleBar]]
+    chart_candles_by_symbol: dict[str, list[CandleBar]]
     latest_candle_1m_ts_ms: int | None
 
 
@@ -109,6 +118,8 @@ def snapshot_from_service_store(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison: dict[str, object] | None = None,
+    perp_venue_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
 ) -> SnapshotDTO:
@@ -117,6 +128,8 @@ def snapshot_from_service_store(
         template=template,
         config=config,
         vpi_config=vpi_config,
+        market_comparison=market_comparison,
+        perp_venue_comparison=perp_venue_comparison,
         generated_at_ms=generated_at_ms,
         run_id=run_id,
     ).snapshot
@@ -128,6 +141,8 @@ def build_service_snapshot(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison: dict[str, object] | None = None,
+    perp_venue_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
 ) -> ServiceSnapshotBuild:
@@ -142,27 +157,37 @@ def build_service_snapshot(
     tickers = [
         _ticker_from_latest(item) for item in ticker_records if is_safe_public_symbol(item.symbol)
     ]
-    required_1m_limit = _required_1m_limit(config)
-    required_window_start_ms = _required_1m_window_start_ms(generated_at_ms, required_1m_limit)
+    snapshot_symbols = sorted(
+        set(universe_symbols(config, contracts, tickers)) | {config.universe.benchmark_symbol}
+    )
+    analysis_5m_bars = required_analysis_5m_bars(config)
+    analysis_1m_bars = analysis_5m_bars * 5
+    chart_window_start_ms = _required_1m_window_start_ms(
+        generated_at_ms,
+        CHART_SOURCE_1M_BARS,
+    )
     generated_window_end_ms = generated_at_ms - (generated_at_ms % ONE_MINUTE_MS)
     candle_window = _load_service_candle_window(
         store,
-        start_ts_ms=required_window_start_ms,
+        start_ts_ms=chart_window_start_ms,
         end_ts_ms=generated_window_end_ms,
         vpi_config=vpi_config,
+        candle_symbols=snapshot_symbols,
     )
-    required_window_end_ms = _service_gap_window_end_ms(
+    analysis_window_end_ms = _service_gap_window_end_ms(
         candle_window.latest_candle_1m_ts_ms,
         generated_window_end_ms,
     )
-    adjusted_window_start_ms = required_window_end_ms - (required_1m_limit - 1) * ONE_MINUTE_MS
-    if adjusted_window_start_ms < required_window_start_ms:
-        required_window_start_ms = adjusted_window_start_ms
+    analysis_window_start_ms = analysis_window_end_ms - (analysis_1m_bars - 1) * ONE_MINUTE_MS
+    adjusted_chart_start_ms = analysis_window_end_ms - (CHART_SOURCE_1M_BARS - 1) * ONE_MINUTE_MS
+    if adjusted_chart_start_ms < chart_window_start_ms:
+        chart_window_start_ms = adjusted_chart_start_ms
         candle_window = _load_service_candle_window(
             store,
-            start_ts_ms=required_window_start_ms,
+            start_ts_ms=chart_window_start_ms,
             end_ts_ms=generated_window_end_ms,
             vpi_config=vpi_config,
+            candle_symbols=snapshot_symbols,
         )
     vpi_block = _build_vpi_block(
         candle_window.vpi_candles_1m,
@@ -170,7 +195,13 @@ def build_service_snapshot(
         config=vpi_config,
         generated_at_ms=generated_at_ms,
     )
-    candles_by_symbol = candle_window.candles_by_symbol
+    chart_candles_by_symbol = {
+        symbol: bars[-CHART_SOURCE_5M_BARS:]
+        for symbol, bars in candle_window.candles_by_symbol.items()
+    }
+    analysis_candles_by_symbol = {
+        symbol: bars[-analysis_5m_bars:] for symbol, bars in chart_candles_by_symbol.items()
+    }
     try:
         previous_oi_by_symbol, oi_diagnostics = _prepare_open_interest_history(
             store,
@@ -191,15 +222,15 @@ def build_service_snapshot(
         config=config,
         contracts=contracts,
         tickers=tickers,
-        candles_by_symbol=candles_by_symbol,
+        candles_by_symbol=analysis_candles_by_symbol,
         previous_oi_by_symbol=previous_oi_by_symbol,
     )
     _append_service_gap_risk_tags(
         rows,
         store=store,
         symbols=[contract.symbol for contract in contracts],
-        window_start_ms=required_window_start_ms,
-        window_end_ms=required_window_end_ms,
+        window_start_ms=analysis_window_start_ms,
+        window_end_ms=analysis_window_end_ms,
     )
     result = PipelineResult(
         run_id=run_id,
@@ -207,9 +238,9 @@ def build_service_snapshot(
         rows=rows,
         contracts=contracts,
         tickers=tickers,
-        candles_by_symbol=candles_by_symbol,
+        candles_by_symbol=analysis_candles_by_symbol,
         chart_candles_by_symbol={
-            symbol: {"5m": bars[-128:]} for symbol, bars in candles_by_symbol.items()
+            symbol: {"5m": bars[-128:]} for symbol, bars in analysis_candles_by_symbol.items()
         },
         candle_errors={},
     )
@@ -224,6 +255,10 @@ def build_service_snapshot(
     snapshot.summary["serviceSource"] = "duckdb-service"
     snapshot.summary["serviceCandles1m"] = candle_window.candle_1m_count
     snapshot.summary["oiDiagnostics"] = oi_diagnostics
+    if market_comparison is not None:
+        snapshot.summary["marketComparison"] = market_comparison
+    if perp_venue_comparison is not None:
+        snapshot.summary["perpVenueComparison"] = perp_venue_comparison
     if vpi_block is not None:
         snapshot.summary["vpiLitePlus"] = vpi_block
         items_by_symbol = {
@@ -234,7 +269,7 @@ def build_service_snapshot(
                 row.display["vpiLitePlus"] = item
     return ServiceSnapshotBuild(
         snapshot=snapshot,
-        candles_by_symbol=candles_by_symbol,
+        chart_candles_by_symbol=chart_candles_by_symbol,
         latest_candle_1m_ts_ms=candle_window.latest_candle_1m_ts_ms,
     )
 
@@ -247,15 +282,20 @@ def publish_service_snapshot_once(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison: dict[str, object] | None = None,
+    perp_venue_comparison: dict[str, object] | None = None,
     generated_at_ms: int | None = None,
     run_id: str | None = None,
     max_data_lag_ms: int | None = None,
 ) -> SnapshotDTO:
+    build_started = time.monotonic()
     build = build_service_snapshot(
         store,
         template=template,
         config=config,
         vpi_config=vpi_config,
+        market_comparison=market_comparison,
+        perp_venue_comparison=perp_venue_comparison,
         generated_at_ms=generated_at_ms,
         run_id=run_id,
     )
@@ -266,14 +306,23 @@ def publish_service_snapshot_once(
             max_data_lag_ms=max_data_lag_ms,
         )
     snapshot = build.snapshot
+    build_finished = time.monotonic()
     publish_snapshot_artifacts(
         snapshot=snapshot,
         writer=writer,
         cache=cache,
         chart_candles_by_symbol={
             symbol: chart_timeframes_from_5m(bars)
-            for symbol, bars in build.candles_by_symbol.items()
+            for symbol, bars in build.chart_candles_by_symbol.items()
         },
+    )
+    artifact_published = time.monotonic()
+    runtime_logger.info(
+        "service snapshot published: runId={} rows={} buildMs={} artifactPublishMs={}",
+        snapshot.run_id,
+        len(snapshot.rows),
+        round((build_finished - build_started) * 1000),
+        round((artifact_published - build_finished) * 1000),
     )
     return snapshot
 
@@ -305,6 +354,8 @@ async def publish_service_snapshot_periodically(
     template: str,
     config: FilterConfig,
     vpi_config: VpiConfig | None = None,
+    market_comparison_provider: Callable[[], dict[str, object] | None] | None = None,
+    perp_venue_comparison_provider: Callable[[], dict[str, object] | None] | None = None,
     interval_seconds: float,
     publish_immediately: bool = True,
 ) -> None:
@@ -319,6 +370,14 @@ async def publish_service_snapshot_periodically(
             template=template,
             config=config,
             vpi_config=vpi_config,
+            market_comparison=(
+                market_comparison_provider() if market_comparison_provider is not None else None
+            ),
+            perp_venue_comparison=(
+                perp_venue_comparison_provider()
+                if perp_venue_comparison_provider is not None
+                else None
+            ),
         )
     while True:
         await asyncio.sleep(interval_seconds)
@@ -330,6 +389,14 @@ async def publish_service_snapshot_periodically(
             template=template,
             config=config,
             vpi_config=vpi_config,
+            market_comparison=(
+                market_comparison_provider() if market_comparison_provider is not None else None
+            ),
+            perp_venue_comparison=(
+                perp_venue_comparison_provider()
+                if perp_venue_comparison_provider is not None
+                else None
+            ),
         )
 
 
@@ -468,6 +535,7 @@ def _load_service_candle_window(
     start_ts_ms: int,
     end_ts_ms: int,
     vpi_config: VpiConfig | None,
+    candle_symbols: list[str],
 ) -> ServiceCandleWindow:
     if isinstance(store, CompactServiceSnapshotStore):
         vpi_symbols = (
@@ -479,7 +547,7 @@ def _load_service_candle_window(
             store.load_candles_1m_range(vpi_symbols, start_ts_ms, end_ts_ms) if vpi_symbols else []
         )
         return ServiceCandleWindow(
-            candles_by_symbol=store.load_candles_5m_since(start_ts_ms),
+            candles_by_symbol=store.load_candles_5m_since(start_ts_ms, candle_symbols),
             vpi_candles_1m=vpi_candles,
             candle_1m_count=store.count_candles_1m_since(start_ts_ms),
             latest_candle_1m_ts_ms=store.latest_candle_1m_ts_since(start_ts_ms),
@@ -581,8 +649,8 @@ def _service_gap_window_end_ms(
     return min(latest_bucket_ts, generated_bucket_ts) - FIVE_MINUTES_MS
 
 
-def _required_1m_limit(config: FilterConfig) -> int:
-    return max(config.candles.min_required_bars * 5, max(TIMEFRAME_BARS.values()) * 5)
+def required_analysis_5m_bars(config: FilterConfig) -> int:
+    return config.candles.min_required_bars
 
 
 def _required_1m_window_start_ms(generated_at_ms: int, required_1m_limit: int) -> int:

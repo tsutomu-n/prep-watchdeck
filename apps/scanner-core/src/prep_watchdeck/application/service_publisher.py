@@ -8,7 +8,6 @@ from typing import Protocol
 from prep_watchdeck.application.service_plan import SubscriptionPlan
 from prep_watchdeck.domain.service_models import (
     BackfillProgress,
-    DeepBackfillProgress,
     ServiceDiagnostics,
     ServiceStateSnapshot,
 )
@@ -31,7 +30,6 @@ def build_service_state_snapshot(
     subscription: SubscriptionPlan,
     backfill: BackfillProgress | None = None,
     reconcile: BackfillProgress | None = None,
-    deep_backfill: DeepBackfillProgress | None = None,
     generated_at_ms: int | None = None,
 ) -> ServiceStateSnapshot:
     diagnostics = store.diagnostics()
@@ -46,7 +44,6 @@ def build_service_state_snapshot(
         diagnostics=diagnostics,
         backfill=backfill,
         reconcile=reconcile,
-        deep_backfill=deep_backfill,
     )
 
 
@@ -58,7 +55,6 @@ def publish_service_state_once(
     subscription: SubscriptionPlan,
     backfill: BackfillProgress | None = None,
     reconcile: BackfillProgress | None = None,
-    deep_backfill: DeepBackfillProgress | None = None,
     generated_at_ms: int | None = None,
 ) -> ServiceStateSnapshot:
     snapshot = build_service_state_snapshot(
@@ -67,7 +63,6 @@ def publish_service_state_once(
         subscription=subscription,
         backfill=backfill,
         reconcile=reconcile,
-        deep_backfill=deep_backfill,
         generated_at_ms=generated_at_ms,
     )
     writer.write(snapshot)
@@ -84,7 +79,6 @@ async def publish_service_state_periodically(
     publish_immediately: bool = True,
     backfill_provider: Callable[[], BackfillProgress | None] | None = None,
     reconcile_provider: Callable[[], BackfillProgress | None] | None = None,
-    deep_backfill_provider: Callable[[], DeepBackfillProgress | None] | None = None,
 ) -> None:
     if interval_seconds <= 0:
         raise ValueError("interval_seconds must be positive")
@@ -97,7 +91,6 @@ async def publish_service_state_periodically(
             subscription=subscription,
             backfill=backfill_provider() if backfill_provider is not None else None,
             reconcile=reconcile_provider() if reconcile_provider is not None else None,
-            deep_backfill=deep_backfill_provider() if deep_backfill_provider is not None else None,
         )
     while True:
         await asyncio.sleep(interval_seconds)
@@ -109,5 +102,4 @@ async def publish_service_state_periodically(
             subscription=subscription,
             backfill=backfill_provider() if backfill_provider is not None else None,
             reconcile=reconcile_provider() if reconcile_provider is not None else None,
-            deep_backfill=deep_backfill_provider() if deep_backfill_provider is not None else None,
         )

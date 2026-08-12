@@ -1,10 +1,14 @@
 # Decision 0007: 市場監視専用の製品境界
 
 - 作成: `2026-08-02T22:00:39+09:00`
-- 更新: `2026-08-02T22:00:39+09:00`
+- 更新: `2026-08-12T21:38:47+09:00`
 - 状態: `設計判断`
 
 ---
+
+> **一部superseded:** Candidateをproduction surfaceへ含める記述は
+> [Decision 0010](0010-retire-74h-candidate-deep-backfill.md)により置換された。
+> 市場監視専用、Past Note、state、退役APIの境界は引き続き有効である。
 
 ## 決定
 

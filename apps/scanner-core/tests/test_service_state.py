@@ -12,7 +12,6 @@ from prep_watchdeck.application.service_publisher import (
 from prep_watchdeck.domain.service_models import (
     BackfillProgress,
     Candle1mRecord,
-    DeepBackfillProgress,
 )
 
 
@@ -81,40 +80,6 @@ def test_build_service_state_snapshot_includes_optional_backfill_progress(tmp_pa
     assert snapshot.backfill == backfill
 
 
-def test_build_service_state_snapshot_includes_optional_deep_backfill_progress(
-    tmp_path,
-) -> None:
-    store = DuckDbServiceStore(tmp_path / "watchdeck.duckdb")
-    subscription = build_subscription_plan(["BTCUSDT"], product_type="USDT-FUTURES")
-    deep_backfill = DeepBackfillProgress(
-        status="running",
-        target_symbols=1,
-        completed_symbols=0,
-        pending_symbols=1,
-        saved_count=0,
-        error_count=0,
-        target_limit=5885,
-        batch_size=1,
-        concurrency=1,
-        rate_limit_per_second=5.0,
-        cooldown_seconds=5.0,
-        retry_delay_seconds=60.0,
-        cycle_count=0,
-        started_at_ms=1_781_000_000_000,
-        updated_at_ms=1_781_000_000_000,
-    )
-
-    snapshot = build_service_state_snapshot(
-        store,
-        product_type="USDT-FUTURES",
-        subscription=subscription,
-        deep_backfill=deep_backfill,
-        generated_at_ms=1_781_000_050_000,
-    )
-
-    assert snapshot.deep_backfill == deep_backfill
-
-
 def test_publish_service_state_once_writes_atomic_json(tmp_path) -> None:
     store = DuckDbServiceStore(tmp_path / "watchdeck.duckdb")
     subscription = build_subscription_plan(["BTCUSDT"], product_type="USDT-FUTURES")
@@ -137,23 +102,6 @@ def test_publish_service_state_once_writes_atomic_json(tmp_path) -> None:
             updated_at_ms=1_781_000_030_000,
             finished_at_ms=1_781_000_030_000,
         ),
-        deep_backfill=DeepBackfillProgress(
-            status="running",
-            target_symbols=1,
-            completed_symbols=0,
-            pending_symbols=1,
-            saved_count=0,
-            error_count=0,
-            target_limit=5885,
-            batch_size=1,
-            concurrency=1,
-            rate_limit_per_second=5.0,
-            cooldown_seconds=5.0,
-            retry_delay_seconds=60.0,
-            cycle_count=0,
-            started_at_ms=1_781_000_000_000,
-            updated_at_ms=1_781_000_000_000,
-        ),
         generated_at_ms=1_781_000_050_000,
     )
 
@@ -166,6 +114,4 @@ def test_publish_service_state_once_writes_atomic_json(tmp_path) -> None:
     assert payload["diagnostics"]["schemaReady"] is True
     assert payload["backfill"]["status"] == "completed"
     assert payload["backfill"]["savedCount"] == 200
-    assert payload["deepBackfill"]["status"] == "running"
-    assert payload["deepBackfill"]["targetLimit"] == 5885
-    assert payload["deepBackfill"]["rateLimitPerSecond"] == 5.0
+    assert "deepBackfill" not in payload

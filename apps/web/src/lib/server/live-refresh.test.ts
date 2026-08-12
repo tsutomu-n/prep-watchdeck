@@ -55,7 +55,6 @@ describe("live refresh helpers", () => {
         repository: {
           latest: async () => snapshot as never,
           summary: async () => ({}),
-          rankings: async () => [],
           symbols: async () => [],
           symbol: async () => undefined
         },
@@ -78,7 +77,6 @@ describe("live refresh helpers", () => {
         repository: {
           latest: async () => snapshot as never,
           summary: async () => ({}),
-          rankings: async () => [],
           symbols: async () => [],
           symbol: async () => undefined
         },
@@ -103,7 +101,6 @@ describe("live refresh helpers", () => {
         repository: {
           latest: async () => ({}) as never,
           summary: async () => ({}),
-          rankings: async () => [],
           symbols: async () => [],
           symbol: async () => undefined
         },
@@ -124,7 +121,6 @@ describe("live refresh helpers", () => {
         repository: {
           latest: async () => ({ runId: "existing" }) as never,
           summary: async () => ({}),
-          rankings: async () => [],
           symbols: async () => [],
           symbol: async () => undefined
         },

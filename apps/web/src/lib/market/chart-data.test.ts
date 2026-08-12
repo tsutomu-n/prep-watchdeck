@@ -170,7 +170,7 @@ describe("chart data helpers", () => {
     expect(timeframeSeconds("1h")).toBe(3600);
     expect(timeframeSeconds("4h")).toBe(14400);
     expect(timeframeSeconds("24h")).toBe(86400);
-    expect(timeframeSeconds("74h")).toBe(266400);
+    expect(timeframeSeconds("74h")).toBe(900);
     expect(timeframeSeconds("unknown")).toBe(900);
   });
 });

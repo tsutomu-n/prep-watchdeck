@@ -1,9 +1,9 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-09T20:30:00+09:00`
-- 検証: `2026-08-09T20:30:00+09:00`
-- 文書更新作業: `2026-08-09_20:30`（Asia/Tokyo）
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -111,7 +111,7 @@ CI=true timeout 90 uv run python -m pytest -q \
 - 非retryable 4xx、invalid JSON、Bitget business errorの即時失敗
 - timestamp前進、startup grace、停止後の復帰、外部障害との分離
 - watchdog failure、通常終了、Ctrl-C、無効化時のtask cleanup
-- state、snapshot、ticker、backfill、reconcile、deep-backfill taskのcancel/await
+- state、snapshot、ticker、backfill、reconcile taskのcancel/await
 - CLI既定値と限定されたREST probe
 
 mock gateはlive Bitget障害やlive process killを発生させず、現役stateへwriterを接続しない。
@@ -216,13 +216,14 @@ test greenだけでは完了にしない。変更内容に応じてcode、schema
 runtime path、monitoring state、performance/soak、未実行項目を監査する。実行できない必須gate、
 sourceとの不一致、単一writer違反、未照合の削除対象がある場合は未完了とする。
 
-## Candidate / OI focused verification
+## Analysis history / OI focused verification
 
-74h三値AND、Candidate-only gate、noTrade診断、OI out-of-order upsert、exact lookback、
-24時間retention、restart再利用、cycle劣化、UNKNOWN無加点、WS ticker/candle再取得は
-scanner-core focused testsで確認する。exact 60分、retention、restartはseed済み一時DuckDBの
-deterministic integration testを正本とし、finite live smokeの経過時間では代用しない。
+scanner-core focused testsでは、383本の分析tail、1915本の1分足gap audit、1177本の5分足相当を使う
+chart source、`rankings.noTrade`診断、OI out-of-order upsert、exact 60分lookback、24時間retention、
+restart再利用、cycle劣化、UNKNOWN無加点、WS ticker/candle再取得を確認する。OIのexact 60分、retention、
+restartはseed済み一時DuckDBのdeterministic integration testを正本とし、finite live smokeの経過時間では
+代用しない。
 
-Web focused verificationは有効summaryと不正summary fallback、Candidate空状態、OI四状態、
-74h三状態、VPI-Lite+ availability維持を含む。最終判定はfocused test後に
-`bash scripts/verify-local.sh`を実行する。
+Web focused verificationは5 timeframes、CandidateなしのDashboard/Monitoring Rail/Symbol workspace、
+OI四状態、VPI-Lite+ availability維持を含む。最終判定はfocused test後に
+`bash scripts/verify-local.sh`を1回だけ実行する。

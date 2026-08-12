@@ -70,7 +70,7 @@
 
   .tf-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 0;
     background: transparent;
   }
@@ -154,7 +154,7 @@
       border-right: 0;
     }
 
-    .tf-grid a:nth-last-child(-n + 2) {
+    .tf-grid a:last-child {
       border-bottom: 0;
     }
   }

@@ -432,7 +432,6 @@
               {/each}
             </select>
           </label>
-          <span class="sort-note">74h: 独自ルール用。72hではない。</span>
         </div>
       </details>
     </div>
@@ -1000,8 +999,7 @@
     padding-top: 6px;
   }
 
-  .sort-state,
-  .sort-note {
+  .sort-state {
     color: var(--subtle);
     font-size: 11px;
     line-height: 1.2;

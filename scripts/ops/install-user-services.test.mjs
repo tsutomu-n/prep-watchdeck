@@ -63,8 +63,7 @@ describe("install-user-services", () => {
     expect(service).toContain(`Environment=PREP_WATCHDECK_STATE_DIR=${stateRoot}`);
     expect(service).toContain("--backfill-limit 0 --reconcile-concurrency 1");
     expect(service).toContain("--ticker-refresh-interval-sec 60");
-    expect(service).toContain("--deep-backfill-limit 5885");
-    expect(service).toContain("--deep-backfill-rate-limit-per-second 1");
+    expect(service).not.toContain("--deep-backfill-");
     expect(service).toContain("TimeoutStopSec=90s");
     expect(web).toContain(`ExecStart=/usr/bin/bash ${repoRoot}/scripts/start-all.sh`);
     expect(web).toContain("Environment=SNAPSHOT_SOURCE=skip");

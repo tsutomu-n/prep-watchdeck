@@ -59,12 +59,11 @@ test("Raw Sort controls feed manual corrected ranking without persistence", asyn
   await expect(watchlist.getByText("Raw Sort: 15m 価格変化 小さい順")).toBeVisible();
   await expect(firstSymbol).toHaveText("DUMP");
 
-  await page
-    .getByRole("region", { name: "15m ランキング" })
-    .getByRole("button", { name: "74h", exact: true })
+  await watchlist
+    .getByRole("group", { name: "時間軸ショートカット" })
+    .getByRole("button", { name: "24h", exact: true })
     .click();
-  await expect(watchlist.getByText("Raw Sort: 74h 価格変化 小さい順")).toBeVisible();
-  await expect(watchlist.getByText("74h: 独自ルール用。72hではない。")).toBeVisible();
+  await expect(watchlist.getByText("Raw Sort: 24h 価格変化 小さい順")).toBeVisible();
 
   const smartRank = page.getByRole("region", { name: "補正順位" });
   await expect(smartRank.getByText("未実行。Raw Sortで絞った後、必要な時だけ押してください。")).toBeVisible();
@@ -78,6 +77,6 @@ test("Raw Sort controls feed manual corrected ranking without persistence", asyn
   await expect(smartRank.locator(".smart-rank-list li")).toHaveCount(5);
   await expect(smartRank.getByText("監視優先度").first()).toBeVisible();
   await expect(smartRank.getByText("更新遅延による補正 -12", { exact: true })).toBeVisible();
-  await expect(smartRank.locator(".smart-rank-list a").first()).toHaveAttribute("href", /\?tf=74h$/);
+  await expect(smartRank.locator(".smart-rank-list a").first()).toHaveAttribute("href", /\?tf=24h$/);
   await expect(smartRank.getByRole("button", { name: /\d+s/ })).toBeDisabled();
 });

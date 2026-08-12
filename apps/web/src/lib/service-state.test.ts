@@ -11,7 +11,7 @@ describe("service state helpers", () => {
           dataAsOfMs: 1_780_999_980_000,
           streamSymbols: 666,
           streamShards: 28,
-          deepBackfill: {
+          backfill: {
             status: "running",
             completedSymbols: 120,
             targetSymbols: 666
@@ -42,24 +42,20 @@ describe("service state helpers", () => {
     ).toBe("stale");
   });
 
-  it("does not treat completed backfill retry history as a current service error", () => {
+  it("ignores legacy deep backfill progress", () => {
+    const legacyState = {
+      generatedAtMs: 1_781_000_000_000,
+      dataAsOfMs: 1_780_999_980_000,
+      deepBackfill: {
+        status: "running",
+        completedSymbols: 120,
+        targetSymbols: 666
+      }
+    };
+
     expect(
-      summarizeServiceState(
-        {
-          generatedAtMs: 1_781_000_000_000,
-          dataAsOfMs: 1_780_999_980_000,
-          deepBackfill: {
-            status: "completed",
-            completedSymbols: 666,
-            pendingSymbols: 0,
-            targetSymbols: 666,
-            errorCount: 2,
-            latestError: "AAOIUSDT: request failed after retries"
-          }
-        },
-        1_781_000_030_000
-      ).status
-    ).toBe("ok");
+      summarizeServiceState(legacyState, 1_781_000_030_000)
+    ).toMatchObject({ status: "ok", backfillText: "補完なし" });
   });
 
   it("keeps labels and lag formatting stable", () => {

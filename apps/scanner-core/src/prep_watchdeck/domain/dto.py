@@ -89,11 +89,6 @@ class ScannerRowDTO(CamelModel):
     range_24h_low: float | None = None
     range_24h_position_pct: float | None = None
     range_24h_pct: float | None = None
-    price_change_74h_pct: float | None = None
-    turnover_current_24h_usdt: float | None = None
-    turnover_24h_ending_74h_ago_usdt: float | None = None
-    volume_change_74h_24h_pct: float | None = None
-    user_rule_74h_matched: bool | None = None
     roughness_15m: str | None = None
     btc_relative_15m: str | None = None
     funding_bias: str | None = None

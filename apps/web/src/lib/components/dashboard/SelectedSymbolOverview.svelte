@@ -8,8 +8,7 @@
     categoryLabel,
     codeLabel,
     openInterestStateLabel,
-    rowExclusionLabels,
-    userRule74hLabel
+    rowExclusionLabels
   } from "$lib/market/labels";
   import { movementSignals, type Range24h } from "$lib/market/row-analysis";
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
@@ -135,20 +134,12 @@
     <dd>{openInterestStateLabel(row.openInterestState)}</dd>
   </div>
   <div>
-    <dt>74h状態</dt>
-    <dd>{userRule74hLabel(row.userRule74hMatched)}</dd>
-  </div>
-  <div>
     <dt>15分変化率</dt>
     <dd>{fmt(row.changePctByTf?.["15m"], "%")}</dd>
   </div>
   <div>
     <dt>1時間売買代金</dt>
     <dd>{fmt(row.turnoverUsdtByTf?.["1h"])}</dd>
-  </div>
-  <div>
-    <dt>74時間価格変化</dt>
-    <dd>{fmt(row.priceChange74hPct, "%")}</dd>
   </div>
   <div>
     <dt>データ網羅率</dt>

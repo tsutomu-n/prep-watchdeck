@@ -34,7 +34,7 @@ describe("LocalFileDashboardViewSettingsRepository", () => {
           views: {
             turnover: {
               kind: "turnoverAtLeast",
-              thresholdUsdtByTimeframe: { "15m": 123_456 },
+              thresholdUsdtByTimeframe: { "15m": 123_456, "74h": 999_999 },
               excludedCategories: ["NO_TRADE"]
             }
           }
@@ -45,6 +45,7 @@ describe("LocalFileDashboardViewSettingsRepository", () => {
       const settings = await new LocalFileDashboardViewSettingsRepository(root).get();
       expect(settings.views.turnover.thresholdUsdtByTimeframe["15m"]).toBe(123_456);
       expect(settings.views.turnover.thresholdUsdtByTimeframe["5m"]).toBe(10_000);
+      expect("74h" in settings.views.turnover.thresholdUsdtByTimeframe).toBe(false);
       expect(settings.views.watch.categories).toEqual(["WATCH"]);
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -62,7 +63,7 @@ describe("LocalFileDashboardViewSettingsRepository", () => {
           ...defaultDashboardViewSettings.views,
           surge: {
             kind: "changePctAtLeast",
-            thresholdPctByTimeframe: { "5m": 7, "15m": 7, "1h": 7, "4h": 7, "24h": 7, "74h": 7 },
+            thresholdPctByTimeframe: { "5m": 7, "15m": 7, "1h": 7, "4h": 7, "24h": 7 },
             excludedCategories: ["NO_TRADE"]
           }
         }

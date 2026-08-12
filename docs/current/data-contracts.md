@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T10:54:58+09:00`
-- 検証: `2026-08-11T10:54:58+09:00`
-- 文書更新作業: `2026-08-11_10:54`（Asia/Tokyo）
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -70,6 +70,54 @@ Dashboard discovery laneでの分類とempty state契約:
   payloadが欠損またはinvalidなら`VPIデータ不足`とする。
 - Benchmarkはdiscovery laneのcoverageと選択対象へ含めない。
 
+### 3市場mark price比較pilot sidecar
+
+serviceと`publish-service`が生成するCold snapshotは、optionalな
+`summary.marketComparison`を持てる。`schemaVersion: 1`、
+`mode: "mark_price_pilot_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、
+`symbols`を持つ。対象symbolは`BTCUSDT | ETHUSDT | SOLUSDT`、sourceは
+`bitget | hyperliquid | bybit`である。
+
+各source itemは`source`、`status`、nullableな`sourceSymbol`、`quote`、`markPrice`、
+`observedAt`、`sourceAt`、`error`を持つ。Hyperliquidはsource timestampを返さないため
+`sourceAt: null`とし、取得時刻をsource時刻として偽装しない。3市場とも標準契約の価格はUSDT建てで、
+HyperliquidはUSDC証拠金である。通貨換算は行わず、集約値は参考比較としてだけ扱う。
+
+symbol itemは`coverage.valid/required`、`status`、nullableな`medianMarkPrice`と`spreadPct`を持つ。
+同じrefresh cycleで3sourceすべてが正数かつ10分以内の時だけ`status: ready`とし、中央値と
+`(max - min) / median * 100`を公開する。それ以外は`status: incomplete`、中央値とspreadを
+`null`にする。Webは局所parserで不正block/itemを表示せず、既存Dashboardを継続する。
+
+このsidecarはDB、snapshot schemaのrequired field、Smart Rank、filter、VPI、
+Hot tickerへ入力しない。
+
+### Bitget / Hyperliquid Perp会場比較 sidecar
+
+serviceと`publish-service`が生成するCold snapshotは、optionalな
+`summary.perpVenueComparison`を持てる。`schemaVersion: 1`、
+`mode: "perp_venue_comparison_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、会場別の
+`sources`、`items`を持つ。top-level `sources`は`venue`、`ok | unavailable`の`status`、nullableな
+`observedAt`、nullableな`error`を保持し、itemが0件でも取得失敗を正常な空集合と区別する。
+
+対象はBitgetの取引中・非RWA・USDT無期限契約とdefault Hyperliquid Coreの非delisted標準Perpで、
+`Bitget.baseCoin`とHyperliquid `name`が完全一致する暗号資産だけである。HYPE、PURR、HIP-3、
+`1000`接頭辞、別名・倍率変換を必要とする銘柄はmappingしない。Bitgetは価格・証拠金ともUSDT、
+Hyperliquid標準Coreは価格USDT・証拠金USDCとして保持し、USDT/USDC換算や会場合算を行わない。
+
+各itemはscanner側`symbol`、`asset`、`ready | partial | unavailable`の`status`、nullableな
+`markSpreadPct`、Bitget/Hyperliquidの`source` itemを持つ。各source itemは会場、source symbol、
+quote、collateral、mark、funding原値・周期・1時間換算、基軸通貨建玉、mark換算建玉想定元本、
+24時間notional出来高、`observedAt`、nullableな`sourceAt`、欠損理由を保持する。
+
+`markSpreadPct`は両会場が正数かつ取得時刻と提供元時刻が10分以内の時だけ
+`(Hyperliquid mark / Bitget mark - 1) * 100`で生成する。Hyperliquidはsource timestampを返さないため
+`sourceAt: null`を維持する。片側欠損では取得済み会場だけを公開し、spreadを`null`にする。
+一度検証に成功した会場別契約catalogはprocess内だけで最大30分保持できる。取得障害周期では
+catalogだけをmappingに再利用し、mark、funding、OI、volume、observedAtなどの市場観測値は
+再利用しない。catalog期限内の片側障害はitemを消さず、その会場を`unavailable`にする。
+30分を超えて契約catalogを確認できない場合は失効させ、古いmappingを無期限に公開しない。
+このsidecarはDB、required snapshot schema、Smart Rank、filter、VPI、Hot tickerへ入力しない。
+
 ## Data quality
 
 rowの`dataQuality`は`OK | STALE | MISSING | PARTIAL`、snapshotの`snapshotStatus`は
@@ -84,7 +132,7 @@ source bannerで別に示す。
 
 `snapshots/service-state.json`はschema version 1で、`generatedAtMs`、nullableな
 `dataAsOfMs`、`productType`、stream件数、`diagnostics`、nullableな`backfill`、
-`reconcile`、`deepBackfill`を持つ。scanner-coreのPydantic producerは必須field、数値制約、
+`reconcile`を持つ。scanner-coreのPydantic producerは必須field、数値制約、
 未知fieldを厳格に検証する。
 
 Web consumerはJSON構文エラーを`unreadable`として扱う一方、構文上有効な部分欠損objectは
@@ -154,7 +202,6 @@ schema v1 artifactは履歴として保持し、上書きしない。
 | GET | `/api/symbols` | symbol一覧 |
 | GET | `/api/symbols/[symbol]` | symbol detail |
 | GET | `/api/symbols/[symbol]/chart` | timeframe別chart。`runId`必須、`tf`対応 |
-| GET | `/api/rankings` | ranking |
 | GET | `/api/summary` | snapshot summary |
 
 ### Monitoring state
@@ -186,18 +233,18 @@ GET、POST、PATCH、PUT、DELETEはいずれも404であり、CSV exportも提�
 同時requestは1つへ集約する。DuckDB lockだけは失敗にせず既存latest snapshotを返し、
 `fallback.reason=DUCKDB_LOCK`で再発行されなかったことを明示する。それ以外の実行失敗は503とする。
 
-## Candidate 74h / OI 60分
+## Analysis / activity / OI 60分
 
-`featureVersion`は`4`、`rulesetVersion`は`3`、`schemaVersion`は`1`である。feature 4は
-1h/4h量倍率と表示専用activity phaseを追加し、74h Candidate / OI契約自体は変更しない。
-74h価格・売買代金
-componentと`userRule74hMatched`は`true | false | null`で、componentのどちらかが`null`なら
-複合値も`null`になる。
+`featureVersion`は`5`、`rulesetVersion`は`4`、`schemaVersion`は`1`である。現行producerは74時間の
+価格・売買代金component、`userRule74hMatched`、`summary.candidateRule74h`、
+`rankings.timeframes`を生成しない。`rankings`は既存診断用の`noTrade`だけを生成する。schemaの
+`summary`、`rankings`、row `display`は追加fieldを許容するため、旧snapshotの74時間fieldを読めても
+現行producerの公開契約とはみなさない。
 
-`summary.candidateRule74h`は`operator=AND`、価格閾値、turnover閾値、
-`turnoverMode=current_24h_vs_74h_ago_24h`、`eligible/notMatched/unknown`件数を持つ。
-Candidateの`rankings.timeframes`は複合値`true`かつ非`NO_TRADE`だけを含み、
-`rankings.noTrade`は全rows由来の診断を維持する。
+scanner分析に必要な5分足は、3つのfilter templateで`candles.min_required_bars=383`に固定する。
+これは最大4時間の量倍率について、現在windowとbaseline 288 samplesを重複なく作るための
+`288 + 2 * 48 - 1`本である。detail chartは別目的で最大1177本の5分足相当を読み、scanner分析と
+gap auditへは末尾383本だけを渡す。
 
 `summary.volumeRatio15m`は量倍率計算を変えず、Webへ基準の意味を渡す追加metadataである。
 `windowMinutes=15`、`sampleStepMinutes=5`、`baselineSampleCount`、
@@ -208,12 +255,12 @@ Candidateの`rankings.timeframes`は複合値`true`かつ非`NO_TRADE`だけを�
 rowの`volumeRatioByTf`は15mの既存値に加えて1hと4hを持てる。各値は現在windowのUSDT売買代金を、
 同じwindow幅のrolling baseline直近`baseline_window_bars` sampleのmedianで割る。sample stepは5分、
 windowは15m=3本、1h=12本、4h=48本である。必要履歴、有限値、正のbaseline、floorを満たさない
-windowだけ`null`にする。5m/24h/74hは量倍率を生成しない。
+windowだけ`null`にする。5m/24hは量倍率を生成しない。
 
 rowのoptional `activityPhase`は`BURST | EXPANDING | SUSTAINED | COOLING | NORMAL | UNKNOWN`である。
 判定順はUNKNOWN、COOLING、SUSTAINED、EXPANDING、BURST、NORMALを固定し、required ratioが欠ける時は
-UNKNOWNとする。これはdisplay-only契約であり、attention score、category、Candidate ranking、
-Raw Sort、補正順位、VPI-Lite+計算へ入力しない。
+UNKNOWNとする。これはdisplay-only契約であり、attention score、category、Raw Sort、Smart Rank、
+VPI-Lite+計算へ入力しない。
 
 表示labelは`BURST`=`急増`、`EXPANDING`=`拡大`、`SUSTAINED`=`持続`、`COOLING`=`失速`、
 `UNKNOWN`=`判定不能`とする。`NORMAL`は通常状態のnoiseを避けるためrowでは省略する。

@@ -2,7 +2,7 @@ import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { resolveStatePaths } from "./state-paths";
 
-export const dashboardTimeframes = ["5m", "15m", "1h", "4h", "24h", "74h"] as const;
+export const dashboardTimeframes = ["5m", "15m", "1h", "4h", "24h"] as const;
 export type DashboardTimeframe = (typeof dashboardTimeframes)[number];
 
 export type ChartBarPayload = {

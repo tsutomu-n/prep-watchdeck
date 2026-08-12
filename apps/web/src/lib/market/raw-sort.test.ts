@@ -98,17 +98,17 @@ describe("raw sort", () => {
   it("keeps missing and non-finite values at the end for both directions", () => {
     const rows = [
       row("MISSING", { changePctByTf: {} }),
-      row("FINITE", { changePctByTf: { "74h": 4.2 } }),
-      row("NAN", { changePctByTf: { "74h": Number.NaN } })
+      row("FINITE", { changePctByTf: { "24h": 4.2 } }),
+      row("NAN", { changePctByTf: { "24h": Number.NaN } })
     ];
 
-    expect(sortRowsByRawSort(rows, state(), "74h").map((item) => item.symbol)).toEqual([
+    expect(sortRowsByRawSort(rows, state(), "24h").map((item) => item.symbol)).toEqual([
       "FINITE",
       "MISSING",
       "NAN"
     ]);
     expect(
-      sortRowsByRawSort(rows, state({ direction: "asc" }), "74h").map((item) => item.symbol)
+      sortRowsByRawSort(rows, state({ direction: "asc" }), "24h").map((item) => item.symbol)
     ).toEqual(["FINITE", "MISSING", "NAN"]);
   });
 
@@ -126,7 +126,7 @@ describe("raw sort", () => {
     ]);
   });
 
-  it("returns null for missing 74h values", () => {
-    expect(getRawSortValue(row("ALT", { changePctByTf: { "15m": 1 } }), state(), "74h")).toBeNull();
+  it("returns null for missing timeframe values", () => {
+    expect(getRawSortValue(row("ALT", { changePctByTf: { "15m": 1 } }), state(), "24h")).toBeNull();
   });
 });

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-11T17:26:25+09:00`
-- 検証: `2026-08-11T17:26:25+09:00`
-- 文書更新作業: `2026-08-11_17:26`（Asia/Tokyo）
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -14,14 +14,14 @@
 process状態の正本ではない。これらは実画面、state file、service状態で確認する。
 
 情報量の多さは意図したものである。Desktopの密度を保ち、Mobileでは表現とscroll境界を
-変えるが、signal、stale、missing、partial、low-quality、ranking item、watchlist row、
+変えるが、signal、stale、missing、partial、low-quality、Smart Rank、watchlist row、
 銘柄annotationを都合よく省略しない。
 
 ## 利用者の基本フロー
 
 1. Topbarのsource、snapshot時刻、service、data qualityを確認する。
-2. Candidateのtimeframeとrankingを確認する。ranking itemは個別分析への明示的なlinkである。
-3. Watchlistのカテゴリ、view、Raw Sortを使って確認対象を絞る。
+2. 表示されている場合は、市場比較とVPI-Lite+のoptional contextを確認する。
+3. Watchlistのカテゴリ、view、Raw Sort、Smart Rankを使って確認対象を絞る。
 4. Watchlist rowを選択し、同じDashboard内のSelected detailを更新する。
 5. Selected detailで分類、理由、risk、24h range、市場活動、Past Noteを確認する。
 6. より深く確認する時だけ、Selected detailの「個別分析を開く」linkからSymbol画面へ進む。
@@ -75,17 +75,17 @@ runtime boundaryも省略しない。
 
 Topbarの後にあるworkspaceのDOM順は、breakpointにかかわらず次で固定する。
 
-1. Candidate (`data-dashboard-section="candidate"`)
+1. optional context (`data-dashboard-section="context"`。対応データがある場合だけ)
 2. Watchlist (`data-dashboard-section="watchlist"`)
 3. Selected detail (`data-dashboard-section="detail"`)
-4. 補正順位 (`data-dashboard-section="smart-rank"`)
+4. Smart Rank (`data-dashboard-section="smart-rank"`)
 
 通常の`Tab`移動も、このsource order内で各sectionの操作要素を順に通る。Desktopの
 `85rem`以上ではSelected detailを右列へ置くが、CSS gridによる見た目の配置だけを変え、
 DOM、読み上げ順、keyboard順を入れ替えない。正の`tabindex`による順序の上書きもしない。
 
 Watchlist row群は後述のroving tab stopにより1つだけがTab順へ入り、そのrowから`Tab`で
-Selected detailの個別分析linkへ進める。補正順位はdetailの後に続く。
+Selected detailの個別分析linkへ進める。Smart Rankはdetailの後に続く。
 
 ### row選択と個別分析navigationの分離
 
@@ -97,8 +97,6 @@ Watchlist row全体は`button[data-row-select]`であり、navigation linkでは
 - 個別分析への遷移はSelected detail内の明示的なlinkだけが行う。実pathは
   `/symbols/<symbol>?tf=<selectedTimeframe>`で、accessible nameは
   「`<symbol> の個別分析を開く`」である。
-- Candidateのranking itemは最初からnavigationを目的とした`a.rank-row`であり、
-  Watchlistの選択buttonと混同しない。
 
 filterやview変更で選択symbolが一時的に非表示になっても、別symbolへ自動選択しない。
 Selected detailは「選択銘柄を保持中」を表示し、入力中の下書きを保持する。対象が再表示
@@ -106,7 +104,7 @@ Selected detailは「選択銘柄を保持中」を表示し、入力中の下�
 
 ### 市場活動（VPI-Lite+）
 
-Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、Candidate直下へ既存Target限定の
+Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、optional contextへ既存Target限定の
 発見laneを置く。利用者が最初に見る見出しは`市場活動`とし、技術名`VPI-Lite+`は小さく併記する。
 各groupはscore降順で最大5件とするが、score自体はlaneへ表示しない。coverage、state分類、empty state、
 Benchmark除外の意味は[`data-contracts.md`](data-contracts.md)を正本とする。
@@ -114,10 +112,33 @@ Benchmark除外の意味は[`data-contracts.md`](data-contracts.md)を正本と�
 reason、risk、funding、open interest、data timestampを表示する。常に「実験中の補助指標で、
 売買シグナルではない」と明記する。
 
-VPIはWatchlist row、ranking、sort、Candidate順へ入れない。Hot ticker deltaは価格DOMだけを
+VPIはWatchlist row、Smart Rank、sortへ入れない。Hot ticker deltaは価格DOMだけを
 更新し、Cold VPI表示を再計算しない。top-levelまたはitemが不正ならVPI部分だけを非表示にし、
 既存Dashboardを継続表示する。これはVPIの低品質状態を隠す処理ではなく、consumer契約を満たさない
 任意payloadをfail-closedで拒否する境界である。
+
+### 3市場価格比較pilot
+
+有効な`summary.marketComparison`がある時だけ、optional contextへscanner rowから独立した
+3市場価格比較panelを表示する。対象はBTC/ETH/SOLで、各sourceのmark price、quote、取得時刻、
+coverage、3/3時だけの参考中央値と最大乖離幅を示す。欠損sourceは隠さず、3/3未満では中央値を
+表示しない。対象銘柄がscanner rowsや現在のWatchlist表示条件に含まれなくてもpanelを維持する。
+
+USDT建ての参考値であり、HyperliquidはUSDC証拠金で通貨換算をしないこと、Smart Rankや売買判定に
+使わないことを明記する。
+Watchlist row、sort、chart、Hot ticker更新には接続しない。payloadが不正なら
+比較panelだけを非表示にし、既存Dashboardを継続する。
+
+### Bitget / Hyperliquid Perp会場比較
+
+有効な`summary.perpVenueComparison`に選択中scanner symbolと一致するitemがある時だけ、Selected detailへ
+折りたたみ式の会場比較を表示する。BitgetとHyperliquidのsource symbol、quote、collateral、mark、
+funding、建玉想定元本、24時間出来高、観測時刻を会場別に示す。片側欠損は取得済み値と欠損理由を
+残し、両会場がfreshな場合だけ符号付きmark差を示す。
+
+unmapped銘柄では比較group自体を表示しない。USDTとUSDCの換算、中央値、会場合算、Smart Rank、通知、
+売買・裁定判断へ接続しない。optional context→Watchlist→Selected detail→Smart RankのDOM/keyboard順、
+bounded scroll、既存の色・font契約を維持する。
 
 ### Watchlist rowのroving keyboard
 
@@ -166,11 +187,10 @@ row qualityのlabel mappingは[`data-contracts.md`](data-contracts.md)を正本�
 異常時だけ視覚表示とrowのaccessible nameへ品質labelを含める。snapshot全体の状態はsource bannerで
 引き続き可視化する。
 
-Mobile Candidateの上昇・下落tabは、文言に加えてそれぞれ`up` / `down`の文字色と上辺markerを使う。
-選択中はfocus背景と`focus-on`文字色を優先し、方向markerは維持する。Watchlist rowで活動phaseが
-`UNKNOWN`かつrow品質も異常の場合、品質の`判定不能`を残し、活動phase側の同じ文言だけを省略する。
+Watchlist rowで活動phaseが`UNKNOWN`かつrow品質も異常の場合、品質の`判定不能`を残し、
+活動phase側の同じ文言だけを省略する。
 活動phaseが判定済みなら、row品質が異常でも`急増 / 拡大 / 持続 / 失速`を表示する。
-Hot ticker updateは対象symbolの現在価格DOMだけを更新し、ranking順、Watchlist順、選択、
+Hot ticker updateは対象symbolの現在価格DOMだけを更新し、Smart Rank、Watchlist順、選択、
 filter、入力中の下書きを変えない。
 
 ## touch targetと操作状態
@@ -198,31 +218,25 @@ view単位の処理中stateを持つ。`finally`で処理中stateを解除し、
 
 ## Desktop / Mobileの情報密度
 
-Desktopは高密度な主分析surface、Mobileは短い確認、候補review、現在symbolのcontext確認に
+Desktopは高密度な主分析surface、Mobileは短い確認、監視対象review、現在symbolのcontext確認に
 使う。MobileへDesktop tableの列配置は押し込まないが、item自体は削らない。
 
 幅`960px`以下では次のbounded scrollを使う。
 
-- Candidateのmobile ranking body: `min(48svh, 28rem)`を上限に縦scrollする。
 - Watchlistのrow領域: `min(60svh, 36rem)`を上限に縦scrollする。
-- 両方とも`touch-action: pan-y`、`overscroll-behavior-y: auto`を使う。
-- ranking linkと表示対象rowは全件DOMに残し、各領域内で末尾まで到達可能にする。
-- Candidateは`561px`以上で連続した4列、`560px`以下で4つのautomatic activation tabにする。Desktop/Mobile表現は両方SSRし、CSS breakpointで切り替える。ArrowLeft/ArrowRightは循環し、Home/Endを含めてfocus移動とpanel切替を同時に行う。
-- ranking linkの整形済みsymbol名は省略しない。rank列と値列を縮退させ、`320px`でも
-  `1000000BABYDOGE`級のsymbol列がellipsisや1文字だけにならず、必要なら途中でwrapする。
-- 変化rankingの見出しはsignの断定ではなくsort契約を表す`上昇順` / `下落順`とする。
-  各値の色は所属panelではなく実数値の符号で決め、正は`up`、負は`down`、0はneutralにする。
+- `touch-action: pan-y`、`overscroll-behavior-y: auto`を使う。
+- 表示対象rowは全件DOMに残し、領域内で末尾まで到達可能にする。
 - view、category、保存済みview設定を切り替えた時は、Watchlist row領域を先頭へ戻す。
 
-400 rowと4 ranking panel × 10 itemを使うstress E2Eでも、末尾itemへscrollでき、Selected
+400 rowを使うstress E2Eでも、末尾itemへscrollでき、Selected
 detailが無制限に下へ押し流されないことを確認する。この件数はruntime固定値ではなく、
 情報を削らずbounded scrollを保つための検証fixtureである。
 
 Watchlist rowは広いtable表現で`42px`、compact card表現で`82px`を基準にする。signal、
 注記、選択、focus、STALEの有無で同じ表示モード内のrow高を変えない。
 
-`320px`ではDashboard CandidateとSymbol chart上部にある6つのtimeframe controlを、
-3列×2行へ均等配置する。Symbolの時間軸別データboardはMobileで2列×3行を維持する。
+`320px`ではDashboardとSymbol chart上部にある5つのtimeframe controlを3列で配置する。
+Symbolの時間軸別データboardはMobileで2列を維持する。
 
 ## 個別Symbol画面の順序
 
@@ -231,20 +245,19 @@ Symbol画面はchart-firstで、top-level DOM順を次に固定する。
 1. Symbol header: 一覧へ戻るlink、symbol、score、分類、品質、選択時間軸変化
 2. 分析領域
    1. 主チャート: timeframe navigationの後に価格・出来高chart
-   2. Monitoring Rail: 分類、label、品質、選択時間軸、ranking位置、movement signal、risk tag
-3. 時間軸別データ: 6 timeframeの変化、代金、volume ratio
+   2. Monitoring Rail: 分類、label、品質、選択時間軸、OI 60分、movement signal、risk tag
+3. 時間軸別データ: 5 timeframeの変化、代金、volume ratio
 4. 補助情報workspace
 
 補助情報workspace内の順序は次で固定する。
 
 1. 24h レンジ
-2. 74h 条件
-3. 品質と市場条件
-4. 理由とリスク
-5. 銘柄注記
-6. スナップショット
+2. 品質と市場条件
+3. 理由とリスク
+4. 銘柄注記
+5. スナップショット
 
-Desktopでは最初の4 sectionを2列、以降を全幅で表示する。Mobileでは同じDOM順の1列へ
+Desktopでは最初の3 sectionを2列、以降を全幅で表示する。Mobileでは同じDOM順の1列へ
 stackする。見た目は1つの外枠とdividerで階層化し、各sectionを独立card catalogへ戻さない。
 Mobileでも内容を非表示にせず、root横overflowを発生させない。
 
@@ -316,10 +329,10 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 
 ## 表示の意味と禁止事項
 
-- rankingとscoreは確認順であり、売買推奨ではない。
+- Smart Rankとscoreは確認順であり、売買推奨ではない。
 - focus colorは選択timeframe、選択symbol、現在のattention、primary actionに限る。
 - up/downは市場方向、warningは注意、quality colorはデータ品質に使い分ける。
-- 高score、上昇色、ranking位置を「買うべき」という表現にしない。
+- 高score、上昇色、Smart Rank上の位置を「買うべき」という表現にしない。
 - stale、missing、partial、low-quality dataを非表示にしない。
 - 内部categoryの`NO_TRADE`は変更せず、利用者向け表示だけを`監視除外候補`とする。
 - 自動注文、自動売買、buy/sell recommendationを示すUIを追加しない。
@@ -331,7 +344,7 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 | Dashboard DOM順 | `apps/web/src/routes/+page.svelte` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | row選択、roving keyboard | `apps/web/src/lib/components/dashboard/DashboardWatchlist.svelte`, `apps/web/src/lib/components/dashboard/DashboardMarketRow.svelte`, `apps/web/src/lib/components/dashboard/SelectedSymbolOverview.svelte` | `apps/web/tests/e2e/home.e2e.ts` |
 | 全signal、STALE、row高 | `apps/web/src/lib/components/dashboard/DashboardMarketRow.svelte`, `apps/web/src/lib/market/row-analysis.ts` | `apps/web/tests/e2e/responsive-layout.e2e.ts`, `apps/web/tests/e2e/home.e2e.ts` |
-| Mobile bounded all-item scroll | `apps/web/src/lib/components/dashboard/DashboardRankingArea.svelte`, `apps/web/src/lib/components/dashboard/DashboardWatchlist.svelte` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
+| Mobile bounded all-item scroll | `apps/web/src/lib/components/dashboard/DashboardWatchlist.svelte` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | Symbol DOM順、Monitoring Rail、flat workspace | `apps/web/src/routes/symbols/[symbol]/+page.svelte`, `apps/web/src/lib/components/symbol/SymbolMonitoringRail.svelte` | `apps/web/tests/e2e/symbol-workspace.e2e.ts`, `apps/web/tests/e2e/monitoring-symbol.e2e.ts`, `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | chart instance、late bars、要約 | `apps/web/src/lib/MarketChart.svelte`, `apps/web/src/lib/market/chart-data.ts`, `apps/web/src/lib/market/chart-theme.ts` | `apps/web/tests/e2e/realtime-dashboard.e2e.ts`, `apps/web/src/lib/market/chart-data.test.ts`, `apps/web/src/lib/market/chart-theme.test.ts` |
 | 配色選択、browser保存、chart再配色 | `apps/web/src/lib/components/ThemeSelector.svelte`, `apps/web/src/lib/theme/color-scheme.ts`, `apps/web/src/lib/styles/watchdeck-theme.css`, `apps/web/src/lib/MarketChart.svelte` | `apps/web/src/lib/theme/color-scheme.test.ts`, `apps/web/src/lib/theme/color-scheme-css.test.ts`, `apps/web/tests/e2e/color-schemes.e2e.ts` |
@@ -340,21 +353,18 @@ Position Size PressureはDashboardとSymbol画面へ表示しない。これら�
 | 監視専用production境界 | `apps/web/src/routes/`, `apps/web/src/lib/`, `scripts/maintenance/monitoring-only-boundary.test.mjs` | `apps/web/tests/e2e/retired-routes.e2e.ts`, `scripts/maintenance/monitoring-only-boundary.test.mjs` |
 | shared theme、色、密度、compact status、誤推奨防止 | `DESIGN.md`, `apps/web/src/routes/+layout.svelte`, `apps/web/src/lib/styles/watchdeck-theme.css` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
 | VPI-Lite+実験表示、optional payload、Hot非影響 | `apps/web/src/lib/market/vpi-lite-plus.ts`, `apps/web/src/lib/components/dashboard/DashboardVpiExperimentPanel.svelte`, `apps/web/src/lib/components/dashboard/SelectedSymbolVpiDetail.svelte` | `apps/web/src/lib/market/vpi-lite-plus.test.ts`, `apps/web/tests/e2e/home.e2e.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
+| 3市場mark price比較pilot、optional payload、3/3集約 | `apps/web/src/lib/market/market-comparison.ts`, `apps/web/src/lib/components/dashboard/DashboardMarketComparisonPanel.svelte` | `apps/web/src/lib/market/market-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
+| Bitget / Hyperliquid Perp会場比較、optional payload、選択銘柄限定 | `apps/web/src/lib/market/perp-venue-comparison.ts`, `apps/web/src/lib/components/dashboard/SelectedSymbolVenueComparison.svelte` | `apps/web/src/lib/market/perp-venue-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
 
 UI変更時は`DESIGN.md`を先に読み、Dashboard、Symbol page、Desktop、Mobileのどこへ
 影響するかを明示する。変更後は対象に近いunit/E2Eに加え、`bun run check`、`bun test`、
 `bun run build`を実行する。情報を減らす変更は、Mobile対応や簡素化という理由だけでは認めない。
 
-## Candidate条件とOI表示
-
-Candidate見出し下はsnapshot summaryをvalidationし、74h価格AND売買代金条件と
-`合致 / 未一致 / 判定不能`件数を表示する。不正または欠損summaryでは数値を推測せず、
-条件metadataを取得できないこととsnapshot更新後の再確認を案内する。旧snapshotのランキングが
-現行74h gate済みであるとは断定しない。
+## OI表示と活動phase
 
 Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で表示する。
-74h条件の複合結果は`一致 / 未一致 / 判定不能`で表示する。VPI-Lite+のOI availabilityは
-別契約なので維持し、重複していた非VPIのraw open interest表示だけを置かない。
+VPI-Lite+のOI availabilityは別契約なので維持し、重複していた非VPIのraw open interest表示は
+置かない。60分前のexact bucketを確認できない場合やOI cycleがdegradedの場合は推測せず`不明`とする。
 
 `summary.volumeRatio15m`をvalidationできた場合だけ、`15分量倍率`へ検証済みの基準説明を付ける。
 値は有限時に`3.4×`、欠損時に`—`とする。metadataが不正・欠損ならsample数や期間を推測せず、
@@ -364,4 +374,4 @@ Symbol時間軸boardでは15mだけ量倍率行を生成し、他timeframeでは
 
 1hと4hの量倍率はSelected detailの文脈表示だけに使う。Watchlistは非normalのactivity phaseを
 量倍率の近くへ表示し、Selected detailとMonitoring Railにも活動phaseを表示するが、売買方向の意味は
-持たせない。enum、label、判定順、ranking非影響は[`data-contracts.md`](data-contracts.md)を正本とする。
+持たせない。enum、label、判定順、Smart Rank非影響は[`data-contracts.md`](data-contracts.md)を正本とする。

@@ -255,66 +255,6 @@
           "default": null,
           "title": "Range24Hpct"
         },
-        "priceChange74hPct": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Pricechange74Hpct"
-        },
-        "turnoverCurrent24hUsdt": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Turnovercurrent24Husdt"
-        },
-        "turnover24hEnding74hAgoUsdt": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Turnover24Hending74Hagousdt"
-        },
-        "volumeChange74h24hPct": {
-          "anyOf": [
-            {
-              "type": "number"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Volumechange74H24Hpct"
-        },
-        "userRule74hMatched": {
-          "anyOf": [
-            {
-              "type": "boolean"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Userrule74Hmatched"
-        },
         "roughness15m": {
           "anyOf": [
             {

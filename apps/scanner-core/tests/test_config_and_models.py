@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from prep_watchdeck.config.filter_config import OpenInterestConfig
+from prep_watchdeck.application.service_snapshot import required_analysis_5m_bars
+from prep_watchdeck.config.filter_config import FilterConfig, OpenInterestConfig
 from prep_watchdeck.config.templates import load_template
 from prep_watchdeck.errors import ConfigError
 from prep_watchdeck.models import CandleBar, ContractInfo, TickerInfo
@@ -20,14 +21,31 @@ def test_rev5_templates_validate() -> None:
     }
     config = configs["balanced"]
 
-    assert config.candles.min_required_bars == 1177
+    assert config.version == 3
+    assert config.candles.min_required_bars == 383
+    assert required_analysis_5m_bars(config) == 383
     assert config.candles.bootstrap_days == 14
-    assert config.user_rule.volume_74h_mode == "current_24h_vs_74h_ago_24h"
+    assert not hasattr(config, "user_rule")
+    assert not hasattr(config, "ranking")
     assert config.data_quality.min_coverage_ratio == 0.98
     assert config.category.min_attention_score_for_display == 40
     assert configs["aggressive"].turnover.min_turnover_1h_usdt == 3000
     assert configs["aggressive"].volume.volume_leading_ratio == 2.0
     assert configs["aggressive"].roughness.warn_move_concentration_15m == 0.86
+
+
+def test_analysis_window_tracks_volume_baseline_and_longest_price_timeframe() -> None:
+    config = load_template(Path("../../config/scanner-filters"), "balanced")
+    payload = config.model_dump()
+    payload["volume"]["baseline_window_bars"] = 1
+    payload["candles"]["min_required_bars"] = 289
+
+    adjusted = FilterConfig.model_validate(payload)
+
+    assert required_analysis_5m_bars(adjusted) == 289
+    payload["candles"]["min_required_bars"] = 288
+    with pytest.raises(ValueError, match=r"candles\.min_required_bars must equal 289"):
+        FilterConfig.model_validate(payload)
 
 
 def test_unknown_template_fails() -> None:

@@ -5,10 +5,6 @@ import schema from "../../../../../schemas/scanner-snapshot.schema.json";
 import type { PrepWatchdeckScannerSnapshot, ScannerRowDTO } from "$lib/generated/scanner-snapshot";
 import { resolveStatePaths } from "./state-paths";
 
-type RankingValue = { symbol: string; value: number };
-type RankingTree = {
-  timeframes?: Record<string, Record<string, RankingValue[]>>;
-};
 type SnapshotCacheEntry = {
   size: bigint;
   mtimeNs: bigint;
@@ -18,7 +14,6 @@ type SnapshotCacheEntry = {
 export interface SnapshotRepository {
   latest(): Promise<PrepWatchdeckScannerSnapshot>;
   summary(): Promise<PrepWatchdeckScannerSnapshot["summary"]>;
-  rankings(tf: string, metric: string): Promise<unknown>;
   symbols(category?: string): Promise<ScannerRowDTO[]>;
   symbol(symbol: string): Promise<ScannerRowDTO | undefined>;
 }
@@ -55,12 +50,6 @@ export class LocalFileSnapshotRepository implements SnapshotRepository {
 
   async summary() {
     return (await this.latest()).summary;
-  }
-
-  async rankings(tf: string, metric: string) {
-    const snapshot = await this.latest();
-    const rankings = snapshot.rankings as RankingTree | undefined;
-    return rankings?.timeframes?.[tf]?.[metric] ?? [];
   }
 
   async symbols(category?: string) {

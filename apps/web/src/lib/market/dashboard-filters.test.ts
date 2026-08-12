@@ -4,7 +4,6 @@ import {
   dashboardCategoryFilters,
   dashboardRawSortDirections,
   dashboardRawSortKeys,
-  dashboardRankingMetrics,
   dashboardRankingTimeframes,
   dashboardViewModes,
   isDashboardCategoryFilter,
@@ -35,15 +34,9 @@ function row(overrides: Partial<ScannerRowDTO> = {}): ScannerRowDTO {
 }
 
 describe("dashboard filters", () => {
-  it("keeps dashboard filter, timeframe, metric, and view labels stable", () => {
+  it("keeps dashboard filter, timeframe, and view labels stable", () => {
     expect(dashboardCategoryFilters).toEqual(["ALL", "WATCH", "CAUTION", "NO_TRADE", "LOW_PRIORITY"]);
-    expect(dashboardRankingTimeframes).toEqual(["5m", "15m", "1h", "4h", "24h", "74h"]);
-    expect(dashboardRankingMetrics).toEqual([
-      ["上昇順", "changeUp"],
-      ["下落順", "changeDown"],
-      ["売買代金", "turnoverTop"],
-      ["15分量倍率", "volumeUp"]
-    ]);
+    expect(dashboardRankingTimeframes).toEqual(["5m", "15m", "1h", "4h", "24h"]);
     expect(dashboardRawSortKeys).toEqual([
       { id: "changePct", label: "価格変化" },
       { id: "turnoverUsdt", label: "売買代金" },
@@ -71,7 +64,7 @@ describe("dashboard filters", () => {
     expect(isDashboardCategoryFilter("BAD")).toBe(false);
     expect(isDashboardViewMode("turnover")).toBe(true);
     expect(isDashboardViewMode("BAD")).toBe(false);
-    expect(isDashboardRankingTimeframe("74h")).toBe(true);
+    expect(isDashboardRankingTimeframe("74h")).toBe(false);
     expect(isDashboardRankingTimeframe("72h")).toBe(false);
     expect(isDashboardRawSortKey("volumeRatio")).toBe(true);
     expect(isDashboardRawSortKey("BAD")).toBe(false);

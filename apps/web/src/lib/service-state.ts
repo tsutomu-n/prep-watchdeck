@@ -13,7 +13,6 @@ export type ServiceStateSnapshot = {
   };
   backfill?: ServiceProgress | null;
   reconcile?: ServiceProgress | null;
-  deepBackfill?: ServiceProgress | null;
 };
 
 export type ServiceProgress = {
@@ -41,7 +40,7 @@ const staleThresholdSeconds = 120;
 export function summarizeServiceState(state: ServiceStateSnapshot, nowMs = Date.now()): ServiceStateView {
   const stateLagSeconds = secondsSince(state.generatedAtMs, nowMs);
   const dataLagSeconds = secondsSince(state.dataAsOfMs ?? state.diagnostics?.latestCandle1mTsMs ?? null, nowMs);
-  const progress = state.deepBackfill ?? state.backfill ?? state.reconcile ?? null;
+  const progress = state.backfill ?? state.reconcile ?? null;
   const hasError = hasCurrentError(progress);
   const isStale =
     (stateLagSeconds !== null && stateLagSeconds > staleThresholdSeconds) ||

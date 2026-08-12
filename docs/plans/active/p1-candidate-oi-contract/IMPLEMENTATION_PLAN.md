@@ -1,17 +1,20 @@
 # P1 Candidate / OI 契約修正 実装計画
 
 - 作成: `2026-08-08T14:21:08+09:00`
-- 更新: `2026-08-10T14:45:00+09:00`
-- 検証: `2026-08-10T14:45:00+09:00`
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
 - 状態: `実装計画`
 
 ---
 
+> **完了済み・再開禁止:** 本文と証拠は実装当時の履歴として保持する。Candidate・74h部分は
+> [Decision 0010](../../../decisions/0010-retire-74h-candidate-deep-backfill.md)によりsupersedeされた。
+> OI 60分の永続化・exact lookback・degraded契約だけが現行である。本planをresumeしない。
 
 ## 0. メタデータ
 
 - Plan ID: `PLAN-P1-CANDIDATE-OI-001`
-- Revision: `7`
+- Revision: `8`
 - Target repo: `tsutomu-n/prep-watchdeck`
 - Baseline commit: `8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583`
 - Canonical path:
