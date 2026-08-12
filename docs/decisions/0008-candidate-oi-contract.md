@@ -1,10 +1,14 @@
 # Decision 0008: Candidate 74h ANDとOI 60分契約
 
 - 作成: `2026-08-09T20:30:00+09:00`
-- 更新: `2026-08-09T20:30:00+09:00`
+- 更新: `2026-08-12T21:38:47+09:00`
 - 状態: `設計判断`
 
 ---
+
+> **一部superseded:** Candidate、74h AND、該当summary/ranking/UI/versionの記述は
+> [Decision 0010](0010-retire-74h-candidate-deep-backfill.md)により置換された。
+> OI 60分、5分bucket、24時間retention、失敗境界の決定は引き続き有効である。
 
 ## 決定
 

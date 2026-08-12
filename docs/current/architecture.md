@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-12T00:57:18+09:00`
-- 検証: `2026-08-12T00:57:18+09:00`
-- 文書更新作業: `2026-08-12_00:57`（Asia/Tokyo）
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -20,18 +20,18 @@ Webはそれらのlocal fileを読み、Past NoteとDashboard view設定をlocal
 
 ### Cold snapshot
 
-`snapshots/latest.json`は初期表示、filter、ranking、Raw Sort、selected symbolの
+`snapshots/latest.json`は初期表示、filter、Raw Sort、Smart Rank、selected symbolの
 基準となるscanner snapshotである。service publishでは重いdetail barsを含めない。
 
 VPI-Lite+ V0はこのCold laneだけで、既存scannerの5分足集約前にclosed 1分足から計算する。
 `config/vpi-lite-plus.toml`はservice起動境界で一度だけ読み、結果は補助sidecarとして
-summaryと存在するrowのdisplayへ格納する。既存ranking、filter、category、attention score、
+summaryと存在するrowのdisplayへ格納する。既存filter、category、attention score、
 Hot ticker、DuckDB writerを変更せず、symbol単位の計算失敗でsnapshot発行を止めない。
 
 BTC/ETH/SOLの3市場価格比較pilotは、Bitget、Hyperliquid、Bybitのpublic RESTから300秒ごとに
 mark priceを取得する独立in-memory collectorである。service起動時と`publish-service`時にも1回取得し、
 結果は`summary.marketComparison`だけへ格納する。取得失敗はsource単位で欠損にし、既存scanner、
-DuckDB、ranking、filter、category、Hot tickerを変更しない。
+DuckDB、filter、category、Hot tickerを変更しない。
 
 ### Hot ticker
 
@@ -71,7 +71,7 @@ Bitget business errorは即時失敗する。
 process内watchdogは最新1分足timestampの絶対的な古さではなく、観測間での前進停止を
 監視する。停止候補時だけBitget public RESTをprobeし、RESTも失敗中なら外部障害として
 停止確認をresetする。REST正常下で停止が規定回数続いた場合だけ`ServiceStalledError`を
-CLIへ伝播し、streamとstate、snapshot、ticker、backfill、reconcile、deep-backfillの
+CLIへ伝播し、streamとstate、snapshot、ticker、backfill、reconcileの
 taskをcancel/awaitして非0終了する。
 
 watchdogはsystemdの`WatchdogSec`/`sd_notify`実装ではない。自動再起動はprocess managerの
@@ -88,7 +88,7 @@ DB writerや永続schemaを追加しない。snapshot生成と旧3市場refresh�
 
 - `src/lib/server/*-repository.ts`: snapshot、runtime、Past Note、Dashboard settingsのlocal repository
 - `src/routes/api/`: local read/write API
-- `src/lib/market/`: timeframe、ranking、Raw Sort、Dashboard state
+- `src/lib/market/`: timeframe、Smart Rank、Raw Sort、Dashboard state
 - `src/lib/components/dashboard/`: dense desktop/mobile監視UI
 - `src/lib/components/symbol/SymbolMonitoringRail.svelte`: Symbol画面の監視材料
 
@@ -122,11 +122,13 @@ state migrationはv2 active filesだけをtargetへcopyし、source全体をRepo
 `STATE_LAYOUT_VERSION`がない既存Archiveはv1、厳密な`2` markerはv2として検証し、未知versionは
 拒否する。日次サマリーはschema v2を`ops/daily/v2/`へ書き、既存schema v1を変更しない。
 
-## Candidate / OI lane
+## Analysis history / OI lane
 
-Candidateのtimeframeランキングだけは74h三値ANDの`True`をeligibilityに使う。Watchlist、
-Raw Sort、Smart Rank、snapshot rows、`rankings.noTrade`診断はこのgateの外に置く。
+3つのscanner filter templateは`candles.min_required_bars=383`を使う。service snapshot cycleは
+detail chart用に最大1177本の5分足相当（5885本の1分足）を読み、scanner分析とgap auditには末尾383本
+（1915本の1分足）だけを渡す。chart sourceの長さとscanner分析の必要履歴を同じ値として扱わない。
 
-service snapshot cycleはpublic tickerのOIを`open_interest_samples`へbulk upsertし、exact lookback
+service snapshot cycleはpublic tickerのOIを`open_interest_samples`へbulk upsertし、exact 60分lookback
 bucketを一括loadする。table初期化失敗はstartup失敗、cycle中のOI store失敗はsnapshotを
-degraded diagnostic付きで継続し、全OIを`UNKNOWN`にする。
+degraded diagnostic付きで継続し、全OIを`UNKNOWN`にする。OIは5分bucket、24時間保持であり、
+Candidateや74時間履歴の有無には依存しない。

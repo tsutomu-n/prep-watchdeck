@@ -2,7 +2,7 @@ import type { Category, DataQuality, ScannerRowDTO } from "$lib/generated/scanne
 
 export const dashboardCategories = ["WATCH", "CAUTION", "NO_TRADE", "LOW_PRIORITY"] as const;
 export const dashboardCategoryFilters = ["ALL", ...dashboardCategories] as const;
-export const dashboardRankingTimeframes = ["5m", "15m", "1h", "4h", "24h", "74h"] as const;
+export const dashboardRankingTimeframes = ["5m", "15m", "1h", "4h", "24h"] as const;
 export const dashboardDataQualities = ["OK", "STALE", "MISSING", "PARTIAL"] as const;
 export const dashboardViewModes = [
   { id: "standard", label: "標準" },
@@ -11,12 +11,6 @@ export const dashboardViewModes = [
   { id: "drop", label: "急落" },
   { id: "turnover", label: "高売買代金" },
   { id: "quality", label: "低品質除外" }
-] as const;
-export const dashboardRankingMetrics = [
-  ["上昇順", "changeUp"],
-  ["下落順", "changeDown"],
-  ["売買代金", "turnoverTop"],
-  ["15分量倍率", "volumeUp"]
 ] as const;
 export const dashboardRawSortKeys = [
   { id: "changePct", label: "価格変化" },
@@ -85,8 +79,7 @@ const defaultTurnoverThresholdByTimeframe: Record<DashboardRankingTimeframe, num
   "15m": 50_000,
   "1h": 100_000,
   "4h": 300_000,
-  "24h": 1_000_000,
-  "74h": 2_000_000
+  "24h": 1_000_000
 };
 
 const defaultChangePctThresholdByTimeframe: Record<DashboardRankingTimeframe, number> = {
@@ -94,8 +87,7 @@ const defaultChangePctThresholdByTimeframe: Record<DashboardRankingTimeframe, nu
   "15m": 2,
   "1h": 2,
   "4h": 2,
-  "24h": 2,
-  "74h": 2
+  "24h": 2
 };
 
 export const defaultDashboardViewSettings: DashboardViewSettings = {

@@ -2,7 +2,7 @@ import { error } from "@sveltejs/kit";
 import { createPastNoteRepository } from "$lib/server/past-note-repository";
 import { createSnapshotRepository } from "$lib/server/snapshot-repository";
 
-const rankingTimeframes = ["5m", "15m", "1h", "4h", "24h", "74h"] as const;
+const rankingTimeframes = ["5m", "15m", "1h", "4h", "24h"] as const;
 
 export async function load({ params, url }) {
   const requestedSymbol = params.symbol.toUpperCase();

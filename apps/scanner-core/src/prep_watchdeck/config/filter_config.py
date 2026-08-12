@@ -6,8 +6,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from prep_watchdeck.constants import TEMPLATES
+from prep_watchdeck.constants import TEMPLATES, TIMEFRAME_BARS
 from prep_watchdeck.errors import ConfigError
+from prep_watchdeck.features.volume_ratio import required_volume_ratio_5m_bars
 
 
 class UniverseConfig(BaseModel):
@@ -30,15 +31,9 @@ class UniverseConfig(BaseModel):
 
 class CandlesConfig(BaseModel):
     granularity: Literal["5m"]
-    min_required_bars: int = Field(ge=1177)
+    min_required_bars: int = Field(ge=1)
     exclude_open_candle: bool = True
     bootstrap_days: int = Field(ge=1)
-
-
-class UserRuleConfig(BaseModel):
-    volume_74h_mode: Literal["current_24h_vs_74h_ago_24h"]
-    price_74h_abs_pct: float = Field(ge=0)
-    volume_74h_min_increase_pct: float = Field(ge=0)
 
 
 class PriceChangeConfig(BaseModel):
@@ -47,17 +42,15 @@ class PriceChangeConfig(BaseModel):
     surge_1h_pct: float
     surge_4h_pct: float
     surge_24h_pct: float
-    surge_74h_pct: float
     move_5m_pct: float
     move_15m_pct: float
     move_1h_pct: float
     move_4h_pct: float
     move_24h_pct: float
-    move_74h_pct: float
 
 
 class VolumeConfig(BaseModel):
-    baseline_window_bars: int
+    baseline_window_bars: int = Field(ge=1)
     min_volume_ratio: float
     strong_volume_ratio: float
     volume_leading_ratio: float
@@ -124,11 +117,6 @@ class CategoryConfig(BaseModel):
         return self.min_attention_score_for_display
 
 
-class RankingConfig(BaseModel):
-    exclude_no_trade_from_main_rankings: bool = True
-    top_n: int = Field(ge=1, le=50)
-
-
 class FilterConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -137,7 +125,6 @@ class FilterConfig(BaseModel):
     version: int
     universe: UniverseConfig
     candles: CandlesConfig
-    user_rule: UserRuleConfig
     price_change: PriceChangeConfig
     volume: VolumeConfig
     turnover: TurnoverConfig
@@ -147,12 +134,17 @@ class FilterConfig(BaseModel):
     funding: FundingConfig
     open_interest: OpenInterestConfig
     category: CategoryConfig
-    ranking: RankingConfig
 
     @model_validator(mode="after")
-    def validate_template_name(self) -> FilterConfig:
+    def validate_template(self) -> FilterConfig:
         if self.name not in TEMPLATES:
             raise ValueError(f"template name must be one of {sorted(TEMPLATES)}")
+        required_bars = max(
+            required_volume_ratio_5m_bars(self.volume.baseline_window_bars),
+            max(TIMEFRAME_BARS.values()) + 1,
+        )
+        if self.candles.min_required_bars != required_bars:
+            raise ValueError(f"candles.min_required_bars must equal {required_bars}")
         return self
 
 

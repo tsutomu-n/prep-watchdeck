@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-10T23:10:43+09:00`
-- 検証: `2026-08-10T23:10:43+09:00`
-- 文書更新作業: `2026-08-10_23:10`（Asia/Tokyo）
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -15,7 +15,7 @@
 
 - [overview.md](current/overview.md): 製品の役割、現行機能、責任範囲
 - [ui-workflow.md](current/ui-workflow.md): shared themeとsemantic color、DashboardのDOM・focus順、
-  row選択と個別分析遷移、全signal/stale、Candidate/WatchlistのMobile密度、Symbol local nav/chart、
+  row選択と個別分析遷移、全signal/stale、WatchlistのMobile密度、Symbol local nav/chart、
   Monitoring Rail、Past Noteのmutation lock・symbol scope・revision保持
 - [operations.md](current/operations.md): 起動、service、state root、停止条件
 
@@ -38,16 +38,23 @@
 - [0005 自動売買を含めない](decisions/0005-no-automatic-trading.md)
 - [0006 VPI-Lite+ Cold sidecar](decisions/0006-vpi-lite-plus-cold-sidecar.md)
 - [0007 市場監視専用の製品境界](decisions/0007-monitoring-only-product-boundary.md)
-- [0008 Candidate 74h ANDとOI 60分契約](decisions/0008-candidate-oi-contract.md)
+- [0008 Candidate 74h ANDとOI 60分契約](decisions/0008-candidate-oi-contract.md):
+  Candidate/74hは0010で置換済み。OI 60分契約は現行。
 - [0009 Quiet Market activity context](decisions/0009-quiet-market-activity-context.md)
+- [0010 Candidate 74hと常駐deep backfillの退役](decisions/0010-retire-74h-candidate-deep-backfill.md)
 
 ## 実装・検証計画
 
-- [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 74h Candidate条件、OI 60分変化、最小UI・テスト・初期runtime qualificationを完了済み。安全な履歴Archive待ちのliving plan。
-- [Quiet Market Instrument](plans/active/quiet-market-instrument/README.md): 15m/1h/4h量倍率、活動phase、異常時だけの品質表示、VPI発見laneを追加済み。既存Candidate、Watchlist、Inspector、補正順位の契約を維持したArchive待ちliving plan。
+- [74時間判定・deep backfillパージ](plans/active/purge-74h-deep-backfill/README.md):
+  74時間Candidate契約と常駐deep backfillをproductionから除去し、snapshot、短期指標、
+  reconcile、chartを維持したままscanner/gap windowをchart sourceから分離する実装中計画。
+- [P1 Candidate / OI契約修正](plans/active/p1-candidate-oi-contract/README.md): 完了済みの実装履歴。
+  Candidate/74h部分は0010で置換済み、OI 60分の履歴と契約だけを維持する。
+- [Quiet Market Instrument](plans/active/quiet-market-instrument/README.md): 15m/1h/4h量倍率、活動phase、
+  異常時だけの品質表示、VPI発見laneを追加したArchive待ちliving plan。
 
 監視専用化の完了計画と過去検証証拠はRepo外Archiveへ退避し、
-現行仕様は`docs/current/`、有効な判断はADR 0007、ADR 0008、ADR 0009を正本とする。
+現行仕様は`docs/current/`、有効な判断はADR 0007〜0010を正本とする。
 
 ## 正本の優先順位
 

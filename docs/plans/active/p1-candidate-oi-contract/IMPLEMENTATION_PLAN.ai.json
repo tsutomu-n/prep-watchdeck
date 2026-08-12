@@ -1,8 +1,24 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-08-10T14:45:00+09:00",
+  "updated_at": "2026-08-12T21:38:47+09:00",
   "plan_id": "PLAN-P1-CANDIDATE-OI-001",
-  "revision": 7,
+  "revision": 8,
+  "supersession": {
+    "status": "partially_superseded_do_not_resume",
+    "decided_at": "2026-08-12T21:38:47+09:00",
+    "decision": "docs/decisions/0010-retire-74h-candidate-deep-backfill.md",
+    "superseded_scope": [
+      "Candidate surface and ranking",
+      "74h fields, summary and timeframe",
+      "deep backfill production path"
+    ],
+    "preserved_scope": [
+      "OI exact 60m comparison",
+      "5m OI buckets and 24h retention",
+      "OI degraded diagnostics and UNKNOWN no-score"
+    ],
+    "resume_policy": "Do not resume this plan. Use current docs and a new active plan."
+  },
   "target_repository": "tsutomu-n/prep-watchdeck",
   "baseline_commit": "8c3ecd4bf9ea16db0e99a0000f2f37fd89c3f583",
   "objective": "候補選定の74h複合条件とOI 60分変化について、設定・計算・ランキング・UI・runtimeの意味を一致させる。",

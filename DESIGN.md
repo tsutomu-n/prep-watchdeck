@@ -1,9 +1,9 @@
 # Prep Watchdeck Design Constitution
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-11T17:26:25+09:00`
-- 検証: `2026-08-11T17:26:25+09:00`
-- 文書更新作業時刻: `2026-08-11_17:26`
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業時刻: `2026-08-12_21:38`
 - 状態: `現行`
 
 ---
@@ -242,15 +242,15 @@ rectangular, data-first, and restrained.
 The interface helps the user:
 
 1. find fast-moving symbols;
-2. narrow candidates for focused symbol analysis;
-3. verify risk, ranking context, and data quality;
+2. narrow monitoring targets for focused symbol analysis;
+3. verify risk, market context, and data quality;
 4. retain only short-lived monitoring context needed for later observation.
 
 Highlighted rows, high scores, green values, and ranking positions must never look like automatic buy / sell
 recommendations. Past Note is a 60-day symbol annotation with observation context, not a trade record.
 
-Desktop is the primary analysis surface. Mobile supports quick review, candidate checking, and current-symbol context;
-it remains usable without reproducing Desktop density.
+Desktop is the primary analysis surface. Mobile supports quick review, monitoring-target checking, and
+current-symbol context; it remains usable without reproducing Desktop density.
 
 ## Color Semantics
 
@@ -400,31 +400,30 @@ monitoring state の semantic family に限定する。
 
 ## Surface Hierarchy
 
-DashboardはCandidate、Watchlist、selected-symbol Inspector、corrected rankingの順に理解できる構造とする。
-Watchlistをprimary surface、Inspectorをcontext surface、corrected rankingと補助情報をsecondary surface
-として、短いeye travelと高いDesktop密度を保つ。`85rem`以上ではInspectorをright railへ置けるが、
-DOM、読み上げ、keyboard順は[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
+Dashboardはoptional context、Watchlist、selected-symbol Inspector、Smart Rankの順に理解できる構造とする。
+Watchlistをprimary surface、Inspectorをcontext surface、Smart Rankと補助情報をsecondary surfaceとして、
+短いeye travelと高いDesktop密度を保つ。`85rem`以上ではInspectorをright railへ置けるが、DOM、読み上げ、
+keyboard順は[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
 
 page shellはflat theme backgroundとし、装飾gridやpage-level color washを使わない。normal service stateを
-過剰に強調せず、error、stale、incomplete backfillを見落としにくくする。
+過剰に強調せず、error、stale、incomplete dataを見落としにくくする。
 
 ## Dashboard Visual Contract
 
-Candidateは`561px`以上で連続した4-column surface、`560px`以下で4つのtabとして見せる。どちらも
-boundedな領域に全rankingを保持し、整形済みsymbolはellipsisや横overflowで失わず必要ならwrapする。
-変化rankingの見出しは`上昇順` / `下落順`とし、値の色は所属panelではなく実際の符号に従う。
+optional contextは対応データがある場合だけWatchlistの前に置き、market comparisonとVPI-Lite+を同じ
+context surfaceにまとめる。これらをWatchlist、selected-symbol Inspector、Smart Rankより先に読み上げる。
 
 Watchlistはcontainer幅`62.125rem`以上でdense table、未満でcompact cardとする。通常row高はtable
 `42px`、card `82px`を基準にし、selection、focus、stale、note、signal数だけで変えない。selected row
 だけにfocus color、left inset、subtle selected backgroundを使える。normal data qualityは常時表示せず、
 異常品質とsignalは視覚表示とaccessible nameの両方から確認できるようにする。
 
-VPI-Lite+はCandidate隣のcompact discovery laneとして、primary labelを`市場活動`、technical labelを
-小さな`VPI-Lite+`とする。Target / Watchlist coverageと異なるempty stateを明示し、laneにはnumeric
-scoreを表示しない。score、reason、risk、funding、open interestは選択中Inspectorだけに置く。
-VPIをWatchlist row、ranking、sort、Candidate順へ入れない。
+VPI-Lite+はoptional context内のcompact discovery laneとして、primary labelを`市場活動`、technical
+labelを小さな`VPI-Lite+`とする。Target / Watchlist coverageと異なるempty stateを明示し、laneには
+numeric scoreを表示しない。score、reason、risk、funding、open interestは選択中Inspectorだけに置く。
+VPIをWatchlist row、Smart Rank、sortへ入れない。
 
-Inspectorはclassification、label、quality、selected timeframe、ranking context、signal、riskを
+Inspectorはclassification、label、quality、selected timeframe、OI 60分、signal、riskを
 一つの監視根拠としてまとめる。Quiet Market Instrumentはcontinuous surface、compact semantic text、
 neutral range track、current marker、明示的なmissing / stale状態で見せ、売買方向を示唆しない。
 量倍率、baseline、activity phase、VPI、quality、内部categoryと表示labelのデータ契約は
@@ -432,10 +431,10 @@ neutral range track、current marker、明示的なmissing / stale状態で見�
 
 ## Symbol Page Visual Contract
 
-symbol identityとkey metric、chart、Monitoring Rail、six-timeframe board、market context、Past Note、
+symbol identityとkey metric、chart、Monitoring Rail、five-timeframe board、market context、Past Note、
 snapshotの階層を保つ。chartを中心となる単一frameとして、二重borderやnested chart cardを作らない。
 Monitoring Railの最初のsummaryはclassification、label、quality、selected timeframeの2-column gridとし、
-Mobileでも2-columnを維持する。six-timeframe boardはMobileで2-column x 3-rowとする。
+Mobileでも2-columnを維持する。five-timeframe boardはMobileで2-columnを基本とする。
 
 supporting informationはequal-card catalogではなく、一つの外枠とdividerによるcontinuous workspaceにする。
 Past Noteはreason、observation time、concise noteを持つ60日間のsymbol annotationとして見せ、trade
@@ -445,9 +444,9 @@ recordやexecution historyにしない。Chart request、cleanup、mutation、dr
 ## Responsive, Accessibility, and Motion
 
 - `560px`以下のTopbarはsource、service、runtime boundaryを可読な3-cell stripにする。
-- `960px`以下ではCandidateとWatchlistをbounded internal scrollにし、全itemへの到達性を維持する。
+- `960px`以下ではWatchlistをbounded internal scrollにし、全itemへの到達性を維持する。
 - `720px`以下のSymbol Pageはstickyで横scroll可能なlocal navigationを持つ。
-- `360px`以下のsix-item timeframe controlは3-column x 2-rowとする。
+- `360px`以下のfive-item timeframe controlは3-columnを基本とする。
 - Desktopの高密度controlは`34px`を使用できる。compact widthまたはcoarse pointerでは`44px`以上、
   primary Mobile actionは`48px`を使用できる。
 

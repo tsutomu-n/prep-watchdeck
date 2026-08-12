@@ -735,8 +735,6 @@ test("a Hot delta updates only one price DOM without changing 400-row analysis s
     nodes.map((node) => node.getAttribute("data-symbol"))
   );
   expect(rowOrderBefore).toHaveLength(399);
-  const ranking = page.getByRole("region", { name: "15m ランキング" });
-  const rankingBefore = await ranking.innerText();
 
   const altRow = watchlist.locator('[data-market-row][data-symbol="ALTUSDT"]');
   const untouchedRow = watchlist.locator('[data-market-row][data-symbol="NEWALTUSDT"]');
@@ -789,7 +787,6 @@ test("a Hot delta updates only one price DOM without changing 400-row analysis s
     nodes.map((node) => node.getAttribute("data-symbol"))
   );
   expect(rowOrderAfter).toEqual(rowOrderBefore);
-  expect(await ranking.innerText()).toBe(rankingBefore);
   await expect(qualityFilter).toHaveAttribute("aria-pressed", "true");
   await expect(detail.getByRole("heading", { name: "THIN" })).toBeVisible();
 

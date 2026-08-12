@@ -48,10 +48,6 @@ from prep_watchdeck.application.service_bootstrap import (
     bootstrap_universe,
     refresh_ticker_latest_periodically,
 )
-from prep_watchdeck.application.service_deep_backfill import (
-    DeepBackfillProgressTracker,
-    run_deep_backfill_worker,
-)
 from prep_watchdeck.application.service_gap_audit import (
     audit_service_gaps,
     service_gap_audit_from_dict,
@@ -123,7 +119,7 @@ service_gap_app = typer.Typer(no_args_is_help=True)
 app.add_typer(service_gap_app, name="service-gap")
 console = Console()
 MAX_BACKFILL_LIMIT = 6_000
-DEFAULT_DEEP_BACKFILL_RATE_LIMIT_PER_SECOND = 5.0
+DEFAULT_GAP_REPAIR_RATE_LIMIT_PER_SECOND = 5.0
 
 
 @app.command()
@@ -206,51 +202,6 @@ def service(
             help="Seconds after startup before the watchdog may probe or fail.",
         ),
     ] = 300.0,
-    deep_backfill_limit: Annotated[
-        int,
-        typer.Option(
-            "--deep-backfill-limit",
-            min=0,
-            max=MAX_BACKFILL_LIMIT,
-            help="Low-priority historical 1m target per symbol; 0 disables it.",
-        ),
-    ] = 0,
-    deep_backfill_batch_size: Annotated[
-        int,
-        typer.Option(
-            "--deep-backfill-batch-size",
-            min=1,
-            help="Symbols processed per deep backfill cycle.",
-        ),
-    ] = 1,
-    deep_backfill_concurrency: Annotated[
-        int,
-        typer.Option("--deep-backfill-concurrency", min=1),
-    ] = 1,
-    deep_backfill_cooldown_sec: Annotated[
-        float,
-        typer.Option(
-            "--deep-backfill-cooldown-sec",
-            min=0.0,
-            help="Seconds to sleep between deep backfill cycles.",
-        ),
-    ] = 5.0,
-    deep_backfill_retry_delay_sec: Annotated[
-        float,
-        typer.Option(
-            "--deep-backfill-retry-delay-sec",
-            min=0.0,
-            help="Seconds before retrying a failed deep backfill symbol.",
-        ),
-    ] = 60.0,
-    deep_backfill_rate_limit_per_second: Annotated[
-        float,
-        typer.Option(
-            "--deep-backfill-rate-limit-per-second",
-            min=0.1,
-            help="REST request rate for the deep backfill Bitget client.",
-        ),
-    ] = DEFAULT_DEEP_BACKFILL_RATE_LIMIT_PER_SECOND,
     stop_after_records: Annotated[
         int | None,
         typer.Option("--stop-after-records", min=1, hidden=True),
@@ -286,12 +237,6 @@ def service(
                 watchdog_stall_sec=watchdog_stall_sec,
                 watchdog_confirmations=watchdog_confirmations,
                 watchdog_startup_grace_sec=watchdog_startup_grace_sec,
-                deep_backfill_limit=deep_backfill_limit,
-                deep_backfill_batch_size=deep_backfill_batch_size,
-                deep_backfill_concurrency=deep_backfill_concurrency,
-                deep_backfill_cooldown_sec=deep_backfill_cooldown_sec,
-                deep_backfill_retry_delay_sec=deep_backfill_retry_delay_sec,
-                deep_backfill_rate_limit_per_second=deep_backfill_rate_limit_per_second,
                 stop_after_records=stop_after_records,
             )
         )
@@ -425,7 +370,7 @@ def service_gap_repair(
     rate_limit_per_second: Annotated[
         float,
         typer.Option("--rate-limit-per-second", min=0.1),
-    ] = DEFAULT_DEEP_BACKFILL_RATE_LIMIT_PER_SECOND,
+    ] = DEFAULT_GAP_REPAIR_RATE_LIMIT_PER_SECOND,
 ) -> None:
     """Repair audited 1m gaps from Bitget public history-candles."""
     settings = Settings()
@@ -835,12 +780,6 @@ async def run_service_from_bitget(
     watchdog_stall_sec: float,
     watchdog_confirmations: int,
     watchdog_startup_grace_sec: float,
-    deep_backfill_limit: int,
-    deep_backfill_batch_size: int,
-    deep_backfill_concurrency: int,
-    deep_backfill_cooldown_sec: float,
-    deep_backfill_retry_delay_sec: float,
-    deep_backfill_rate_limit_per_second: float,
     stop_after_records: int | None,
 ) -> ServiceRunResult:
     config = load_template(settings.config_dir, template)
@@ -930,23 +869,6 @@ async def run_service_from_bitget(
         with reconcile_tracker_lock:
             return reconcile_tracker.snapshot() if reconcile_tracker is not None else None
 
-    deep_backfill_tracker = (
-        DeepBackfillProgressTracker(
-            stream_symbols,
-            target_limit=deep_backfill_limit,
-            batch_size=deep_backfill_batch_size,
-            concurrency=deep_backfill_concurrency,
-            rate_limit_per_second=deep_backfill_rate_limit_per_second,
-            cooldown_seconds=deep_backfill_cooldown_sec,
-            retry_delay_seconds=deep_backfill_retry_delay_sec,
-        )
-        if deep_backfill_limit > 0
-        else None
-    )
-
-    def deep_backfill_progress():
-        return deep_backfill_tracker.snapshot() if deep_backfill_tracker is not None else None
-
     initial_comparison_started_at = time.monotonic()
     await asyncio.gather(
         refresh_market_comparison_once(market_comparison_collector),
@@ -965,7 +887,6 @@ async def run_service_from_bitget(
         subscription=subscription,
         backfill=backfill_progress(),
         reconcile=reconcile_progress(),
-        deep_backfill=deep_backfill_progress(),
     )
     publish_service_snapshot_once(
         store,
@@ -989,7 +910,6 @@ async def run_service_from_bitget(
                 publish_immediately=False,
                 backfill_provider=backfill_progress,
                 reconcile_provider=reconcile_progress,
-                deep_backfill_provider=deep_backfill_progress,
             )
         )
         if settings.service_publish_interval_seconds > 0
@@ -1092,26 +1012,6 @@ async def run_service_from_bitget(
         if reconcile_interval_sec > 0
         else None
     )
-    deep_backfill_task = (
-        asyncio.create_task(
-            _run_service_deep_backfill_from_bitget(
-                store=store,
-                symbols=stream_symbols,
-                product_type=bootstrap_result.product_type,
-                target_limit=deep_backfill_limit,
-                batch_size=deep_backfill_batch_size,
-                concurrency=deep_backfill_concurrency,
-                cooldown_seconds=deep_backfill_cooldown_sec,
-                retry_delay_seconds=deep_backfill_retry_delay_sec,
-                rate_limit_per_second=deep_backfill_rate_limit_per_second,
-                tracker=deep_backfill_tracker,
-                blocked_by=lambda: _tracker_is_running(backfill_tracker),
-            )
-        )
-        if deep_backfill_tracker is not None
-        else None
-    )
-
     try:
         if await_backfill and backfill_task is not None:
             assert backfill_tracker is not None
@@ -1126,7 +1026,6 @@ async def run_service_from_bitget(
                 subscription=subscription,
                 backfill=backfill_progress(),
                 reconcile=reconcile_progress(),
-                deep_backfill=deep_backfill_progress(),
             )
             publish_service_snapshot_once(
                 store,
@@ -1168,7 +1067,6 @@ async def run_service_from_bitget(
             perp_venue_comparison_task,
             backfill_task,
             reconcile_task,
-            deep_backfill_task,
         )
         publish_service_state_once(
             store,
@@ -1177,7 +1075,6 @@ async def run_service_from_bitget(
             subscription=subscription,
             backfill=backfill_progress(),
             reconcile=reconcile_progress(),
-            deep_backfill=deep_backfill_progress(),
         )
     return ServiceRunResult(
         bootstrap=bootstrap_result,
@@ -1284,59 +1181,6 @@ async def _run_service_ticker_refresh_from_bitget(
                 "public ticker refresh failed: {}", type(exc).__name__
             ),
         )
-
-
-async def _run_service_deep_backfill_from_bitget(
-    *,
-    store: Any,
-    symbols: list[str],
-    product_type: str,
-    target_limit: int,
-    batch_size: int,
-    concurrency: int,
-    cooldown_seconds: float,
-    retry_delay_seconds: float,
-    rate_limit_per_second: float,
-    tracker: DeepBackfillProgressTracker,
-    blocked_by: Callable[[], bool] | None,
-) -> BackfillResult | None:
-    try:
-        async with BitgetPublicClient(rate_limit_per_second=rate_limit_per_second) as client:
-
-            async def fetcher(
-                symbol: str,
-                product_type: str,
-                granularity: str,
-                limit: int,
-            ):
-                return await fetch_recent_history_candles(
-                    client,
-                    symbol,
-                    product_type,
-                    granularity=granularity,
-                    limit=limit,
-                )
-
-            return await run_deep_backfill_worker(
-                store=store,
-                fetcher=fetcher,
-                symbols=symbols,
-                product_type=product_type,
-                target_limit=target_limit,
-                batch_size=batch_size,
-                concurrency=concurrency,
-                cooldown_seconds=cooldown_seconds,
-                retry_delay_seconds=retry_delay_seconds,
-                tracker=tracker,
-                blocked_by=blocked_by,
-            )
-    except asyncio.CancelledError:
-        if tracker.snapshot().status == "running":
-            tracker.mark_cancelled()
-        raise
-    except Exception as exc:
-        tracker.mark_failed(f"{type(exc).__name__}: {exc}")
-        return None
 
 
 async def _run_service_until_stopped(

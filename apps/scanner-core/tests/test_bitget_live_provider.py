@@ -5,12 +5,11 @@ from pathlib import Path
 
 from prep_watchdeck.adapters.bitget_live.provider import snapshot_from_pipeline
 from prep_watchdeck.config.templates import load_template
-from prep_watchdeck.domain.features.long_horizon import MIN_REQUIRED_BARS
 from prep_watchdeck.models import CandleBar, Category, ContractInfo, ScannerRow, TickerInfo
 from prep_watchdeck.screening.pipeline import PipelineResult
 
 
-def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
+def test_snapshot_from_pipeline_marks_live_without_candidate_contract() -> None:
     bars = matched_bars("ALTUSDT")
     result = PipelineResult(
         run_id="live-test",
@@ -68,7 +67,6 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
                 "1h": bars[-12:],
                 "4h": bars,
                 "24h": bars,
-                "74h": bars,
             }
         },
         candle_errors={},
@@ -84,18 +82,10 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
 
     assert snapshot.source.data_source == "live"
     assert snapshot.summary["counts"]["WATCH"] == 1
-    assert snapshot.feature_version == "4"
-    assert snapshot.ruleset_version == "3"
+    assert snapshot.feature_version == "5"
+    assert snapshot.ruleset_version == "4"
     assert snapshot.schema_version == 1
-    assert snapshot.summary["candidateRule74h"] == {
-        "operator": "AND",
-        "priceAbsPct": 4.0,
-        "turnoverIncreasePct": 15.0,
-        "turnoverMode": "current_24h_vs_74h_ago_24h",
-        "eligible": 1,
-        "notMatched": 0,
-        "unknown": 0,
-    }
+    assert "candidateRule74h" not in snapshot.summary
     assert snapshot.summary["volumeRatio15m"] == {
         "windowMinutes": 15,
         "sampleStepMinutes": 5,
@@ -135,15 +125,13 @@ def test_snapshot_from_pipeline_marks_live_and_builds_rankings() -> None:
         "close": 1.05,
         "quoteVolume": 1500.0,
     }
-    assert snapshot.rankings["timeframes"]["15m"]["changeUp"][0]["symbol"] == "ALTUSDT"
-    assert "USER_74H_PRICE_MATCH" in snapshot.rows[0].reason_codes
-    assert "USER_74H_VOLUME_MATCH" in snapshot.rows[0].reason_codes
-    assert snapshot.rankings["noTrade"] == []
+    assert set(snapshot.rows[0].change_pct_by_tf) <= {"5m", "15m", "1h", "4h", "24h"}
+    assert all("74H" not in code for code in snapshot.rows[0].reason_codes)
+    assert snapshot.rankings == {"noTrade": []}
 
 
-def test_snapshot_from_pipeline_uses_ranking_top_n_from_config() -> None:
+def test_snapshot_from_pipeline_preserves_no_trade_diagnostics_only() -> None:
     config = load_template(Path("../../config/scanner-filters"), "balanced")
-    config = config.model_copy(update={"ranking": config.ranking.model_copy(update={"top_n": 1})})
     result = PipelineResult(
         run_id="ranking-top-n-test",
         generated_at_ms=1_781_000_000_000,
@@ -167,17 +155,8 @@ def test_snapshot_from_pipeline_uses_ranking_top_n_from_config() -> None:
         result, template="balanced", config=config, product_type="USDT-FUTURES"
     )
 
-    assert [item["symbol"] for item in snapshot.rankings["timeframes"]["15m"]["changeUp"]] == [
-        "BETUSDT"
-    ]
-    assert snapshot.rankings["meta"]["timeframes"]["15m"]["changeUp"] == {
-        "limit": 1,
-        "totalEligible": 2,
-        "excludedNoTrade": True,
-    }
-
     assert [item["symbol"] for item in snapshot.rankings["noTrade"]] == ["THINUSDT"]
-    assert snapshot.summary["candidateRule74h"]["eligible"] == 2
+    assert set(snapshot.rankings) == {"noTrade"}
 
 
 def test_snapshot_from_pipeline_volume_ratio_metadata_follows_active_config() -> None:
@@ -238,7 +217,7 @@ def scanner_row(symbol: str, category: Category, change_15m: float) -> ScannerRo
 
 def matched_bars(symbol: str) -> list[CandleBar]:
     bars = []
-    for index in range(MIN_REQUIRED_BARS):
+    for index in range(1177):
         bars.append(
             CandleBar(
                 symbol=symbol,
@@ -246,11 +225,9 @@ def matched_bars(symbol: str) -> list[CandleBar]:
                 open=Decimal("1.0"),
                 high=Decimal("1.2"),
                 low=Decimal("0.9"),
-                close=Decimal("1.05") if index == MIN_REQUIRED_BARS - 1 else Decimal("1.0"),
+                close=Decimal("1.05") if index == 1176 else Decimal("1.0"),
                 base_vol=Decimal("100"),
-                quote_vol=(
-                    Decimal("1500") if index >= MIN_REQUIRED_BARS - 24 * 12 else Decimal("1000")
-                ),
+                quote_vol=(Decimal("1500") if index >= 1177 - 24 * 12 else Decimal("1000")),
             )
         )
     return bars

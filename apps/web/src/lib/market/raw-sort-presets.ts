@@ -2,7 +2,7 @@ import type {
   DashboardRawSortState
 } from "$lib/market/dashboard-filters";
 
-export const rawSortQuickTimeframes = ["15m", "1h", "24h", "74h"] as const;
+export const rawSortQuickTimeframes = ["15m", "1h", "24h"] as const;
 export const rawSortQuickLenses = [
   { id: "up", label: "上昇" },
   { id: "down", label: "下落" },

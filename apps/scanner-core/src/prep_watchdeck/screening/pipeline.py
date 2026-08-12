@@ -276,7 +276,6 @@ async def fetch_chart_candles(
         "1h": "1H",
         "4h": "4H",
         "24h": "1Dutc",
-        "74h": "3Dutc",
     }
     semaphore = asyncio.Semaphore(max(1, candle_concurrency))
     result: dict[str, dict[str, list[CandleBar]]] = {}

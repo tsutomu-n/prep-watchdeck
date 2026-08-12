@@ -42,7 +42,7 @@ describe("symbol chart API", () => {
       GET(
         event(
           "ALTUSDT",
-          "http://localhost/api/symbols/ALTUSDT/chart?tf=BAD&runId=run-1"
+          "http://localhost/api/symbols/ALTUSDT/chart?tf=74h&runId=run-1"
         )
       )
     ).rejects.toMatchObject({ status: 400 });

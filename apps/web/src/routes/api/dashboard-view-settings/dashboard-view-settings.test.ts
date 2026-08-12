@@ -45,7 +45,7 @@ describe("/api/dashboard-view-settings", () => {
           viewId: "surge",
           view: {
             kind: "changePctAtLeast",
-            thresholdPctByTimeframe: { "5m": 5, "15m": 5, "1h": 5, "4h": 5, "24h": 5, "74h": 5 },
+            thresholdPctByTimeframe: { "5m": 5, "15m": 5, "1h": 5, "4h": 5, "24h": 5 },
             excludedCategories: ["NO_TRADE"]
           }
         })
@@ -113,7 +113,7 @@ describe("/api/dashboard-view-settings", () => {
           viewId: "surge",
           view: {
             kind: "changePctAtLeast",
-            thresholdPctByTimeframe: { "5m": 1, "15m": 1, "1h": 1, "4h": 1, "24h": 1, "74h": 1, BAD: 1 },
+            thresholdPctByTimeframe: { "5m": 1, "15m": 1, "1h": 1, "4h": 1, "24h": 1, "74h": 1 },
             excludedCategories: ["NO_TRADE"]
           }
         })
@@ -126,7 +126,7 @@ describe("/api/dashboard-view-settings", () => {
           viewId: "turnover",
           view: {
             kind: "turnoverAtLeast",
-            thresholdUsdtByTimeframe: { "5m": -1, "15m": 1, "1h": 1, "4h": 1, "24h": 1, "74h": 1 },
+            thresholdUsdtByTimeframe: { "5m": -1, "15m": 1, "1h": 1, "4h": 1, "24h": 1 },
             excludedCategories: ["NO_TRADE"]
           }
         })

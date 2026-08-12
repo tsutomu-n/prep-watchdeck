@@ -6,7 +6,7 @@ from pathlib import Path
 from prep_watchdeck.config.templates import load_template
 from prep_watchdeck.domain.dto import SnapshotDTO
 from prep_watchdeck.domain.enums import DataSource
-from prep_watchdeck.domain.screening.rankings import build_rankings, candidate_rule_counts
+from prep_watchdeck.domain.screening.rankings import build_rankings
 from prep_watchdeck.features.activity_phase import classify_activity_phase
 from prep_watchdeck.features.volume_ratio import volume_ratio_15m_metadata
 
@@ -29,8 +29,8 @@ class FixtureProvider:
         payload = json.loads(path.read_text(encoding="utf-8"))
         payload["source"]["templateName"] = template
         payload["source"]["dataSource"] = DataSource.FIXTURE.value
-        payload["featureVersion"] = "4"
-        payload["rulesetVersion"] = "3"
+        payload["featureVersion"] = "5"
+        payload["rulesetVersion"] = "4"
         payload["source"]["fixtureSet"] = name
         snapshot = SnapshotDTO.model_validate(payload)
         for row in snapshot.rows:
@@ -41,16 +41,9 @@ class FixtureProvider:
                 min_volume_ratio=config.volume.min_volume_ratio,
                 strong_volume_ratio=config.volume.strong_volume_ratio,
             )
-        snapshot.rankings = build_rankings(snapshot.rows, top_n=config.ranking.top_n)
+        snapshot.rankings = build_rankings(snapshot.rows)
         snapshot.summary["volumeRatio15m"] = volume_ratio_15m_metadata(
             config.volume.baseline_window_bars,
             config.volume.volume_ratio_floor_usdt,
         )
-        snapshot.summary["candidateRule74h"] = {
-            "operator": "AND",
-            "priceAbsPct": config.user_rule.price_74h_abs_pct,
-            "turnoverIncreasePct": config.user_rule.volume_74h_min_increase_pct,
-            "turnoverMode": config.user_rule.volume_74h_mode,
-            **candidate_rule_counts(snapshot.rows),
-        }
         return snapshot

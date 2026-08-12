@@ -12,13 +12,13 @@ from typing import Any, Protocol, runtime_checkable
 from prep_watchdeck.adapters.bitget_live.provider import snapshot_from_pipeline
 from prep_watchdeck.adapters.local_snapshot import AtomicSnapshotWriter
 from prep_watchdeck.application.chart_artifacts import (
+    DETAIL_CHART_SOURCE_5M_BARS,
     chart_timeframes_from_5m,
     publish_snapshot_artifacts,
 )
 from prep_watchdeck.application.service_gap_audit import SymbolGapAudit, audit_service_gaps
 from prep_watchdeck.config.filter_config import FilterConfig
 from prep_watchdeck.config.vpi_config import VpiConfig
-from prep_watchdeck.constants import TIMEFRAME_BARS
 from prep_watchdeck.domain.dto import SnapshotDTO
 from prep_watchdeck.domain.service_models import (
     Candle1mRecord,
@@ -40,6 +40,8 @@ ONE_MINUTE_MS = 60 * ONE_SECOND_MS
 FIVE_MINUTES_MS = 5 * ONE_MINUTE_MS
 DEFAULT_MAX_SERVICE_SNAPSHOT_DATA_LAG_MS = 2 * ONE_MINUTE_MS
 OPEN_INTEREST_RETENTION_MS = 24 * 60 * ONE_MINUTE_MS
+CHART_SOURCE_5M_BARS = DETAIL_CHART_SOURCE_5M_BARS
+CHART_SOURCE_1M_BARS = CHART_SOURCE_5M_BARS * 5
 logger = logging.getLogger(__name__)
 
 
@@ -91,7 +93,7 @@ class CompactServiceSnapshotStore(Protocol):
 @dataclass(frozen=True)
 class ServiceSnapshotBuild:
     snapshot: SnapshotDTO
-    candles_by_symbol: dict[str, list[CandleBar]]
+    chart_candles_by_symbol: dict[str, list[CandleBar]]
     latest_candle_1m_ts_ms: int | None
 
 
@@ -148,25 +150,30 @@ def build_service_snapshot(
     tickers = [
         _ticker_from_latest(item) for item in ticker_records if is_safe_public_symbol(item.symbol)
     ]
-    required_1m_limit = _required_1m_limit(config)
-    required_window_start_ms = _required_1m_window_start_ms(generated_at_ms, required_1m_limit)
+    analysis_5m_bars = required_analysis_5m_bars(config)
+    analysis_1m_bars = analysis_5m_bars * 5
+    chart_window_start_ms = _required_1m_window_start_ms(
+        generated_at_ms,
+        CHART_SOURCE_1M_BARS,
+    )
     generated_window_end_ms = generated_at_ms - (generated_at_ms % ONE_MINUTE_MS)
     candle_window = _load_service_candle_window(
         store,
-        start_ts_ms=required_window_start_ms,
+        start_ts_ms=chart_window_start_ms,
         end_ts_ms=generated_window_end_ms,
         vpi_config=vpi_config,
     )
-    required_window_end_ms = _service_gap_window_end_ms(
+    analysis_window_end_ms = _service_gap_window_end_ms(
         candle_window.latest_candle_1m_ts_ms,
         generated_window_end_ms,
     )
-    adjusted_window_start_ms = required_window_end_ms - (required_1m_limit - 1) * ONE_MINUTE_MS
-    if adjusted_window_start_ms < required_window_start_ms:
-        required_window_start_ms = adjusted_window_start_ms
+    analysis_window_start_ms = analysis_window_end_ms - (analysis_1m_bars - 1) * ONE_MINUTE_MS
+    adjusted_chart_start_ms = analysis_window_end_ms - (CHART_SOURCE_1M_BARS - 1) * ONE_MINUTE_MS
+    if adjusted_chart_start_ms < chart_window_start_ms:
+        chart_window_start_ms = adjusted_chart_start_ms
         candle_window = _load_service_candle_window(
             store,
-            start_ts_ms=required_window_start_ms,
+            start_ts_ms=chart_window_start_ms,
             end_ts_ms=generated_window_end_ms,
             vpi_config=vpi_config,
         )
@@ -176,7 +183,13 @@ def build_service_snapshot(
         config=vpi_config,
         generated_at_ms=generated_at_ms,
     )
-    candles_by_symbol = candle_window.candles_by_symbol
+    chart_candles_by_symbol = {
+        symbol: bars[-CHART_SOURCE_5M_BARS:]
+        for symbol, bars in candle_window.candles_by_symbol.items()
+    }
+    analysis_candles_by_symbol = {
+        symbol: bars[-analysis_5m_bars:] for symbol, bars in chart_candles_by_symbol.items()
+    }
     try:
         previous_oi_by_symbol, oi_diagnostics = _prepare_open_interest_history(
             store,
@@ -197,15 +210,15 @@ def build_service_snapshot(
         config=config,
         contracts=contracts,
         tickers=tickers,
-        candles_by_symbol=candles_by_symbol,
+        candles_by_symbol=analysis_candles_by_symbol,
         previous_oi_by_symbol=previous_oi_by_symbol,
     )
     _append_service_gap_risk_tags(
         rows,
         store=store,
         symbols=[contract.symbol for contract in contracts],
-        window_start_ms=required_window_start_ms,
-        window_end_ms=required_window_end_ms,
+        window_start_ms=analysis_window_start_ms,
+        window_end_ms=analysis_window_end_ms,
     )
     result = PipelineResult(
         run_id=run_id,
@@ -213,9 +226,9 @@ def build_service_snapshot(
         rows=rows,
         contracts=contracts,
         tickers=tickers,
-        candles_by_symbol=candles_by_symbol,
+        candles_by_symbol=analysis_candles_by_symbol,
         chart_candles_by_symbol={
-            symbol: {"5m": bars[-128:]} for symbol, bars in candles_by_symbol.items()
+            symbol: {"5m": bars[-128:]} for symbol, bars in analysis_candles_by_symbol.items()
         },
         candle_errors={},
     )
@@ -244,7 +257,7 @@ def build_service_snapshot(
                 row.display["vpiLitePlus"] = item
     return ServiceSnapshotBuild(
         snapshot=snapshot,
-        candles_by_symbol=candles_by_symbol,
+        chart_candles_by_symbol=chart_candles_by_symbol,
         latest_candle_1m_ts_ms=candle_window.latest_candle_1m_ts_ms,
     )
 
@@ -286,7 +299,7 @@ def publish_service_snapshot_once(
         cache=cache,
         chart_candles_by_symbol={
             symbol: chart_timeframes_from_5m(bars)
-            for symbol, bars in build.candles_by_symbol.items()
+            for symbol, bars in build.chart_candles_by_symbol.items()
         },
     )
     return snapshot
@@ -613,8 +626,8 @@ def _service_gap_window_end_ms(
     return min(latest_bucket_ts, generated_bucket_ts) - FIVE_MINUTES_MS
 
 
-def _required_1m_limit(config: FilterConfig) -> int:
-    return max(config.candles.min_required_bars * 5, max(TIMEFRAME_BARS.values()) * 5)
+def required_analysis_5m_bars(config: FilterConfig) -> int:
+    return config.candles.min_required_bars
 
 
 def _required_1m_window_start_ms(generated_at_ms: int, required_1m_limit: int) -> int:

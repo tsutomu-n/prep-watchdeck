@@ -1,15 +1,15 @@
 # prep-watchdeck 現行概要
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-10T20:23:57+09:00`
-- 検証: `2026-08-10T20:23:57+09:00`
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
 - 状態: `現行`
 
 ---
 
 ## 製品の役割
 
-`prep-watchdeck`は、Bitgetのpublic market dataから異常な値動きを見つけ、候補を絞り、
+`prep-watchdeck`は、Bitgetのpublic market dataから異常な値動きを見つけ、監視対象を絞り、
 risk/contextとdata qualityを確認するlocal-first市場監視watchdeckである。
 
 自動売買Botではない。売買指示、自動発注、Private API、残高・position取得、
@@ -27,12 +27,12 @@ risk/contextとdata qualityを確認するlocal-first市場監視watchdeckであ
 
 - Bitget public RESTからlive snapshotを作る。
 - Bitget public WebSocketの`ticker`と`candle1m`をDuckDBへ保存する。
-- 起動時REST seed、recent gap reconcile、任意のdeep backfillを行う。
+- 起動時REST seedとrecent gap reconcileを行う。
 - Cold snapshot、1秒Hot ticker、detail chartを分離して表示する。
-- 5m、15m、1h、4h、24h、74hで候補を確認する。
-- Raw Sort、ranking、カテゴリ、data quality、risk tagで候補を絞る。
-- Candidate、Watchlist、選択銘柄detail、補正順位の順でDashboardを確認する。
-- Symbol画面のMonitoring Railで分類、label、品質、時間軸、ranking位置、movement signal、
+- 5m、15m、1h、4h、24hで市場状態を確認する。
+- Raw Sort、Smart Rank、カテゴリ、data quality、risk tagで監視対象を絞る。
+- optional context、Watchlist、選択銘柄detail、Smart Rankの順でDashboardを確認する。
+- Symbol画面のMonitoring Railで分類、label、品質、時間軸、OI 60分、movement signal、
   risk tagを確認する。
 - Past Noteを銘柄annotationとして保存し、`observedAt`から60日または`expiresAt`到達時に
   月別Archiveへ移す。
@@ -42,7 +42,7 @@ risk/contextとdata qualityを確認するlocal-first市場監視watchdeckであ
 - 起動時にscanner-coreとWebの実pathを表示し、個別override不一致では停止する。
 - 日次サマリーschema v2を`ops/daily/v2/`へ生成し、schema v1出力を上書きしない。
 
-ranking、score、上昇色、選択状態は「次に確認する候補」を表し、売買推奨ではない。
+Smart Rank、score、上昇色、選択状態は「次に確認する監視対象」を表し、売買推奨ではない。
 
 ## 非目標
 

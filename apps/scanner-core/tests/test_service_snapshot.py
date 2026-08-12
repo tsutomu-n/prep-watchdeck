@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -9,8 +10,12 @@ from typer.testing import CliRunner
 from prep_watchdeck.adapters.duckdb import DuckDbServiceStore, DuckDbSnapshotCache
 from prep_watchdeck.adapters.local_snapshot import AtomicSnapshotWriter
 from prep_watchdeck.application.service_snapshot import (
+    CHART_SOURCE_1M_BARS,
+    CHART_SOURCE_5M_BARS,
     aggregate_1m_to_5m,
+    build_service_snapshot,
     publish_service_snapshot_once,
+    required_analysis_5m_bars,
     snapshot_from_service_store,
 )
 from prep_watchdeck.config.templates import load_template
@@ -22,6 +27,7 @@ from prep_watchdeck.domain.service_models import (
     TickerLatestRecord,
 )
 from prep_watchdeck.interfaces.cli import app
+from prep_watchdeck.models import CandleBar
 
 runner = CliRunner()
 
@@ -133,7 +139,7 @@ def test_snapshot_from_service_store_excludes_unsupported_symbols(tmp_path) -> N
 def test_snapshot_from_service_store_does_not_mark_stale_history_ok(tmp_path) -> None:
     old_start_ms = 1_780_000_000_000
     one_minute_ms = 60_000
-    required_1m_bars = 1177 * 5
+    required_1m_bars = 1915
     candles: list[Candle1mRecord] = []
     for index in range(required_1m_bars):
         ts_ms = old_start_ms + index * one_minute_ms
@@ -166,7 +172,7 @@ def test_snapshot_from_service_store_does_not_mark_stale_history_ok(tmp_path) ->
 def test_snapshot_from_service_store_surfaces_repairable_gap_risk_tag(tmp_path) -> None:
     window_end_ms = 1_781_000_700_000
     latest_candle_ts_ms = window_end_ms + 5 * 60_000
-    required_1m_bars = 1177 * 5
+    required_1m_bars = 1915
     window_start_ms = window_end_ms - (required_1m_bars - 1) * 60_000
     missing_ts_ms = window_start_ms + 123 * 60_000
     candles: list[Candle1mRecord] = []
@@ -204,7 +210,7 @@ def test_snapshot_from_service_store_does_not_flag_publish_lag_as_gap(tmp_path) 
     window_end_ms = 1_781_000_700_000
     latest_candle_ts_ms = window_end_ms + 5 * 60_000
     generated_at_ms = latest_candle_ts_ms + 3 * 60_000
-    required_1m_bars = 1177 * 5
+    required_1m_bars = 1915
     window_start_ms = window_end_ms - (required_1m_bars - 1) * 60_000
     candles: list[Candle1mRecord] = []
     for index in range(required_1m_bars + 5):
@@ -240,7 +246,7 @@ def test_snapshot_from_service_store_does_not_flag_publish_lag_as_gap(tmp_path) 
 def test_snapshot_from_service_store_marks_tail_lag_as_stale_not_repairable(tmp_path) -> None:
     window_end_ms = 1_781_000_700_000
     latest_candle_ts_ms = window_end_ms + 5 * 60_000
-    required_1m_bars = 1177 * 5
+    required_1m_bars = 1915
     window_start_ms = window_end_ms - (required_1m_bars - 1) * 60_000
     candles: list[Candle1mRecord] = []
     for index in range(required_1m_bars + 5):
@@ -280,7 +286,7 @@ def test_snapshot_from_service_store_marks_tail_lag_as_stale_not_repairable(tmp_
 
 def test_snapshot_from_service_store_surfaces_history_short_and_zero_volume_tags(tmp_path) -> None:
     window_end_ms = 1_781_000_700_000
-    required_1m_bars = 1177 * 5
+    required_1m_bars = 1915
     window_start_ms = window_end_ms - (required_1m_bars - 1) * 60_000
     candles: list[Candle1mRecord] = []
     for index in range(30):
@@ -364,6 +370,51 @@ def test_duckdb_service_store_loads_compact_snapshot_candle_window(tmp_path) -> 
     )
     assert float(first.base_vol) == 220.0
     assert float(first.quote_vol) == 220.0
+
+
+def test_service_snapshot_separates_analysis_gap_and_chart_windows(monkeypatch) -> None:
+    generated_at_ms = 1_800_000_000_000
+    config = load_template(Path("../../config/scanner-filters"), "balanced")
+    store = RecordingCompactServiceStore(generated_at_ms=generated_at_ms)
+    captured_bar_counts: dict[str, int] = {}
+
+    from prep_watchdeck.application import service_snapshot as service_snapshot_module
+
+    original_build_scanner_rows = service_snapshot_module.build_scanner_rows
+
+    def recording_build_scanner_rows(**kwargs):
+        captured_bar_counts.update(
+            {symbol: len(bars) for symbol, bars in kwargs["candles_by_symbol"].items()}
+        )
+        return original_build_scanner_rows(**kwargs)
+
+    monkeypatch.setattr(
+        service_snapshot_module,
+        "build_scanner_rows",
+        recording_build_scanner_rows,
+    )
+
+    build = build_service_snapshot(
+        store,
+        template="balanced",
+        config=config,
+        generated_at_ms=generated_at_ms,
+        run_id="window-separation-test",
+    )
+
+    analysis_5m_bars = required_analysis_5m_bars(config)
+    gap_end_ms = generated_at_ms - 5 * 60_000
+    gap_start_ms = gap_end_ms - (analysis_5m_bars * 5 - 1) * 60_000
+    chart_start_ms = gap_end_ms - (CHART_SOURCE_1M_BARS - 1) * 60_000
+
+    assert analysis_5m_bars == 383
+    assert captured_bar_counts == {"ALTUSDT": 383, "BTCUSDT": 383}
+    assert len(build.chart_candles_by_symbol["ALTUSDT"]) == CHART_SOURCE_5M_BARS
+    assert store.five_minute_starts[-1] == chart_start_ms
+    assert store.count_starts[-1] == chart_start_ms
+    assert store.range_calls == [(["ALTUSDT", "BTCUSDT"], gap_start_ms, gap_end_ms)]
+    assert gap_end_ms - gap_start_ms == (1915 - 1) * 60_000
+    assert build.snapshot.summary["serviceCandles1m"] == CHART_SOURCE_1M_BARS * 2
 
 
 def test_publish_service_snapshot_once_writes_latest_json(tmp_path) -> None:
@@ -712,6 +763,55 @@ class MemoryServiceStore:
             sample for sample in self.oi_samples if sample.bucket_ts_ms >= cutoff_ts_ms
         ]
         return before - len(self.oi_samples)
+
+
+class RecordingCompactServiceStore(MemoryServiceStore):
+    def __init__(self, *, generated_at_ms: int) -> None:
+        super().__init__(
+            instruments=[instrument("ALTUSDT", "ALT"), instrument("BTCUSDT", "BTC")],
+            tickers=[ticker("ALTUSDT"), ticker("BTCUSDT")],
+            candles=[],
+        )
+        self.generated_at_ms = generated_at_ms
+        self.five_minute_starts: list[int] = []
+        self.count_starts: list[int] = []
+        self.range_calls: list[tuple[list[str], int, int]] = []
+
+    def load_candles_5m_since(self, start_ts_ms: int) -> dict[str, list[CandleBar]]:
+        self.five_minute_starts.append(start_ts_ms)
+        return {
+            symbol: [
+                CandleBar(
+                    symbol=symbol,
+                    ts=self.generated_at_ms - (CHART_SOURCE_5M_BARS - index) * 300_000,
+                    open=Decimal("1"),
+                    high=Decimal("1.1"),
+                    low=Decimal("0.9"),
+                    close=Decimal("1"),
+                    base_vol=Decimal("100"),
+                    quote_vol=Decimal("1000"),
+                )
+                for index in range(CHART_SOURCE_5M_BARS)
+            ]
+            for symbol in ("ALTUSDT", "BTCUSDT")
+        }
+
+    def count_candles_1m_since(self, start_ts_ms: int) -> int:
+        self.count_starts.append(start_ts_ms)
+        return CHART_SOURCE_1M_BARS * 2
+
+    def latest_candle_1m_ts_since(self, start_ts_ms: int) -> int | None:
+        _ = start_ts_ms
+        return self.generated_at_ms
+
+    def load_candles_1m_range(
+        self,
+        symbols: list[str],
+        start_ts_ms: int,
+        end_ts_ms: int,
+    ) -> list[Candle1mRecord]:
+        self.range_calls.append((symbols, start_ts_ms, end_ts_ms))
+        return []
 
 
 class FailingOiMemoryServiceStore(MemoryServiceStore):

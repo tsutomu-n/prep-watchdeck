@@ -8,7 +8,6 @@
     dashboardCategoryFilters as categoryFilters,
     dashboardRawSortDirections as rawSortDirections,
     dashboardRawSortKeys as rawSortKeys,
-    dashboardRankingMetrics as metrics,
     dashboardRankingTimeframes as rankingTimeframes,
     dashboardViewModes as viewModes,
     defaultDashboardViewSettings,
@@ -26,7 +25,6 @@
     type DashboardRankingTimeframe as RankingTimeframe,
     type DashboardViewMode as ViewMode
   } from "$lib/market/dashboard-filters";
-  import { formatCandidateRule74h } from "$lib/market/candidate-rule";
   import {
     formatVolumeRatioBaseline,
     formatVolumeRatioHelp
@@ -65,7 +63,6 @@
     resolveDashboardSelection,
     validateDraftSymbol
   } from "$lib/market/dashboard-selection";
-  import DashboardRankingArea from "$lib/components/dashboard/DashboardRankingArea.svelte";
   import DashboardMarketComparisonPanel from "$lib/components/dashboard/DashboardMarketComparisonPanel.svelte";
   import DashboardVpiExperimentPanel from "$lib/components/dashboard/DashboardVpiExperimentPanel.svelte";
   import DashboardWatchQueue from "$lib/components/dashboard/DashboardWatchQueue.svelte";
@@ -172,9 +169,6 @@
   let visibleRows = $derived(sortRowsByRawSort(filteredRows, rawSortState, selectedTimeframe));
   let selection = $derived(resolveDashboardSelection(selectedSymbol, visibleRows));
   let selected = $derived(selection.row);
-  let candidateRuleText = $derived(
-    formatCandidateRule74h(snapshot?.summary?.candidateRule74h)
-  );
   let volumeRatioBaseline = $derived(
     formatVolumeRatioBaseline(snapshot?.summary?.volumeRatio15m)
   );
@@ -740,17 +734,8 @@
     />
 
     <section class="workspace">
-      <div class="dashboard-slot candidate-slot" data-dashboard-section="candidate">
-        <DashboardRankingArea
-          rankings={snapshot?.rankings}
-          {selectedTimeframe}
-          {candidateRuleText}
-          {volumeRatioBaseline}
-          {volumeRatioHelp}
-          timeframes={rankingTimeframes}
-          {metrics}
-          onTimeframeSelect={selectRankingTimeframe}
-        />
+      {#if marketComparisonSummary || vpiSummary}
+      <div class="dashboard-slot context-slot" data-dashboard-section="context">
         {#if marketComparisonSummary}
           <DashboardMarketComparisonPanel summary={marketComparisonSummary} />
         {/if}
@@ -763,6 +748,7 @@
           />
         {/if}
       </div>
+      {/if}
 
       <div class="dashboard-slot watchlist-slot" data-dashboard-section="watchlist">
         <DashboardWatchQueue
@@ -909,7 +895,7 @@
     line-height: 1.45;
   }
 
-  /* Hallmark macrostructure: candidate → watchlist → selected context → corrected ranking.
+  /* Hallmark macrostructure: market context → watchlist → selected context → corrected ranking.
    * DESIGN.md locked terminal palette; flat surfaces, bounded mobile lists, no information removal.
    */
   .terminal {
@@ -926,7 +912,7 @@
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "candidate"
+      "context"
       "watchlist"
       "detail"
       "smart";
@@ -943,8 +929,8 @@
     min-width: 0;
   }
 
-  .candidate-slot {
-    grid-area: candidate;
+  .context-slot {
+    grid-area: context;
   }
 
   .watchlist-slot {
@@ -973,7 +959,7 @@
     .workspace {
       grid-template-columns: minmax(0, 1fr) minmax(300px, 330px);
       grid-template-areas:
-        "candidate detail"
+        "context detail"
         "watchlist detail"
         "smart detail";
     }

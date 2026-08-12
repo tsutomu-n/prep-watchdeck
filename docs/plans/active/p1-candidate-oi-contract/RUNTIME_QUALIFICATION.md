@@ -1,12 +1,15 @@
 # 初期Runtime Qualification
 
 - 作成: `2026-08-08T14:21:08+09:00`
-- 更新: `2026-08-09T15:39:47+09:00`
-- 検証: `2026-08-09T15:39:47+09:00`
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
 - 状態: `実装計画`
 
 ---
 
+> **再実行禁止:** 以下は完了当時のCandidate / OI qualification証拠である。Candidate・74hの受入項目は
+> [Decision 0010](../../../decisions/0010-retire-74h-candidate-deep-backfill.md)によりsupersedeされた。
+> 現行runtimeの受入手順として再利用しない。
 
 ## 目的
 

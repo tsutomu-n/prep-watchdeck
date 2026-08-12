@@ -20,21 +20,16 @@ def test_fixture_snapshot_validates() -> None:
     assert any(row.category.value == "NO_TRADE" for row in snapshot.rows)
 
 
-def test_basic_fixture_computes_candidate_74h_contract() -> None:
+def test_basic_fixture_publishes_short_horizon_contract() -> None:
     snapshot = FixtureProvider(Path("../../fixtures")).build_snapshot(
         template="balanced", fixture_set="basic"
     )
 
-    candidate_rule = snapshot.summary["candidateRule74h"]
-    assert candidate_rule["eligible"] == 1
-    assert candidate_rule["notMatched"] == 0
-    assert candidate_rule["unknown"] == 3
-    assert [item["symbol"] for item in snapshot.rankings["timeframes"]["15m"]["changeUp"]] == [
-        "ALTUSDT"
-    ]
+    assert "candidateRule74h" not in snapshot.summary
     assert [item["symbol"] for item in snapshot.rankings["noTrade"]] == ["THINUSDT"]
-    assert snapshot.feature_version == "4"
-    assert snapshot.ruleset_version == "3"
+    assert set(snapshot.rankings) == {"noTrade"}
+    assert snapshot.feature_version == "5"
+    assert snapshot.ruleset_version == "4"
     assert snapshot.schema_version == 1
     assert {row.symbol: row.activity_phase for row in snapshot.rows} == {
         "ALTUSDT": "SUSTAINED",
@@ -53,27 +48,13 @@ def test_basic_fixture_computes_candidate_74h_contract() -> None:
     }
 
 
-def test_fixture_provider_uses_template_ranking_top_n(tmp_path) -> None:
-    config_dir = tmp_path / "scanner-filters"
-    config_dir.mkdir()
-    source = Path("../../config/scanner-filters/balanced.toml")
-    config = source.read_text(encoding="utf-8").replace("top_n = 10", "top_n = 1")
-    (config_dir / "balanced.toml").write_text(config, encoding="utf-8")
-
-    snapshot = FixtureProvider(Path("../../fixtures"), config_dir=config_dir).build_snapshot(
-        template="balanced", fixture_set="basic"
-    )
-
-    assert len(snapshot.rankings["timeframes"]["15m"]["changeUp"]) == 1
-    assert snapshot.rankings["meta"]["timeframes"]["15m"]["changeUp"]["limit"] == 1
-
-
 def test_fixture_volume_ratio_metadata_follows_active_config(tmp_path) -> None:
     config_dir = tmp_path / "scanner-filters"
     config_dir.mkdir()
     source = Path("../../config/scanner-filters/balanced.toml")
     config = (
         source.read_text(encoding="utf-8")
+        .replace("min_required_bars = 383", "min_required_bars = 289")
         .replace("baseline_window_bars = 288", "baseline_window_bars = 96")
         .replace("volume_ratio_floor_usdt = 1000", "volume_ratio_floor_usdt = 2500")
     )
@@ -199,3 +180,33 @@ def test_schema_exposes_optional_activity_phase_enum() -> None:
         "UNKNOWN",
     ]
     assert "activityPhase" not in row_schema["required"]
+
+
+def test_schema_omits_retired_74h_properties_and_keeps_legacy_extension_points() -> None:
+    schema = json.loads(Path("../../schemas/scanner-snapshot.schema.json").read_text())
+    row_schema = schema["$defs"]["ScannerRowDTO"]
+
+    assert row_schema["additionalProperties"] is True
+    assert {
+        "priceChange74hPct",
+        "turnoverCurrent24hUsdt",
+        "turnover24hEnding74hAgoUsdt",
+        "volumeChange74h24hPct",
+        "userRule74hMatched",
+    }.isdisjoint(row_schema["properties"])
+    assert schema["properties"]["summary"]["additionalProperties"] is True
+    assert schema["properties"]["rankings"]["additionalProperties"] is True
+
+
+def test_snapshot_reader_accepts_retired_74h_fields_as_legacy_extensions() -> None:
+    payload = json.loads(Path("../../fixtures/snapshots/basic.json").read_text())
+    payload["summary"]["candidateRule74h"] = {"eligible": 1}
+    payload["rankings"]["timeframes"] = {"74h": {}}
+    payload["rows"][0]["userRule74hMatched"] = True
+
+    snapshot = SnapshotDTO.model_validate(payload)
+    serialized = snapshot.model_dump(mode="json", by_alias=True)
+
+    assert serialized["summary"]["candidateRule74h"] == {"eligible": 1}
+    assert serialized["rankings"]["timeframes"] == {"74h": {}}
+    assert serialized["rows"][0]["userRule74hMatched"] is True

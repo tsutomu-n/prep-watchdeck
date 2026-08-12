@@ -13,16 +13,15 @@ from prep_watchdeck.domain.dto import (
     SparklineDTO,
 )
 from prep_watchdeck.domain.enums import DataSource, SnapshotStatus
-from prep_watchdeck.domain.features.long_horizon import compute_74h_features
 from prep_watchdeck.domain.features.time_grid import normalize_5m_grid
-from prep_watchdeck.domain.screening.rankings import build_rankings, candidate_rule_counts
+from prep_watchdeck.domain.screening.rankings import build_rankings
 from prep_watchdeck.features.volume_ratio import volume_ratio_15m_metadata
 from prep_watchdeck.models import CandleBar, ContractInfo, ScannerRow, TickerInfo
 from prep_watchdeck.screening.pipeline import PipelineResult, run_live_pipeline
 from prep_watchdeck.settings import Settings
 
 if TYPE_CHECKING:
-    from prep_watchdeck.config.filter_config import FilterConfig, UserRuleConfig
+    from prep_watchdeck.config.filter_config import FilterConfig
 
 
 class BitgetLiveProvider:
@@ -61,7 +60,6 @@ def snapshot_from_pipeline(
 ) -> SnapshotDTO:
     contract_map = {contract.symbol: contract for contract in result.contracts}
     ticker_map = {ticker.symbol: ticker for ticker in result.tickers}
-    user_rule = config.user_rule if config is not None else None
     rows = [
         _row_to_dto(
             row,
@@ -69,7 +67,6 @@ def snapshot_from_pipeline(
             ticker=ticker_map.get(row.symbol),
             bars=result.candles_by_symbol.get(row.symbol, []),
             chart_bars_by_timeframe=result.chart_candles_by_symbol.get(row.symbol, {}),
-            user_rule=user_rule,
             include_chart_bars=include_chart_bars,
             sparkline_points_limit=sparkline_points_limit,
         )
@@ -95,19 +92,12 @@ def snapshot_from_pipeline(
             config.volume.baseline_window_bars,
             config.volume.volume_ratio_floor_usdt,
         )
-        summary["candidateRule74h"] = {
-            "operator": "AND",
-            "priceAbsPct": config.user_rule.price_74h_abs_pct,
-            "turnoverIncreasePct": config.user_rule.volume_74h_min_increase_pct,
-            "turnoverMode": config.user_rule.volume_74h_mode,
-            **candidate_rule_counts(rows),
-        }
 
     return SnapshotDTO(
         schema_version=SCHEMA_VERSION,
         engine_version="0.1.0",
-        feature_version="4",
-        ruleset_version="3",
+        feature_version="5",
+        ruleset_version="4",
         config_hash=config_hash,
         run_id=result.run_id,
         generated_at=result.generated_at_ms,
@@ -120,10 +110,7 @@ def snapshot_from_pipeline(
             data_source=DataSource.LIVE,
         ),
         summary=summary,
-        rankings=build_rankings(
-            rows,
-            top_n=config.ranking.top_n if config is not None else 10,
-        ),
+        rankings=build_rankings(rows),
         rows=rows,
     )
 
@@ -135,21 +122,12 @@ def _row_to_dto(
     ticker: TickerInfo | None,
     bars: list[CandleBar],
     chart_bars_by_timeframe: dict[str, list[CandleBar]] | None = None,
-    user_rule: UserRuleConfig | None = None,
     include_chart_bars: bool = True,
     sparkline_points_limit: int = 5,
 ) -> ScannerRowDTO:
     _grid, quality = normalize_5m_grid(bars)
     range_24h = _range_24h_from_ticker(ticker, fallback_close=float(row.close))
 
-    if user_rule is not None:
-        long_horizon = compute_74h_features(
-            bars,
-            price_threshold_abs_pct=user_rule.price_74h_abs_pct,
-            volume_increase_threshold_pct=user_rule.volume_74h_min_increase_pct,
-        )
-    else:
-        long_horizon = compute_74h_features(bars)
     points_limit = min(max(sparkline_points_limit, 0), 16)
     sparkline: SparklineDTO = {
         "tf": "5m",
@@ -163,10 +141,6 @@ def _row_to_dto(
         }
 
     reason_codes = [row.label]
-    if long_horizon.price_condition_matched is True:
-        reason_codes.append("USER_74H_PRICE_MATCH")
-    if long_horizon.turnover_condition_matched is True:
-        reason_codes.append("USER_74H_VOLUME_MATCH")
 
     return ScannerRowDTO(
         symbol=row.symbol,
@@ -193,11 +167,6 @@ def _row_to_dto(
         range_24h_low=range_24h["low"],
         range_24h_position_pct=range_24h["position_pct"],
         range_24h_pct=range_24h["range_pct"],
-        price_change_74h_pct=long_horizon.price_change_74h_pct,
-        turnover_current_24h_usdt=long_horizon.turnover_current_24h_usdt,
-        turnover_24h_ending_74h_ago_usdt=long_horizon.turnover_24h_ending_74h_ago_usdt,
-        volume_change_74h_24h_pct=long_horizon.volume_change_74h_24h_pct,
-        user_rule_74h_matched=long_horizon.user_rule_74h_matched,
         roughness_15m=row.roughness_15m,
         btc_relative_15m=row.btc_relative_15m,
         funding_bias=row.funding_bias,

@@ -5,7 +5,6 @@ from pathlib import Path
 
 from prep_watchdeck.constants import SCHEMA_VERSION
 from prep_watchdeck.models import ScannerRow
-from prep_watchdeck.screening.rankings import build_rankings
 
 
 def _dump(path: Path, payload: dict[str, object]) -> None:
@@ -59,7 +58,22 @@ def export_json_bundle(
             rows=rows,
         ),
     )
-    rankings = build_rankings(rows, top_n=top_n, exclude_no_trade=exclude_no_trade)
+    _ = top_n, exclude_no_trade
+    rankings = {
+        "noTrade": [
+            {
+                "symbol": row.symbol,
+                "category": row.category,
+                "priorityScore": row.priority_score,
+                "changePct": row.change_pct_by_tf.get("15m"),
+                "volumeRatio": row.volume_ratio_by_tf.get("15m"),
+                "turnoverUsdt": row.turnover_usdt_by_tf.get("15m"),
+                "label": row.label,
+            }
+            for row in rows
+            if row.category == "NO_TRADE"
+        ]
+    }
     _dump(
         out_dir / "rankings.json",
         {

@@ -9,7 +9,6 @@ from prep_watchdeck.application.service_deep_backfill import (
     select_deep_backfill_batch,
 )
 from prep_watchdeck.domain.service_models import Candle1mRecord
-from prep_watchdeck.interfaces import cli
 from prep_watchdeck.models import CandleBar
 
 
@@ -131,54 +130,6 @@ async def test_run_deep_backfill_worker_does_not_complete_from_old_rows(tmp_path
         ("AAAUSDT", "USDT-FUTURES", "1m", 2),
         ("AAAUSDT", "USDT-FUTURES", "1m", 2),
     ]
-
-
-async def test_service_deep_backfill_wrapper_marks_failed_without_raising(
-    tmp_path,
-    monkeypatch,
-) -> None:
-    store = DuckDbServiceStore(tmp_path / "watchdeck.duckdb")
-    tracker = DeepBackfillProgressTracker(
-        ["AAAUSDT"],
-        target_limit=2,
-        batch_size=1,
-        concurrency=1,
-        rate_limit_per_second=5.0,
-        cooldown_seconds=0.0,
-        retry_delay_seconds=0.0,
-        started_at_ms=1_781_000_000_000,
-    )
-
-    class FailingClient:
-        def __init__(self, rate_limit_per_second: float) -> None:
-            assert rate_limit_per_second == 5.0
-
-        async def __aenter__(self):
-            raise RuntimeError("client unavailable")
-
-        async def __aexit__(self, exc_type, exc, tb) -> None:
-            return None
-
-    monkeypatch.setattr(cli, "BitgetPublicClient", FailingClient)
-
-    result = await cli._run_service_deep_backfill_from_bitget(
-        store=store,
-        symbols=["AAAUSDT"],
-        product_type="USDT-FUTURES",
-        target_limit=2,
-        batch_size=1,
-        concurrency=1,
-        cooldown_seconds=0.0,
-        retry_delay_seconds=0.0,
-        rate_limit_per_second=5.0,
-        tracker=tracker,
-        blocked_by=None,
-    )
-
-    snapshot = tracker.snapshot()
-    assert result is None
-    assert snapshot.status == "failed"
-    assert snapshot.latest_error == "RuntimeError: client unavailable"
 
 
 class FlakyDeepFetcher:

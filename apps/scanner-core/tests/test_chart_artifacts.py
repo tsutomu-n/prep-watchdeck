@@ -40,6 +40,18 @@ def test_detail_chart_bars_are_sorted_deduplicated_and_limited(tmp_path) -> None
     assert len(timestamps) == len(set(timestamps))
 
 
+def test_detail_chart_keeps_the_existing_1177_bar_source_depth() -> None:
+    timeframes = chart_timeframes_from_5m([_bar(index) for index in range(1177)])
+
+    assert {timeframe: len(bars) for timeframe, bars in timeframes.items()} == {
+        "5m": 1177,
+        "15m": 393,
+        "1h": 99,
+        "4h": 26,
+        "24h": 5,
+    }
+
+
 def test_detail_chart_cleanup_removes_only_stale_json_files(tmp_path) -> None:
     (tmp_path / "STALEUSDT.json").parent.mkdir(parents=True, exist_ok=True)
     (tmp_path / "STALEUSDT.json").write_text("{}\n", encoding="utf-8")

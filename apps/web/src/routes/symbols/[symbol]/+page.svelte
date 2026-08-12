@@ -6,7 +6,6 @@
     type PastNote
   } from "$lib/past-note/past-note";
   import { savePastNoteRecord } from "$lib/past-note/past-note-client";
-  import { rankingPosition } from "$lib/market/rankings";
   import { movementSignals, range24h } from "$lib/market/row-analysis";
   import { formatDisplaySymbol } from "$lib/market/symbol-display";
   import SymbolHeader from "$lib/components/symbol/SymbolHeader.svelte";
@@ -33,13 +32,7 @@
 
   let { data }: PageProps = $props();
 
-  const rankingTimeframes = ["5m", "15m", "1h", "4h", "24h", "74h"] as const;
-  const rankingMetrics = [
-    { id: "changeUp", label: "上昇順" },
-    { id: "changeDown", label: "下落順" },
-    { id: "turnoverTop", label: "売買代金" },
-    { id: "volumeUp", label: "出来高倍率" }
-  ] as const;
+  const rankingTimeframes = ["5m", "15m", "1h", "4h", "24h"] as const;
 
   let pastNotes = $state<PastNote[]>([]);
   let noteReason = $state("");
@@ -58,12 +51,6 @@
   let displaySymbol = $derived(formatDisplaySymbol(row.symbol));
   let selectedSignals = $derived(movementSignals(row, selectedTimeframe));
   let selectedPastNotes = $derived(filterPastNotesBySymbol(pastNotes, row.symbol));
-  let rankingContext = $derived(
-    rankingMetrics.map((metric) => ({
-      ...metric,
-      result: rankingPosition(data.snapshot.rankings, selectedTimeframe, metric.id, row.symbol)
-    }))
-  );
   let timeframeRows = $derived(
     rankingTimeframes.map((timeframe) => ({
       timeframe,
@@ -211,7 +198,7 @@
       <MarketChart row={row} timeframe={selectedTimeframe} runId={data.snapshot.runId} size="analysis" />
     </section>
 
-    <SymbolMonitoringRail {row} {selectedTimeframe} {rankingContext} {selectedSignals} />
+    <SymbolMonitoringRail {row} {selectedTimeframe} {selectedSignals} />
   </section>
 
   <SymbolTimeframeBoard symbol={row.symbol} {selectedTimeframe} rows={timeframeRows} />

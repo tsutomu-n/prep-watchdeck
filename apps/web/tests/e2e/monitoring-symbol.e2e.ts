@@ -25,21 +25,7 @@ test("symbol page keeps the monitoring evidence in a monitoring-only rail", asyn
   await expect(
     monitoringRail.locator("dt").filter({ hasText: /^活動phase$/ }).locator("..")
   ).toContainText("持続");
-  const rule74h = page.getByRole("heading", { name: "74h 条件", exact: true }).locator("..");
-  await expect(rule74h.locator("dt").filter({ hasText: /^ユーザー条件$/ }).locator("..")).toContainText(
-    "一致"
-  );
   await expect(page.getByText("open interest", { exact: true })).toHaveCount(0);
-
-  await expect(
-    monitoringRail.getByRole("heading", { name: "ランキング位置", exact: true })
-  ).toBeVisible();
-  await expect(monitoringRail.locator(".rank-context dt")).toHaveText([
-    "上昇順",
-    "下落順",
-    "売買代金",
-    "出来高倍率"
-  ]);
   await expect(monitoringRail.getByRole("heading", { name: "即時シグナル", exact: true })).toBeVisible();
   await expect(monitoringRail.getByText("5分/1時間一致", { exact: true })).toBeVisible();
   await expect(monitoringRail.getByText("出来高増", { exact: true })).toBeVisible();

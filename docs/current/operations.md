@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-10T14:13:39+09:00`
-- 検証: `2026-08-10T14:13:39+09:00`
-- 文書更新作業: `2026-08-10_14:13`（Asia/Tokyo）
+- 更新: `2026-08-12T21:38:47+09:00`
+- 検証: `2026-08-12T21:38:47+09:00`
+- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
 - 状態: `現行`
 
 ---
@@ -94,23 +94,18 @@ DuckDBの`snapshots` tableはlatest cacheであり、履歴Archiveではない�
 旧DBをrollback backupとして保持してから同一filesystem上で入れ替える。`VACUUM`をfile縮小手段として
 扱わない。
 
-service unitは通常の直近60本reconcileとは別に、74h判定に必要な5885本を低優先で構築する。
+service unitは起動時backfillを無効にし、通常のrecent gap reconcileと継続取得を行う。
 
 ```text
 --backfill-limit 0
 --reconcile-concurrency 1
 --ticker-refresh-interval-sec 60
---deep-backfill-limit 5885
---deep-backfill-batch-size 1
---deep-backfill-concurrency 1
---deep-backfill-cooldown-sec 5
---deep-backfill-retry-delay-sec 60
---deep-backfill-rate-limit-per-second 1
 ```
 
 同じstate rootに別の`watchdeck service`を起動せず、full local gateとunit diff確認後に
-正式unitを1回だけcontrolled restartする。deep backfillはrestart後も進捗を
-`service-state.json`の`deepBackfill`へ出す。
+正式unitを1回だけcontrolled restartする。scanner分析とgap auditは5分足383本を使う。detail chartは
+別目的で最大1177本の5分足相当（5885本の1分足）を読むため、長いchart source取得をdeep backfillや
+74時間判定の復活と解釈しない。
 
 ### 更新停止watchdog
 
@@ -154,7 +149,7 @@ state_root="$(realpath -m "${PREP_WATCHDECK_STATE_DIR:-var}")"
 systemctl --user show prep-watchdeck-service.service \
   -p ActiveState -p SubState -p MainPID -p NRestarts -p Restart
 
-jq '{generatedAtMs,dataAsOfMs,diagnostics,backfill,reconcile,deepBackfill}' \
+jq '{generatedAtMs,dataAsOfMs,diagnostics,backfill,reconcile}' \
   "$state_root/snapshots/service-state.json"
 
 curl --fail http://127.0.0.1:5173/api/health
@@ -169,7 +164,7 @@ Bitget障害中に再起動を繰り返さない。
 
 unit設定を戻す場合は、`--apply`が表示したservice/Webそれぞれのbackupを元のunit pathへ
 `install -m 0644`で戻し、`systemctl --user daemon-reload`後に1回だけcontrolled restartする。
-deep backfillがupsertした正常なpublic candleは削除しない。
+既存の正常なpublic candleやOI sampleは削除しない。
 
 serviceはbootstrap後もBitget public all-tickerを60秒ごとに1回取得し、`holdingAmount`と
 provider `ts`をfreshなOI current sampleへ使う。取得失敗はwarningとして次cycleへ継続し、
@@ -359,5 +354,5 @@ bun run build
 serviceを起動済み扱いにしない。各snapshot cycleのOI保存・読込・prune失敗はsnapshot発行を
 継続するが、`summary.oiDiagnostics`をdegradedにし、全OIを`UNKNOWN`として加点しない。
 
-OI sampleはsource時刻の5分bucketで24時間だけ保持する。service再起動後は同じstate rootの
-履歴を再利用する。同一DuckDBへ別writerを起動しない既存運用を維持する。
+OI sampleはsource時刻の5分bucketで24時間だけ保持し、exact 60分lookbackと比較する。service再起動後は
+同じstate rootの履歴を再利用する。同一DuckDBへ別writerを起動しない既存運用を維持する。

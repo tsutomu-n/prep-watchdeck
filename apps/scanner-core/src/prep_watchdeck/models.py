@@ -7,7 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from prep_watchdeck.domain.enums import ActivityPhase
 
-Timeframe = Literal["5m", "15m", "1h", "4h", "24h", "74h"]
+Timeframe = Literal["5m", "15m", "1h", "4h", "24h"]
 Category = Literal["WATCH", "CAUTION", "NO_TRADE", "LOW_PRIORITY"]
 Direction = Literal["UP_SURGE", "UP", "FLAT", "DOWN", "DOWN_CRASH"]
 

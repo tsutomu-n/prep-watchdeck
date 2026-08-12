@@ -8,6 +8,13 @@ from prep_watchdeck.models import CandleBar
 
 VOLUME_RATIO_WINDOW_MINUTES = 15
 VOLUME_RATIO_SAMPLE_STEP_MINUTES = 5
+VOLUME_RATIO_WINDOWS_5M = {"15m": 3, "1h": 12, "4h": 48}
+
+
+def required_volume_ratio_5m_bars(baseline_sample_count: int) -> int:
+    if baseline_sample_count < 1:
+        raise ValueError("baseline_sample_count must be positive")
+    return baseline_sample_count + 2 * max(VOLUME_RATIO_WINDOWS_5M.values()) - 1
 
 
 def volume_ratio_15m_metadata(
@@ -29,7 +36,7 @@ def volume_ratio_15m(
     baseline_window_bars: int,
     floor_usdt: float,
 ) -> float | None:
-    return _volume_ratio(bars, 3, baseline_window_bars, floor_usdt)
+    return _volume_ratio(bars, VOLUME_RATIO_WINDOWS_5M["15m"], baseline_window_bars, floor_usdt)
 
 
 def _volume_ratio(
@@ -68,8 +75,17 @@ def volume_ratio_by_timeframe(
     return {
         "5m": None,
         "15m": volume_ratio_15m(bars, baseline_window_bars, floor_usdt),
-        "1h": _volume_ratio(bars, 12, baseline_window_bars, floor_usdt),
-        "4h": _volume_ratio(bars, 48, baseline_window_bars, floor_usdt),
+        "1h": _volume_ratio(
+            bars,
+            VOLUME_RATIO_WINDOWS_5M["1h"],
+            baseline_window_bars,
+            floor_usdt,
+        ),
+        "4h": _volume_ratio(
+            bars,
+            VOLUME_RATIO_WINDOWS_5M["4h"],
+            baseline_window_bars,
+            floor_usdt,
+        ),
         "24h": None,
-        "74h": None,
     }

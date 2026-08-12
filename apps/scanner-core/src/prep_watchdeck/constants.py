@@ -9,7 +9,6 @@ TIMEFRAME_BARS: dict[str, int] = {
     "1h": 12,
     "4h": 48,
     "24h": 288,
-    "74h": 888,
 }
 CATEGORIES = ("WATCH", "CAUTION", "NO_TRADE", "LOW_PRIORITY")
 TEMPLATES = {"conservative", "balanced", "aggressive"}

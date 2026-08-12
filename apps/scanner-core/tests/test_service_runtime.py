@@ -141,6 +141,13 @@ def test_service_cli_once_and_doctor_initialize_service_store(tmp_path, monkeypa
     assert "candles1m=0" in doctor_result.output
 
 
+def test_service_cli_help_omits_deep_backfill_options() -> None:
+    result = runner.invoke(app, ["service", "--help"])
+
+    assert result.exit_code == 0
+    assert "--deep-backfill-" not in result.output
+
+
 def test_service_cli_runs_stream_without_network(monkeypatch) -> None:
     async def fake_run_service_from_bitget(
         settings,
@@ -159,12 +166,6 @@ def test_service_cli_runs_stream_without_network(monkeypatch) -> None:
         watchdog_stall_sec: float,
         watchdog_confirmations: int,
         watchdog_startup_grace_sec: float,
-        deep_backfill_limit: int,
-        deep_backfill_batch_size: int,
-        deep_backfill_concurrency: int,
-        deep_backfill_cooldown_sec: float,
-        deep_backfill_retry_delay_sec: float,
-        deep_backfill_rate_limit_per_second: float,
         stop_after_records: int | None,
     ) -> ServiceRunResult:
         _ = settings
@@ -183,12 +184,6 @@ def test_service_cli_runs_stream_without_network(monkeypatch) -> None:
         assert watchdog_stall_sec == 300.0
         assert watchdog_confirmations == 3
         assert watchdog_startup_grace_sec == 300.0
-        assert deep_backfill_limit == 0
-        assert deep_backfill_batch_size == 1
-        assert deep_backfill_concurrency == 1
-        assert deep_backfill_cooldown_sec == 5.0
-        assert deep_backfill_retry_delay_sec == 60.0
-        assert deep_backfill_rate_limit_per_second == 5.0
         assert stop_after_records == 1
         return ServiceRunResult(
             bootstrap=BootstrapResult(
@@ -563,7 +558,6 @@ async def test_service_background_cleanup_cancels_and_awaits_all_task_kinds() ->
             "ticker_refresh",
             "backfill",
             "reconcile",
-            "deep_backfill",
         )
     }
     cancelled: list[str] = []

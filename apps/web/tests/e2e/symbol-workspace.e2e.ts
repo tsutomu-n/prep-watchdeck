@@ -285,6 +285,13 @@ test("symbol support information is one flat divided workspace in workflow order
   const workspace = symbolPage.locator("[data-symbol-workspace]");
   await expect(workspace).toBeVisible();
   const timeframeBoard = symbolPage.getByRole("region", { name: "時間軸別データ" });
+  await expect(timeframeBoard.locator(".tf-grid > a > span")).toHaveText([
+    "5m",
+    "15m",
+    "1h",
+    "4h",
+    "24h"
+  ]);
   await expect(timeframeBoard.locator("em")).toHaveCount(1);
   await expect(timeframeBoard.getByText("15分量倍率 3.4×", { exact: true })).toBeVisible();
 
@@ -306,14 +313,13 @@ test("symbol support information is one flat divided workspace in workflow order
   ]);
 
   const sections = workspace.locator(":scope > [data-symbol-workspace-section]");
-  await expect(sections).toHaveCount(6);
+  await expect(sections).toHaveCount(5);
   expect(
     await sections.evaluateAll((elements) =>
       elements.map((element) => element.querySelector("h2")?.textContent?.trim() ?? "")
     )
   ).toEqual([
     "24h レンジ",
-    "74h 条件",
     "品質と市場条件",
     "理由とリスク",
     "銘柄注記",
@@ -330,7 +336,7 @@ test("symbol support information is one flat divided workspace in workflow order
   expect(workspaceBox.boxShadow).toBe("none");
 
   const sectionBoxes = await Promise.all(
-    Array.from({ length: 6 }, (_, index) => readBox(sections.nth(index)))
+    Array.from({ length: 5 }, (_, index) => readBox(sections.nth(index)))
   );
   for (const [index, box] of sectionBoxes.entries()) {
     expect(box.backgroundColor, `section ${index} background`).toBe("rgba(0, 0, 0, 0)");
@@ -342,10 +348,9 @@ test("symbol support information is one flat divided workspace in workflow order
   expect(sectionBoxes[0]?.top).toBeCloseTo(sectionBoxes[1]?.top ?? 0, 0);
   expect(sectionBoxes[0]?.right).toBeCloseTo(sectionBoxes[1]?.left ?? 0, 0);
   expect(sectionBoxes[0]?.width).toBeCloseTo(sectionBoxes[1]?.width ?? 0, 0);
-  expect(sectionBoxes[2]?.top).toBeCloseTo(sectionBoxes[3]?.top ?? 0, 0);
-  expect(sectionBoxes[2]?.right).toBeCloseTo(sectionBoxes[3]?.left ?? 0, 0);
+  expect(sectionBoxes[3]?.width).toBeCloseTo(workspaceBox.width - 2, 0);
   expect(sectionBoxes[4]?.width).toBeCloseTo(workspaceBox.width - 2, 0);
-  expect(sectionBoxes[5]?.borderBottomWidth).toBe("0px");
+  expect(sectionBoxes[4]?.borderBottomWidth).toBe("0px");
 
   const nestedSurfaces = [workspace.locator(".fact-list > div").first()];
   for (const [index, surface] of nestedSurfaces.entries()) {
@@ -365,30 +370,16 @@ test("symbol support information is one flat divided workspace in workflow order
   await expect(workspace.getByText("データ時点", { exact: true })).toBeVisible();
 });
 
-test("uses dashboard sort-order labels in the Symbol ranking position", async ({ page }) => {
-  await page.goto("/symbols/ALTUSDT?tf=15m");
-
-  const monitoringRail = page.getByRole("complementary", { name: "監視材料" });
-  const rankingHeading = monitoringRail.getByRole("heading", { name: "ランキング位置", exact: true });
-  await expect(rankingHeading).toBeVisible();
-  await expect(monitoringRail.locator(".rank-context dt")).toHaveText([
-    "上昇順",
-    "下落順",
-    "売買代金",
-    "出来高倍率"
-  ]);
-});
-
 test("symbol support workspace stacks without gaps or horizontal overflow on mobile", async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 900 });
   await page.goto("/symbols/THINUSDT?tf=15m");
 
   const workspace = page.locator("[data-symbol-workspace]");
   const sections = workspace.locator(":scope > [data-symbol-workspace-section]");
-  await expect(sections).toHaveCount(6);
+  await expect(sections).toHaveCount(5);
   const workspaceBox = await readBox(workspace);
   const sectionBoxes = await Promise.all(
-    Array.from({ length: 6 }, (_, index) => readBox(sections.nth(index)))
+    Array.from({ length: 5 }, (_, index) => readBox(sections.nth(index)))
   );
 
   for (const [index, box] of sectionBoxes.entries()) {

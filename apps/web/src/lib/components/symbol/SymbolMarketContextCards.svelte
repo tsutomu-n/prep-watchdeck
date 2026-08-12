@@ -2,7 +2,7 @@
   import SymbolChip from "$lib/components/symbol/SymbolChip.svelte";
   import type { ScannerRowDTO } from "$lib/generated/scanner-snapshot";
   import { formatNumber as fmt } from "$lib/market/format";
-  import { changeTone, codeLabel, userRule74hLabel } from "$lib/market/labels";
+  import { changeTone, codeLabel } from "$lib/market/labels";
   import type { Range24h } from "$lib/market/row-analysis";
 
   let { row, range }: { row: ScannerRowDTO; range: Range24h | null } = $props();
@@ -35,32 +35,6 @@
   {:else}
     <p class="empty">レンジ未取得</p>
   {/if}
-</section>
-
-<section class="intel-card context-section" data-symbol-workspace-section>
-  <h2>74h 条件</h2>
-  <dl class="fact-list">
-    <div>
-      <dt>価格変化</dt>
-      <dd class={changeTone(row.priceChange74hPct)}>{fmt(row.priceChange74hPct, "%")}</dd>
-    </div>
-    <div>
-      <dt>現在24h代金</dt>
-      <dd>{fmt(row.turnoverCurrent24hUsdt)}</dd>
-    </div>
-    <div>
-      <dt>74h前24h代金</dt>
-      <dd>{fmt(row.turnover24hEnding74hAgoUsdt)}</dd>
-    </div>
-    <div>
-      <dt>代金変化</dt>
-      <dd class={changeTone(row.volumeChange74h24hPct)}>{fmt(row.volumeChange74h24hPct, "%")}</dd>
-    </div>
-    <div>
-      <dt>ユーザー条件</dt>
-      <dd>{userRule74hLabel(row.userRule74hMatched)}</dd>
-    </div>
-  </dl>
 </section>
 
 <section class="intel-card context-section" data-symbol-workspace-section>
