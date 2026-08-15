@@ -1,0 +1,29 @@
+{
+  "code": "00000",
+  "msg": "success",
+  "requestTime": 1786701600000,
+  "data": [
+    {
+      "symbol": "BTCUSDT",
+      "markPrice": "60000",
+      "indexPrice": "59990",
+      "bidPr": "59999",
+      "askPr": "60001",
+      "fundingRate": "0.0008",
+      "holdingAmount": "10",
+      "quoteVolume": "1200000",
+      "baseVolume": "20",
+      "ts": "1786701599000"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "indexPrice": "3000",
+      "bidPr": "2999",
+      "askPr": "3001",
+      "fundingRate": "0.0004",
+      "holdingAmount": "100",
+      "quoteVolume": "600000",
+      "ts": "1786701598000"
+    }
+  ]
+}

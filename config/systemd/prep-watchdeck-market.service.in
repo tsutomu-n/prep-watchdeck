@@ -1,0 +1,29 @@
+[Unit]
+Description=prep-watchdeck public perp market collector
+After=network-online.target prep-watchdeck-market-db.service
+Wants=network-online.target
+Requires=prep-watchdeck-market-db.service
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO_ROOT@/apps/market-core
+Environment=HOME=@HOME_DIR@
+Environment=PATH=@HOME_DIR@/.local/bin:@HOME_DIR@/.local/share/bun/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PREP_WATCHDECK_MARKET_STATE_DIR=@MARKET_STATE_ROOT@
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=@MARKET_ENV_FILE@
+UnsetEnvironment=PREP_WATCHDECK_MARKET_ALLOW_NONSTANDARD_DATABASE_TARGET
+ExecStartPre=/usr/bin/test -f @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/test -O @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/bash -c 'test "$(/usr/bin/stat -c %%a "$1")" = 600' _ @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/install -d -m 0700 @MARKET_STATE_ROOT@
+ExecStartPre=@UV_BIN@ run watchdeck-market migrate
+ExecStart=@UV_BIN@ run watchdeck-market service
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=90s
+TimeoutStopSec=90s
+UMask=0077
+
+[Install]
+WantedBy=default.target

@@ -66,17 +66,23 @@ describe("web port selection", () => {
     expect(exhausted.stderr).toContain("no available web port found from 5200 through 5299");
   });
 
-  test("start-all reports and passes the selected fallback port", () => {
-    const fixture = createFixture([5173]);
+  test("start-all starts only the installed user-service boundary", () => {
+    const fixture = createFixture([]);
     const result = runScript(startAll, fixture, {
-      PORT: "5173",
-      SNAPSHOT_SOURCE: "skip"
+      SYSTEMCTL_BIN: join(fixture.bin, "systemctl")
     });
 
     expect(result.status).toBe(0);
-    expect(result.stderr).toContain("port 5173 is in use; using 5174");
-    expect(result.stdout).toContain("url=http://127.0.0.1:5174/");
-    expect(result.stdout).toContain("fake-bun run dev -- --port 5174 --strictPort");
+    expect(result.stdout).toContain("url=http://127.0.0.1:5173/");
+    expect(result.stdout).toContain(
+      "fake-systemctl --user start prep-watchdeck-market-db.service"
+    );
+    expect(result.stdout).toContain(
+      "fake-systemctl --user start prep-watchdeck-market.service"
+    );
+    expect(result.stdout).toContain(
+      "fake-systemctl --user start prep-watchdeck-web.service"
+    );
   });
 
   test("start-local reports and passes the selected fallback port", () => {
@@ -110,6 +116,10 @@ function createFixture(busyPorts) {
   );
   writeExecutable(join(bin, "bun"), '#!/usr/bin/env bash\necho "fake-bun $*"\n');
   writeExecutable(join(bin, "uv"), '#!/usr/bin/env bash\necho "fake-uv $*"\n');
+  writeExecutable(
+    join(bin, "systemctl"),
+    '#!/usr/bin/env bash\nif [[ "$2" == "cat" ]]; then exit 0; fi\necho "fake-systemctl $*"\n'
+  );
   return { bin, state };
 }
 
@@ -138,7 +148,7 @@ function testEnvironment(fixture) {
   return {
     HOME: process.env.HOME,
     PATH: `${fixture.bin}:${process.env.PATH}`,
-    PREP_WATCHDECK_STATE_DIR: fixture.state
+    PREP_WATCHDECK_MARKET_STATE_DIR: fixture.state
   };
 }
 

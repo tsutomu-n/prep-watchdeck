@@ -1,0 +1,53 @@
+[project]
+name = "prep-watchdeck-market"
+version = "0.1.0"
+description = "Public perpetual market data service for prep-watchdeck"
+requires-python = ">=3.13"
+dependencies = [
+    "aiohttp<3.13",
+    "loguru>=0.7.3",
+    "polars>=1.41.2",
+    "psycopg[binary,pool]>=3.2,<4",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.1",
+    "rich>=15.0.0",
+    "typer>=0.26.7",
+]
+
+[project.scripts]
+watchdeck-market = "prep_watchdeck_market.cli:app"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I", "UP", "SIM", "RUF"]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.pyrefly]
+project-includes = ["src/**/*.py", "tests/**/*.py"]
+
+[dependency-groups]
+dev = [
+    "pyrefly>=1.0.0",
+    "pytest>=9.1.0",
+    "ruff>=0.15.17",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+package = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/prep_watchdeck_market"]

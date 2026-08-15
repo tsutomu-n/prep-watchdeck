@@ -1,0 +1,26 @@
+[
+  {
+    "universe": [
+      {"name": "BTC", "szDecimals": 5, "maxLeverage": 40},
+      {"name": "ETH", "szDecimals": 4, "maxLeverage": 25}
+    ]
+  },
+  [
+    {
+      "funding": "0.00001",
+      "openInterest": "11.5",
+      "dayNtlVlm": "1300000",
+      "oraclePx": "60000",
+      "markPx": "60010",
+      "midPx": "60009"
+    },
+    {
+      "funding": "0.00002",
+      "openInterest": "120",
+      "dayNtlVlm": "700000",
+      "oraclePx": "3000",
+      "markPx": null,
+      "midPx": "3001"
+    }
+  ]
+]

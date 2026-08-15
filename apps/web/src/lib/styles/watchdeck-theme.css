@@ -383,18 +383,18 @@ body {
   font-family: var(--font-sans);
 }
 
-:where(.terminal, .symbol-page) [data-single-line-action] {
+:where(.terminal, .symbol-page, .universe-page) [data-single-line-action] {
   white-space: nowrap;
 }
 
-:where(.terminal, .symbol-page)
+:where(.terminal, .symbol-page, .universe-page)
   :where(a[href], button, input, select, textarea, summary):focus-visible {
   outline: var(--focus-ring-width) solid var(--focus);
   outline-offset: var(--focus-ring-offset);
 }
 
 @media (max-width: 48rem), (any-pointer: coarse) {
-  :where(.terminal, .symbol-page)
+  :where(.terminal, .symbol-page, .universe-page)
     :where(
       a[href],
       button,
@@ -408,7 +408,8 @@ body {
     box-sizing: border-box;
   }
 
-  :where(.terminal, .symbol-page) label:has(input[type="checkbox"], input[type="radio"]) {
+  :where(.terminal, .symbol-page, .universe-page)
+    label:has(input[type="checkbox"], input[type="radio"]) {
     min-width: var(--control-height-touch);
     min-height: var(--control-height-touch);
     box-sizing: border-box;

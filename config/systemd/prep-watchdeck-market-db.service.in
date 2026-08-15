@@ -1,0 +1,31 @@
+[Unit]
+Description=prep-watchdeck dedicated market Postgres
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=@REPO_ROOT@
+Environment=HOME=@HOME_DIR@
+Environment=PATH=@HOME_DIR@/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PREP_WATCHDECK_MARKET_STATE_DIR=@MARKET_STATE_ROOT@
+Environment=PREP_WATCHDECK_MARKET_ENV_FILE=@MARKET_ENV_FILE@
+Environment=PREP_WATCHDECK_MARKET_DB_PORT=55432
+Environment=DOCKER_HOST=unix:///var/run/docker.sock
+UnsetEnvironment=DOCKER_CONTEXT
+ExecStartPre=/usr/bin/test -f @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/test -O @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/bash -c 'test "$(/usr/bin/stat -c %%a "$1")" = 600' _ @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/install -d -m 0700 @MARKET_STATE_ROOT@
+ExecStartPre=/usr/bin/install -d -m 0700 @MARKET_STATE_ROOT@/postgres
+ExecStartPre=@DOCKER_BIN@ info
+ExecStart=@DOCKER_BIN@ compose --project-name prep-watchdeck-market --env-file @MARKET_ENV_FILE@ --file @REPO_ROOT@/deploy/market-postgres/compose.yaml up --detach --wait --wait-timeout 60 postgres
+ExecStop=@DOCKER_BIN@ compose --project-name prep-watchdeck-market --env-file @MARKET_ENV_FILE@ --file @REPO_ROOT@/deploy/market-postgres/compose.yaml down --timeout 60
+TimeoutStartSec=90s
+TimeoutStopSec=90s
+Restart=no
+UMask=0077
+
+[Install]
+WantedBy=default.target

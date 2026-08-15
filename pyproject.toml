@@ -10,7 +10,7 @@ dependencies = []
 package = false
 
 [tool.uv.workspace]
-members = ["apps/scanner-core"]
+members = ["apps/market-core"]
 
 [tool.ruff]
 line-length = 100

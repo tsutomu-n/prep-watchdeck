@@ -28,7 +28,7 @@ playwright-report/
 !.env.example
 apis.json
 
-# Generated runtime data
+# Generated and legacy rollback runtime data
 data/**
 !data/
 !data/.gitkeep
@@ -49,6 +49,10 @@ var/watchdeck.duckdb*
 var/scanner.lock
 var/test-past-notes/
 var/test-dashboard-view-settings/
+
+# Optional repo-local market runtime override. The operational default is Repo-external.
+var-market/**
+*.dump
 
 # Local-only artifacts
 .plan/

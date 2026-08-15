@@ -1,229 +1,173 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
-- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
+- 更新: `2026-08-15T03:18:13+09:00`
+- 検証: `2026-08-15T03:18:13+09:00`
 - 状態: `現行`
 
 ---
 
-## Full local gate
+## 原則
 
-Repo全体の標準gate:
+変更箇所に最も近いfocused testから実行し、Repo横断`verify-local.sh`は最終確認で1回だけ使う。
+test green、HTTP health、単一snapshotだけをruntime/data quality/cutover完了の証拠にしない。
 
-```bash
-bash scripts/verify-local.sh
-```
+外部API、Postgres、Webを使う検証は専用database、Repo外の一時state root、別Web portへ隔離する。
+現役DuckDB、旧scanner service、JustPass Postgres、port 5432へ接続しない。
 
-scriptが実行する順序:
-
-1. maintenance tests
-2. document metadata checker
-3. document local-link checker
-4. scanner-core pytest
-5. Ruff check / format check
-6. Pyrefly
-7. Web unit tests
-8. Svelte check
-9. production build
-10. Playwright E2E
-
-E2E、performance、soakのstateは`PREP_WATCHDECK_STATE_DIR`配下の`tmp/<gate>/runtime`へ
-隔離する。現役serviceが同じDuckDBを使用中なら、full gateへ別の一時state rootを指定する。
-
-## 変更範囲ごとの最小gate
-
-### 文書
+## Market core focused gate
 
 ```bash
-bun test scripts/maintenance/document-metadata.test.mjs
-bun scripts/maintenance/check-document-metadata.mjs
-bun test scripts/maintenance/document-links.test.mjs
-bun scripts/maintenance/check-document-links.mjs
-git diff --check
-```
-
-metadata/link checkerは形式とlocal linkの存在を確認する。内容がcodeと一致するかは、
-対象のCLI help、route、schema、config、testも別に照合する。
-
-### Scanner-core
-
-```bash
-cd apps/scanner-core
-uv run python -m pytest -q <関連test>
-uv run ruff check .
-uv run ruff format --check .
+cd apps/market-core
+uv run pytest -q <関連test>
+uv run ruff check src tests
+uv run ruff format --check src tests
 uv run pyrefly check
 ```
 
-広いscanner変更では`<関連test>`だけで終えず、全pytestを実行する。
+変更種別ごとの最低確認:
 
-VPI-Lite+のCoreとCold snapshot統合では、少なくとも次も実行する。
+- catalog: 3 adapter table、provenance、SCD2、除外、partial failure
+- identity: exact base、collision、multiplier、quantity unit unknown
+- L1/candle: 20秒fetch、50秒deadline、single-flight、no stale reuse、3 finality契約
+- selected: 1 group、primary switch、TTL、heartbeat、old task close、max20 depth、100 trades、
+  stale/板不足/null book walk
+- artifact: schema、median freshness/skew/parity、atomic write、invalid numeric拒否
+- archive: normalized readback、manifest generation、checksum、late-correction停止、bounded retention、
+  ephemeral raw age条件、selected FK順
 
-```bash
-cd apps/scanner-core
-uv run python -m pytest -q \
-  tests/test_vpi_ewma.py \
-  tests/test_vpi_compute.py \
-  tests/test_vpi_classify.py \
-  tests/test_vpi_config.py \
-  tests/test_vpi_service_integration.py \
-  tests/test_service_snapshot.py \
-  tests/test_settings.py
-```
+DB integrationは専用Postgres 17を一時portで起動し、終了時に専用containerだけを停止する。
 
-closed 1分足だけの使用、open candle非影響、disabled/通常scan非影響、benchmark summary、
-row display複製、symbol単位failure isolation、既存ranking・row判定不変を確認する。
-
-### Web / UI
+## Web focused gate
 
 ```bash
 cd apps/web
+bun run generate:types
 bun test
 bun run check
 bun run build
 ```
 
-interaction、route、responsive layoutを変えた場合は関連Playwright E2Eも実行する。
-releaseまたは複数surfaceへ及ぶ変更はrootのfull local gateで閉じる。
+route、selection、responsiveを変えた場合は関連Playwrightを追加する。最低でもDesktop 1440pxと
+Mobile 390pxで、検索/filter、行選択、primary変更、Chart、partial/unavailable、selected depth/trades、
+Past Note、keyboard focus、横overflowを確認する。
 
-VPI-Lite+ UIでは、局所parserの全enum/範囲/不正payload、概要panelのscore非表示、選択銘柄だけの
-補助詳細、自動売買シグナルではない旨、既存row・ranking非影響、Hot ticker deltaでCold VPIが変わらない
-ことをunitとPlaywrightで確認する。`1440x900`、`1280x800`、`390x844`でBefore/Afterを比較し、
-横overflow、主要操作の欠落、誤推奨表現がないことも確認する。
-
-## Service resilience gate
-
-REST retry、watchdog、service supervisionのfocused gate:
-
-```bash
-cd apps/scanner-core
-CI=true timeout 90 uv run python -m pytest -q \
-  tests/test_bitget_client.py \
-  tests/test_service_watchdog.py \
-  tests/test_service_runtime.py
-```
-
-確認対象:
-
-- retry対象、上限、`Retry-After`、backoff、timeout、cancellation
-- 非retryable 4xx、invalid JSON、Bitget business errorの即時失敗
-- timestamp前進、startup grace、停止後の復帰、外部障害との分離
-- watchdog failure、通常終了、Ctrl-C、無効化時のtask cleanup
-- state、snapshot、ticker、backfill、reconcile taskのcancel/await
-- CLI既定値と限定されたREST probe
-
-mock gateはlive Bitget障害やlive process killを発生させず、現役stateへwriterを接続しない。
-
-## Runtime切替後の確認
-
-runtime変更を実serviceへ反映した場合はtest greenと分けて確認する。
-
-```bash
-repo_root="$(git rev-parse --show-toplevel)"
-cd "$repo_root"
-state_root="$(realpath -m "${PREP_WATCHDECK_STATE_DIR:-var}")"
-
-systemctl --user show prep-watchdeck-service.service \
-  -p ActiveState -p SubState -p MainPID -p NRestarts -p Restart -p RestartUSec
-
-jq '{generatedAtMs,dataAsOfMs,diagnostics,backfill,reconcile}' \
-  "$state_root/snapshots/service-state.json"
-
-curl --fail http://127.0.0.1:5173/api/health
-lsof "$state_root/watchdeck.duckdb"
-```
-
-確認するのは、想定したprocessへの切替、`active/running`、process manager policy、
-state/data timestamp前進、Web health、単一DuckDB writer、Past Note、Dashboard settings維持である。
-固定PIDや固定row数は合格条件にしない。Bitget障害中に再起動を繰り返さない。
-
-## Realtime gate
-
-```bash
-cd apps/web
-bun run test:performance
-SOAK_DURATION_MS=3600000 bun run test:soak
-```
-
-performanceはtransport、Hot apply、Raw Sort、Long Task、Cold snapshot反映、hidden中pollを確認する。
-継続的なHot更新は50ms超Long Task 0件、apply p95 8ms以下を必須とする。Raw Sortは最初の
-`1h`/`15m`切替を各100ms以下、その後20回のsteady-state p95を50ms以下とする。
-
-Cold snapshotは50ms超Long Taskの件数と全durationを診断証拠へ残すが、件数だけでは失敗にしない。
-snapshot fetch完了からfreshness DOM反映までを計測windowとし、最大Long Task 100ms以下、反映
-200ms以下を必須とする。これにより51msと重大なmain-thread停止を区別しつつ、上限超過は
-fail-closedに扱う。固定waitや反映後の処理はCold計測windowへ含めない。
-
-soakはrequest failure、row維持、chart同時数、hidden中poll、stale検出と回復、heap傾向、
-symbol遷移を確認する。
-soakの各sampleはrequest完了を最大5秒だけ待ち、最終`inFlight=0`を必須とする。時間内に
-drainしない場合は失敗であり、待機をrequest failureやhung requestの免除に使わない。
-過去baselineは現行合格を保証しないため、比較時は同じcommit、fixture、row数、環境を記録する。
-
-## State / Archive gate
+## Docs/ops focused gate
 
 ```bash
 bun test \
-  scripts/maintenance/retired-records-archive.test.mjs \
-  scripts/maintenance/state-dir.test.mjs \
-  scripts/ops/watchdeck-daily-summary.test.mjs
+  scripts/maintenance/document-metadata.test.mjs \
+  scripts/maintenance/document-links.test.mjs \
+  scripts/maintenance/monitoring-only-boundary.test.mjs \
+  scripts/maintenance/web-port.test.mjs \
+  scripts/ops/install-user-services.test.mjs \
+  scripts/ops/run-isolated-shadow.test.mjs
+
+bun scripts/maintenance/check-document-metadata.mjs
+bun scripts/maintenance/check-document-links.mjs
+bash -n scripts/start-all.sh scripts/start-local.sh scripts/update-live.sh \
+  scripts/ops/install-user-services.sh scripts/ops/run-market-maintenance.sh \
+  scripts/ops/run-isolated-shadow.sh
+git diff --check
 ```
 
-state移行またはRepo history最終化を行う場合は、scriptのdry-runと専用checkerを先に使う。
+installer testは外部credential file、unit directory、systemctl/uv/dockerをfixtureへ隔離する。
+実user unitをinstall/start/restartしない。
 
-- scanner-coreとWebが同じ絶対state rootを解決する。
-- layout v2 targetをDB/WAL、snapshot、Past Note、Dashboard settings、usage events、opsへ限定する。
-- source全体とArchiveのfile list・SHA-256、v2 common files、監視annotation件数を照合する。
-- markerless layout v1 Archiveを検証でき、未知versionを拒否する。
-- snapshot `runId`とchart `snapshotRunId`を照合する。
-- old/new stateが同時に更新されない。
-- Archive後のsource、tracked集合、Archive本体のdriftを拒否する。
-- delete/apply前にrollback sourceとArchive証拠が残る。
-
-## Monitoring-only boundary gate
+## Full local gate
 
 ```bash
-bun test scripts/maintenance/monitoring-only-boundary.test.mjs
-cd apps/web
-bun run test:e2e -- tests/e2e/retired-routes.e2e.ts
+bash scripts/verify-local.sh
 ```
 
-production sourceに退役domain、record path、route fileが残らず、旧APIが全methodで404となること、
-Past Note routeが引き続き存在することを確認する。scanner内部の`NO_TRADE`と、Archive・test・v1互換
-readerに必要な旧identifierだけを明示的allowlistとする。
+`TEST_DATABASE_URL`が未指定の場合、scriptは固定digestのPostgres 17を専用一時containerと動的loopback
+portで起動し、全Postgres integration testを実行後に削除する。指定する場合も隔離test DBに限定する。
+DB testのskipはfull gate成功として扱わない。
 
-## 証拠の残し方
+順序:
 
-検証記録には次を残す。
+1. current maintenance/ops tests
+2. document metadata/link
+3. workspace lock
+4. market-core全pytest、Ruff、format、Pyrefly
+5. Web type generation、unit、Svelte check、build
+6. Playwright E2E
 
-- 東京時間`yyyy-mm-dd_hh:mm`
-- branch、HEAD、既存差分
-- 実行commandと結果
-- 使用した隔離state root
-- 未実行項目と理由
-- runtime切替の有無
-- 残リスクとrollback
+未実行、skip、timeout、既存失敗を成功扱いしない。無関係な既存失敗は回帰と分離し、原因と
+再開条件を記録する。
 
-現行文書へ一回限りのPID、件数、移行ログを累積しない。再開に必要な短期状態はrepo rootの
-`HANDOFF.md`、完了計画と長期証拠はRepo外Archiveへ置く。`.ai_memory/HANDOFF.md`など
-root以外の旧handoffを再開正本にしない。
+## Isolated live smoke
 
-## 完了判定
+3 Venueのread-only smokeは各APIを必要最小回数だけ呼ぶ。確認対象:
 
-test greenだけでは完了にしない。変更内容に応じてcode、schema、CLI help、current docs、
-runtime path、monitoring state、performance/soak、未実行項目を監査する。実行できない必須gate、
-sourceとの不一致、単一writer違反、未照合の削除対象がある場合は未完了とする。
+- catalogが3回連続成功し、除外/provenance/capabilityが保存される。
+- L1 fresh 120秒以内が99%以上。95%未満が2周期続けば失敗。
+- 60秒cycle p95 30秒以下、max 50秒以下、overlap/backlog 0、429 0。
+- confirmed/derived candleの受信分保存率100%、duplicate 0、activeの95%以上に直近5分bar。
+- Aster OIは明示null、Hyperliquid oracleをindexとして公開しない。
+- Postgres commit p95 2秒以下、connection leakと次cycleまで続くlock 0。
+- 選択変更後10秒以内に旧subscription解除、orphan 0。
 
-## Analysis history / OI focused verification
+単一成功cycleで合格にしない。private/paid endpoint、Hyperliquid requester-pays S3は使用しない。
 
-scanner-core focused testsでは、383本の分析tail、1915本の1分足gap audit、1177本の5分足相当を使う
-chart source、`rankings.noTrade`診断、OI out-of-order upsert、exact 60分lookback、24時間retention、
-restart再利用、cycle劣化、UNKNOWN無加点、WS ticker/candle再取得を確認する。OIのexact 60分、retention、
-restartはseed済み一時DuckDBのdeterministic integration testを正本とし、finite live smokeの経過時間では
-代用しない。
+## Shadow gate
 
-Web focused verificationは5 timeframes、CandidateなしのDashboard/Monitoring Rail/Symbol workspace、
-OI四状態、VPI-Lite+ availability維持を含む。最終判定はfocused test後に
-`bash scripts/verify-local.sh`を1回だけ実行する。
+現役runtimeを変更せず、専用DB/state/portで15分baselineと60分shadowを各1回測る。
+
+- 旧snapshot p95がbaseline比120%以内
+- 旧service `NRestarts=0`
+- 現役DuckDB writer 1
+- 新serviceのCPU、memory、network、DB size、raw/parquet増分を記録
+- `7*raw_GB/day + 365*parquet_GB/day + 30GB <= 0.75*開始時free`
+
+容量式、rate limit、data quality、既存影響のどれかが不合格ならcutoverへ進まない。
+
+単一入口は`scripts/ops/run-isolated-shadow.sh`。既定はdry-runであり、state/evidence、現役read-only
+snapshot/DuckDB/unit、Compose project、DB/Web portをすべて明示する。production既定55432/5173と
+JustPass 5432、Repo配下state/evidence、live stateとの重複は拒否する。`--execute`時だけ15分baseline、
+専用Postgres/collector/Web、60分shadow、容量sampleを順に実行する。
+Webはbaseline前にproduction buildを1回完了し、shadow中はdev/HMRではなくpreviewを専用portで使う。
+Dockerはambient context/remote hostを使わず、`DOCKER_CONTEXT`をunsetしてrootful local
+`unix:///var/run/docker.sock`へ固定する。socketがなければ開始しない。
+
+容量sampleはread-only DB sessionから当日UTCの`market_state_1m`、`candle_1m`、`funding_events`を
+Venue別にproduction archiveと同じcolumns、schema、ZSTDで一時Parquet化する。経過時間で1日へ
+外挿し25% safety marginを加える。行がないpartitionは0と断定せず`insufficient_data`とし、容量gateを
+HOLDにする。ただし現行productでproducerを持たず、funding値を`market_state_1m`へ保持する
+`funding_events`はoptionalとし、空なら`optional_no_rows`と0を明示してcomplete判定から除外する。
+一時Parquetは削除し、JSON証拠だけをRepo外へ残す。
+
+```bash
+bash scripts/ops/run-isolated-shadow.sh --dry-run \
+  --state-root /absolute/repo-outside/shadow-state \
+  --evidence-root /absolute/repo-outside/shadow-evidence \
+  --live-state-root /absolute/live-state \
+  --live-snapshot /absolute/live-state/snapshots/latest.json \
+  --live-duckdb /absolute/live-state/watchdeck.duckdb \
+  --live-scanner-unit prep-watchdeck-service.service \
+  --compose-project prep-watchdeck-market-shadow-YYYYMMDD \
+  --db-port 55442 --web-port 5183
+```
+
+短時間overrideはharnessのdry-run/動作確認専用で、AC-11/AC-12の受入値は15分/60分から変更しない。
+cleanupは記録済みmarket/Web PIDと指定Compose projectだけに限定し、production unit/stateを停止・変更・
+削除しない。network値はprocess帰属を証明できないため、shadow中のhost totalを上限、baseline差引後を
+推定値として区別し、その限界を証拠へ残す。
+
+harnessはHEAD、tracked binary diff、untracked file hashを含むsource digestをshadow前後で比較し、
+不一致なら受入証拠としない。一致が証明するのはshadow実行中の不変だけであり、
+実行後のsource変更は別に記録し、そのshadowで検証済みとは扱わない。
+
+harnessの`summary.json`が自動判定するのは既存runtime影響、429、容量だけであり、CP-08全体のPASSでは
+ない。AC-03/AC-04/AC-05/AC-07/AC-09は`database-summary.tsv`、market service log、artifactを別途
+集計・照合する。429は`l1_cycle`のstructured `error_codes`にある`http_429`または
+`bitget_business_429`だけを数え、ログ中の無関係な裸の数値は判定へ使わない。未照合のままsummaryだけで
+cutoverへ進まない。
+
+## 証拠
+
+branch、HEAD、既存差分、JST時刻、command、exit code、隔離DB/state/port、実行件数、未実行項目、
+runtime mutation有無、rollbackを記録する。credential、raw secret、固定PIDを文書へ残さない。
+
+実装、focused gate、full gate、isolated smoke/shadow、最終diffのmandatory条件がすべて証拠付きで
+満たされた場合だけPASS。push、merge、cutoverは別承認であり、local PASSへ含めない。

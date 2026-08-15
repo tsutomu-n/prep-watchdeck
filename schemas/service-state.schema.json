@@ -1,0 +1,268 @@
+{
+  "$defs": {
+    "ArtifactFileStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "generatedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Generatedat"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Errorcode"
+        }
+      },
+      "required": [
+        "name",
+        "status",
+        "generatedAt",
+        "errorCode"
+      ],
+      "title": "ArtifactFileStatus",
+      "type": "object"
+    },
+    "CollectorRunArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "runKind": {
+          "enum": [
+            "catalog",
+            "l1"
+          ],
+          "title": "Runkind",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "succeeded",
+            "partial",
+            "failed"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "startedAt": {
+          "format": "date-time",
+          "title": "Startedat",
+          "type": "string"
+        },
+        "completedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completedat"
+        },
+        "cycleAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cycleat"
+        },
+        "ageSeconds": {
+          "minimum": 0,
+          "title": "Ageseconds",
+          "type": "number"
+        },
+        "recordsReceived": {
+          "minimum": 0,
+          "title": "Recordsreceived",
+          "type": "integer"
+        },
+        "recordsWritten": {
+          "minimum": 0,
+          "title": "Recordswritten",
+          "type": "integer"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Errorcode"
+        }
+      },
+      "required": [
+        "runKind",
+        "status",
+        "startedAt",
+        "completedAt",
+        "cycleAt",
+        "ageSeconds",
+        "recordsReceived",
+        "recordsWritten",
+        "errorCode"
+      ],
+      "title": "CollectorRunArtifact",
+      "type": "object"
+    },
+    "FreshnessArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "ready",
+            "partial",
+            "unavailable",
+            "stale"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "latestAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latestat"
+        },
+        "ageSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ageseconds"
+        },
+        "maxAgeSeconds": {
+          "exclusiveMinimum": 0,
+          "title": "Maxageseconds",
+          "type": "number"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Errorcode"
+        }
+      },
+      "required": [
+        "status",
+        "latestAt",
+        "maxAgeSeconds",
+        "errorCode"
+      ],
+      "title": "FreshnessArtifact",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "unavailable",
+        "stale"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "qualityReasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Qualityreasons",
+      "type": "array"
+    },
+    "collectors": {
+      "items": {
+        "$ref": "#/$defs/CollectorRunArtifact"
+      },
+      "title": "Collectors",
+      "type": "array"
+    },
+    "catalog": {
+      "$ref": "#/$defs/FreshnessArtifact"
+    },
+    "l1": {
+      "$ref": "#/$defs/FreshnessArtifact"
+    },
+    "artifacts": {
+      "items": {
+        "$ref": "#/$defs/ArtifactFileStatus"
+      },
+      "title": "Artifacts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "status",
+    "qualityReasons",
+    "collectors",
+    "catalog",
+    "l1",
+    "artifacts"
+  ],
+  "title": "MarketServiceStateArtifact",
+  "type": "object"
+}

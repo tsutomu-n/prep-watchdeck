@@ -1,0 +1,21 @@
+[Unit]
+Description=prep-watchdeck confirmed archive and bounded retention
+After=prep-watchdeck-market-db.service
+Requires=prep-watchdeck-market-db.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@REPO_ROOT@/apps/market-core
+Environment=HOME=@HOME_DIR@
+Environment=PATH=@HOME_DIR@/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PREP_WATCHDECK_MARKET_STATE_DIR=@MARKET_STATE_ROOT@
+Environment=PREP_WATCHDECK_MARKET_UV_BIN=@UV_BIN@
+EnvironmentFile=@MARKET_ENV_FILE@
+UnsetEnvironment=PREP_WATCHDECK_MARKET_ALLOW_NONSTANDARD_DATABASE_TARGET
+ExecStartPre=/usr/bin/test -f @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/test -O @MARKET_ENV_FILE@
+ExecStartPre=/usr/bin/bash -c 'test "$(/usr/bin/stat -c %%a "$1")" = 600' _ @MARKET_ENV_FILE@
+ExecStart=/usr/bin/bash @REPO_ROOT@/scripts/ops/run-market-maintenance.sh
+Nice=10
+TimeoutStartSec=30min
+UMask=0077

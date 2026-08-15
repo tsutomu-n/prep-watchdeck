@@ -76,34 +76,13 @@ const pathAllowlist = [
 
 const identifierAllowlist = [
   {
-    id: "internal-no-trade-category",
-    reason: "NO_TRADE remains an internal scanner and snapshot category.",
-    pattern: /\bNO_TRADE\b/gu
-  },
-  {
     id: "past-note-monitoring-annotation",
     reason: "Past Note remains a monitoring annotation and is not a trade record.",
     pattern: /\bPastNotes?\b|\bpastNotes?\b|past-notes?|Past Note/gu
   }
 ];
 
-const rulePathAllowlist = [
-  {
-    id: "retired-runtime-env-rejection",
-    ruleId: "retired-runtime-env",
-    reason: "Active state resolvers name retired overrides only to reject them fail-closed.",
-    paths: new Set([
-      "apps/web/src/lib/server/state-paths.ts",
-      "scripts/lib/resolve-state-paths.sh"
-    ])
-  },
-  {
-    id: "legacy-usage-event-reader",
-    ruleId: "retired-usage-event",
-    reason: "Daily summary v2 classifies historical v1 events without producing or promoting them.",
-    paths: new Set(["scripts/ops/watchdeck-daily-summary.mjs"])
-  }
-];
+const rulePathAllowlist = [];
 
 const forbiddenIdentifiers = [
   {
@@ -183,13 +162,9 @@ describe("monitoring-only production boundary", () => {
       "state-v1-compatibility"
     ]);
     expect(identifierAllowlist.map(({ id }) => id)).toEqual([
-      "internal-no-trade-category",
       "past-note-monitoring-annotation"
     ]);
-    expect(rulePathAllowlist.map(({ id }) => id)).toEqual([
-      "retired-runtime-env-rejection",
-      "legacy-usage-event-reader"
-    ]);
+    expect(rulePathAllowlist.map(({ id }) => id)).toEqual([]);
   });
 
   test("retired API route files do not exist", () => {

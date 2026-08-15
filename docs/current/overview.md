@@ -1,61 +1,50 @@
 # prep-watchdeck 現行概要
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
+- 更新: `2026-08-14T22:07:54+09:00`
+- 検証: `2026-08-14T22:07:54+09:00`
 - 状態: `現行`
 
 ---
 
 ## 製品の役割
 
-`prep-watchdeck`は、Bitgetのpublic market dataから異常な値動きを見つけ、監視対象を絞り、
-risk/contextとdata qualityを確認するlocal-first市場監視watchdeckである。
+`prep-watchdeck`は、運用資金5,000 USD以下の裁量Perp traderが、複数Venueの市場状態、
+鮮度、由来、流動性の概算を同じ画面で確認するためのlocal-first監視アプリである。
 
-自動売買Botではない。売買指示、自動発注、Private API、残高・position取得、
-注文endpointは実装しない。利用者が保存するのはPast NoteとDashboard view設定だけである。
-
-## 構成
-
-- `apps/scanner-core`: Python 3.13、`uv`、CLI名`watchdeck`
-- `apps/web`: SvelteKit、Bun、localhost向けWeb UIとlocal API
-- `config/scanner-filters`: scanner filter template
-- `schemas/scanner-snapshot.schema.json`: scanner-coreとWeb間のsnapshot契約
-- `fixtures`: network不要の決定的な検証入力
+対象はBitget、Hyperliquid Core、Asterのactive crypto linear perpetual。base完全一致、
+base数量、multiplier 1、単一候補を確認できるinstrumentだけを自動group化する。
+同じgroupにできない銘柄もVenue単独instrumentとして表示し、推測でalias変換しない。
 
 ## 現行機能
 
-- Bitget public RESTからlive snapshotを作る。
-- Bitget public WebSocketの`ticker`と`candle1m`をDuckDBへ保存する。
-- 起動時REST seedとrecent gap reconcileを行う。
-- Cold snapshot、1秒Hot ticker、detail chartを分離して表示する。
-- 5m、15m、1h、4h、24hで市場状態を確認する。
-- Raw Sort、Smart Rank、カテゴリ、data quality、risk tagで監視対象を絞る。
-- optional context、Watchlist、選択銘柄detail、Smart Rankの順でDashboardを確認する。
-- Symbol画面のMonitoring Railで分類、label、品質、時間軸、OI 60分、movement signal、
-  risk tagを確認する。
-- Past Noteを銘柄annotationとして保存し、`observedAt`から60日または`expiresAt`到達時に
-  月別Archiveへ移す。
-- Dashboard view設定をローカル保存する。
-- `PREP_WATCHDECK_STATE_DIR`でDB、snapshot、chart、Past Note、Dashboard settings、
-  usage events、opsのrootを一括切替する。
-- 起動時にscanner-coreとWebの実pathを表示し、個別override不一致では停止する。
-- 日次サマリーschema v2を`ops/daily/v2/`へ生成し、schema v1出力を上書きしない。
+- 3 Venueのcatalogを15分周期、L1を60秒fixed-rateで取得する。
+- mark、reference price種別、BBO、funding raw/周期/1時間換算、OI raw/単位、24時間出来高を
+  Venue別に表示する。取得不能、stale、単位不明はnullと理由を公開する。
+- 検索、Venue、coverage、quality filterでinstrumentを絞る。既定sortはbase、次にVenue。
+- 厳格な鮮度と同一cycle条件を満たす2 Venue以上のmarkだけ、USD/USDC/USDT parity仮定を
+  明示した参考中央値として表示する。値を変換・合算・rankingしない。
+- 選択groupだけ最大20段の板と直近100 tradesを購読し、$100/$500/$1,000の板上概算を表示する。
+- 選択instrumentの5m、15m、1h、4h、24h Chartを表示する。
+- Past Noteを`venueInstrumentId`単位でローカル保存する。
+- Postgresの期限後履歴を、照合済みParquetへ保存してからbounded retentionする。
 
-Smart Rank、score、上昇色、選択状態は「次に確認する監視対象」を表し、売買推奨ではない。
+## 責任範囲外
 
-## 非目標
+- 売買推奨、将来価格予測、裁定機会の断定、価格差ranking
+- 自動売買、注文、残高、position、Private API、秘密API key
+- RWA、HIP-3、synthetic、RFQ、alias、multiplier contract
+- 全市場の板・全trade永続化、HFT、深いhistorical backfill
 
-Attack Ticket、Trade Memo、TRADE / SKIP記録、Weekly Review、Deal Check、Pre-Trade Check、
-Position Size Pressureは製品境界から退役済みである。対応するproduction UI、domain、repository、
-CSV export、APIは提供しない。旧API pathは全methodで404となる。
+板上概算は現在受信したbookを指定notionalまでwalkした参考値であり、fee、将来impact、
+実際の注文可否を含まない。
 
-## 正本
+## 構成
 
-- 起動と短い利用案内: `README.md`
-- 現行仕様index: `docs/README.md`
-- UI規則: `DESIGN.md`
-- 実装コード、schema、tests
+- `apps/market-core`: Python 3.13、CLI `watchdeck-market`
+- `apps/web`: SvelteKit 2 / Svelte 5、localhost UIとlocal file API
+- `deploy/market-postgres`: 専用Postgres 17 Compose
+- `schemas`: Webが読む4つのJSON schema
+- `config/systemd`: DB、collector、maintenance、Webのuser unit template
 
-この文書に固定されたruntime件数や市場値は置かない。現在値は
-`watchdeck doctor`、state files、実画面で確認する。
+現在値は`watchdeck-market status`、`artifacts/service-state.json`、service log、実画面で確認する。
