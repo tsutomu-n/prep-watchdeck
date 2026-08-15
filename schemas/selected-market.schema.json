@@ -1,0 +1,447 @@
+{
+  "$defs": {
+    "BookWalkDisclaimersArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "includesFees": {
+          "const": false,
+          "title": "Includesfees",
+          "type": "boolean"
+        },
+        "predictsFutureImpact": {
+          "const": false,
+          "title": "Predictsfutureimpact",
+          "type": "boolean"
+        },
+        "confirmsOrderAvailability": {
+          "const": false,
+          "title": "Confirmsorderavailability",
+          "type": "boolean"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        }
+      },
+      "required": [
+        "includesFees",
+        "predictsFutureImpact",
+        "confirmsOrderAvailability",
+        "statement"
+      ],
+      "title": "BookWalkDisclaimersArtifact",
+      "type": "object"
+    },
+    "BookWalkEstimateArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "notionalQuote": {
+          "title": "Notionalquote",
+          "type": "number"
+        },
+        "buy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BookWalkFillArtifact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "sell": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BookWalkFillArtifact"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "buyUnavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Buyunavailablereason"
+        },
+        "sellUnavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sellunavailablereason"
+        },
+        "includesFees": {
+          "const": false,
+          "title": "Includesfees",
+          "type": "boolean"
+        },
+        "predictsFutureImpact": {
+          "const": false,
+          "title": "Predictsfutureimpact",
+          "type": "boolean"
+        },
+        "confirmsOrderAvailability": {
+          "const": false,
+          "title": "Confirmsorderavailability",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "notionalQuote",
+        "buy",
+        "sell",
+        "buyUnavailableReason",
+        "sellUnavailableReason",
+        "includesFees",
+        "predictsFutureImpact",
+        "confirmsOrderAvailability"
+      ],
+      "title": "BookWalkEstimateArtifact",
+      "type": "object"
+    },
+    "BookWalkFillArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "baseSize": {
+          "title": "Basesize",
+          "type": "number"
+        },
+        "averagePrice": {
+          "title": "Averageprice",
+          "type": "number"
+        },
+        "topPriceImpactBps": {
+          "title": "Toppriceimpactbps",
+          "type": "number"
+        }
+      },
+      "required": [
+        "baseSize",
+        "averagePrice",
+        "topPriceImpactBps"
+      ],
+      "title": "BookWalkFillArtifact",
+      "type": "object"
+    },
+    "DepthLevelArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "price": {
+          "title": "Price",
+          "type": "number"
+        },
+        "sizeBase": {
+          "title": "Sizebase",
+          "type": "number"
+        }
+      },
+      "required": [
+        "price",
+        "sizeBase"
+      ],
+      "title": "DepthLevelArtifact",
+      "type": "object"
+    },
+    "SelectedInstrumentArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "exclusiveMinimum": 0,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "sourceSymbol": {
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "quoteAsset": {
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "depthReceivedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Depthreceivedat"
+        },
+        "depthAgeSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Depthageseconds"
+        },
+        "quality": {
+          "enum": [
+            "ready",
+            "partial",
+            "unavailable",
+            "stale"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "qualityReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        },
+        "bids": {
+          "items": {
+            "$ref": "#/$defs/DepthLevelArtifact"
+          },
+          "maxItems": 20,
+          "title": "Bids",
+          "type": "array"
+        },
+        "asks": {
+          "items": {
+            "$ref": "#/$defs/DepthLevelArtifact"
+          },
+          "maxItems": 20,
+          "title": "Asks",
+          "type": "array"
+        },
+        "bookWalks": {
+          "items": {
+            "$ref": "#/$defs/BookWalkEstimateArtifact"
+          },
+          "maxItems": 3,
+          "title": "Bookwalks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "venue",
+        "sourceSymbol",
+        "quoteAsset",
+        "depthReceivedAt",
+        "quality",
+        "qualityReasons",
+        "bids",
+        "asks",
+        "bookWalks"
+      ],
+      "title": "SelectedInstrumentArtifact",
+      "type": "object"
+    },
+    "SelectedPayloadArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "selectionId": {
+          "title": "Selectionid",
+          "type": "string"
+        },
+        "groupId": {
+          "title": "Groupid",
+          "type": "string"
+        },
+        "primaryVenueInstrumentId": {
+          "title": "Primaryvenueinstrumentid",
+          "type": "string"
+        },
+        "expiresAt": {
+          "format": "date-time",
+          "title": "Expiresat",
+          "type": "string"
+        },
+        "instruments": {
+          "items": {
+            "$ref": "#/$defs/SelectedInstrumentArtifact"
+          },
+          "title": "Instruments",
+          "type": "array"
+        },
+        "trades": {
+          "items": {
+            "$ref": "#/$defs/SelectedTradeArtifact"
+          },
+          "maxItems": 100,
+          "title": "Trades",
+          "type": "array"
+        }
+      },
+      "required": [
+        "selectionId",
+        "groupId",
+        "primaryVenueInstrumentId",
+        "expiresAt",
+        "instruments",
+        "trades"
+      ],
+      "title": "SelectedPayloadArtifact",
+      "type": "object"
+    },
+    "SelectedTradeArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "exclusiveMinimum": 0,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "sourceSymbol": {
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "tradeId": {
+          "title": "Tradeid",
+          "type": "string"
+        },
+        "side": {
+          "enum": [
+            "buy",
+            "sell"
+          ],
+          "title": "Side",
+          "type": "string"
+        },
+        "price": {
+          "title": "Price",
+          "type": "number"
+        },
+        "sizeBase": {
+          "title": "Sizebase",
+          "type": "number"
+        },
+        "sourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourceat"
+        },
+        "receivedAt": {
+          "format": "date-time",
+          "title": "Receivedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "venue",
+        "sourceSymbol",
+        "tradeId",
+        "side",
+        "price",
+        "sizeBase",
+        "sourceAt",
+        "receivedAt"
+      ],
+      "title": "SelectedTradeArtifact",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "unavailable",
+        "stale"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "qualityReasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Qualityreasons",
+      "type": "array"
+    },
+    "disclaimers": {
+      "$ref": "#/$defs/BookWalkDisclaimersArtifact"
+    },
+    "selection": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SelectedPayloadArtifact"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "status",
+    "qualityReasons",
+    "disclaimers",
+    "selection"
+  ],
+  "title": "SelectedMarketArtifact",
+  "type": "object"
+}

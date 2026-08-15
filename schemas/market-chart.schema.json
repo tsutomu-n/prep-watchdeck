@@ -1,0 +1,224 @@
+{
+  "$defs": {
+    "ChartBarArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "bucketAt": {
+          "format": "date-time",
+          "title": "Bucketat",
+          "type": "string"
+        },
+        "open": {
+          "title": "Open",
+          "type": "number"
+        },
+        "high": {
+          "title": "High",
+          "type": "number"
+        },
+        "low": {
+          "title": "Low",
+          "type": "number"
+        },
+        "close": {
+          "title": "Close",
+          "type": "number"
+        },
+        "volumeBase": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volumebase"
+        },
+        "volumeNotional": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volumenotional"
+        },
+        "tradeCount": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Tradecount"
+        },
+        "finality": {
+          "enum": [
+            "confirmed",
+            "derived_final",
+            "mixed"
+          ],
+          "title": "Finality",
+          "type": "string"
+        },
+        "sourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourceat"
+        },
+        "observedAt": {
+          "format": "date-time",
+          "title": "Observedat",
+          "type": "string"
+        },
+        "sourceBarCount": {
+          "minimum": 1,
+          "title": "Sourcebarcount",
+          "type": "integer"
+        },
+        "expectedSourceBarCount": {
+          "minimum": 1,
+          "title": "Expectedsourcebarcount",
+          "type": "integer"
+        },
+        "complete": {
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "qualityReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "bucketAt",
+        "open",
+        "high",
+        "low",
+        "close",
+        "volumeBase",
+        "volumeNotional",
+        "finality",
+        "sourceAt",
+        "observedAt",
+        "sourceBarCount",
+        "expectedSourceBarCount",
+        "complete",
+        "qualityReasons"
+      ],
+      "title": "ChartBarArtifact",
+      "type": "object"
+    },
+    "ChartTimeframeArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "timeframe": {
+          "enum": [
+            "5m",
+            "15m",
+            "1h",
+            "4h",
+            "24h"
+          ],
+          "title": "Timeframe",
+          "type": "string"
+        },
+        "seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Seconds",
+          "type": "integer"
+        },
+        "bars": {
+          "items": {
+            "$ref": "#/$defs/ChartBarArtifact"
+          },
+          "maxItems": 500,
+          "title": "Bars",
+          "type": "array"
+        }
+      },
+      "required": [
+        "timeframe",
+        "seconds",
+        "bars"
+      ],
+      "title": "ChartTimeframeArtifact",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "unavailable",
+        "stale"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "qualityReasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Qualityreasons",
+      "type": "array"
+    },
+    "venueInstrumentId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Venueinstrumentid"
+    },
+    "timeframes": {
+      "items": {
+        "$ref": "#/$defs/ChartTimeframeArtifact"
+      },
+      "title": "Timeframes",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "status",
+    "qualityReasons",
+    "venueInstrumentId",
+    "timeframes"
+  ],
+  "title": "MarketChartArtifact",
+  "type": "object"
+}

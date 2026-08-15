@@ -1,44 +1,38 @@
+import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
-import {
-  resolveWebTestStatePaths,
-  shellEnvironment
-} from "./test-state-paths";
-
-const e2ePaths = resolveWebTestStatePaths("e2e");
-const e2eStateEnv = shellEnvironment({
-  PREP_WATCHDECK_STATE_DIR: e2ePaths.runtimeRoot
-});
-const cleanupEnv = shellEnvironment({
-  WATCHDECK_TEST_RUNTIME_ROOT: e2ePaths.runtimeRoot
-});
 
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.e2e.ts",
-  outputDir: e2ePaths.playwrightOutputDir,
+  outputDir: resolve(process.cwd(), "../../var/tmp/e2e/playwright-results"),
   workers: 1,
   timeout: 30_000,
-  expect: {
-    timeout: 5_000
-  },
+  expect: { timeout: 5_000 },
   use: {
-    baseURL: "http://127.0.0.1:4173",
+    baseURL: "http://127.0.0.1:4174",
+    channel: process.env.CI ? undefined : "chrome",
+    screenshot: "only-on-failure",
     trace: "on-first-retry"
   },
   projects: [
     {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] }
+      name: "desktop-1440",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 960 } }
+    },
+    {
+      name: "mobile-390",
+      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } }
     }
   ],
   webServer: {
-    command: [
-      `cd ../web && ${cleanupEnv} bun -e 'import { rmSync } from "node:fs"; rmSync(process.env.WATCHDECK_TEST_RUNTIME_ROOT, { recursive: true, force: true })'`,
-      `cd ../scanner-core && ${e2eStateEnv} uv run watchdeck scan --source fixture --fixture-set basic --template balanced`,
-      "cd ../web && bun run build",
-      `${e2eStateEnv} bun run preview -- --port 4173`
-    ].join(" && "),
-    url: "http://127.0.0.1:4173/",
+    command: "bun run build && bun run preview -- --port 4174 --strictPort",
+    env: {
+      PREP_WATCHDECK_MARKET_STATE_DIR: resolve(
+        process.cwd(),
+        "../../var/tmp/e2e/runtime"
+      )
+    },
+    url: "http://127.0.0.1:4174/api/health",
     reuseExistingServer: false,
     timeout: 120_000
   }

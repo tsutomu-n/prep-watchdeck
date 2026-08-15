@@ -1,0 +1,53 @@
+{
+  "timezone": "UTC",
+  "serverTime": 1786705875000,
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "pair": "BTCUSDT",
+      "contractType": "PERPETUAL",
+      "status": "TRADING",
+      "baseAsset": "BTC",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "underlyingType": "COIN",
+      "filters": [
+        {"filterType": "PRICE_FILTER", "tickSize": "0.1"},
+        {"filterType": "LOT_SIZE", "stepSize": "0.001"}
+      ]
+    },
+    {
+      "symbol": "TSLAUSDT",
+      "pair": "TSLAUSDT",
+      "contractType": "PERPETUAL",
+      "status": "TRADING",
+      "baseAsset": "TSLA",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "underlyingType": "STOCK",
+      "filters": []
+    },
+    {
+      "symbol": "ETHUSDT",
+      "pair": "ETHUSDT",
+      "contractType": "PERPETUAL",
+      "status": "PENDING_TRADING",
+      "baseAsset": "ETH",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "underlyingType": "COIN",
+      "filters": []
+    },
+    {
+      "symbol": "SOLUSDT_260925",
+      "pair": "SOLUSDT",
+      "contractType": "CURRENT_QUARTER",
+      "status": "TRADING",
+      "baseAsset": "SOL",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "underlyingType": "COIN",
+      "filters": []
+    }
+  ]
+}

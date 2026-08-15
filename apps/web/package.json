@@ -11,17 +11,14 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:performance": "xvfb-run -a sh -c 'openbox >/tmp/prep-watchdeck-openbox.log 2>&1 & exec playwright test --config playwright.performance.config.ts'",
-    "test:soak": "xvfb-run -a sh -c 'openbox >/tmp/prep-watchdeck-soak-openbox.log 2>&1 & exec playwright test --config playwright.soak.config.ts'",
-    "generate:types": "json2ts --maxItems=-1 -i ../../schemas/scanner-snapshot.schema.json -o src/lib/generated/scanner-snapshot.d.ts"
+    "generate:types": "json2ts --maxItems=-1 -i ../../schemas/universe-snapshot.schema.json -o src/lib/generated/universe-snapshot.d.ts && json2ts --maxItems=-1 -i ../../schemas/market-chart.schema.json -o src/lib/generated/market-chart.d.ts && json2ts --maxItems=-1 -i ../../schemas/selected-market.schema.json -o src/lib/generated/selected-market.d.ts && json2ts --maxItems=-1 -i ../../schemas/service-state.schema.json -o src/lib/generated/service-state.d.ts"
   },
   "dependencies": {
     "@sveltejs/adapter-auto": "^6.1.0",
     "@sveltejs/kit": "^2.55.0",
     "ajv": "^8.17.1",
     "lightweight-charts": "^5.2.0",
-    "svelte": "^5.54.1",
-    "valibot": "^1.4.1"
+    "svelte": "^5.54.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.0",

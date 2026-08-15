@@ -1,8 +1,8 @@
 declare global {
   namespace App {
     interface PageData {
-      snapshot?: import("$lib/generated/scanner-snapshot").PrepWatchdeckScannerSnapshot;
-      error?: string;
+      market?: import("$lib/server/market-artifact-repository").MarketArtifactBundle;
+      marketError?: string;
     }
   }
 }

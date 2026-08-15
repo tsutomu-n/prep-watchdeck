@@ -1,377 +1,95 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
-- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
+- 更新: `2026-08-15T11:21:14+09:00`
+- 検証: `2026-08-15T11:21:14+09:00`
 - 状態: `現行`
 
 ---
 
-## この文書が固定するもの
-
-この文書は、Dashboardと個別Symbol画面の現行操作契約を固定する。market値、件数、
-process状態の正本ではない。これらは実画面、state file、service状態で確認する。
-
-情報量の多さは意図したものである。Desktopの密度を保ち、Mobileでは表現とscroll境界を
-変えるが、signal、stale、missing、partial、low-quality、Smart Rank、watchlist row、
-銘柄annotationを都合よく省略しない。
-
-## 利用者の基本フロー
-
-1. Topbarのsource、snapshot時刻、service、data qualityを確認する。
-2. 表示されている場合は、市場比較とVPI-Lite+のoptional contextを確認する。
-3. Watchlistのカテゴリ、view、Raw Sort、Smart Rankを使って確認対象を絞る。
-4. Watchlist rowを選択し、同じDashboard内のSelected detailを更新する。
-5. Selected detailで分類、理由、risk、24h range、市場活動、Past Noteを確認する。
-6. より深く確認する時だけ、Selected detailの「個別分析を開く」linkからSymbol画面へ進む。
-7. Symbol画面のMonitoring Rail、chart、時間軸別データ、市場条件を確認する。
-8. 後日の監視に必要な時だけ、Past Noteを60日有効の銘柄annotationとして保存する。
-
-## shared themeとsemantic color
-
-全routeは`apps/web/src/routes/+layout.svelte`から
-`apps/web/src/lib/styles/watchdeck-theme.css`を読み込む。色、文字、余白、row、control、focus、
-chart tokenのruntime正本はこのshared themeだけである。productionのroute/component styleにある
-raw hexadecimalおよび`rgb()` / `rgba()`色literalは0件で、componentはsemantic tokenか、そのtokenを
-入力にした`color-mix()`だけを使う。raw値はshared themeとcolor adapterのtest fixtureに限定する。
-
-DashboardとSymbol Pageのheaderは同じnative selectを`配色`label付きで表示する。選択可能なIDは
-`watchdeck`、`carbon-aurora`、`forest-amber`、`plum-signal`、`paper-ledger`、`arctic-terminal`、
-`sage-field`、`lilac-current`の8つで、`watchdeck`を既定値とする。
-閉じた状態では現在の種別を`DARK` / `LIGHT`として常時表示し、select内では
-「ダークテーマ」「ライトテーマ」のnative `optgroup`へ4件ずつ分ける。
-選択値は`prep-watchdeck:color-scheme`としてbrowserの`localStorage`だけへ保存し、DB、snapshot、
-Dashboard view設定、URLへ含めない。初回描画前に有効な保存値を`html[data-color-scheme]`へ適用し、
-reloadとroute移動で維持する。不明値、空値、storage読取失敗は`watchdeck`へfail closedする。
-4つのLight themeは明示選択型とし、native controlへ`color-scheme: light`を適用する。
-別tabとの即時同期とOS theme自動連動は行わない。
-
-両headerは全画面共通のnative `フォント`selectも表示する。選択可能なIDは`watchdeck`と
-`terminal`で、表示名は「標準（コンパクト）」「等幅（ターミナル）」とする。
-選択値は`prep-watchdeck:font-scheme`として`localStorage`だけへ保存し、
-初回描画前に`html[data-font-scheme]`へ適用する。不明値、空値、storage失敗は`watchdeck`へ戻す。
-font変更は同じchart instanceへfont familyだけを適用し、chart、`ResizeObserver`、bars requestを
-作り直さない。追加fontのdownload、外部配信、OS設定の変更は行わない。
-
-semantic colorの役割は次で固定する。
-
-- `up` / `down`: 価格変化、変化率、sparkline、candle、方向付きvolumeなど、市場方向だけ。
-- `warning` / `warningBorder`: 運用上の注意、risk確認、draft衝突、計画外結果、
-  service劣化。価格の正負やvalidation errorには使わない。
-- `qualityGood`: 検証済み品質、完了したcheck、正常なsystem state。
-- `qualityRisk`: stale、missing、partial、low-confidence、unreadable、取得失敗、入力validationなど、
-  実データまたはfieldの問題。通常の注意喚起には使わない。
-- source、service、runtimeのsystem stateは`qualityGood`、`warning`、`qualityRisk`を状態に応じて使い、
-  marketの`up` / `down`とは色値も意味も分離する。
-
-幅`560px`以下のTopbarはsource、service、runtime boundaryを横並びの3 cellへ圧縮する。
-sourceとserviceの主要状態は`role="status"`、`aria-live="polite"`、`aria-atomic="true"`を維持し、
-runtime boundaryも省略しない。
-
-## Dashboardの構造とフォーカス順
-
-### 固定されたsection順
-
-Topbarの後にあるworkspaceのDOM順は、breakpointにかかわらず次で固定する。
-
-1. optional context (`data-dashboard-section="context"`。対応データがある場合だけ)
-2. Watchlist (`data-dashboard-section="watchlist"`)
-3. Selected detail (`data-dashboard-section="detail"`)
-4. Smart Rank (`data-dashboard-section="smart-rank"`)
-
-通常の`Tab`移動も、このsource order内で各sectionの操作要素を順に通る。Desktopの
-`85rem`以上ではSelected detailを右列へ置くが、CSS gridによる見た目の配置だけを変え、
-DOM、読み上げ順、keyboard順を入れ替えない。正の`tabindex`による順序の上書きもしない。
-
-Watchlist row群は後述のroving tab stopにより1つだけがTab順へ入り、そのrowから`Tab`で
-Selected detailの個別分析linkへ進める。Smart Rankはdetailの後に続く。
-
-### row選択と個別分析navigationの分離
-
-Watchlist row全体は`button[data-row-select]`であり、navigation linkではない。
-
-- click、`Enter`、`Space`はrowを選択し、URLを変えずにSelected detailを更新する。
-- 選択状態はrowの見た目だけでなく`aria-pressed="true"`でも示す。
-- focusを別rowへ動かしただけでは選択symbolを変えない。
-- 個別分析への遷移はSelected detail内の明示的なlinkだけが行う。実pathは
-  `/symbols/<symbol>?tf=<selectedTimeframe>`で、accessible nameは
-  「`<symbol> の個別分析を開く`」である。
-
-filterやview変更で選択symbolが一時的に非表示になっても、別symbolへ自動選択しない。
-Selected detailは「選択銘柄を保持中」を表示し、入力中の下書きを保持する。対象が再表示
-されるまでは保存不可であることも隠さず表示する。
-
-### 市場活動（VPI-Lite+）
-
-Cold snapshotに有効な`summary.vpiLitePlus`がある時だけ、optional contextへ既存Target限定の
-発見laneを置く。利用者が最初に見る見出しは`市場活動`とし、技術名`VPI-Lite+`は小さく併記する。
-各groupはscore降順で最大5件とするが、score自体はlaneへ表示しない。coverage、state分類、empty state、
-Benchmark除外の意味は[`data-contracts.md`](data-contracts.md)を正本とする。
-選択rowに一致する`row.display.vpiLitePlus`がある時だけ、選択銘柄の補助詳細としてscore、
-reason、risk、funding、open interest、data timestampを表示する。常に「実験中の補助指標で、
-売買シグナルではない」と明記する。
-
-VPIはWatchlist row、Smart Rank、sortへ入れない。Hot ticker deltaは価格DOMだけを
-更新し、Cold VPI表示を再計算しない。top-levelまたはitemが不正ならVPI部分だけを非表示にし、
-既存Dashboardを継続表示する。これはVPIの低品質状態を隠す処理ではなく、consumer契約を満たさない
-任意payloadをfail-closedで拒否する境界である。
+## 主要flow
 
-### 3市場価格比較pilot
+1. Universeの全instrumentをbase、Venue順で確認する。
+2. 検索、Venue、coverage、quality filterで監視対象を絞る。
+3. mark、reference種別、funding、OI、24時間出来高、鮮度、provenanceをVenue別に確認する。
+4. group化済みinstrumentでは、条件を満たす時だけ参考mark中央値を確認する。
+5. 行を選び、primary Venue、Chart、groupの板・約定・book walkを確認する。
+6. 後で再確認する文脈だけPast Noteへ保存する。
 
-有効な`summary.marketComparison`がある時だけ、optional contextへscanner rowから独立した
-3市場価格比較panelを表示する。対象はBTC/ETH/SOLで、各sourceのmark price、quote、取得時刻、
-coverage、3/3時だけの参考中央値と最大乖離幅を示す。欠損sourceは隠さず、3/3未満では中央値を
-表示しない。対象銘柄がscanner rowsや現在のWatchlist表示条件に含まれなくてもpanelを維持する。
+売買方向、期待収益、裁定機会、推奨Venue、ランキングは表示しない。
 
-USDT建ての参考値であり、HyperliquidはUSDC証拠金で通貨換算をしないこと、Smart Rankや売買判定に
-使わないことを明記する。
-Watchlist row、sort、chart、Hot ticker更新には接続しない。payloadが不正なら
-比較panelだけを非表示にし、既存Dashboardを継続する。
+## Universe Explorer
 
-### Bitget / Hyperliquid Perp会場比較
+各行は少なくともbase、Venue、source symbol、group/単独状態、mark、funding、OI、24時間出来高、
+quality、観測時刻を識別できるようにする。quote、settle、collateral、reference price kind、
+source endpointは詳細またはprovenance表示から確認できる。
 
-有効な`summary.perpVenueComparison`に選択中scanner symbolと一致するitemがある時だけ、Selected detailへ
-折りたたみ式の会場比較を表示する。BitgetとHyperliquidのsource symbol、quote、collateral、mark、
-funding、建玉想定元本、24時間出来高、観測時刻を会場別に示す。片側欠損は取得済み値と欠損理由を
-残し、両会場がfreshな場合だけ符号付きmark差を示す。
+検索はbase、source symbol、`venueInstrumentId`、quote、settleを対象にする。filterはnative
+input/selectを使い、
+labelを常時表示する。絞り込みで値のないitemを黙って除外する場合は、適用中filterと件数を示す。
 
-unmapped銘柄では比較group自体を表示しない。USDTとUSDCの換算、中央値、会場合算、Smart Rank、通知、
-売買・裁定判断へ接続しない。optional context→Watchlist→Selected detail→Smart RankのDOM/keyboard順、
-bounded scroll、既存の色・font契約を維持する。
+group coverageとdata qualityは別軸である。単独instrumentは「品質不良」ではなく未group、
+stale/unavailableはcoverageに関係なく品質状態として示す。
 
-### Watchlist rowのroving keyboard
+参考mark中央値には次を併記する。
 
-Watchlist row群のTab stopは常に1つだけである。
+- 参加Venue数
+- cycle/freshness条件
+- `USD/USDC/USDT parityを参考中央値だけに仮定`
+- executable priceでも売買推奨でもないこと
 
-- 現在focus中のrowがまだ表示中なら、そのrowを`tabindex="0"`にする。
-- そうでなければ、表示中の選択rowを`tabindex="0"`にする。
-- 選択rowも表示されていなければ、先頭rowを`tabindex="0"`にする。
-- それ以外のrowは`tabindex="-1"`にする。
-- `ArrowDown` / `ArrowUp`は次／前の表示rowへfocusだけを移す。端では停止する。
-- `Home` / `End`は先頭／末尾の表示rowへfocusだけを移す。
-- key移動後のrowは、bounded scroll領域の外なら領域内へscrollする。
-- `Enter` / `Space`で初めてfocus rowを選択する。
-- row群からfocusが外れた後もTab stopは1つを維持し、選択状態は失わない。
+## 選択
 
-keyboard helpは「上下キーで銘柄を移動、EnterまたはSpaceで選択」としてrow groupへ
-`aria-describedby`で関連付ける。
+行の選択は視覚state、keyboard focus、collector subscriptionを混同しない。Webは500ms debounce後に
+`/api/selection`へ1 commandを送り、その後market serviceの選択処理とartifact更新を待つ。同じ
+`groupId + venueInstrumentId`を5分ごとにheartbeatする。primaryを変える時は同じgroupでも新しい
+selection revisionとして扱う。
 
-## signal、stale、品質の提示契約
+選択対象が次のUniverseから消えた、group membershipが変わった、commandが期限切れになった場合は、
+旧detailを有効なまま見せず選択解除またはunavailable理由を表示する。
 
-### movement signal
+## 選択detail
 
-`movementSignals`が返したsignalは、Desktop/Mobileとも全件をrow内へ表示する。
-「先頭だけ」「+N」「hover時だけ」の省略はしない。現行signalは次を含む。
+detailは次の順で表示する。
 
-- 5分/1時間一致（短縮表示: `一致`）
-- 短期逆行（`逆行`）または直近失速（`失速`）
-- 5分急変（`急変`）
-- 出来高増（`量増`）
+1. primary instrument identity、quote/settle/collateral、freshness
+2. 5m / 15m / 1h / 4h / 24h Chart
+3. Venue別depth最大20段
+4. group横断の直近100 trades
+5. $100 / $500 / $1,000 book walk
+6. Past Note
 
-各chipは短縮labelを視覚表示し、`aria-label`には完全なlabelを持つ。さらにrow選択buttonの
-`aria-label`へ、分類、表示label、選択時間軸の変化と代金、15分量倍率、異常時だけの品質、活動phase、注記、
-全signalの完全labelを連結する。色だけでsignalを区別しない。
+Chartは選択した`venueInstrumentId`だけを描画する。artifactは`derived_final`と`confirmed`を保持するが、
+現画面ではfinalityを識別表示しない。欠落bar、version境界、不完全barを埋めず、timeframe変更で
+選択instrumentを変えない。
 
-### Hot価格のstale
+book walkはbuy/sellを分け、平均価格とtop-of-bookからのbpsだけを表示する。10秒超、板不足、
+非USD-like、単位不明では数値の代わりに理由を表示する。常に次を明記する。
 
-現在価格は価格専用の可変精度で表示し、1未満の正の価格を汎用の小数2桁丸めによって`0`と
-表示しない。高価格帯は小数2桁、1以上1000未満は小数3桁、1未満は最大4有効桁を基準にする。
+> 現在受信した板だけの概算。fee、将来impact、実際の注文可否を含まない。
 
-Hot ticker価格が5秒を超えて更新されていない時は、価格をquality-risk色にし、同じ価格欄へ
-`STALE`を文字で表示する。row選択buttonの`aria-describedby`は価格欄の`id`を参照するため、
-読み上げでも価格値と`STALE`を取得できる。stale化によってrow高を変えたり、他のfieldを
-隠したりしない。
-
-row qualityのlabel mappingは[`data-contracts.md`](data-contracts.md)を正本とする。通常品質は省略し、
-異常時だけ視覚表示とrowのaccessible nameへ品質labelを含める。snapshot全体の状態はsource bannerで
-引き続き可視化する。
-
-Watchlist rowで活動phaseが`UNKNOWN`かつrow品質も異常の場合、品質の`判定不能`を残し、
-活動phase側の同じ文言だけを省略する。
-活動phaseが判定済みなら、row品質が異常でも`急増 / 拡大 / 持続 / 失速`を表示する。
-Hot ticker updateは対象symbolの現在価格DOMだけを更新し、Smart Rank、Watchlist順、選択、
-filter、入力中の下書きを変えない。
-
-## touch targetと操作状態
-
-`DESIGN.md`とshared themeが次を固定する。
-
-- Desktopの高密度controlは`34px`高を使用できる。
-- `48rem`以下、またはcoarse pointerでは、link、button、text input、select、textarea、
-  summaryを原則`44px × 44px`以上にする。
-- checkbox/radio本体はnative sizeを維持し、関連labelを`44px × 44px`以上のtargetにする。
-- primary mobile actionを指定する場合は`48px`高を使う。
-- action labelは1行を維持し、control group側をwrapまたはstackする。
-- keyboard focusは`focus` tokenの`2px`ringと`2px`offsetで視覚表示する。
-- hover styleはhover可能なfine pointerだけへ適用する。
-- hover、focus、active、selected、disabled、loadingでborder幅、padding、control寸法を変えない。
-- disabled controlは理由を表示し、loading controlは`aria-busy`と進行中labelを持つ。
-- validation errorはquality-riskの視覚状態、`aria-invalid`、関連error、`role="alert"`で示す。
-- 保存成功は`role="status"`と`aria-live="polite"`で通知する。
-
-DashboardとSymbol画面ではPast Note保存の処理中stateをrouteが所有する。同じ保存の再実行は
-完了まで無効化し、送信元symbol以外へsuccess/errorを波及させない。Dashboard view設定の保存も
-view単位の処理中stateを持つ。`finally`で処理中stateを解除し、失敗時は既存入力を維持する。
+## Past Note
 
-`320px`、`375px`、`414px`、`768px`と、幅`1200px`のcoarse pointerをE2E対象に含める。
+Past Noteは`venueInstrumentId`単位の監視annotationで、trade journalではない。reasonまたは本文を
+必須とし、保存中の重複submitを防ぐ。選択が変わっても別instrumentのdraft、feedback、noteを
+混在させない。reasonが空なら`過去注記`とし、同じreasonで再保存した場合は同じinstrumentの既存noteを
+新しいnoteで置き換える。60日を過ぎたnoteは再表示しない。
 
-## Desktop / Mobileの情報密度
-
-Desktopは高密度な主分析surface、Mobileは短い確認、監視対象review、現在symbolのcontext確認に
-使う。MobileへDesktop tableの列配置は押し込まないが、item自体は削らない。
+## Qualityと障害
 
-幅`960px`以下では次のbounded scrollを使う。
+- missing、partial、stale、invalidを空文字や0へ変換しない。
+- source timestampがない場合は「なし」とし、observed timeへ置き換えない。
+- Web process healthとmarket data qualityを同じbadgeにしない。
+- 一部Venue障害では取得できたVenueを残し、失敗Venueと理由を表示する。
+- artifact schema不一致やrefresh失敗ではbannerを表示する。直前の検証済みDOMが残る場合も、
+  その全値を現在値として扱わない。
 
-- Watchlistのrow領域: `min(60svh, 36rem)`を上限に縦scrollする。
-- `touch-action: pan-y`、`overscroll-behavior-y: auto`を使う。
-- 表示対象rowは全件DOMに残し、領域内で末尾まで到達可能にする。
-- view、category、保存済みview設定を切り替えた時は、Watchlist row領域を先頭へ戻す。
+## Responsiveとaccessibility
 
-400 rowを使うstress E2Eでも、末尾itemへscrollでき、Selected
-detailが無制限に下へ押し流されないことを確認する。この件数はruntime固定値ではなく、
-情報を削らずbounded scrollを保つための検証fixtureである。
+Desktop 1440pxはUniverseとdetailを同時に走査できる密度を保つ。Mobile 390pxはfilter、行、
+selected detailを縦方向へ並べ、横overflowで主要操作を隠さない。tap targetは44px以上、主要actionは
+48pxを目安にする。
 
-Watchlist rowは広いtable表現で`42px`、compact card表現で`82px`を基準にする。signal、
-注記、選択、focus、STALEの有無で同じ表示モード内のrow高を変えない。
-
-`320px`ではDashboardとSymbol chart上部にある5つのtimeframe controlを3列で配置する。
-Symbolの時間軸別データboardはMobileで2列を維持する。
-
-## 個別Symbol画面の順序
-
-Symbol画面はchart-firstで、top-level DOM順を次に固定する。
-
-1. Symbol header: 一覧へ戻るlink、symbol、score、分類、品質、選択時間軸変化
-2. 分析領域
-   1. 主チャート: timeframe navigationの後に価格・出来高chart
-   2. Monitoring Rail: 分類、label、品質、選択時間軸、OI 60分、movement signal、risk tag
-3. 時間軸別データ: 5 timeframeの変化、代金、volume ratio
-4. 補助情報workspace
-
-補助情報workspace内の順序は次で固定する。
-
-1. 24h レンジ
-2. 品質と市場条件
-3. 理由とリスク
-4. 銘柄注記
-5. スナップショット
-
-Desktopでは最初の3 sectionを2列、以降を全幅で表示する。Mobileでは同じDOM順の1列へ
-stackする。見た目は1つの外枠とdividerで階層化し、各sectionを独立card catalogへ戻さない。
-Mobileでも内容を非表示にせず、root横overflowを発生させない。
-
-幅`720px`以下では、Symbol header直後に`個別分析内を移動`というsticky local navigationを
-表示する。chart、監視材料、時間軸、市場条件、銘柄注記の5 anchorを横scrollで全件到達可能にする。
-anchor activation後は対象sectionへfocusを移し、次の
-`Tab`がsection内の最初の操作へ進む。long-form workspace末尾には`分析上部へ戻る`linkを置き、
-page先頭へfocusを戻す。DesktopではこのMobile補助navigationを表示せず、chart-firstのDOM順は
-変えない。
-
-## Chartのsingle-container契約
-
-Symbolのchartは、初期時点でembedded candleもAPI candleも0件でも、1つの
-`.chart-surface`をmountする。
-
-- chart library、chart instance、candlestick、volume、line seriesをmount時に1回だけ作る。
-- APIは選択symbol、timeframe、snapshot `runId`を指定して取得する。
-- symbol、timeframe、runIdが変わった時は前requestをabortし、新しいrequestへ切り替える。
-- API candleが遅れて到着した時は、同じchart instanceのseries dataを更新する。
-- 遅延到着のためにcontainer、chart instance、library chunkを作り直さない。
-- abort済みrequestのresponseまたはerrorは、現在のseriesやempty stateを書き換えない。
-- 表示可能なcandleもline dataもない間はcontainer上へ「ローソク足データなし」をoverlay表示する。
-- candle到着後はoverlayを外し、同じcontainerへcanvasを表示する。
-- theme tokenが欠損または不正ならtoken名を含むerrorとしてfail closedし、silent fallbackしない。
-- 配色変更時は同じchart instanceとseriesへ新しいtheme tokenを適用し、volume dataの表示色も更新する。
-  theme変更だけでchart、`ResizeObserver`、bars request、library chunkを作り直さない。
-- componentがmodule load完了前にunmountされた場合はchartを作らない。作成済みなら
-  `ResizeObserver`をdisconnectし、chart instanceをremoveし、active bars requestをabortする。
-
-chartのcanvas surfaceは`aria-hidden="true"`とし、chart regionをscreen reader向け要約へ
-`aria-describedby`で関連付ける。要約は`aria-live="polite"`で次を伝える。
-
-- candle: symbol、timeframe、本数、UTCの開始／終了、最新足の始値・高値・安値・終値・出来高
-- line-only: symbol、timeframe、点数、UTCの開始／終了、最新値
-- empty: 「表示できる価格データはありません」
-- load error: 視覚表示と`role="alert"`
-
-存在しないOHLCVをline-only／empty状態から捏造しない。API barsの遅延到着後は同じ要約を
-更新し、E2Eでは1 request、1 chunk、1 chart creationのままOHLCV要約へ変わることを確認する。
-
-## 保存mutationと下書きの整合
-
-非同期保存はrouteがsingle-flight stateを所有し、button local stateだけに任せない。
-
-### Dashboard
-
-- Past Noteは1つのroute-owned保存lockを持ち、request開始時のorigin symbolと入力revisionを
-  固定する。同じ保存の再実行は完了まで拒否する。
-- response時に同じsymbol、同じrevisionなら送信済み入力だけをclearする。保存中に入力が変わった
-  場合は新しい入力を保持し、送信時点の内容だけが保存されたことを通知する。
-- success/errorはorigin symbolへだけ表示し、別symbolのSelected detailへ漏らさない。
-- Dashboard view設定はview単位のsaving stateを持ち、保存中のviewだけを無効化する。
-
-### 個別Symbol画面
-
-- Past Noteは1つのactive tokenにorigin symbolとsubmitted revisionを持つ。同一symbolの新しい入力は
-  保持し、API payloadはclick時点の内容から変えない。同じrevisionなら入力をclearする。
-- success/errorはsymbol別に保持する。保存中に別Symbolへclient navigationしても、
-  移動先のdraftやfeedbackを変更せず、元Symbolへ戻った時だけ結果を表示する。
-
-すべてのmutationは`finally`でlockを解除する。処理中buttonは`aria-busy`と操作別labelを持ち、
-保存結果はpolite status、失敗はalertで伝える。
-
-## 非目標となった取引ワークフロー
-
-Attack Ticket、Trade Memo、TRADE / SKIP記録、Weekly Review、Deal Check、Pre-Trade Check、
-Position Size PressureはDashboardとSymbol画面へ表示しない。これらの入力、計算、保存、編集、
-削除、CSV exportをUIから復元しない。Past Noteはこの代替ではなく、期限付き銘柄annotationである。
-
-## 表示の意味と禁止事項
-
-- Smart Rankとscoreは確認順であり、売買推奨ではない。
-- focus colorは選択timeframe、選択symbol、現在のattention、primary actionに限る。
-- up/downは市場方向、warningは注意、quality colorはデータ品質に使い分ける。
-- 高score、上昇色、Smart Rank上の位置を「買うべき」という表現にしない。
-- stale、missing、partial、low-quality dataを非表示にしない。
-- 内部categoryの`NO_TRADE`は変更せず、利用者向け表示だけを`監視除外候補`とする。
-- 自動注文、自動売買、buy/sell recommendationを示すUIを追加しない。
-
-## 実装と検証の根拠
-
-| 契約 | 現行実装 | 主な検証 |
-| --- | --- | --- |
-| Dashboard DOM順 | `apps/web/src/routes/+page.svelte` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
-| row選択、roving keyboard | `apps/web/src/lib/components/dashboard/DashboardWatchlist.svelte`, `apps/web/src/lib/components/dashboard/DashboardMarketRow.svelte`, `apps/web/src/lib/components/dashboard/SelectedSymbolOverview.svelte` | `apps/web/tests/e2e/home.e2e.ts` |
-| 全signal、STALE、row高 | `apps/web/src/lib/components/dashboard/DashboardMarketRow.svelte`, `apps/web/src/lib/market/row-analysis.ts` | `apps/web/tests/e2e/responsive-layout.e2e.ts`, `apps/web/tests/e2e/home.e2e.ts` |
-| Mobile bounded all-item scroll | `apps/web/src/lib/components/dashboard/DashboardWatchlist.svelte` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
-| Symbol DOM順、Monitoring Rail、flat workspace | `apps/web/src/routes/symbols/[symbol]/+page.svelte`, `apps/web/src/lib/components/symbol/SymbolMonitoringRail.svelte` | `apps/web/tests/e2e/symbol-workspace.e2e.ts`, `apps/web/tests/e2e/monitoring-symbol.e2e.ts`, `apps/web/tests/e2e/responsive-layout.e2e.ts` |
-| chart instance、late bars、要約 | `apps/web/src/lib/MarketChart.svelte`, `apps/web/src/lib/market/chart-data.ts`, `apps/web/src/lib/market/chart-theme.ts` | `apps/web/tests/e2e/realtime-dashboard.e2e.ts`, `apps/web/src/lib/market/chart-data.test.ts`, `apps/web/src/lib/market/chart-theme.test.ts` |
-| 配色選択、browser保存、chart再配色 | `apps/web/src/lib/components/ThemeSelector.svelte`, `apps/web/src/lib/theme/color-scheme.ts`, `apps/web/src/lib/styles/watchdeck-theme.css`, `apps/web/src/lib/MarketChart.svelte` | `apps/web/src/lib/theme/color-scheme.test.ts`, `apps/web/src/lib/theme/color-scheme-css.test.ts`, `apps/web/tests/e2e/color-schemes.e2e.ts` |
-| font選択、browser保存、chart font再適用 | `apps/web/src/lib/components/FontSelector.svelte`, `apps/web/src/lib/theme/font-scheme.ts`, `apps/web/src/lib/styles/watchdeck-theme.css`, `apps/web/src/lib/MarketChart.svelte` | `apps/web/src/lib/theme/font-scheme.test.ts`, `apps/web/src/lib/market/chart-theme.test.ts`, `apps/web/tests/e2e/font-schemes.e2e.ts` |
-| Past Note mutation、symbol scope、revision保持 | `apps/web/src/routes/+page.svelte`, `apps/web/src/routes/symbols/[symbol]/+page.svelte`, `apps/web/src/lib/past-note/` | `apps/web/src/lib/past-note/*.test.ts`, `apps/web/tests/e2e/home.e2e.ts`, `apps/web/tests/e2e/symbol-workspace.e2e.ts` |
-| 監視専用production境界 | `apps/web/src/routes/`, `apps/web/src/lib/`, `scripts/maintenance/monitoring-only-boundary.test.mjs` | `apps/web/tests/e2e/retired-routes.e2e.ts`, `scripts/maintenance/monitoring-only-boundary.test.mjs` |
-| shared theme、色、密度、compact status、誤推奨防止 | `DESIGN.md`, `apps/web/src/routes/+layout.svelte`, `apps/web/src/lib/styles/watchdeck-theme.css` | `apps/web/tests/e2e/responsive-layout.e2e.ts` |
-| VPI-Lite+実験表示、optional payload、Hot非影響 | `apps/web/src/lib/market/vpi-lite-plus.ts`, `apps/web/src/lib/components/dashboard/DashboardVpiExperimentPanel.svelte`, `apps/web/src/lib/components/dashboard/SelectedSymbolVpiDetail.svelte` | `apps/web/src/lib/market/vpi-lite-plus.test.ts`, `apps/web/tests/e2e/home.e2e.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
-| 3市場mark price比較pilot、optional payload、3/3集約 | `apps/web/src/lib/market/market-comparison.ts`, `apps/web/src/lib/components/dashboard/DashboardMarketComparisonPanel.svelte` | `apps/web/src/lib/market/market-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
-| Bitget / Hyperliquid Perp会場比較、optional payload、選択銘柄限定 | `apps/web/src/lib/market/perp-venue-comparison.ts`, `apps/web/src/lib/components/dashboard/SelectedSymbolVenueComparison.svelte` | `apps/web/src/lib/market/perp-venue-comparison.test.ts`, `apps/web/tests/e2e/realtime-dashboard.e2e.ts` |
-
-UI変更時は`DESIGN.md`を先に読み、Dashboard、Symbol page、Desktop、Mobileのどこへ
-影響するかを明示する。変更後は対象に近いunit/E2Eに加え、`bun run check`、`bun test`、
-`bun run build`を実行する。情報を減らす変更は、Mobile対応や簡素化という理由だけでは認めない。
-
-## OI表示と活動phase
-
-Symbol Monitoring Railは`OI 60分`を`増加 / 横ばい / 減少 / 不明`で表示する。
-VPI-Lite+のOI availabilityは別契約なので維持し、重複していた非VPIのraw open interest表示は
-置かない。60分前のexact bucketを確認できない場合やOI cycleがdegradedの場合は推測せず`不明`とする。
-
-`summary.volumeRatio15m`をvalidationできた場合だけ、`15分量倍率`へ検証済みの基準説明を付ける。
-値は有限時に`3.4×`、欠損時に`—`とする。metadataが不正・欠損ならsample数や期間を推測せず、
-基準詳細を取得できないfallbackを表示する。計算とmetadataの厳密な契約は
-[`data-contracts.md`](data-contracts.md)を正本とする。
-Symbol時間軸boardでは15mだけ量倍率行を生成し、他timeframeではDOMを生成しない。
-
-1hと4hの量倍率はSelected detailの文脈表示だけに使う。Watchlistは非normalのactivity phaseを
-量倍率の近くへ表示し、Selected detailとMonitoring Railにも活動phaseを表示するが、売買方向の意味は
-持たせない。enum、label、判定順、Smart Rank非影響は[`data-contracts.md`](data-contracts.md)を正本とする。
+semantic table/list、native form control、可視focus、keyboard操作、status textを使う。
+色だけでmovement、quality、selectionを表さない。検索IME composition中にfilterを確定しない。
+自動scroll、点滅、常時animation、hover必須操作を追加しない。

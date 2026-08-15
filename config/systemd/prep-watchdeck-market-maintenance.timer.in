@@ -1,0 +1,11 @@
+[Unit]
+Description=run prep-watchdeck market archive and retention hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=5min
+Unit=prep-watchdeck-market-maintenance.service
+
+[Install]
+WantedBy=timers.target

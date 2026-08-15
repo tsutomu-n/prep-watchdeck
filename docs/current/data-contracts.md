@@ -1,275 +1,113 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
-- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
 
-## Snapshot
+## Identity
 
-正本schemaは`schemas/scanner-snapshot.schema.json`。scanner-coreのPydantic DTOから
-exportし、Web型は`bun run generate:types`で生成する。
+- `venueInstrumentId=<venue>:<sourceSymbol>`。例: `bitget:BTCUSDT`。
+- `venueInstrumentVersionId`はPostgres SCD2 versionの内部ID。
+- `groupId=crypto:<BASE>:linear-perp`。
+- `mappingMethod=exact_base_heuristic`は、active、crypto、linear perpetual、base完全一致、
+  base数量、multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する。
 
-top-level必須field:
+alias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQは自動group化しない。
 
-- `schemaVersion`
-- `engineVersion`
-- `featureVersion`
-- `rulesetVersion`
-- `configHash`
-- `runId`
-- `generatedAt`
-- `dataAsOf`
-- `snapshotStatus`
-- `source`
-- `summary`
-- `rankings`
-- `rows`
+## 値と単位
 
-fieldの完全な型、nested必須field、制約はschemaを正本にする。fieldの追加・変更はschema、
-generated type、producer、consumer、testsを同時に更新する。
+- `markPrice`と`referencePrice`を分け、`referencePriceKind=index|oracle|none`を保持する。
+- Hyperliquid oracleをindexと表示しない。
+- Fundingは`fundingRateRaw`、`fundingIntervalSeconds`、`nextFundingAt`を保存する。
+  周期確認時だけ`fundingRatePerHour`を公開する。
+- OIは`openInterestRaw`と`openInterestRawUnit`を常に由来どおり保持する。base数量を確認できる時だけ
+  `openInterestBase`、markと両方が有効な時だけ`openInterestNotional`を算出する。
+- 24時間出来高は`volume24hRaw`と`volume24hUnit`をVenue別に表示し、時間窓の差分率を作らない。
+- `sourceAt`が配信されないsourceではnullを維持し、`observedAt`で鮮度を判定する。
 
-### VPI-Lite+ V0 sidecar
+USD、USDC、USDTのparity仮定は参考mark中央値だけに適用する。Venue値を変換・合算・rankingせず、
+実行可能価格として扱わない。
 
-serviceが生成するCold snapshotだけ、`summary.vpiLitePlus`を追加できる。summaryが正本で、
-`schemaVersion: 1`、`mode: "lite_plus_v0"`、`generatedAt`、`benchmarks`、`targets`を持つ。
-各symbol itemは次だけを公開する。
+## JSON read model
 
-- `symbol`
-- `state`
-- 0..100の`score`
-- `reasonCodes`、`riskTagCodes`
-- `fundingState`、`openInterestState`
-- `dataQuality`
-- nullableな`dataAsOf`
+正本schemaは次の4 file。すべて`schemaVersion=1`、unknown property禁止、NaN/Infinity禁止、
+ISO 8601 UTC timestampを使う。
 
-内部pressure、diagnostics、1分足配列は公開しない。実在するscanner rowとsymbolが一致する場合だけ、
-同じitemを`row.display.vpiLitePlus`へ複製する。benchmarkはscanner rowがなくてもsummaryへ残る。
-configが未指定またはdisabled、通常のlive/fixture scanではblock自体を追加しない。
+- `schemas/universe-snapshot.schema.json`
+- `schemas/market-chart.schema.json`
+- `schemas/selected-market.schema.json`
+- `schemas/service-state.schema.json`
 
-Webはこのoptional sidecarを局所parserでfail-closedに検証する。top-level契約が不正ならVPI全体を
-表示せず、不正なitemだけならそのitemを除外する。既存snapshot schemaのrequired fieldにはせず、
-generated typeへ手書きfieldを追加しない。Hot ticker payloadはVPIを持たず、Cold snapshotを次に
-発行するまでVPI値は変化しない。
+Python Pydantic modelからschemaを検証し、Web typeは`bun run generate:types`で生成する。
+生成済み`.d.ts`を手編集しない。
 
-VPI stateは`CALM | EARLY_ACTIVITY | ACTIVE_MOVE | THIN_VOLATILITY |
-SINGLE_BAR_SUSPECT | DATA_INSUFFICIENT | DATA_STALE | UNKNOWN`、data qualityは
-`OK | INSUFFICIENT | STALE | ERROR`である。これはscanner rowの`dataQuality`とは別契約である。
+### universe-snapshot.json
 
-Dashboard discovery laneでの分類とempty state契約:
+Top-levelは`generatedAt`、`status`、`qualityReasons`、`parityAssumption`、`items`。
+各itemはidentity、Venue/source symbol、quote/settle/collateral、execution model、catalog provenance、
+L1値、単位、freshness、collector run、source payload hash、error code、参考mark中央値を持つ。
 
-- `EARLY_ACTIVITY | ACTIVE_MOVE`は`活動増加`、`THIN_VOLATILITY | SINGLE_BAR_SUSPECT`は
-  `要注意`へ分類する。
-- `VPI対象 N / Watchlist M銘柄`の`N`はvalidなTarget item数、`M`は現在のWatchlist表示条件に
-  含まれるrow数である。discovery buttonは両方に含まれるTargetだけを選択対象にする。
-- valid summaryにTargetがなければ`VPI判定対象なし`、Targetはあるが現在の表示条件に該当しなければ
-  `現在の表示条件に該当するVPI対象なし`、対象はあるが活動増加・要注意がなければ`活動急増なし`、
-  payloadが欠損またはinvalidなら`VPIデータ不足`とする。
-- Benchmarkはdiscovery laneのcoverageと選択対象へ含めない。
+`quality=stale|unavailable`の値をfreshとして公開しない。参考中央値は同一group、同一cycle、
+2 Venue以上、age 120秒以内、skew 30秒以内、USD-like quote/settle/collateralをすべて満たす時だけ
+`ready`にする。24時間出来高の中央値は作らない。
 
-### 3市場mark price比較pilot sidecar
+### market-chart.json
 
-serviceと`publish-service`が生成するCold snapshotは、optionalな
-`summary.marketComparison`を持てる。`schemaVersion: 1`、
-`mode: "mark_price_pilot_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、
-`symbols`を持つ。対象symbolは`BTCUSDT | ETHUSDT | SOLUSDT`、sourceは
-`bitget | hyperliquid | bybit`である。
+Top-levelは`venueInstrumentId`と`timeframes`。timeframeは`5m|15m|1h|4h|24h`、各最大500 bars。
+barはOHLC、base/notional volume、trade count、`confirmed|derived_final`、source/observed時刻、
+source bar数、complete、quality理由を持つ。version境界を跨ぐbar、欠落barを補間しない。
 
-各source itemは`source`、`status`、nullableな`sourceSymbol`、`quote`、`markPrice`、
-`observedAt`、`sourceAt`、`error`を持つ。Hyperliquidはsource timestampを返さないため
-`sourceAt: null`とし、取得時刻をsource時刻として偽装しない。3市場とも標準契約の価格はUSDT建てで、
-HyperliquidはUSDC証拠金である。通貨換算は行わず、集約値は参考比較としてだけ扱う。
+### selected-market.json
 
-symbol itemは`coverage.valid/required`、`status`、nullableな`medianMarkPrice`と`spreadPct`を持つ。
-同じrefresh cycleで3sourceすべてが正数かつ10分以内の時だけ`status: ready`とし、中央値と
-`(max - min) / median * 100`を公開する。それ以外は`status: incomplete`、中央値とspreadを
-`null`にする。Webは局所parserで不正block/itemを表示せず、既存Dashboardを継続する。
+1 active selectionまたはnullを持つ。selectionには`selectionId`、`groupId`、
+`primaryVenueInstrumentId`、`expiresAt`、group instruments、直近100 tradesを含む。
+各instrumentは最大20 bids/asks、depth時刻/age、quality、$100/$500/$1,000 book walkを持つ。
 
-このsidecarはDB、snapshot schemaのrequired field、Smart Rank、filter、VPI、
-Hot tickerへ入力しない。
+depthが10秒超、板不足、非USD-like、非CLOB、単位不明なら概算をnullにし理由を返す。
+`includesFees=false`、`predictsFutureImpact=false`、`confirmsOrderAvailability=false`を固定する。
 
-### Bitget / Hyperliquid Perp会場比較 sidecar
+### service-state.json
 
-serviceと`publish-service`が生成するCold snapshotは、optionalな
-`summary.perpVenueComparison`を持てる。`schemaVersion: 1`、
-`mode: "perp_venue_comparison_v1"`、`generatedAt`、`refreshIntervalSeconds: 300`、会場別の
-`sources`、`items`を持つ。top-level `sources`は`venue`、`ok | unavailable`の`status`、nullableな
-`observedAt`、nullableな`error`を保持し、itemが0件でも取得失敗を正常な空集合と区別する。
+catalog/L1の最新collector run、freshness、artifactごとのwrite結果を持つ。`ready`以外でも
+取得できたstatusと理由を残す。Web healthとmarket data qualityは別契約であり、HTTP 200だけを
+market data readyの証拠にしない。
 
-対象はBitgetの取引中・非RWA・USDT無期限契約とdefault Hyperliquid Coreの非delisted標準Perpで、
-`Bitget.baseCoin`とHyperliquid `name`が完全一致する暗号資産だけである。HYPE、PURR、HIP-3、
-`1000`接頭辞、別名・倍率変換を必要とする銘柄はmappingしない。Bitgetは価格・証拠金ともUSDT、
-Hyperliquid標準Coreは価格USDT・証拠金USDCとして保持し、USDT/USDC換算や会場合算を行わない。
+## Selection command
 
-各itemはscanner側`symbol`、`asset`、`ready | partial | unavailable`の`status`、nullableな
-`markSpreadPct`、Bitget/Hyperliquidの`source` itemを持つ。各source itemは会場、source symbol、
-quote、collateral、mark、funding原値・周期・1時間換算、基軸通貨建玉、mark換算建玉想定元本、
-24時間notional出来高、`observedAt`、nullableな`sourceAt`、欠損理由を保持する。
+Webは`control/selection.json`をlock付きatomic replaceする。
 
-`markSpreadPct`は両会場が正数かつ取得時刻と提供元時刻が10分以内の時だけ
-`(Hyperliquid mark / Bitget mark - 1) * 100`で生成する。Hyperliquidはsource timestampを返さないため
-`sourceAt: null`を維持する。片側欠損では取得済み会場だけを公開し、spreadを`null`にする。
-一度検証に成功した会場別契約catalogはprocess内だけで最大30分保持できる。取得障害周期では
-catalogだけをmappingに再利用し、mark、funding、OI、volume、observedAtなどの市場観測値は
-再利用しない。catalog期限内の片側障害はitemを消さず、その会場を`unavailable`にする。
-30分を超えて契約catalogを確認できない場合は失効させ、古いmappingを無期限に公開しない。
-このsidecarはDB、required snapshot schema、Smart Rank、filter、VPI、Hot tickerへ入力しない。
+```json
+{
+  "schemaVersion": 1,
+  "groupId": "crypto:BTC:linear-perp",
+  "venueInstrumentId": "bitget:BTCUSDT",
+  "requestedAt": "2026-08-14T00:00:00.000Z",
+  "heartbeatAt": "2026-08-14T00:00:00.000Z"
+}
+```
 
-## Data quality
+選択identityが同じheartbeatでは`requestedAt`を維持する。Universeのactive grouped instrumentで
+ないcommand、不正timestamp、future revision、期限切れcommandはfail-closedに無視する。
 
-rowの`dataQuality`は`OK | STALE | MISSING | PARTIAL`、snapshotの`snapshotStatus`は
-`OK | STALE | PARTIAL | ERROR`である。stale、gap、coverage、unsupported symbolをUIで隠さず、
-価格方向やrankingとは別の意味として扱う。
+## Past Note
 
-row qualityの表示labelは`PARTIAL`=`一部データ不足`、`STALE`=`更新遅延`、`MISSING`=`判定不能`で、
-未知値もfail-closedで`判定不能`とする。`OK`は通常rowで常時表示しない。snapshot全体の状態は
-source bannerで別に示す。
+`past-notes/<venueInstrumentId>.json`にschema version 1、`venueInstrumentId`、notesを保存する。
+noteはreason、本文、`observedAt`、`expiresAt`を持ち、60日後に読取時pruneする。
+reasonが空なら`過去注記`を保存する。同じ`venueInstrumentId + reason`で再保存した場合は、既存noteを
+新しいnoteで置き換える。
+旧Bitget symbol noteをheuristic groupへ自動移行しない。
 
-## Service state
+## Web API
 
-`snapshots/service-state.json`はschema version 1で、`generatedAtMs`、nullableな
-`dataAsOfMs`、`productType`、stream件数、`diagnostics`、nullableな`backfill`、
-`reconcile`を持つ。scanner-coreのPydantic producerは必須field、数値制約、
-未知fieldを厳格に検証する。
-
-Web consumerはJSON構文エラーを`unreadable`として扱う一方、構文上有効な部分欠損objectは
-表示用の既定値へ落とす。したがって、Web read時にproducerと同じ完全schemaを再検証する契約では
-ない。file missingは`/api/service-state`で404、read failureは503、存在時はraw stateと
-要約viewを返す。
-
-## Chart
-
-detail chartはschema version 2で、次を持つ。
-
-- `snapshotRunId`
-- `symbol`
-- `generatedAt`
-- `dataAsOf`
-- timeframe別bars
-
-producerは同一timestampを最後のbarへ正規化して昇順にし、timeframeごと128本以下にする。
-Web consumerはschema version、symbol、timestamp昇順かつ重複なし、正数OHLC、非負
-`quoteVolume`、128本上限を検証する。snapshotと`runId`が一致しないchartは表示しない。
-chart APIは`runId`必須、`tf`省略時は`15m`、file missing時は指定timeframeの空配列を返し、
-run mismatchは409、invalid artifactは503とする。
-
-## Hot ticker
-
-ticker runtimeはschema version 1で、正整数かつ単調増加する`sequence`、非負整数`asOf`、
-full updates、直近delta updatesを持つ。unsafe symbol、同一array内の重複symbol、
-非正数price、非正整数timestampを拒否し、deltaの各rowがfullの同一rowと一致することも検証する。
-
-`/api/runtime/tickers?after=<sequence>`は、現在値と同じなら204、現在値の直前なら
-`full=false`のdelta、それ以外なら`full=true`のrecovery batchを返す。file missingも204である。
-`after`は数字だけのsafe integerでなければ400とする。
-
-## Monitoring state
-
-active state layout v2でWebが所有する保存契約は次の2つである。
-
-- `past-notes/current.json`: `{ notes: PastNote[] }`
-- `dashboard-view-settings/current.json`: schema version 1のDashboard view設定
-
-`PastNote`は`symbol`、`reason`、`observedAt`、`expiresAt`、`note`を持つ銘柄annotationである。
-同一`symbol`と`reason`の保存はcurrent内を置換する。`observedAt`から60日経過、または
-`expiresAt`到達のどちらか早い時点でcurrentから外し、観測月ごとの
-`past-notes/archive/YYYY-MM/past-notes-YYYY-MM.json`へ重複排除して保存する。
-
-Dashboard view設定はDashboardの表示条件を保持する。内部categoryの`NO_TRADE`はsnapshotと
-filter contractとして維持し、UIでは`監視除外候補`と表示する。
-
-## 日次サマリー
-
-`scripts/ops/watchdeck-daily-summary.mjs`はschema version 2を
-`ops/daily/v2/YYYY-MM-DD.json`へ、任意のMarkdownを同directoryへ書く。入力はusage events、
-snapshot、Past Note、Dashboard settingsだけである。既存の`ops/daily/YYYY-MM-DD.*`
-schema v1 artifactは履歴として保持し、上書きしない。
-
-## Local API
-
-### Market / runtime read
-
-| Method | Route | 役割 |
+| method | path | contract |
 | --- | --- | --- |
-| GET | `/api/health` | Web processのhealth |
-| GET | `/api/latest` | 最新snapshot |
-| GET | `/api/dashboard/snapshot` | Dashboard用Cold snapshot。`afterRunId`対応 |
-| GET | `/api/runtime/tickers` | Hot ticker full/delta batch。`after`対応 |
-| GET | `/api/service-state` | service runtime state |
-| GET | `/api/symbols` | symbol一覧 |
-| GET | `/api/symbols/[symbol]` | symbol detail |
-| GET | `/api/symbols/[symbol]/chart` | timeframe別chart。`runId`必須、`tf`対応 |
-| GET | `/api/summary` | snapshot summary |
+| GET | `/api/market-data` | 4 artifactのschema検証済みbundle、`no-store` |
+| POST | `/api/selection` | localhost限定。group/primaryをatomic write |
+| GET | `/api/market-past-notes?venueInstrumentId=...` | instrument note読取 |
+| POST | `/api/market-past-notes` | localhost限定。instrument note保存 |
+| GET | `/api/health` | Web process health。market qualityとは別 |
 
-### Monitoring state
-
-| Method | Route | 役割 |
-| --- | --- | --- |
-| GET / POST | `/api/past-notes` | Past Noteの取得・作成 |
-| GET / PATCH | `/api/dashboard-view-settings` | Dashboard view設定の取得・変更 |
-
-mutation methodはlocalhostからだけ許可する。read methodはlocal file repositoryを読む。
-record format、file lock、atomic writeのvalidationは各repositoryとroute testを正本にする。
-
-`/api/dashboard/snapshot?afterRunId=<current-run-id>`は変更がなければ204を返す。
-
-### 非目標となった旧API
-
-`/api/trade-memos`、`/api/attack-tickets`、`/api/weekly-review`にはproduction routeを置かない。
-GET、POST、PATCH、PUT、DELETEはいずれも404であり、CSV exportも提供しない。
-
-### Local command
-
-| Method | Route | 役割 |
-| --- | --- | --- |
-| POST | `/api/refresh-live` | `publish-service`を使うsnapshot再発行、または既存snapshot再読込 |
-
-`refresh-live`はlocalhostに加えて、local runtimeかつ
-`PREP_WATCHDECK_ENABLE_LOCAL_COMMANDS=true`の明示opt-inが必要である。
-`PREP_WATCHDECK_RUNTIME_TARGET=cloudflare`では有効化しない。
-同時requestは1つへ集約する。DuckDB lockだけは失敗にせず既存latest snapshotを返し、
-`fallback.reason=DUCKDB_LOCK`で再発行されなかったことを明示する。それ以外の実行失敗は503とする。
-
-## Analysis / activity / OI 60分
-
-`featureVersion`は`5`、`rulesetVersion`は`4`、`schemaVersion`は`1`である。現行producerは74時間の
-価格・売買代金component、`userRule74hMatched`、`summary.candidateRule74h`、
-`rankings.timeframes`を生成しない。`rankings`は既存診断用の`noTrade`だけを生成する。schemaの
-`summary`、`rankings`、row `display`は追加fieldを許容するため、旧snapshotの74時間fieldを読めても
-現行producerの公開契約とはみなさない。
-
-scanner分析に必要な5分足は、3つのfilter templateで`candles.min_required_bars=383`に固定する。
-これは最大4時間の量倍率について、現在windowとbaseline 288 samplesを重複なく作るための
-`288 + 2 * 48 - 1`本である。detail chartは別目的で最大1177本の5分足相当を読み、scanner分析と
-gap auditへは末尾383本だけを渡す。
-
-`summary.volumeRatio15m`は量倍率計算を変えず、Webへ基準の意味を渡す追加metadataである。
-`windowMinutes=15`、`sampleStepMinutes=5`、`baselineSampleCount`、
-`approxBaselineSpanMinutes=baselineSampleCount * sampleStepMinutes`、`statistic=median`、
-`floorUsdt`を持つ。sample countとfloorはactive filter config由来で、LiveとFixtureが同じ意味を出す。
-旧config名`baseline_window_bars`と`schemaVersion=1`は変更しない。
-
-rowの`volumeRatioByTf`は15mの既存値に加えて1hと4hを持てる。各値は現在windowのUSDT売買代金を、
-同じwindow幅のrolling baseline直近`baseline_window_bars` sampleのmedianで割る。sample stepは5分、
-windowは15m=3本、1h=12本、4h=48本である。必要履歴、有限値、正のbaseline、floorを満たさない
-windowだけ`null`にする。5m/24hは量倍率を生成しない。
-
-rowのoptional `activityPhase`は`BURST | EXPANDING | SUSTAINED | COOLING | NORMAL | UNKNOWN`である。
-判定順はUNKNOWN、COOLING、SUSTAINED、EXPANDING、BURST、NORMALを固定し、required ratioが欠ける時は
-UNKNOWNとする。これはdisplay-only契約であり、attention score、category、Raw Sort、Smart Rank、
-VPI-Lite+計算へ入力しない。
-
-表示labelは`BURST`=`急増`、`EXPANDING`=`拡大`、`SUSTAINED`=`持続`、`COOLING`=`失速`、
-`UNKNOWN`=`判定不能`とする。`NORMAL`は通常状態のnoiseを避けるためrowでは省略する。
-Watchlist rowで`UNKNOWN`と異常なrow品質が重なる場合は、品質側の`判定不能`を表示し、活動phase側の
-重複labelだけを省略する。選択銘柄の詳細ではactivity phase自体を`判定不能`として確認できる。
-
-`open_interest_samples`は`(symbol,bucket_ts_ms)`主キー、`holding_amount`、`source_ts_ms`、
-`updated_at_ms`を持つadditive DuckDB tableである。bucketはsource `ts`の5分floor、同bucketは
-より新しいsource時刻だけ更新し、24時間より古いrowだけを削除する。OI cycle障害は
-`summary.oiDiagnostics.status=degraded`と`code=OI_HISTORY_UNAVAILABLE`で可視化する。
-公開する状態名とUIは60分比較に固定されているため、`change_lookback_minutes`の現在の許容値も
-`60`だけとする。
+不正JSON、schema不一致、missing fileは推測で補完せず503、unavailable、または空stateとして扱う。

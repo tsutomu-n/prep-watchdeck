@@ -1,20 +1,20 @@
 [Unit]
-Description=prep-watchdeck local web
-After=network-online.target prep-watchdeck-service.service
-Wants=network-online.target
+Description=prep-watchdeck local Universe Explorer web
+After=network-online.target prep-watchdeck-market.service
+Wants=network-online.target prep-watchdeck-market.service
 
 [Service]
 Type=simple
-WorkingDirectory=@REPO_ROOT@
+WorkingDirectory=@REPO_ROOT@/apps/web
 Environment=HOME=@HOME_DIR@
 Environment=PATH=@HOME_DIR@/.local/bin:@HOME_DIR@/.local/share/bun/bin:/usr/local/bin:/usr/bin:/bin
-Environment=PREP_WATCHDECK_STATE_DIR=@STATE_ROOT@
-Environment=SNAPSHOT_SOURCE=skip
+Environment=PREP_WATCHDECK_MARKET_STATE_DIR=@MARKET_STATE_ROOT@
 Environment=PORT=5173
-ExecStart=/usr/bin/bash @REPO_ROOT@/scripts/start-all.sh
+ExecStart=@BUN_BIN@ run dev -- --port 5173 --strictPort
 Restart=on-failure
 RestartSec=5s
 TimeoutStopSec=30s
+UMask=0077
 
 [Install]
 WantedBy=default.target

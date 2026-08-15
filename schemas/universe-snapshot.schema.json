@@ -1,0 +1,637 @@
+{
+  "$defs": {
+    "CatalogProvenanceArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "sourceKind": {
+          "title": "Sourcekind",
+          "type": "string"
+        },
+        "endpoint": {
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "documentationUrl": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Documentationurl"
+        },
+        "payloadHash": {
+          "title": "Payloadhash",
+          "type": "string"
+        },
+        "observedAt": {
+          "format": "date-time",
+          "title": "Observedat",
+          "type": "string"
+        },
+        "sourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourceat"
+        }
+      },
+      "required": [
+        "sourceKind",
+        "endpoint",
+        "documentationUrl",
+        "payloadHash",
+        "observedAt",
+        "sourceAt"
+      ],
+      "title": "CatalogProvenanceArtifact",
+      "type": "object"
+    },
+    "ParityAssumption": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "const": "usd_usdc_usdt_reference_only",
+          "title": "Code",
+          "type": "string"
+        },
+        "appliedTo": {
+          "const": "reference_mark_median_only",
+          "title": "Appliedto",
+          "type": "string"
+        },
+        "statement": {
+          "title": "Statement",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code",
+        "appliedTo",
+        "statement"
+      ],
+      "title": "ParityAssumption",
+      "type": "object"
+    },
+    "ReferenceMarkMedianArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "ready",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "venueCount": {
+          "minimum": 0,
+          "title": "Venuecount",
+          "type": "integer"
+        },
+        "venues": {
+          "items": {
+            "enum": [
+              "bitget",
+              "hyperliquid",
+              "aster"
+            ],
+            "type": "string"
+          },
+          "title": "Venues",
+          "type": "array"
+        },
+        "cycleAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cycleat"
+        },
+        "maxAgeSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maxageseconds"
+        },
+        "skewSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Skewseconds"
+        },
+        "unavailableReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unavailablereason"
+        },
+        "parityAssumptionCode": {
+          "const": "usd_usdc_usdt_reference_only",
+          "title": "Parityassumptioncode",
+          "type": "string"
+        }
+      },
+      "required": [
+        "status",
+        "value",
+        "venueCount",
+        "venues",
+        "cycleAt",
+        "unavailableReason",
+        "parityAssumptionCode"
+      ],
+      "title": "ReferenceMarkMedianArtifact",
+      "type": "object"
+    },
+    "UniverseInstrumentArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "exclusiveMinimum": 0,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Groupid"
+        },
+        "mappingMethod": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Mappingmethod"
+        },
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "sourceSymbol": {
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "baseAsset": {
+          "title": "Baseasset",
+          "type": "string"
+        },
+        "quoteAsset": {
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "settleAsset": {
+          "title": "Settleasset",
+          "type": "string"
+        },
+        "collateralAsset": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Collateralasset"
+        },
+        "active": {
+          "title": "Active",
+          "type": "boolean"
+        },
+        "marketType": {
+          "title": "Markettype",
+          "type": "string"
+        },
+        "executionModel": {
+          "title": "Executionmodel",
+          "type": "string"
+        },
+        "catalog": {
+          "$ref": "#/$defs/CatalogProvenanceArtifact"
+        },
+        "quality": {
+          "enum": [
+            "ready",
+            "partial",
+            "unavailable",
+            "stale"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "qualityReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        },
+        "ageSeconds": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ageseconds"
+        },
+        "collectorRunId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Collectorrunid"
+        },
+        "cycleAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cycleat"
+        },
+        "observedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Observedat"
+        },
+        "sourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourceat"
+        },
+        "sourcePayloadHash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourcepayloadhash"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Errorcode"
+        },
+        "markPrice": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Markprice"
+        },
+        "referencePrice": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referenceprice"
+        },
+        "referencePriceKind": {
+          "enum": [
+            "index",
+            "oracle",
+            "none"
+          ],
+          "title": "Referencepricekind",
+          "type": "string"
+        },
+        "bestBid": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Bestbid"
+        },
+        "bestAsk": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Bestask"
+        },
+        "fundingRateRaw": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fundingrateraw"
+        },
+        "fundingIntervalSeconds": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fundingintervalseconds"
+        },
+        "fundingRatePerHour": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fundingrateperhour"
+        },
+        "nextFundingAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Nextfundingat"
+        },
+        "openInterestRaw": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Openinterestraw"
+        },
+        "openInterestRawUnit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Openinterestrawunit"
+        },
+        "openInterestBase": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Openinterestbase"
+        },
+        "openInterestNotional": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Openinterestnotional"
+        },
+        "volume24hRaw": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volume24Hraw"
+        },
+        "volume24hUnit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volume24Hunit"
+        },
+        "referenceMarkMedian": {
+          "$ref": "#/$defs/ReferenceMarkMedianArtifact"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "groupId",
+        "mappingMethod",
+        "venue",
+        "sourceSymbol",
+        "baseAsset",
+        "quoteAsset",
+        "settleAsset",
+        "collateralAsset",
+        "active",
+        "marketType",
+        "executionModel",
+        "catalog",
+        "quality",
+        "qualityReasons",
+        "collectorRunId",
+        "cycleAt",
+        "observedAt",
+        "sourceAt",
+        "sourcePayloadHash",
+        "errorCode",
+        "markPrice",
+        "referencePrice",
+        "referencePriceKind",
+        "bestBid",
+        "bestAsk",
+        "fundingRateRaw",
+        "fundingRatePerHour",
+        "nextFundingAt",
+        "openInterestRaw",
+        "openInterestRawUnit",
+        "openInterestBase",
+        "openInterestNotional",
+        "volume24hRaw",
+        "volume24hUnit",
+        "referenceMarkMedian"
+      ],
+      "title": "UniverseInstrumentArtifact",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "unavailable",
+        "stale"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "qualityReasons": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Qualityreasons",
+      "type": "array"
+    },
+    "parityAssumption": {
+      "$ref": "#/$defs/ParityAssumption"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/UniverseInstrumentArtifact"
+      },
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generatedAt",
+    "status",
+    "qualityReasons",
+    "parityAssumption",
+    "items"
+  ],
+  "title": "UniverseSnapshotArtifact",
+  "type": "object"
+}

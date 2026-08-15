@@ -37,14 +37,14 @@ describe("document metadata targets", () => {
     expect(isDocumentTarget("AGENTS.md")).toBe(true);
     expect(isDocumentTarget("docs/current/overview.md")).toBe(true);
     expect(isDocumentTarget("docs/current/reference.html")).toBe(true);
-    expect(isDocumentTarget("config/scanner-filters/README.md")).toBe(true);
+    expect(isDocumentTarget("apps/market-core/README.md")).toBe(true);
+    expect(isDocumentTarget("deploy/market-postgres/README.md")).toBe(false);
     expect(isDocumentTarget("apps/web/README.md")).toBe(true);
 
     expect(isDocumentTarget("docs/archive/old.md")).toBe(false);
     expect(isDocumentTarget("docs/local-archive/old.md")).toBe(false);
     expect(isDocumentTarget("mockups/example/README.md")).toBe(false);
     expect(isDocumentTarget("apps/web/src/lib/generated/types.md")).toBe(false);
-    expect(isDocumentTarget("fixtures/README.md")).toBe(false);
     expect(isDocumentTarget("src/example.ts")).toBe(false);
   });
 

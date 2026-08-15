@@ -1,0 +1,59 @@
+{
+  "code": "00000",
+  "msg": "success",
+  "requestTime": 1786705874987,
+  "data": [
+    {
+      "symbol": "BTCUSDT",
+      "baseCoin": "BTC",
+      "quoteCoin": "USDT",
+      "supportMarginCoins": ["USDT"],
+      "sizeMultiplier": "0.0001",
+      "symbolType": "perpetual",
+      "symbolStatus": "normal",
+      "fundInterval": "8",
+      "isRwa": "NO"
+    },
+    {
+      "symbol": "XAUUSDT",
+      "baseCoin": "XAU",
+      "quoteCoin": "USDT",
+      "supportMarginCoins": ["USDT"],
+      "sizeMultiplier": "0.01",
+      "symbolType": "perpetual",
+      "symbolStatus": "normal",
+      "fundInterval": "8",
+      "isRwa": "YES"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "baseCoin": "ETH",
+      "quoteCoin": "USDT",
+      "supportMarginCoins": ["USDT"],
+      "sizeMultiplier": "0.001",
+      "symbolType": "perpetual",
+      "symbolStatus": "maintain",
+      "fundInterval": "8",
+      "isRwa": "NO"
+    },
+    {
+      "symbol": "SOLUSDT-DELIVERY",
+      "baseCoin": "SOL",
+      "quoteCoin": "USDT",
+      "supportMarginCoins": ["USDT"],
+      "sizeMultiplier": "0.1",
+      "symbolType": "delivery",
+      "symbolStatus": "normal",
+      "isRwa": "NO"
+    },
+    {
+      "symbol": "UNKNOWNUSDT",
+      "baseCoin": "UNKNOWN",
+      "quoteCoin": "USDT",
+      "supportMarginCoins": ["USDT"],
+      "sizeMultiplier": "1",
+      "symbolType": "perpetual",
+      "symbolStatus": "normal"
+    }
+  ]
+}

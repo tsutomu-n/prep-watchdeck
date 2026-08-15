@@ -1,9 +1,8 @@
 # Prep Watchdeck Design Constitution
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
-- 文書更新作業時刻: `2026-08-12_21:38`
+- 更新: `2026-08-14T22:07:54+09:00`
+- 検証: `2026-08-14T22:07:54+09:00`
 - 状態: `現行`
 
 ---
@@ -235,19 +234,20 @@ components:
 
 ## Product Boundary
 
-Prep Watchdeck is a local crypto market monitoring watchdeck. It is not a trading bot.
+Prep Watchdeck is a local crypto perpetual-market Universe Explorer. It is not a trading bot.
 
 The identity is a **Dark-first Market Monitoring Terminal** with an optional low-glare light scheme: dense, flat,
 rectangular, data-first, and restrained.
 The interface helps the user:
 
-1. find fast-moving symbols;
-2. narrow monitoring targets for focused symbol analysis;
-3. verify risk, market context, and data quality;
-4. retain only short-lived monitoring context needed for later observation.
+1. scan Bitget, Hyperliquid Core, and Aster instruments without giving one Venue priority;
+2. narrow instruments by identity, Venue, coverage, and data quality;
+3. inspect source-specific price, funding, OI, volume, freshness, depth, and trades;
+4. retain only short-lived instrument notes needed for later observation.
 
-Highlighted rows, high scores, green values, and ranking positions must never look like automatic buy / sell
-recommendations. Past Note is a 60-day symbol annotation with observation context, not a trade record.
+Highlighted rows, reference medians, movement colors, and book-walk estimates must never look like automatic
+buy / sell recommendations or executable-price claims. Past Note is a 60-day `venueInstrumentId` annotation,
+not a trade record.
 
 Desktop is the primary analysis surface. Mobile supports quick review, monitoring-target checking, and
 current-symbol context; it remains usable without reproducing Desktop density.
@@ -357,10 +357,10 @@ Sage Fieldは低刺激なセージ、Lilac Currentは選択状態を識別しや
 `IPA Pゴシック`、generic family とする。browser が実際に `Watchdeck Sans` を解決できることを
 確認し、存在しない preferred family の列挙だけで済ませない。
 
-symbol identity は大きく bold にできる。number は可能な限り tabular numeric とし、percentage、
-score、turnover、ranking、timestamp を走査しやすく揃える。
+instrument identity は大きく bold にできる。number は可能な限り tabular numeric とし、mark、
+funding、OI、volume、bps、timestamp を走査しやすく揃える。
 
-- `title-xl`: symbol page identity
+- `title-xl`: selected instrument identity
 - `title-lg`: top-level page heading
 - `heading-md`: panel / section heading
 - `body-md`: normal explanation
@@ -383,7 +383,7 @@ generic familyへfallbackする。font変更でsize、weight、line-height、spa
 | `watchdeck` | 標準（コンパクト） | `Watchdeck Sans` | 既定。Desktopの高密度走査 |
 | `terminal` | 等幅（ターミナル） | `Cascadia Mono` / `IBM Plex Mono` | 数値、timestamp、短いcodeの桁を揃える |
 
-DashboardとSymbol Pageのheaderに同じnative selectを置く。選択は本文、control、data、chart axisへ
+Universe Explorerのheaderにnative selectを置く。選択は本文、control、data、chart axisへ
 同時に適用し、chart instance、series、request、observerを作り直さない。
 
 ## Shape and Depth
@@ -395,69 +395,63 @@ soft shadow、glassmorphism、backdrop blur、neumorphism を使わない。dept
 border、sticky header、selected-row inset、active-timeframe fill、section grouping、divider で示す。
 primary、context、secondary surface の階層に新色、gradient、glow、反復 card shadow を使わない。
 
-badge は movement signal、data quality、Past Note、rekindle / past rapid move、warning、verified
-monitoring state の semantic family に限定する。
+badge は Venue、coverage、data quality、Past Note、warning、verified monitoring state の
+semantic family に限定する。
 
 ## Surface Hierarchy
 
-Dashboardはoptional context、Watchlist、selected-symbol Inspector、Smart Rankの順に理解できる構造とする。
-Watchlistをprimary surface、Inspectorをcontext surface、Smart Rankと補助情報をsecondary surfaceとして、
-短いeye travelと高いDesktop密度を保つ。`85rem`以上ではInspectorをright railへ置けるが、DOM、読み上げ、
-keyboard順は[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
+Universe Explorerはheader/filter、instrument Universe、selected detailの順に理解できる構造とする。
+Universeをprimary surface、selected detailをcontext surface、provenanceとdisclaimerをsupporting surfaceとする。
+DesktopではUniverseとdetailを並置できるが、DOM、読み上げ、keyboard順は
+[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
 
 page shellはflat theme backgroundとし、装飾gridやpage-level color washを使わない。normal service stateを
-過剰に強調せず、error、stale、incomplete dataを見落としにくくする。
+過剰に強調せず、error、stale、partial、unavailableを見落としにくくする。
 
-## Dashboard Visual Contract
+## Universe Visual Contract
 
-optional contextは対応データがある場合だけWatchlistの前に置き、market comparisonとVPI-Lite+を同じ
-context surfaceにまとめる。これらをWatchlist、selected-symbol Inspector、Smart Rankより先に読み上げる。
+filterは一つのcompact toolbarにまとめ、native search/selectと常時表示labelを使う。UniverseはDesktopで
+dense table、狭い幅でcompact rows/cardsへ変換できる。通常row高はtable `42px`、Mobile `82px`を基準にし、
+selection、focus、stale、noteの有無だけで不規則に変えない。
 
-Watchlistはcontainer幅`62.125rem`以上でdense table、未満でcompact cardとする。通常row高はtable
-`42px`、card `82px`を基準にし、selection、focus、stale、note、signal数だけで変えない。selected row
-だけにfocus color、left inset、subtle selected backgroundを使える。normal data qualityは常時表示せず、
-異常品質とsignalは視覚表示とaccessible nameの両方から確認できるようにする。
+selected rowだけにfocus color、left inset、subtle selected backgroundを使える。movement色は市場値の方向、
+quality色はmissing/stale/partial、focus色は選択だけに使う。reference medianはVenue値より強く見せず、
+参加Venue数、freshness、parity仮定を同じsurfaceで確認できるようにする。
 
-VPI-Lite+はoptional context内のcompact discovery laneとして、primary labelを`市場活動`、technical
-labelを小さな`VPI-Lite+`とする。Target / Watchlist coverageと異なるempty stateを明示し、laneには
-numeric scoreを表示しない。score、reason、risk、funding、open interestは選択中Inspectorだけに置く。
-VPIをWatchlist row、Smart Rank、sortへ入れない。
+group coverageとqualityを同じbadgeへ押し込まない。単独instrumentはneutral、unavailableはquality riskで示す。
+mark、funding、OI、volumeのnullを`0`、dashだけ、前回値へ変換せず、理由またはaccessible labelを付ける。
 
-Inspectorはclassification、label、quality、selected timeframe、OI 60分、signal、riskを
-一つの監視根拠としてまとめる。Quiet Market Instrumentはcontinuous surface、compact semantic text、
-neutral range track、current marker、明示的なmissing / stale状態で見せ、売買方向を示唆しない。
-量倍率、baseline、activity phase、VPI、quality、内部categoryと表示labelのデータ契約は
-[`docs/current/data-contracts.md`](docs/current/data-contracts.md)を正本とする。
+## Selected Detail Visual Contract
 
-## Symbol Page Visual Contract
+selected identity、Chart、Venue別depth、trades、book walk、Past Noteを一つのcontinuous workspaceにする。
+Chartを中心となる単一frameとして、二重borderやnested chart cardを作らない。5 timeframe controlは
+active fillとtextで選択を示し、`derived_final`と`confirmed`を同一視しない。
 
-symbol identityとkey metric、chart、Monitoring Rail、five-timeframe board、market context、Past Note、
-snapshotの階層を保つ。chartを中心となる単一frameとして、二重borderやnested chart cardを作らない。
-Monitoring Railの最初のsummaryはclassification、label、quality、selected timeframeの2-column gridとし、
-Mobileでも2-columnを維持する。five-timeframe boardはMobileで2-columnを基本とする。
+depthはbid/askを色だけで区別せずlabelを持つ。book walkは$100/$500/$1,000を同じ尺度で並べ、
+fee、将来impact、注文可否を含まないdisclaimerを数値から離さない。staleまたは板不足では空欄を
+埋めず、unavailable reasonを表示する。
 
-supporting informationはequal-card catalogではなく、一つの外枠とdividerによるcontinuous workspaceにする。
-Past Noteはreason、observation time、concise noteを持つ60日間のsymbol annotationとして見せ、trade
-recordやexecution historyにしない。Chart request、cleanup、mutation、draft競合の挙動は
-[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
+Past Noteはreason、observation time、concise noteを持つ60日間のinstrument annotationとして見せ、
+trade recordやexecution historyにしない。Chart request、selection heartbeat、cleanup、mutation、
+draft競合の挙動は[`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
 
 ## Responsive, Accessibility, and Motion
 
-- `560px`以下のTopbarはsource、service、runtime boundaryを可読な3-cell stripにする。
-- `960px`以下ではWatchlistをbounded internal scrollにし、全itemへの到達性を維持する。
-- `720px`以下のSymbol Pageはstickyで横scroll可能なlocal navigationを持つ。
+- `560px`以下のTopbarはsource、service、runtime boundaryを可読なstackにする。
+- `960px`以下ではUniverseとselected detailを縦方向へ並べ、全itemへの到達性を維持する。
+- Mobileでinstrument row、filter、Chart、depthをviewport外へ横溢れさせない。
 - `360px`以下のfive-item timeframe controlは3-columnを基本とする。
 - Desktopの高密度controlは`34px`を使用できる。compact widthまたはcoarse pointerでは`44px`以上、
   primary Mobile actionは`48px`を使用できる。
 
 keyboard focusはopaqueな`focus` color、`2px` ring、`2px` offsetで、隣接surfaceに対して3:1以上の
 non-text contrastを保つ。colorだけをstateの伝達手段にせず、selected、busy、error、save resultは
-対応するtextとARIA stateを持つ。roving tabindex、fragment focus、bounded scrollの挙動詳細は
+対応するtextとARIA stateを持つ。selection、IME、focus、scrollの挙動詳細は
 [`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)を正本とする。
 
 continuous / decorative motionは禁止する。motionをstateの唯一の伝達手段にせず、reduced-motionを
-尊重する。現行の例外は`ServiceStatusBadge.svelte`のlabel付きfreshness meterにある
-`transition: width 180ms linear`だけであり、他のlayout-property animationの前例にしない。
+尊重する。必要なtransitionは150〜200ms程度のcolor/opacity/transformへ限定し、layout-propertyを
+animationしない。
 
 ## Validation
 
@@ -470,6 +464,6 @@ cd ../..
 npx -p @google/design.md designmd lint DESIGN.md
 ```
 
-layout、interaction、responsive behavior を変えた場合は関連 Playwright E2E と対象 viewport の visual
+layout、interaction、responsive behaviorを変えた場合は関連Playwright E2Eと1440px / 390pxのvisual
 確認も実行する。現行の挙動と検証根拠は
 [`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)に従う。

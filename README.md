@@ -1,310 +1,205 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
-- 検証: `2026-08-12T21:38:47+09:00`
-- 文書更新作業: `2026-08-12_21:38`（Asia/Tokyo）
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
 
-`prep-watchdeck`は、Bitgetのpublic market dataを使うローカル市場監視watchdeckです。
-scanner-coreがDuckDBとsnapshotを更新し、SvelteKit Webが異常な値動きの発見、
-候補の絞り込み、risk/context確認、銘柄annotationの保存を支援します。
+`prep-watchdeck`は、Bitget、Hyperliquid Core、Asterのpublic market dataを集め、
+crypto linear perpetualをVenue横断で確認するlocal-firstのUniverse Explorerです。
+価格、資金調達率、建玉、24時間出来高、鮮度、取得元、安全にgroup化できた選択銘柄の
+板・約定・Chartを表示します。
 
-取引判断や損益の記録、自動売買、Private API、残高・position、注文endpoint、
-自動発注、売買推奨は製品責任に含めません。
+売買推奨、自動売買、注文、残高、position、秘密API、RWA、HIP-3、synthetic/RFQ市場は扱いません。
+
+初めて操作する場合は、[正本ユーザーマニュアル](docs/current/user-manual.md)から読んでください。
+このREADMEは初期設定と運用入口をまとめています。
 
 ## 必要なもの
 
-- Python 3.13
-- `uv`
-- `bun`
-- live利用時のinternet接続
+- Python 3.13と`uv`
+- Bun
+- Docker Compose
+- systemd user serviceを使う場合はLinuxのuser manager
+- public market APIへ接続できるnetwork
 
-Web依存をまだ導入していない場合:
+依存を準備します。
 
 ```bash
+uv sync --all-packages
 cd apps/web
 bun install
 bun run generate:types
 cd ../..
 ```
 
-## 最短起動
+## Dedicated Postgres
 
-Repo root:
+既定のstate rootは`~/.local/share/prep-watchdeck-market`、専用Postgresのloopback portは
+`127.0.0.1:55432`です。JustPassなど他projectのPostgres、port 5432、container、volume、
+database、roleを再利用しません。
 
 ```bash
+install -d -m 0700 "$HOME/.config/prep-watchdeck-market"
+install -d -m 0700 "$HOME/.local/share/prep-watchdeck-market/postgres"
+touch "$HOME/.config/prep-watchdeck-market/postgres.env"
+chmod 0600 "$HOME/.config/prep-watchdeck-market/postgres.env"
+```
+
+`postgres.env`へ次を設定します。`POSTGRES_PASSWORD`はローカル専用の十分に長い値を作り、
+URL側ではpercent-encodeしてください。このfileはcommitしません。
+
+```text
+POSTGRES_DB=prep_watchdeck_market
+POSTGRES_USER=prep_watchdeck_market
+POSTGRES_PASSWORD=<local-secret>
+PREP_WATCHDECK_MARKET_DATABASE_URL=postgresql://prep_watchdeck_market:<url-encoded-secret>@127.0.0.1:55432/prep_watchdeck_market
+```
+
+productionのinstallerとCLIは、user/databaseが`prep_watchdeck_market`、host/portが
+`127.0.0.1:55432`であることを検証します。隔離test/shadowで別targetを使う場合だけ、専用state/portと
+`PREP_WATCHDECK_MARKET_ALLOW_NONSTANDARD_DATABASE_TARGET=true`を明示します。このoverrideを
+productionの`postgres.env`へ書いてはいけません。
+
+## systemd user service
+
+まずrender差分を確認します。
+
+```bash
+bash scripts/ops/install-user-services.sh --dry-run
+```
+
+承認済みのローカル環境だけへunitをinstallします。`--apply`は既存unitをtimestamp付きでbackupし、
+daemon-reloadとenableだけを行います。serviceのstart/restartは行いません。
+
+```bash
+bash scripts/ops/install-user-services.sh --apply
 bash scripts/start-all.sh
 ```
 
-既定URL:
+既定URLは`http://127.0.0.1:5173/`です。installされる境界は次の5 unitです。
+
+- `prep-watchdeck-market-db.service`: 専用Postgres 17 Compose
+- `prep-watchdeck-market.service`: catalog、L1、candle、selected stream、artifact発行
+- `prep-watchdeck-market-maintenance.service`: confirmed archiveとbounded retention
+- `prep-watchdeck-market-maintenance.timer`: 毎時maintenance
+- `prep-watchdeck-web.service`: localhost SvelteKit Web
+
+Webだけをforegroundで起動する開発入口です。collectorは起動しないため、既存のmarket serviceを
+重複起動しません。
+
+```bash
+bash scripts/start-local.sh
+```
+
+## Stateとread model
 
 ```text
-http://127.0.0.1:5173/
+~/.local/share/prep-watchdeck-market/
+  postgres/
+  archive/
+  artifacts/
+    universe-snapshot.json
+    market-chart.json
+    selected-market.json
+    service-state.json
+  control/selection.json
+  past-notes/<venueInstrumentId>.json
+  market-service.lock
+  market-maintenance.lock
 ```
 
-5173が使用中なら、5174以降の最初の空きportへ自動fallbackする。`PORT`を指定した
-場合も、その値を開始点として最大100候補を昇順に探索する。実際に選んだURLは
-起動時の`url=...`へ表示する。選択後に別processが同じportを取得した場合は、
-別portへ黙って移らず起動を停止する。
+Postgresが直近データの正本、confirmed Parquetが期限後履歴の正本、4つのJSONは再生成可能な
+Web read modelです。WebはPostgresへ接続しません。選択commandとPast Noteの書込みは
+localhost requestだけに許可されます。
 
-networkを使わないfixture起動:
-
-```bash
-SNAPSHOT_SOURCE=fixture bash scripts/start-all.sh
-```
-
-既存snapshotだけでWebを起動:
-
-```bash
-SNAPSHOT_SOURCE=skip bash scripts/start-all.sh
-```
-
-主なoverride:
-
-| 目的 | 例 |
-| --- | --- |
-| port探索開始値 | `PORT=5174 bash scripts/start-all.sh` |
-| live対象数変更 | `LIVE_MAX_SYMBOLS=10 bash scripts/start-all.sh` |
-| 全対象 | `LIVE_MAX_SYMBOLS=all bash scripts/start-all.sh` |
-| template変更 | `TEMPLATE=aggressive bash scripts/start-all.sh` |
-| fallback禁止 | `START_ALL_STRICT_SNAPSHOT=true bash scripts/start-all.sh` |
-
-起動時にscanner-coreとWebが共有する次の絶対pathを表示します。
-
-```text
-stateDir=...
-snapshotPath=...
-databasePath=...
-serviceStatePath=...
-tickerRuntimePath=...
-chartDir=...
-```
-
-異なる個別overrideがscanner-coreとWebへ設定されている場合は、起動前に停止します。
-
-## State directory
-
-未指定時はRepo内の`var/`を使います。Repo外へ切り替える場合:
-
-```bash
-export PREP_WATCHDECK_STATE_DIR="$HOME/.local/share/prep-watchdeck"
-bash scripts/start-all.sh
-```
-
-このrootから次を導出します。
-
-```text
-watchdeck.duckdb
-scanner.lock
-snapshots/latest.json
-snapshots/service-state.json
-snapshots/ticker-runtime.json
-snapshots/charts/latest/
-past-notes/current.json
-past-notes/archive/YYYY-MM/past-notes-YYYY-MM.json
-dashboard-view-settings/current.json
-usage-events/
-ops/daily/v2/
-tmp/e2e/
-tmp/performance/
-tmp/soak/
-```
-
-監視stateの個別path環境変数は互換overrideとして残ります。標準運用では
-`PREP_WATCHDECK_STATE_DIR`だけを設定してください。
-相対state rootを指定した場合はRepo root基準で解決します。
-
-## 既存stateの移行
-
-service、scan、Webを停止してから、コピー先とArchive先を指定します。
-
-```bash
-bash scripts/maintenance/migrate-state-dir.sh \
-  --target "$HOME/.local/share/prep-watchdeck" \
-  --archive-dir "$HOME/watchdeck-local-archive/state-$(date +%Y%m%d-%H%M%S)"
-```
-
-このスクリプトは次を行います。
-
-1. 旧`var/`全体をfull Archiveへ複製し、state layout version 2の証拠を付ける。
-2. layout v2のDB、snapshot、chart、Past Note、Dashboard settings、usage events、opsだけを
-   state rootへ複製する。
-3. 相対path manifestとSHA-256、JSON、snapshot/chart runId、監視annotation件数を検証する。
-4. 旧`data/scanner.duckdb`があれば`legacy-data/`へ複製する。
-5. 旧ファイルを一切削除せず終了する。
-
-既存のversion markerがないArchiveはlayout v1として引き続き検証できます。
-
-切替後の確認:
-
-```bash
-export PREP_WATCHDECK_STATE_DIR="$HOME/.local/share/prep-watchdeck"
-
-cd apps/scanner-core
-uv run watchdeck status
-uv run watchdeck doctor
-cd ../..
-
-bash scripts/maintenance/verify-state-dir.sh \
-  --source "$PWD/var" \
-  --target "$PREP_WATCHDECK_STATE_DIR" \
-  --archive-dir "$HOME/watchdeck-local-archive/state-YYYYMMDD-HHMMSS" \
-  --mode cutover
-```
-
-旧stateが更新された、監視stateが欠けた、runIdが不一致、full gateが失敗した場合は、
-旧`var/`を削除せず環境変数を外して戻します。
-
-## Scanner service
-
-scanner-core:
-
-```bash
-cd apps/scanner-core
-uv run watchdeck service
-```
-
-有限確認:
-
-```bash
-uv run watchdeck service --max-symbols 1 --stop-after-records 1
-uv run watchdeck doctor
-```
-
-同じDuckDBへ複数writerを起動しないでください。service実行中のsnapshot再発行は
-`watchdeck publish-service`経路を使います。
-
-serviceは最新1分足timestampの前進を監視する。既定では起動後300秒を判定対象外とし、
-60秒ごとに確認する。300秒以上前進しない場合だけBitget public RESTを1銘柄・1件で
-確認し、REST正常下の停止が3回連続した場合に非0終了する。RESTも失敗中なら外部障害と
-みなし、serviceを終了させず既存WebSocket再接続を継続する。
-
-自動復旧にはprocess manager側の`Restart=on-failure`が必要である。緊急時は
-`--watchdog-interval-sec 0`でwatchdogを無効化できる。Bitget RESTの429、対象5xx、
-network timeoutは最大5 attemptsのbounded retryを行うが、その他の4xxや不正responseは
-再試行しない。詳細な確認とrollbackは[現行運用](docs/current/operations.md)を参照する。
-
-## 個別操作
-
-live snapshotだけ更新:
+現在のartifact状態だけを確認します。別collectorやone-shot scanは起動しません。
 
 ```bash
 bash scripts/update-live.sh
 ```
 
-scanner状態確認:
+## Maintenanceとbackup
+
+毎時timerと同じ処理を手動で実行します。
 
 ```bash
-cd apps/scanner-core
-uv run watchdeck status
-uv run watchdeck doctor
+bash scripts/ops/run-market-maintenance.sh
 ```
 
-fixture snapshot:
+毎時maintenanceは、各dataset/Venueの最古未archive日から重複を除いた最大3日と、直前の
+完了UTC日を自動で処理します。`--partition-date`を指定すると、直前日ではなく指定した完了日を
+優先対象へ加え、同じ自動catch-upも行います。
 
 ```bash
-cd apps/scanner-core
-uv run watchdeck scan --source fixture --fixture-set basic --template balanced
+bash scripts/ops/run-market-maintenance.sh --partition-date YYYY-MM-DD
 ```
 
-日次サマリー:
+maintenanceは完了UTC日のnormalized datasetをParquetへ書き、readbackとmanifest確認後だけ8日超を
+削除します。Parquet対象外と明示したephemeral rawは7日+2時間、selected raw/historyは各保持期限後に
+bounded deleteします。各DELETEは最大10,000行、1回の上限はnormalized 180 batch、raw 10 batch、
+selected 250 batchです。source更新のないactive manifestは再生成せず、空datasetをarchive成功として
+扱いません。
+
+Postgres backup:
 
 ```bash
-bun scripts/ops/watchdeck-daily-summary.mjs
+bash scripts/ops/market-postgres-backup.sh \
+  --state-root "$HOME/.local/share/prep-watchdeck-market" \
+  --env-file "$HOME/.config/prep-watchdeck-market/postgres.env" \
+  --backup-dir "$HOME/watchdeck-local-archive/market-postgres"
 ```
 
-schema v2出力は解決済みstate rootの`ops/daily/v2/`へ保存されます。
-`PREP_WATCHDECK_STATE_DIR`未指定時はrepo `var/ops/daily/v2/`です。既存のschema v1出力は
-上書きしません。
+restoreはmarket serviceを停止し、対象名と`--apply`を明示する別操作です。手順は
+[現行運用](docs/current/operations.md)を参照してください。
 
 ## 検証
 
-full local gate:
+Repo横断gateは最後に1回だけ実行します。
 
 ```bash
 bash scripts/verify-local.sh
 ```
 
-Realtime performance / soak:
+`TEST_DATABASE_URL`が未指定なら、gateは固定digestのPostgres 17を一時containerとして起動し、
+実DB integrationをskipせず実行後にcontainerを削除します。他projectのDBは使用しません。
+
+実market API、Postgres、Webを使うsmoke/shadowは、現役state/serviceから隔離した
+DB、state root、portで実施します。test greenだけでlive cutover済みとは扱いません。
+
+隔離shadowは最初にdry-runで全targetを確認します。state/evidence、Compose project、DB/Web port、
+現役snapshot/DuckDB/unitをすべて明示し、production既定port 55432/5173とJustPass 5432は使いません。
 
 ```bash
-cd apps/web
-bun run test:performance
-SOAK_DURATION_MS=3600000 bun run test:soak
+bash scripts/ops/run-isolated-shadow.sh --dry-run \
+  --state-root /absolute/repo-outside/shadow-state \
+  --evidence-root /absolute/repo-outside/shadow-evidence \
+  --live-state-root /absolute/live-state \
+  --live-snapshot /absolute/live-state/snapshots/latest.json \
+  --live-duckdb /absolute/live-state/watchdeck.duckdb \
+  --live-scanner-unit prep-watchdeck-service.service \
+  --compose-project prep-watchdeck-market-shadow-YYYYMMDD \
+  --db-port 55442 --web-port 5183
 ```
 
-文書metadata:
+dry-run差分を確認した同じ引数で`--dry-run`を`--execute`へ変更すると、15分baselineと60分shadowを
+1回実行します。短い`--baseline-seconds`/`--shadow-seconds`はharness確認用で、受入証拠にはしません。
+Webはbaseline前に1回buildし、shadow中はdev/HMRではなくpreviewを使います。終了時は記録した
+process groupと指定Compose projectだけを停止し、証拠と専用stateはRepo外へ残します。Dockerは
+ambient remote contextを使わず、rootful local `unix:///var/run/docker.sock`だけに固定します。
 
-```bash
-bun test scripts/maintenance/document-metadata.test.mjs
-bun scripts/maintenance/check-document-metadata.mjs
-bun test scripts/maintenance/document-links.test.mjs
-bun scripts/maintenance/check-document-links.mjs
-```
+## 正本
 
-旧文書とmockupをRepo外へArchiveする場合:
-
-```bash
-bash scripts/maintenance/archive-repo-history.sh \
-  --archive-dir "$HOME/watchdeck-local-archive/repo-history-$(date +%Y%m%d-%H%M%S)"
-```
-
-Git追跡を外す直前に、tracked集合、現在のsource、Archive本体を再照合します。
-
-```bash
-bash scripts/maintenance/verify-repo-history-archive.sh \
-  --archive-dir "$HOME/watchdeck-local-archive/repo-history-YYYYMMDD-HHMMSS"
-```
-
-この再検証が失敗した場合は旧文書を削除しません。
-
-Repo historyとstateの両Archiveが揃った後の最終化:
-
-```bash
-bash scripts/maintenance/finalize-reorganization.sh \
-  --repo-history-archive "$HOME/watchdeck-local-archive/repo-history-YYYYMMDD-HHMMSS" \
-  --state-target "$HOME/.local/share/prep-watchdeck" \
-  --state-archive-dir "$HOME/watchdeck-local-archive/state-YYYYMMDD-HHMMSS"
-```
-
-既定はdry-run。出力を確認してから同じコマンドへ`--apply`を付ける。
-`--apply`でも、検証済みmanifest記載の旧文書・mockupと、検証済みlegacy DBだけを
-削除する。旧`var/`はrollback用として保持する。
-
-`--apply`は削除開始前にRepo history Archive内へ一時証跡を実際に作成する。
-作成・書込みができなければ削除0件で停止する。削除完了後は
-`REPO_FINALIZATION_VERIFIED`へ確定する。削除開始後に失敗して
-`.REPO_FINALIZATION_VERIFIED.*`が残った場合は、消さずに部分実行を調査する。
-
-## ディレクトリ境界
-
-- Git Repo: `apps/`、`config/`、`schemas/`、`fixtures/`、`scripts/`、現行文書
-- Runtime state: DB、snapshot、chart、Past Note、Dashboard settings、usage events、ops
-- Local Archive: 旧文書、完了計画、mockup、backup、過去検証証跡
-
-現行文書の入口は[docs/README.md](docs/README.md)です。
-
-## 現行仕様
-
-- [現行概要](docs/current/overview.md)
+- [正本ユーザーマニュアル](docs/current/user-manual.md)
+- [現行ドキュメント](docs/README.md)
 - [アーキテクチャ](docs/current/architecture.md)
-- [運用](docs/current/operations.md)
 - [データ契約](docs/current/data-contracts.md)
 - [UIワークフロー](docs/current/ui-workflow.md)
+- [運用](docs/current/operations.md)
 - [検証](docs/current/validation.md)
 - [UI設計規則](DESIGN.md)
+- [Decision 0011](docs/decisions/0011-perp-universe-replacement.md)
 
-## Security
-
-- Bitget public market dataだけを扱う。
-- API key、secret、残高、position、注文機能を追加しない。
-- local write APIとruntime commandはlocalhostだけに許可する。
-- `git clean -fdx`や`git clean -fdX`を使わない。ignored stateを削除する危険がある。
-
-## OI 60分
-
-serviceはBitget public tickerのOpen Interestを5分bucketで24時間だけDuckDBへ保持し、
-exact 60分前と比較します。履歴不足・古い値・不正値は「不明」で、注目度へ加点しません。
+旧scannerのstate、unit backup、稼働checkoutはcutover後のrollback確認が完了するまで削除しません。
