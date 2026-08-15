@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T03:18:13+09:00`
-- 検証: `2026-08-15T03:18:13+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
@@ -45,7 +45,16 @@ bash scripts/ops/install-user-services.sh --check
 bash scripts/start-all.sh
 ```
 
-停止時はWeb、collector、DBの順にする。maintenance実行中は終了を確認してからDBを止める。
+完全停止時は、最初に毎時timerを止めて新しいmaintenanceの開始を防ぐ。実行中のmaintenanceがある場合は
+終了を確認し、その後Web、collector、DBの順に止める。
+
+```bash
+systemctl --user stop prep-watchdeck-market-maintenance.timer
+systemctl --user show prep-watchdeck-market-maintenance.service \
+  -p ActiveState -p SubState
+```
+
+`ActiveState=inactive`を確認した後だけ、次を実行する。
 
 ```bash
 systemctl --user stop prep-watchdeck-web.service
@@ -53,11 +62,8 @@ systemctl --user stop prep-watchdeck-market.service
 systemctl --user stop prep-watchdeck-market-db.service
 ```
 
-毎時timerだけを止める場合:
-
-```bash
-systemctl --user stop prep-watchdeck-market-maintenance.timer
-```
+`prep-watchdeck-market-maintenance.service`が`active`の間はDBを止めない。毎時timerだけを止め、
+collectorとWebを継続する場合は最初の1 commandだけを実行する。
 
 ## 状態確認
 

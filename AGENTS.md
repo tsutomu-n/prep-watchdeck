@@ -1,8 +1,8 @@
 # Prep Watchdeck Agent Guide
 
 - 作成: `2026-06-26T16:12:22+09:00`
-- 更新: `2026-08-14T22:40:28+09:00`
-- 検証: `2026-08-14T22:40:28+09:00`
+- 更新: `2026-08-15T11:21:14+09:00`
+- 検証: `2026-08-15T11:21:14+09:00`
 - 状態: `現行`
 
 ---
@@ -28,6 +28,7 @@ runtime files、Postgres data、Parquet、`.svelte-kit`、`node_modules`、test 
 
 ## Authoritative Documents
 
+- user-facing usage / interpretation: [`docs/current/user-manual.md`](docs/current/user-manual.md)
 - architecture / process boundary: [`docs/current/architecture.md`](docs/current/architecture.md)
 - schema / state / API contract: [`docs/current/data-contracts.md`](docs/current/data-contracts.md)
 - UI behavior / state transition: [`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)
@@ -36,6 +37,9 @@ runtime files、Postgres data、Parquet、`.svelte-kit`、`node_modules`、test 
 - non-trivial task plan: `docs/plans/active/<task>/`
 
 将来予定を `docs/current/` へ現行事実として書かない。
+`docs/current/`はRepositoryの現行仕様であり、commit、push、merge、live cutover、現在hostで稼働中の
+versionとは別の状態である。`docs/plans/active/`は作業証拠であり、[docs index](docs/README.md)から
+リンクされたplanだけを候補としてcodeと現在差分へ照合する。
 
 ## Core Rules
 
@@ -47,7 +51,9 @@ runtime files、Postgres data、Parquet、`.svelte-kit`、`node_modules`、test 
 - 現役または他projectのPostgresへ別writerを接続しない。特にJustPassのport 5432、container、
   volume、database、roleへ接触しない。
 - E2E、smoke、shadow stateとDBは現役serviceから隔離し、専用のstate root、container、portを使う。
-- 課金、deploy、外部送信、秘密情報、不可逆削除、`git push` は明示指示なしに行わない。
+- 明示承認なしにcommit、push、PR、merge、unitのinstall / enable / start / stop / restart、live DB
+  migration、maintenance、backup、restore、deploy、cutover、旧state削除を行わない。
+- 課金、外部送信、秘密情報の変更、不可逆削除は明示指示なしに行わない。
 - test green だけで runtime、データ品質、公開、受入完了まで確認済みと扱わない。
 
 複数境界、移行、認証、互換性、高 risk、原因未確定、中断再開を伴う作業は
@@ -65,14 +71,30 @@ runtime files、Postgres data、Parquet、`.svelte-kit`、`node_modules`、test 
 
 ## Common Commands
 
+### Read-only status
+
+```bash
+git status --short
+git diff
+cd apps/market-core && uv run watchdeck-market status
+bash scripts/update-live.sh
+```
+
+`update-live.sh`は収集を実行せず、現在のartifact状態を読む。
+
+### State-changing or output-generating
+
 ```bash
 bash scripts/start-all.sh
 cd apps/market-core && uv run watchdeck-market migrate
-cd apps/market-core && uv run watchdeck-market status
 bash scripts/ops/run-market-maintenance.sh
 cd apps/web && bun run generate:types
 bash scripts/verify-local.sh
 ```
+
+`start-all.sh`、`migrate`、maintenanceはlocal stateを変更する。`verify-local.sh`は一時Postgres、
+type生成、build、Playwrightを実行する。`generate:types`と`verify-local.sh`は生成物やtest出力を作る。
+いずれもread-only調査の確認commandとして実行しない。
 
 変更箇所に近い確認から実行する。
 

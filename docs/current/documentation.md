@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント管理
 
 - 作成: `2026-07-18T11:29:04+09:00`
-- 更新: `2026-08-14T22:07:54+09:00`
-- 検証: `2026-08-14T22:07:54+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
@@ -19,6 +19,9 @@
 固定されたmarket件数、PID、artifact時刻、test件数、benchmark値は文書を正本にしない。
 実service、DB、artifact、実画面、その時点のtest出力で確認する。
 
+`docs/current/`の「現行」はRepositoryに実装された現行仕様を表す。commit、push、merge、live cutoverは
+別の状態であり、現在hostで稼働中のversionと混同しない。
+
 ## 文書の役割
 
 | 文書 | 役割 | 更新trigger |
@@ -27,6 +30,7 @@
 | `AGENTS.md` | Repo作業規則 | directory、toolchain、gate |
 | `DESIGN.md` | semantic tokenとUI規範 | component、interaction、responsive |
 | `docs/README.md` | 現行文書index | 文書の追加、削除、役割変更 |
+| `docs/current/user-manual.md` | 利用者の操作・読み方とAI向け最小参照 | user-visible機能、表示、主要導線 |
 | `docs/current/overview.md` | 製品価値と責任範囲 | user-visible機能、対象Venue、市場範囲 |
 | `docs/current/architecture.md` | process/storage/data lane | service、DB、artifact、state境界 |
 | `docs/current/data-contracts.md` | identity、schema、API | field、version、route、retention |
@@ -36,7 +40,7 @@
 | `docs/decisions/*.md` | 採用済み設計判断 | 判断の置換、撤回、互換性変更 |
 
 `docs/current/`へ将来予定、一回限りのPID/件数、未検証のlive主張を置かない。未完了checkpointと
-証拠はactive plan、短期再開情報はroot `HANDOFF.md`へ分ける。
+証拠はactive plan、短期再開情報が必要なtaskだけroot `HANDOFF.md`へ分ける。
 
 ## 旧仕様
 

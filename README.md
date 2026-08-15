@@ -1,17 +1,21 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-08-14T23:19:15+09:00`
-- 検証: `2026-08-14T23:19:15+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
 
 `prep-watchdeck`は、Bitget、Hyperliquid Core、Asterのpublic market dataを集め、
 crypto linear perpetualをVenue横断で確認するlocal-firstのUniverse Explorerです。
-価格、資金調達率、建玉、24時間出来高、鮮度、取得元、選択銘柄の板・約定・Chartを表示します。
+価格、資金調達率、建玉、24時間出来高、鮮度、取得元、安全にgroup化できた選択銘柄の
+板・約定・Chartを表示します。
 
 売買推奨、自動売買、注文、残高、position、秘密API、RWA、HIP-3、synthetic/RFQ市場は扱いません。
+
+初めて操作する場合は、[正本ユーザーマニュアル](docs/current/user-manual.md)から読んでください。
+このREADMEは初期設定と運用入口をまとめています。
 
 ## 必要なもの
 
@@ -188,6 +192,7 @@ ambient remote contextを使わず、rootful local `unix:///var/run/docker.sock`
 
 ## 正本
 
+- [正本ユーザーマニュアル](docs/current/user-manual.md)
 - [現行ドキュメント](docs/README.md)
 - [アーキテクチャ](docs/current/architecture.md)
 - [データ契約](docs/current/data-contracts.md)

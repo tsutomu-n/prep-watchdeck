@@ -1,8 +1,8 @@
 # prep-watchdeck 現行概要
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-14T22:07:54+09:00`
-- 検証: `2026-08-14T22:07:54+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
@@ -25,7 +25,7 @@ base数量、multiplier 1、単一候補を確認できるinstrumentだけを自
 - 厳格な鮮度と同一cycle条件を満たす2 Venue以上のmarkだけ、USD/USDC/USDT parity仮定を
   明示した参考中央値として表示する。値を変換・合算・rankingしない。
 - 選択groupだけ最大20段の板と直近100 tradesを購読し、$100/$500/$1,000の板上概算を表示する。
-- 選択instrumentの5m、15m、1h、4h、24h Chartを表示する。
+- 安全にgroup化できた選択instrumentの5m、15m、1h、4h、24h Chartを表示する。
 - Past Noteを`venueInstrumentId`単位でローカル保存する。
 - Postgresの期限後履歴を、照合済みParquetへ保存してからbounded retentionする。
 

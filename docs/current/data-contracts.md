@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-14T22:07:54+09:00`
-- 検証: `2026-08-14T22:07:54+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
@@ -96,6 +96,8 @@ Webは`control/selection.json`をlock付きatomic replaceする。
 
 `past-notes/<venueInstrumentId>.json`にschema version 1、`venueInstrumentId`、notesを保存する。
 noteはreason、本文、`observedAt`、`expiresAt`を持ち、60日後に読取時pruneする。
+reasonが空なら`過去注記`を保存する。同じ`venueInstrumentId + reason`で再保存した場合は、既存noteを
+新しいnoteで置き換える。
 旧Bitget symbol noteをheuristic groupへ自動移行しない。
 
 ## Web API

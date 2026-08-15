@@ -1,7 +1,7 @@
 # 3 Venue Crypto Perp Universe Replacement
 
 - 作成: `2026-08-14T19:43:00+09:00`
-- 更新: `2026-08-15T03:21:05+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
 - 状態: `実装計画`
 - branch: `ai/perp-universe-replacement-20260814-1943`
 - base: `origin/main@c4c68a9`
@@ -215,12 +215,14 @@ harnessはexit 0、cleanup 0、`summary.json.status=pass`、source digest before
 
 ### CP-09 Final audit and cutover approval handoff — COMPLETE
 
-証拠を提示し、push/merge/cutover/旧service停止は別の明示承認まで行わない。
+証拠を提示し、commit/pushは明示承認後だけ行う。merge/cutover/旧service停止は、それぞれ別の
+明示承認まで行わない。
 
 Evidence: `sp-review`で最終diffを監査し、AllowedFiles外0、tracked/untracked whitespace 0、
 conflict marker、secret、未接続debug、意図的test無効化の残存なしを確認した。DESIGN lintは
-errors 0 / warnings 0。docs metadata/link testは17 passed、checkerは両方OK。cutoverは未承認・
-未実施であり、CP-08/CP-09完了はその承認を代替しない。
+errors 0 / warnings 0。docs metadata/link testは17 passed、checkerは両方OK。明示承認後に
+commit `6fe972f85b361c4f756ef1cb22e2560133a4dffb`をremote branchへpushした。mergeとcutoverは
+未承認・未実施であり、CP-08/CP-09完了はその承認を代替しない。
 
 ## Minimal Verification
 
@@ -283,4 +285,6 @@ errors 0 / warnings 0。docs metadata/link testは17 passed、checkerは両方OK
   受入run後に変更していない。
 - 最終`sp-review`ではscope逸脱、whitespace、conflict、secret、debug、disabled testのblockerを
   検出せず、DESIGN lintとdocs gateも成功した。local実装はcutover承認待ちゲートへ到達した。
-- commit、push、merge、live cutover、旧service停止は未承認・未実施。現行runtimeは継続稼働している。
+- 明示承認後、commit `6fe972f85b361c4f756ef1cb22e2560133a4dffb`を作成し、
+  `origin/ai/perp-universe-replacement-20260814-1943`へpushした。merge、live cutover、旧service停止は
+  未承認・未実施。現行runtimeは継続稼働している。

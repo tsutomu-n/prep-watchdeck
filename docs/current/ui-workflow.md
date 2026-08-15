@@ -1,8 +1,8 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-14T22:07:54+09:00`
-- 検証: `2026-08-14T22:07:54+09:00`
+- 更新: `2026-08-15T11:21:14+09:00`
+- 検証: `2026-08-15T11:21:14+09:00`
 - 状態: `現行`
 
 ---
@@ -24,7 +24,8 @@
 quality、観測時刻を識別できるようにする。quote、settle、collateral、reference price kind、
 source endpointは詳細またはprovenance表示から確認できる。
 
-検索はbase、source symbol、`venueInstrumentId`を対象にする。filterはnative input/selectを使い、
+検索はbase、source symbol、`venueInstrumentId`、quote、settleを対象にする。filterはnative
+input/selectを使い、
 labelを常時表示する。絞り込みで値のないitemを黙って除外する場合は、適用中filterと件数を示す。
 
 group coverageとdata qualityは別軸である。単独instrumentは「品質不良」ではなく未group、
@@ -39,9 +40,10 @@ stale/unavailableはcoverageに関係なく品質状態として示す。
 
 ## 選択
 
-行の選択は視覚state、keyboard focus、collector subscriptionを混同しない。500ms debounce後に
-`/api/selection`へ1 commandを送り、同じ`groupId + venueInstrumentId`を5分ごとにheartbeatする。
-primaryを変える時は同じgroupでも新しいselection revisionとして扱う。
+行の選択は視覚state、keyboard focus、collector subscriptionを混同しない。Webは500ms debounce後に
+`/api/selection`へ1 commandを送り、その後market serviceの選択処理とartifact更新を待つ。同じ
+`groupId + venueInstrumentId`を5分ごとにheartbeatする。primaryを変える時は同じgroupでも新しい
+selection revisionとして扱う。
 
 選択対象が次のUniverseから消えた、group membershipが変わった、commandが期限切れになった場合は、
 旧detailを有効なまま見せず選択解除またはunavailable理由を表示する。
@@ -57,8 +59,9 @@ detailは次の順で表示する。
 5. $100 / $500 / $1,000 book walk
 6. Past Note
 
-Chartは選択した`venueInstrumentId`だけを描画する。`derived_final`を`confirmed`と同じ表示にせず、
-欠落bar、version境界、不完全barを埋めない。timeframe変更で選択instrumentを変えない。
+Chartは選択した`venueInstrumentId`だけを描画する。artifactは`derived_final`と`confirmed`を保持するが、
+現画面ではfinalityを識別表示しない。欠落bar、version境界、不完全barを埋めず、timeframe変更で
+選択instrumentを変えない。
 
 book walkはbuy/sellを分け、平均価格とtop-of-bookからのbpsだけを表示する。10秒超、板不足、
 非USD-like、単位不明では数値の代わりに理由を表示する。常に次を明記する。
@@ -69,7 +72,8 @@ book walkはbuy/sellを分け、平均価格とtop-of-bookからのbpsだけを�
 
 Past Noteは`venueInstrumentId`単位の監視annotationで、trade journalではない。reasonまたは本文を
 必須とし、保存中の重複submitを防ぐ。選択が変わっても別instrumentのdraft、feedback、noteを
-混在させない。60日を過ぎたnoteは再表示しない。
+混在させない。reasonが空なら`過去注記`とし、同じreasonで再保存した場合は同じinstrumentの既存noteを
+新しいnoteで置き換える。60日を過ぎたnoteは再表示しない。
 
 ## Qualityと障害
 
@@ -77,7 +81,8 @@ Past Noteは`venueInstrumentId`単位の監視annotationで、trade journalで�
 - source timestampがない場合は「なし」とし、observed timeへ置き換えない。
 - Web process healthとmarket data qualityを同じbadgeにしない。
 - 一部Venue障害では取得できたVenueを残し、失敗Venueと理由を表示する。
-- artifact schema不一致では旧DOMや前回値をfreshとして残さない。
+- artifact schema不一致やrefresh失敗ではbannerを表示する。直前の検証済みDOMが残る場合も、
+  その全値を現在値として扱わない。
 
 ## Responsiveとaccessibility
 

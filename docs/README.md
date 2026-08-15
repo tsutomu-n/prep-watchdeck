@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-14T22:07:54+09:00`
-- 検証: `2026-08-14T22:07:54+09:00`
+- 更新: `2026-08-15T11:04:37+09:00`
+- 検証: `2026-08-15T11:04:37+09:00`
 - 状態: `現行`
 
 ---
@@ -12,6 +12,7 @@
 
 ## まず読む
 
+- [user-manual.md](current/user-manual.md): 人間向けの操作・読み方とAI向け最小参照をまとめた正本
 - [overview.md](current/overview.md): 製品価値、対象市場、責任範囲
 - [ui-workflow.md](current/ui-workflow.md): Universeの絞り込み、選択、Chart、板・約定、Past Note
 - [operations.md](current/operations.md): 専用Postgres、systemd、state、maintenance、rollback
