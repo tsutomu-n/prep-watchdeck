@@ -185,6 +185,15 @@ def _aster_capabilities() -> tuple[SourceCapability, ...]:
         ),
         SourceCapability(
             venue="aster",
+            capability="funding_history",
+            available=True,
+            source_kind="native_rest",
+            endpoint_or_channel="/fapi/v3/fundingRate",
+            documentation_url=ASTER_DOCUMENTATION_URL,
+            details={"capture": "settled_events", "catchupHours": 48},
+        ),
+        SourceCapability(
+            venue="aster",
             capability="open_interest",
             available=False,
             source_kind="native_rest",

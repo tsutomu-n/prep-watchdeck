@@ -1,17 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-MARKET_STATE_ROOT="${PREP_WATCHDECK_MARKET_STATE_DIR:-$HOME/.local/share/prep-watchdeck-market}"
-UV_BIN="${PREP_WATCHDECK_MARKET_UV_BIN:-uv}"
-
-if [[ "$MARKET_STATE_ROOT" != /* || "$MARKET_STATE_ROOT" == *$'\n'* ]]; then
-  printf 'PREP_WATCHDECK_MARKET_STATE_DIR must be an absolute single-line path\n' >&2
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
+UV_BIN="${PREP_WATCHDECK_MARKET_UV_BIN:-$(command -v uv || true)}"
+if [[ -z "$UV_BIN" || ! -x "$UV_BIN" ]]; then
+  printf 'uv executable not found\n' >&2
   exit 2
 fi
 
-export PREP_WATCHDECK_MARKET_STATE_DIR="$MARKET_STATE_ROOT"
-install -d -m 0700 "$MARKET_STATE_ROOT" "$MARKET_STATE_ROOT/archive"
-
 cd "$ROOT_DIR/apps/market-core"
-exec "$UV_BIN" run watchdeck-market maintenance "$@"
+
+funding_status=0
+"$UV_BIN" run watchdeck-market funding-sync || funding_status=$?
+
+maintenance_status=0
+"$UV_BIN" run watchdeck-market maintenance "$@" || maintenance_status=$?
+
+if (( maintenance_status != 0 )); then
+  exit "$maintenance_status"
+fi
+if (( funding_status != 0 )); then
+  printf 'maintenance completed, but funding sync requires attention\n' >&2
+  exit "$funding_status"
+fi

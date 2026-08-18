@@ -1,8 +1,8 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T11:21:14+09:00`
-- 検証: `2026-08-15T11:21:14+09:00`
+- 更新: `2026-08-18T23:30:00+09:00`
+- 検証: `2026-08-18T23:30:00+09:00`
 - 状態: `現行`
 
 ---
@@ -18,6 +18,44 @@
 
 売買方向、期待収益、裁定機会、推奨Venue、ランキングは表示しない。
 
+## 状態軸
+
+UIは次の状態を混ぜない。
+
+- **Data quality**: `ready / partial / stale / unavailable`
+- **Freshness**: 観測後の秒数と許容時間
+- **Coverage**: `3 Venue / 2 Venue / 単独 / 未group`
+- **Operational state**: artifact refresh失敗、selection失敗、pending、heartbeat
+- **Selection**: 選択中または未選択
+
+Data qualityはそれぞれ`正常 / 一部取得 / 期限切れ / 取得不能`と表示する。Coverageが単独または
+未groupであることは品質不良ではないためneutralに表示する。selectionやWeb refreshの操作失敗も
+market data qualityへ読み替えない。
+
+Market Coreが`stale / unavailable`としてnullにした値を、Webが前回値や0で補わない。ageがない場合は
+`取得時刻なし`と表示する。
+
+## 更新停止とvalidated snapshot
+
+Webは5秒ごとに4 artifactを再取得する。すでにschema・generation・freshnessを検証済みのbundleを
+表示している状態で再取得に失敗した場合、既存DOMを消さず次を表示する。
+
+> 更新停止  
+> 最新データを取得できません。以下は最後に検証できたsnapshotです。
+
+これはartifact statusへ新しい値を追加するものではなくWebのoperational stateである。表示中の
+`ready / partial / stale / unavailable`を勝手に変更しない。bannerには`service-state.generatedAt`を
+最終検証時刻として併記し、再取得成功時にbannerを消す。5秒pollごとに強いalertを反復しない。
+
+## 品質理由
+
+artifactの`qualityReasons`と`errorCode`はWeb presentation layerで人間向け日本語へ変換する。通常表示は
+理由の意味を示し、raw codeは展開可能な`技術情報`へ残す。未知codeを握り潰さず、未定義理由として
+raw codeを表示する。
+
+Chart、参考mark中央値、selected depth、book walkにも同じ規則を適用する。`partial`は原因ではなく
+集約結果なので、可能な範囲で子statusまたはreasonを併記する。
+
 ## Universe Explorer
 
 各行は少なくともbase、Venue、source symbol、group/単独状態、mark、funding、OI、24時間出来高、
@@ -25,8 +63,8 @@ quality、観測時刻を識別できるようにする。quote、settle、colla
 source endpointは詳細またはprovenance表示から確認できる。
 
 検索はbase、source symbol、`venueInstrumentId`、quote、settleを対象にする。filterはnative
-input/selectを使い、
-labelを常時表示する。絞り込みで値のないitemを黙って除外する場合は、適用中filterと件数を示す。
+input/selectを使い、labelを常時表示する。絞り込みで値のないitemを黙って除外する場合は、適用中filterと
+件数を示す。
 
 group coverageとdata qualityは別軸である。単独instrumentは「品質不良」ではなく未group、
 stale/unavailableはcoverageに関係なく品質状態として示す。
@@ -46,13 +84,14 @@ stale/unavailableはcoverageに関係なく品質状態として示す。
 selection revisionとして扱う。
 
 選択対象が次のUniverseから消えた、group membershipが変わった、commandが期限切れになった場合は、
-旧detailを有効なまま見せず選択解除またはunavailable理由を表示する。
+旧detailを有効なまま見せず選択解除またはunavailable理由を表示する。selection POST失敗は
+operational warningとして表示し、data quality色へ混ぜない。
 
 ## 選択detail
 
 detailは次の順で表示する。
 
-1. primary instrument identity、quote/settle/collateral、freshness
+1. primary instrument identity、coverage、quote/settle/collateral、freshness
 2. 5m / 15m / 1h / 4h / 24h Chart
 3. Venue別depth最大20段
 4. group横断の直近100 trades
@@ -61,7 +100,7 @@ detailは次の順で表示する。
 
 Chartは選択した`venueInstrumentId`だけを描画する。artifactは`derived_final`と`confirmed`を保持するが、
 現画面ではfinalityを識別表示しない。欠落bar、version境界、不完全barを埋めず、timeframe変更で
-選択instrumentを変えない。
+選択instrumentを変えない。partial/incomplete理由は人間向け文言とraw codeの両方を確認できる。
 
 book walkはbuy/sellを分け、平均価格とtop-of-bookからのbpsだけを表示する。10秒超、板不足、
 非USD-like、単位不明では数値の代わりに理由を表示する。常に次を明記する。
@@ -81,7 +120,7 @@ Past Noteは`venueInstrumentId`単位の監視annotationで、trade journalで�
 - source timestampがない場合は「なし」とし、observed timeへ置き換えない。
 - Web process healthとmarket data qualityを同じbadgeにしない。
 - 一部Venue障害では取得できたVenueを残し、失敗Venueと理由を表示する。
-- artifact schema不一致やrefresh失敗ではbannerを表示する。直前の検証済みDOMが残る場合も、
+- artifact schema不一致やrefresh失敗では更新停止bannerを表示する。直前の検証済みDOMが残る場合も、
   その全値を現在値として扱わない。
 
 ## Responsiveとaccessibility
@@ -91,5 +130,6 @@ selected detailを縦方向へ並べ、横overflowで主要操作を隠さない
 48pxを目安にする。
 
 semantic table/list、native form control、可視focus、keyboard操作、status textを使う。
-色だけでmovement、quality、selectionを表さない。検索IME composition中にfilterを確定しない。
-自動scroll、点滅、常時animation、hover必須操作を追加しない。
+色だけでmovement、quality、coverage、selectionを表さない。検索IME composition中にfilterを確定しない。
+自動scroll、点滅、常時animation、hover必須操作を追加しない。自動refresh失敗はpolite status、
+明示的なselection操作失敗だけ必要に応じてalertを使う。

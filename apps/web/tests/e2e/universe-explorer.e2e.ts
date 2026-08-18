@@ -24,17 +24,22 @@ test.afterEach(async () => {
   await rm(runtimeRoot, { recursive: true, force: true });
 });
 
-test("Universe Explorerの主要な監視flowを表示・操作できる", async ({ page }) => {
+test("Universe Explorerの主要な監視flowと品質表示を操作できる", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Perp Universe Explorer" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
   await expect(page.getByText("3 / 3", { exact: true })).toBeVisible();
+  await expect(page.getByText("最終検証", { exact: true })).toBeVisible();
+  await expect(page.getByText("2 Venue", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("単独", { exact: true }).first()).toBeVisible();
 
   const inspector = page.getByRole("complementary");
   await expect(inspector.getByRole("heading", { name: "参考mark中央値" })).toBeVisible();
   await expect(inspector.getByText(/Parity仮定・reference only/)).toBeVisible();
-  await expect(inspector.getByText("USD、USDC、USDTは参考中央値だけ等価扱い", { exact: true })).toBeVisible();
+  await expect(
+    inspector.getByText("USD、USDC、USDTは参考中央値だけ等価扱い", { exact: true })
+  ).toBeVisible();
   await expect(inspector.getByRole("heading", { name: "Venue L1" })).toBeVisible();
   await expect(inspector.getByText("Quote", { exact: true })).toBeVisible();
   await expect(inspector.getByText("Collateral", { exact: true })).toBeVisible();
@@ -45,9 +50,15 @@ test("Universe Explorerの主要な監視flowを表示・操作できる", async
   await expect(
     selectedMarket.getByRole("columnheader", { name: "板上概算" }).first()
   ).toBeVisible();
-  await expect(selectedMarket.getByRole("rowheader", { name: "$100", exact: true }).first()).toBeVisible();
-  await expect(selectedMarket.getByRole("rowheader", { name: "$500", exact: true }).first()).toBeVisible();
-  await expect(selectedMarket.getByRole("rowheader", { name: "$1,000", exact: true }).first()).toBeVisible();
+  await expect(
+    selectedMarket.getByRole("rowheader", { name: "$100", exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    selectedMarket.getByRole("rowheader", { name: "$500", exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    selectedMarket.getByRole("rowheader", { name: "$1,000", exact: true }).first()
+  ).toBeVisible();
   await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true }).first()).toBeVisible();
   await expect(selectedMarket.getByText("直近約定 1件", { exact: true })).toBeVisible();
 
@@ -85,6 +96,11 @@ test("Universe Explorerの主要な監視flowを表示・操作できる", async
     "schemaVersion",
     "venueInstrumentId"
   ]);
+
+  await rm(resolve(artifactRoot, "service-state.json"), { force: true });
+  await expect(page.getByText("更新停止", { exact: true })).toBeVisible({ timeout: 8_000 });
+  await expect(page.getByText(/最後に検証できたsnapshotです/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
 
   const horizontalOverflow = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;

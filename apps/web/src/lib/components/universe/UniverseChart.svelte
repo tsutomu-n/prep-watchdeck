@@ -1,10 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import type { IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
-  import type {
-    MarketChartArtifact,
-    Timeframe
-  } from "$lib/generated/market-chart";
+  import type { MarketChartArtifact, Timeframe } from "$lib/generated/market-chart";
+  import {
+    reasonSummary,
+    statusLabel,
+    technicalReasonCodes
+  } from "$lib/market/market-state-presentation";
   import {
     applyChartFontFamily,
     applyChartThemePalette,
@@ -35,18 +37,15 @@
   let activeFrame = $derived(payload.timeframes.find((item) => item.timeframe === timeframe));
   let bars = $derived(activeFrame?.bars ?? []);
   let incompleteCount = $derived(bars.filter((bar) => !bar.complete).length);
+  let frameReasons = $derived([
+    ...payload.qualityReasons,
+    ...bars.flatMap((bar) => bar.qualityReasons)
+  ]);
+  let technicalReasons = $derived(technicalReasonCodes(frameReasons));
   let summary = $derived(
     bars.length === 0
       ? `${venueInstrumentId} ${timeframe} ローソク足データなし`
       : `${venueInstrumentId} ${timeframe} ${bars.length}本、未完全部分 ${incompleteCount}本`
-  );
-  let chartQualityLabel = $derived(
-    {
-      ready: "正常",
-      partial: "一部取得",
-      unavailable: "取得不能",
-      stale: "期限切れ"
-    }[payload.status]
   );
 
   onMount(async () => {
@@ -198,12 +197,21 @@
     </div>
   {/if}
   {#if incompleteCount > 0}
-    <p class="quality-note">不完全な集約bar {incompleteCount}本を含みます。判断時は品質理由を確認してください。</p>
-  {/if}
-  {#if payload.status !== "ready" || payload.qualityReasons.length > 0}
     <p class="quality-note">
-      Chart品質: {chartQualityLabel} / {payload.qualityReasons.join(" / ") || "理由なし"}
+      不完全な集約bar {incompleteCount}本を含みます。欠損を補完していません。
     </p>
+  {/if}
+  {#if payload.status !== "ready" || technicalReasons.length > 0}
+    <div class="quality-note">
+      <strong>Chart品質: {statusLabel(payload.status)}</strong>
+      <span>{reasonSummary(frameReasons)}</span>
+      {#if technicalReasons.length > 0}
+        <details>
+          <summary>技術情報</summary>
+          <code>{technicalReasons.join(" / ")}</code>
+        </details>
+      {/if}
+    </div>
   {/if}
 </section>
 
@@ -212,7 +220,6 @@
     border-top: 1px solid var(--line);
     background: var(--chart-surface);
   }
-
   .chart-heading {
     display: flex;
     align-items: center;
@@ -222,29 +229,24 @@
     padding: var(--space-sm) var(--space-md);
     border-bottom: 1px solid var(--chart-grid);
   }
-
   h3,
   p {
     margin: 0;
   }
-
   h3 {
     color: var(--chart-text);
     font-size: var(--type-heading-md-size);
   }
-
   .chart-heading p,
   .quality-note {
     margin-top: var(--space-xxs);
     color: var(--chart-text);
     font-size: var(--type-body-sm-size);
   }
-
   .timeframes {
     display: flex;
     gap: var(--space-xs);
   }
-
   button {
     min-width: 38px;
     min-height: var(--control-height-dense);
@@ -255,22 +257,18 @@
     font: inherit;
     cursor: pointer;
   }
-
   button.active {
     border-color: var(--chart-focus);
     background: var(--chart-focus);
     color: var(--focus-on);
   }
-
   .chart-wrap {
     position: relative;
   }
-
   .chart-surface {
     width: 100%;
     height: 340px;
   }
-
   .chart-message {
     display: grid;
     place-items: center;
@@ -278,19 +276,27 @@
     padding: var(--space-md);
     color: var(--chart-text);
   }
-
   .chart-wrap .chart-message {
     position: absolute;
     inset: 0;
     min-height: 0;
   }
-
   .quality-note {
+    display: grid;
+    gap: var(--space-xxs);
     padding: var(--space-sm) var(--space-md);
     border-top: 1px solid var(--chart-grid);
     color: var(--warning);
   }
-
+  .quality-note details {
+    margin-top: var(--space-xs);
+  }
+  .quality-note code {
+    display: block;
+    margin-top: var(--space-xs);
+    overflow-wrap: anywhere;
+    color: var(--chart-text);
+  }
   .sr-only {
     position: absolute;
     width: 1px;
@@ -302,22 +308,18 @@
     white-space: nowrap;
     border: 0;
   }
-
   @media (max-width: 48rem) {
     .chart-heading {
       align-items: stretch;
       flex-direction: column;
     }
-
     .timeframes {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
     }
-
     button {
       min-height: var(--control-height-touch);
     }
-
     .chart-surface {
       height: 280px;
     }

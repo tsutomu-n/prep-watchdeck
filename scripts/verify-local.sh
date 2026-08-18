@@ -83,7 +83,7 @@ echo "== market-core: ruff check =="
 uv run ruff check src tests
 
 echo "== market-core: ruff format --check =="
-uv run ruff format --check src tests
+uv run ruff format --check --diff src tests
 
 echo "== market-core: pyrefly check =="
 uv run pyrefly check
