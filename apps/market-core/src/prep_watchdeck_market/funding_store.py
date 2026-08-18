@@ -163,11 +163,7 @@ def load_latest_funding_times(connection: Connection[Any]) -> dict[str, datetime
             ).fetchall()
     except psycopg.Error:
         raise FundingStoreError("latest funding state query failed") from None
-    return {
-        f"{row[0]}:{row[1]}": row[2]
-        for row in rows
-        if isinstance(row[2], datetime)
-    }
+    return {f"{row[0]}:{row[1]}": row[2] for row in rows if isinstance(row[2], datetime)}
 
 
 def persist_funding_sweep_url(
