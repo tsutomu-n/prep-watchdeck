@@ -179,6 +179,15 @@ def _bitget_capabilities() -> tuple[SourceCapability, ...]:
         ),
         SourceCapability(
             venue="bitget",
+            capability="funding_history",
+            available=True,
+            source_kind="native_rest",
+            endpoint_or_channel="/api/v3/market/history-fund-rate",
+            documentation_url="https://www.bitget.com/api-doc/uta/public/Get-History-Funding-Rate",
+            details={"capture": "settled_events", "catchupHours": 48},
+        ),
+        SourceCapability(
+            venue="bitget",
             capability="open_interest",
             available=True,
             source_kind="native_rest",
