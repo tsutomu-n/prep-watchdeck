@@ -5,6 +5,7 @@ name: Verify
   push:
     branches:
       - main
+      - p0/watchdeck-v1-20260818
   pull_request:
 
 permissions:
