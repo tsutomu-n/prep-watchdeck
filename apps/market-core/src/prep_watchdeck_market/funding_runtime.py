@@ -10,18 +10,15 @@ from loguru import logger
 
 from prep_watchdeck_market.funding_store import (
     FundingFailure,
-    FundingStoreError,
     FundingStoreResult,
     load_funding_catalog_url,
     load_latest_funding_times_url,
     persist_funding_sweep_url,
 )
 from prep_watchdeck_market.models import CatalogInstrument, Venue
-from prep_watchdeck_market.scheduler import next_grid_at
 from prep_watchdeck_market.sources.common import CatalogSourceError
 from prep_watchdeck_market.sources.funding import FundingBatch, fetch_funding_history
 
-FUNDING_SWEEP_SECONDS = 15 * 60
 FUNDING_LOOKBACK = timedelta(hours=48)
 FUNDING_PUBLICATION_GRACE = timedelta(minutes=5)
 FUNDING_REQUEST_PACE_SECONDS: dict[Venue, float] = {
@@ -81,25 +78,6 @@ class FundingRuntime:
         self._instrument_supplier = instrument_supplier
         self._current_version_starts = current_version_starts
         self._utc_clock = utc_clock or (lambda: datetime.now(UTC))
-
-    async def run_forever(self, stop_event: asyncio.Event) -> None:
-        while not stop_event.is_set():
-            started_at = self._utc_clock()
-            _require_aware(started_at, "funding sweep clock")
-            try:
-                await self.run_once(stop_event, started_at=started_at)
-            except FundingStoreError as error:
-                logger.warning(
-                    "funding persistence unavailable errorType={error_type}",
-                    error_type=type(error).__name__,
-                )
-            next_run = next_grid_at(
-                self._utc_clock() + timedelta(microseconds=1),
-                FUNDING_SWEEP_SECONDS,
-            )
-            delay = max(0.0, (next_run - self._utc_clock()).total_seconds())
-            if await _wait_or_stop(stop_event, delay):
-                return
 
     async def run_once(
         self,
