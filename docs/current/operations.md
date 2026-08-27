@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T11:04:37+09:00`
-- 検証: `2026-08-15T11:04:37+09:00`
+- 更新: `2026-08-27T12:18:27+09:00`
+- 検証: `2026-08-27T12:18:27+09:00`
 - 状態: `現行`
 
 ---
@@ -112,7 +112,9 @@ journalctl --user -u prep-watchdeck-market-maintenance.service --since '-2 days'
 systemctl --user start prep-watchdeck-market-maintenance.service
 ```
 
-foregroundで直接実行する場合は専用database URLを環境へ設定する。
+foregroundで直接実行する場合は専用database URLを環境へ設定する。入口は最初に公開履歴から
+精算済みFundingを最大48時間catch-upし、その後にarchive/readback/retentionを行う。Fundingの
+一部Venue失敗時も成功Venueはcommitするが、maintenance完了後のexit statusは非0となる。
 
 ```bash
 PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' \
@@ -145,8 +147,8 @@ file欠損、checksum不一致、manifest変更、DB errorでは安全側に停�
 保持期間:
 
 - `raw_market_observations`と`selected_raw_observations`: 7日+2時間、Parquet対象外
-- `market_state_1m`、`candle_1m`、存在する`funding_events`: 8日、confirmed Parquet後だけ削除。
-  現行collectorは`funding_events`を生成せず、funding値は`market_state_1m`に保持する。
+- `market_state_1m`、`candle_1m`、`funding_events`: 8日、confirmed Parquet後だけ削除。
+  Fundingの現在値・推定値は`market_state_1m`、精算済み履歴だけは`funding_events`に保持する。
 - selected normalized/history: 8日、Parquet対象外
 - Parquet: confirmed generationを履歴正本として維持
 - generation file: currentと直近3 superseded

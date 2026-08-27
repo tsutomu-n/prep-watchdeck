@@ -50,6 +50,8 @@ const REASON_LABELS: Record<string, string> = {
   unsupported_quote_asset: "板上概算に対応しないquote assetです"
 };
 
+const OPERATIONAL_SERVICE_REASONS = new Set(["artifact_write_failure"]);
+
 export function statusLabel(status: ArtifactStatus | string) {
   return STATUS_LABELS[status as ArtifactStatus] ?? status;
 }
@@ -74,6 +76,22 @@ export function technicalReasonCodes(
   extraCode?: string | null
 ) {
   return [...new Set([...reasons, extraCode].filter((value): value is string => Boolean(value)))];
+}
+
+export function partitionServiceReasons(reasons: readonly string[]) {
+  const uniqueReasons = technicalReasonCodes(reasons);
+  return {
+    operational: uniqueReasons.filter((reason) => OPERATIONAL_SERVICE_REASONS.has(reason)),
+    quality: uniqueReasons.filter((reason) => !OPERATIONAL_SERVICE_REASONS.has(reason))
+  };
+}
+
+export function chartVolumeValue(
+  volumeNotional: number | null | undefined,
+  volumeBase: number | null | undefined
+) {
+  const value = volumeNotional ?? volumeBase;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 export function reasonLabels(

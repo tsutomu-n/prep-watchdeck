@@ -34,6 +34,12 @@ test("Universe Explorerの主要な監視flowと品質表示を操作できる",
   await expect(page.getByText("2 Venue", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("単独", { exact: true }).first()).toBeVisible();
 
+  const operational = page.getByLabel("運用上の注意");
+  await expect(operational).toContainText("表示用データの一部を書き込めませんでした");
+  const qualityReasons = page.getByLabel("データ品質理由");
+  await expect(qualityReasons).toContainText("正常でないinstrumentを含みます");
+  await expect(qualityReasons).not.toContainText("表示用データの一部を書き込めませんでした");
+
   const inspector = page.getByRole("complementary");
   await expect(inspector.getByRole("heading", { name: "参考mark中央値" })).toBeVisible();
   await expect(inspector.getByText(/Parity仮定・reference only/)).toBeVisible();
@@ -61,6 +67,8 @@ test("Universe Explorerの主要な監視flowと品質表示を操作できる",
   ).toBeVisible();
   await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true }).first()).toBeVisible();
   await expect(selectedMarket.getByText("直近約定 1件", { exact: true })).toBeVisible();
+  await selectedMarket.getByText("直近約定 1件", { exact: true }).click();
+  await expect(selectedMarket.getByRole("row", { name: /— bitget buy 65,000 0.01/ })).toBeVisible();
 
   const theme = page.getByLabel("配色", { exact: true });
   const font = page.getByLabel("フォント", { exact: true });
@@ -82,6 +90,8 @@ test("Universe Explorerの主要な監視flowと品質表示を操作できる",
   await expect
     .poll(async () => (await readSelectionCommand())?.venueInstrumentId ?? null)
     .toBe("hyperliquid:BTC");
+  await expect(selectedMarket.getByText(/選択groupのartifactを待っています/)).toBeVisible();
+  await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true })).toHaveCount(0);
 
   const command = await readSelectionCommand();
   expect(command).toMatchObject({
@@ -115,8 +125,8 @@ async function publishArtifacts(now: Date) {
   const universe: UniverseSnapshotArtifact = {
     schemaVersion: 1,
     generatedAt,
-    status: "ready",
-    qualityReasons: [],
+    status: "partial",
+    qualityReasons: ["contains_non_ready_instruments"],
     parityAssumption: {
       code: "usd_usdc_usdt_reference_only",
       appliedTo: "reference_mark_median_only",
@@ -229,7 +239,7 @@ async function publishArtifacts(now: Date) {
           side: "buy",
           price: 65_000,
           sizeBase: 0.01,
-          sourceAt: generatedAt,
+          sourceAt: null,
           receivedAt: generatedAt
         }
       ]
@@ -238,8 +248,8 @@ async function publishArtifacts(now: Date) {
   const service: MarketServiceStateArtifact = {
     schemaVersion: 1,
     generatedAt,
-    status: "ready",
-    qualityReasons: [],
+    status: "partial",
+    qualityReasons: ["artifact_write_failure"],
     collectors: [],
     catalog: {
       status: "ready",

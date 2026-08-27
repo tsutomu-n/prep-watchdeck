@@ -9,6 +9,7 @@
   import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
   import {
     formatAgeSeconds,
+    partitionServiceReasons,
     reasonLabel,
     reasonSummary,
     statusLabel,
@@ -72,8 +73,10 @@
   );
   let snapshotFrozen = $derived(Boolean(market && refreshError));
   let lastVerifiedAt = $derived(market?.service.generatedAt ?? market?.universe.generatedAt ?? null);
+  let serviceReasons = $derived(partitionServiceReasons(market?.service.qualityReasons ?? []));
+  let operationalReasons = $derived(serviceReasons.operational);
   let globalReasons = $derived([
-    ...(market?.service.qualityReasons ?? []),
+    ...serviceReasons.quality,
     ...(market?.universe.qualityReasons ?? [])
   ]);
 
@@ -233,6 +236,17 @@
         <span>
           最新データを取得できません。以下は{formatTimestamp(lastVerifiedAt)}に最後に検証できたsnapshotです。
         </span>
+      </section>
+    {/if}
+
+    {#if operationalReasons.length > 0}
+      <section class="operational-banner" aria-label="運用上の注意">
+        <strong>運用上の注意</strong>
+        <span>{reasonSummary(operationalReasons)}</span>
+        <details>
+          <summary>技術情報</summary>
+          <code>{technicalReasonCodes(operationalReasons).join(" / ")}</code>
+        </details>
       </section>
     {/if}
 
@@ -518,7 +532,7 @@
                     <tbody>
                       {#each selectedPayload.trades as trade (`${trade.venueInstrumentId}:${trade.tradeId}`)}
                         <tr>
-                          <td>{formatTimestamp(trade.sourceAt ?? trade.receivedAt)}</td><td>{trade.venue}</td>
+                          <td>{formatTimestamp(trade.sourceAt)}</td><td>{trade.venue}</td>
                           <td>{trade.side}</td><td>{formatFinite(trade.price)}</td><td>{formatFinite(trade.sizeBase)}</td>
                         </tr>
                       {/each}
@@ -559,7 +573,7 @@
   .status-strip span { color: var(--muted); font-size: var(--type-label-caps-size); }
   .status-strip strong { margin-top: var(--space-xxs); overflow-wrap: anywhere; font-size: var(--type-data-md-size); }
   .operational-banner, .quality-banner { display: grid; gap: var(--space-xxs); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--warning-border); background: var(--surface); color: var(--warning); font-size: var(--type-body-sm-size); }
-  .quality-banner code, .technical-details code { display: block; margin-top: var(--space-xs); overflow-wrap: anywhere; color: var(--subtle); }
+  .operational-banner code, .quality-banner code, .technical-details code { display: block; margin-top: var(--space-xs); overflow-wrap: anywhere; color: var(--subtle); }
   .workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(28rem, 1fr); gap: var(--space-grid); margin-top: var(--space-grid); align-items: start; }
   .universe, .inspector { min-width: 0; border: 1px solid var(--line-strong); background: var(--panel-solid); }
   .inspector { position: sticky; top: var(--space-page); max-height: calc(100vh - (2 * var(--space-page))); overflow: auto; }

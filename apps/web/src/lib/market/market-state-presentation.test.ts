@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
+  chartVolumeValue,
   formatAgeSeconds,
+  partitionServiceReasons,
   reasonLabel,
   reasonSummary,
   statusLabel,
@@ -33,5 +35,24 @@ describe("market state presentation", () => {
   test("renders a missing age as a missing timestamp rather than a number", () => {
     expect(formatAgeSeconds(null)).toBe("取得時刻なし");
     expect(formatAgeSeconds(12)).toBe("12秒");
+  });
+
+  test("keeps operational failures separate from market quality", () => {
+    expect(
+      partitionServiceReasons([
+        "artifact_write_failure",
+        "catalog_stale",
+        "artifact_write_failure"
+      ])
+    ).toEqual({
+      operational: ["artifact_write_failure"],
+      quality: ["catalog_stale"]
+    });
+  });
+
+  test("does not invent zero volume when both source values are missing", () => {
+    expect(chartVolumeValue(null, null)).toBeNull();
+    expect(chartVolumeValue(null, 0)).toBe(0);
+    expect(chartVolumeValue(12, 4)).toBe(12);
   });
 });

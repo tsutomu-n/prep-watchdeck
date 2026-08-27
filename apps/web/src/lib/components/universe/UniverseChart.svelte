@@ -3,6 +3,7 @@
   import type { IChartApi, ISeriesApi, UTCTimestamp } from "lightweight-charts";
   import type { MarketChartArtifact, Timeframe } from "$lib/generated/market-chart";
   import {
+    chartVolumeValue,
     reasonSummary,
     statusLabel,
     technicalReasonCodes
@@ -134,11 +135,18 @@
       }))
     );
     volumes.setData(
-      bars.map((bar) => ({
-        time: toTimestamp(bar.bucketAt),
-        value: bar.volumeNotional ?? bar.volumeBase ?? 0,
-        color: palette ? (bar.close >= bar.open ? palette.volumeUp : palette.volumeDown) : undefined
-      }))
+      bars.flatMap((bar) => {
+        const value = chartVolumeValue(bar.volumeNotional, bar.volumeBase);
+        return value === null
+          ? []
+          : [{
+              time: toTimestamp(bar.bucketAt),
+              value,
+              color: palette
+                ? (bar.close >= bar.open ? palette.volumeUp : palette.volumeDown)
+                : undefined
+            }];
+      })
     );
     chartApi.timeScale().fitContent();
   }
