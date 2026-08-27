@@ -45,6 +45,11 @@ describe("install-user-services", () => {
     expect(db).toContain(`Environment=PREP_WATCHDECK_MARKET_STATE_DIR=${fixture.stateRoot}`);
     expect(db).toContain("Environment=DOCKER_HOST=unix:///var/run/docker.sock");
     expect(db).toContain("UnsetEnvironment=DOCKER_CONTEXT");
+    expect(db).toContain(`ExecStartPre=/usr/bin/test -d ${fixture.stateRoot}/postgres`);
+    expect(db).toContain(`ExecStartPre=/usr/bin/test ! -L ${fixture.stateRoot}/postgres`);
+    expect(db).not.toContain(
+      `ExecStartPre=/usr/bin/install -d -m 0700 ${fixture.stateRoot}/postgres`,
+    );
     expect(market).toContain(`WorkingDirectory=${repoRoot}/apps/market-core`);
     expect(market).toContain(`EnvironmentFile=${fixture.envFile}`);
     expect(market).toContain("run watchdeck-market migrate");
@@ -107,6 +112,37 @@ describe("install-user-services", () => {
     expect(result.stderr).toContain("must target the dedicated local database");
     expect(readdirSync(fixture.root)).not.toContain("units");
   });
+
+  test("reapply does not chmod an existing Postgres data directory", () => {
+    const fixture = createFixture();
+    const guardedInstall = join(fixture.bin, "install");
+    writeFileSync(
+      guardedInstall,
+      `#!/usr/bin/env bash
+for argument in "$@"; do
+  if [[ "$argument" == "${fixture.stateRoot}/postgres" && -e "$argument" ]]; then
+    printf 'existing Postgres directory must not be passed to install\\n' >&2
+    exit 77
+  fi
+done
+exec /usr/bin/install "$@"
+`,
+    );
+    chmodSync(guardedInstall, 0o755);
+    const env = { ...process.env, PATH: `${fixture.bin}:${process.env.PATH ?? ""}` };
+
+    const first = spawnSync("bash", [...args(fixture), "--apply"], {
+      encoding: "utf8",
+      env,
+    });
+    expect(first.status).toBe(0);
+
+    const second = spawnSync("bash", [...args(fixture), "--apply"], {
+      encoding: "utf8",
+      env,
+    });
+    expect(second.status).toBe(0);
+  });
 });
 
 function createFixture() {
@@ -138,6 +174,7 @@ function createFixture() {
   }
   return {
     root,
+    bin,
     unitDir,
     stateRoot,
     envFile,
