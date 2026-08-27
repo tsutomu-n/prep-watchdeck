@@ -40,7 +40,7 @@ Market Coreが`stale / unavailable`としてnullにした値を、Webが前回�
 Webは5秒ごとに4 artifactを再取得する。すでにschema・generation・freshnessを検証済みのbundleを
 表示している状態で再取得に失敗した場合、既存DOMを消さず次を表示する。
 
-> 更新停止  
+> 更新停止
 > 最新データを取得できません。以下は最後に検証できたsnapshotです。
 
 これはartifact statusへ新しい値を追加するものではなくWebのoperational stateである。表示中の
