@@ -64,6 +64,7 @@ bun test \
   scripts/maintenance/test-database-url.test.mjs \
   scripts/maintenance/web-port.test.mjs \
   scripts/ops/install-user-services.test.mjs \
+  scripts/ops/market-postgres-restore.test.mjs \
   scripts/ops/run-isolated-shadow.test.mjs
 
 echo "== document metadata =="

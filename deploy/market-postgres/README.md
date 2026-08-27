@@ -49,9 +49,9 @@ bash scripts/ops/market-postgres-backup.sh \
 backupは同じdirectory内の一時fileへcustom-format `pg_dump`を書き、archive内のdatabase名を検査し、
 mode `0600`へ固定してからatomic renameする。元databaseは変更しない。
 
-restore前に`watchdeck-market`を停止する。restore入口は、Repo外にあるmode `0600`の既存backup、
-専用project label、archive内database名、接続中clientが0件であることを検査する。対象名と`--apply`の
-両方が一致しなければ変更しない。
+production restore前に`watchdeck-market`を停止する。restore入口は、Repo外にあるmode `0600`の
+既存backup、専用project label、archive内database名、接続中clientが0件であることを検査する。
+対象名と`--apply`の両方が一致しなければ変更しない。
 
 ```bash
 bash scripts/ops/market-postgres-restore.sh \
@@ -62,5 +62,8 @@ bash scripts/ops/market-postgres-restore.sh \
   --apply
 ```
 
-restoreは`--clean --if-exists --single-transaction`でarchive内objectだけを置換する。検査またはrestoreが
-失敗した場合は非0で停止する。JustPassのproject、port、container、volume、databaseは対象にしない。
+復旧性確認を隔離targetへ行う場合だけ、production既定値とは異なる`--compose-project`と
+`--target-database`を対で指定し、`--confirm-target`も隔離database名へ合わせる。片側だけの変更は拒否する。
+restoreは一時SQLを生成し、`public` schema再作成とarchive内objectの適用を1 transactionで行う。
+検査またはrestoreが失敗した場合は非0で停止する。JustPassのproject、port、container、volume、databaseは
+対象にしない。

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T12:33:02+09:00`
-- 検証: `2026-08-27T12:33:02+09:00`
+- 更新: `2026-08-27T18:30:30+09:00`
+- 検証: `2026-08-27T18:30:30+09:00`
 - 状態: `現行`
 
 ---
@@ -16,7 +16,7 @@
 - productionのCLIはuser/database `prep_watchdeck_market`、`127.0.0.1:55432`以外を拒否する。
   非標準target overrideは隔離test/shadowだけに使い、production env fileではinstallerが拒否する。
 - 同一state rootでmarket collectorを複数起動しない。unitとlocal direct起動は同じlockを使う。
-- live cutover、旧unit停止、旧state削除は別の明示承認まで行わない。
+- release cutover後も旧checkout、旧state、未追跡fileはrollback資産として削除しない。
 
 ## 初期設定
 
@@ -26,15 +26,15 @@ issue、文書へ貼らない。
 unitのrender結果だけを確認する。
 
 ```bash
-bash scripts/ops/install-user-services.sh --dry-run
+bash scripts/ops/install-user-services.sh --repo-root /absolute/clean-release --dry-run
 ```
 
 installを承認した環境では次を実行する。既存unitは同じdirectoryへtimestamp付きでbackupされる。
 この操作はunitをstart/restartしない。
 
 ```bash
-bash scripts/ops/install-user-services.sh --apply
-bash scripts/ops/install-user-services.sh --check
+bash scripts/ops/install-user-services.sh --repo-root /absolute/clean-release --apply
+bash scripts/ops/install-user-services.sh --repo-root /absolute/clean-release --check
 ```
 
 ## 起動と停止
@@ -172,10 +172,11 @@ temporary fileからatomic renameする。
 
 ## Restore
 
-restoreは破壊的な別操作。market serviceとmaintenanceを停止し、接続中clientが0であること、
-backupのdatabase名、専用Compose project、対象名を確認する。`--confirm-target`と`--apply`が
-両方なければ変更しない。custom archiveをmode 0600の一時SQLへ展開できたことを確認してから、
-`public` schemaの再作成とrestore全体を同じDB transactionで適用し、一時SQLは成功・失敗時とも削除する。
+restoreは破壊的な別操作。production targetへ戻す場合はmarket serviceとmaintenanceを停止し、
+接続中clientが0であること、backupのdatabase名、専用Compose project、対象名を確認する。
+`--confirm-target`と`--apply`が両方なければ変更しない。custom archiveをmode 0600の一時SQLへ
+展開できたことを確認してから、`public` schemaの再作成とrestore全体を同じDB transactionで適用し、
+一時SQLは成功・失敗時とも削除する。
 
 ```bash
 systemctl --user stop prep-watchdeck-market.service
@@ -188,6 +189,30 @@ bash scripts/ops/market-postgres-restore.sh \
   --confirm-target prep_watchdeck_market \
   --apply
 ```
+
+production backupの復旧性確認は、別state root、別Compose project、別database、別host portの
+隔離Postgresだけへ行う。`--compose-project`と`--target-database`は必ず対でproduction既定値以外へ
+変更し、`--confirm-target`を隔離database名と一致させる。片側だけの変更、production project/databaseとの
+混在、archive内database名が`prep_watchdeck_market`以外の場合はrestore前に拒否する。
+
+```bash
+PREP_WATCHDECK_MARKET_DB_PORT=55442 docker compose \
+  --project-name prep-watchdeck-market-restore-YYYYMMDD \
+  --env-file /absolute/isolated/postgres.env \
+  --file deploy/market-postgres/compose.yaml up --detach --wait postgres
+
+bash scripts/ops/market-postgres-restore.sh \
+  --state-root /absolute/isolated/state \
+  --env-file /absolute/isolated/postgres.env \
+  --backup /absolute/backup/prep-watchdeck-market-TIMESTAMP.dump \
+  --compose-project prep-watchdeck-market-restore-YYYYMMDD \
+  --target-database prep_watchdeck_market_restore_yyyymmdd \
+  --confirm-target prep_watchdeck_market_restore_yyyymmdd \
+  --apply
+```
+
+隔離env fileの`POSTGRES_DB`は`--target-database`と一致させる。検査後は指定した隔離Compose projectだけを
+停止し、production project、state root、databaseは変更しない。
 
 ## Cutover後のrollback
 

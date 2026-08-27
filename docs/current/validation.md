@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T12:18:27+09:00`
-- 検証: `2026-08-27T12:18:27+09:00`
+- 更新: `2026-08-27T18:30:30+09:00`
+- 検証: `2026-08-27T18:30:30+09:00`
 - 状態: `現行`
 
 ---
@@ -62,18 +62,20 @@ bun test \
   scripts/maintenance/monitoring-only-boundary.test.mjs \
   scripts/maintenance/web-port.test.mjs \
   scripts/ops/install-user-services.test.mjs \
+  scripts/ops/market-postgres-restore.test.mjs \
   scripts/ops/run-isolated-shadow.test.mjs
 
 bun scripts/maintenance/check-document-metadata.mjs
 bun scripts/maintenance/check-document-links.mjs
 bash -n scripts/start-all.sh scripts/start-local.sh scripts/update-live.sh \
   scripts/ops/install-user-services.sh scripts/ops/run-market-maintenance.sh \
-  scripts/ops/run-isolated-shadow.sh
+  scripts/ops/market-postgres-restore.sh scripts/ops/run-isolated-shadow.sh
 git diff --check
 ```
 
 installer testは外部credential file、unit directory、systemctl/uv/dockerをfixtureへ隔離する。
-実user unitをinstall/start/restartしない。
+restore testはproduction既定targetの互換性、隔離project/databaseの対指定、片側だけの変更拒否を
+fake Dockerで確認する。実user unit、container、databaseをinstall/start/restart/restoreしない。
 
 ## Full local gate
 
