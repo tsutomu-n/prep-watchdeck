@@ -145,7 +145,7 @@ if [[ ! -f "$COMPOSE_FILE" ]]; then
   printf 'missing dedicated Compose file: %s\n' "$COMPOSE_FILE" >&2
   exit 2
 fi
-for command_name in awk docker realpath stat; do
+for command_name in awk cat docker mktemp realpath stat; do
   command -v "$command_name" >/dev/null || {
     printf '%s is required\n' "$command_name" >&2
     exit 2
@@ -219,20 +219,32 @@ if [[ "$ACTIVE_CONNECTIONS" != "0" ]]; then
   exit 2
 fi
 
-"${compose[@]}" exec -T postgres sh -ceu '
+RESTORE_SQL_PATH="$(mktemp "$STATE_ROOT/.market-restore.XXXXXX.sql")"
+cleanup() {
+  rm -f -- "$RESTORE_SQL_PATH"
+}
+trap cleanup EXIT
+chmod 0600 "$RESTORE_SQL_PATH"
+"${compose[@]}" exec -T postgres pg_restore \
+  --file=- \
+  --no-owner \
+  --no-privileges <"$BACKUP_PATH" >"$RESTORE_SQL_PATH"
+
+{
+  printf 'DROP SCHEMA IF EXISTS public CASCADE;\nCREATE SCHEMA public;\n'
+  cat "$RESTORE_SQL_PATH"
+} | "${compose[@]}" exec -T postgres sh -ceu '
   export PGPASSWORD="$POSTGRES_PASSWORD"
-  exec pg_restore \
+  exec psql \
     --host=127.0.0.1 \
     --port=5432 \
     --username="$POSTGRES_USER" \
     --dbname="$POSTGRES_DB" \
-    --clean \
-    --if-exists \
     --single-transaction \
-    --exit-on-error \
-    --no-owner \
-    --no-privileges
-' <"$BACKUP_PATH"
+    --set=ON_ERROR_STOP=on
+'
+rm -f -- "$RESTORE_SQL_PATH"
+trap - EXIT
 
 printf 'restored=%s\n' "$BACKUP_PATH"
 printf 'target=%s\n' "$EXPECTED_DATABASE"

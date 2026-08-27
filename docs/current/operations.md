@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T12:18:27+09:00`
-- 検証: `2026-08-27T12:18:27+09:00`
+- 更新: `2026-08-27T12:33:02+09:00`
+- 検証: `2026-08-27T12:33:02+09:00`
 - 状態: `現行`
 
 ---
@@ -174,7 +174,8 @@ temporary fileからatomic renameする。
 
 restoreは破壊的な別操作。market serviceとmaintenanceを停止し、接続中clientが0であること、
 backupのdatabase名、専用Compose project、対象名を確認する。`--confirm-target`と`--apply`が
-両方なければ変更しない。
+両方なければ変更しない。custom archiveをmode 0600の一時SQLへ展開できたことを確認してから、
+`public` schemaの再作成とrestore全体を同じDB transactionで適用し、一時SQLは成功・失敗時とも削除する。
 
 ```bash
 systemctl --user stop prep-watchdeck-market.service
