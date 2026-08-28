@@ -4,6 +4,7 @@ import hashlib
 import os
 import uuid
 from datetime import UTC, date, datetime
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
@@ -81,7 +82,13 @@ def test_archive_generation_readback_and_retention_are_fail_closed(tmp_path: Pat
             first_path = archive_root / first.relative_path
             assert first_path.is_file()
             assert hashlib.sha256(first_path.read_bytes()).hexdigest() == first.sha256
-            assert pl.read_parquet(first_path).height == 2
+            first_frame = pl.read_parquet(first_path)
+            assert first_frame.height == 2
+            assert first_frame.schema["mark_price"] == pl.Decimal(precision=38, scale=18)
+            assert first_frame.get_column("mark_price").to_list() == [
+                Decimal("2532.400000000000000000"),
+                Decimal("2532.390000000000000000"),
+            ]
             assert len(list(first_path.parent.glob("*.parquet"))) == 1
 
             connection.execute(
@@ -233,7 +240,10 @@ def _seed_market_state(connection: psycopg.Connection[Any], partition_date: date
     assert version is not None
     version_id = int(version[0])
 
-    for minute, mark_price in ((0, 100), (1, 101)):
+    for minute, mark_price in (
+        (0, Decimal("2532.4")),
+        (1, Decimal("2532.39")),
+    ):
         bucket_at = datetime(2026, 8, 5, 0, minute, tzinfo=UTC)
         connection.execute(
             """
@@ -246,7 +256,7 @@ def _seed_market_state(connection: psycopg.Connection[Any], partition_date: date
             """,
             (version_id, bucket_at, bucket_at, bucket_at, mark_price),
         )
-        raw_payload = {"minute": minute, "markPrice": mark_price}
+        raw_payload = {"minute": minute, "markPrice": str(mark_price)}
         connection.execute(
             """
                 INSERT INTO raw_market_observations (

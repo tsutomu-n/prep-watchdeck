@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from prep_watchdeck_market.archive import (
     ArchiveDataset,
     _fetch_partition,
+    _partition_frame,
     _PartitionRows,
 )
 from prep_watchdeck_market.config import Settings
@@ -155,12 +156,7 @@ def sample_capacity(
 def _write_temporary_parquet(partition: _PartitionRows, path: Path) -> int:
     if not partition.rows:
         return 0
-    frame = pl.DataFrame(
-        partition.rows,
-        schema=list(partition.columns),
-        orient="row",
-        strict=False,
-    )
+    frame = _partition_frame(partition)
     frame.write_parquet(path, compression="zstd", statistics=True)
     readback = pl.read_parquet(path)
     if readback.columns != list(partition.columns) or readback.height != len(partition.rows):

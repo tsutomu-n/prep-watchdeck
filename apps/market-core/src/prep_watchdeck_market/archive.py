@@ -23,6 +23,27 @@ _SUPPORTED_DATASETS = {"market_state_1m", "candle_1m", "funding_events"}
 _SUPPORTED_VENUES = {"bitget", "hyperliquid", "aster"}
 _SCHEMA_VERSION = 1
 _PART_FILE_NAME = "part-0000.parquet"
+_PARQUET_DECIMAL = pl.Decimal(precision=38, scale=18)
+_PARQUET_DECIMAL_COLUMNS = frozenset(
+    {
+        "best_ask",
+        "best_bid",
+        "close_price",
+        "funding_rate_per_hour",
+        "funding_rate_raw",
+        "high_price",
+        "low_price",
+        "mark_price",
+        "open_interest_base",
+        "open_interest_notional",
+        "open_interest_raw",
+        "open_price",
+        "reference_price",
+        "volume_24h_raw",
+        "volume_base",
+        "volume_notional",
+    }
+)
 
 
 class ArchiveError(RuntimeError):
@@ -54,6 +75,23 @@ class _PartitionRows:
     rows: tuple[tuple[Any, ...], ...]
 
 
+def _partition_frame(partition: _PartitionRows) -> pl.DataFrame:
+    """Build a normalized partition with a stable Parquet decimal schema."""
+
+    decimal_overrides = {
+        column: _PARQUET_DECIMAL
+        for column in partition.columns
+        if column in _PARQUET_DECIMAL_COLUMNS
+    }
+    return pl.DataFrame(
+        partition.rows,
+        schema=list(partition.columns),
+        schema_overrides=decimal_overrides,
+        orient="row",
+        strict=False,
+    )
+
+
 def archive_partition(
     connection: Connection[Any],
     archive_root: Path,
@@ -80,12 +118,7 @@ def archive_partition(
     final_path: Path | None = None
     confirmed = False
     try:
-        frame = pl.DataFrame(
-            partition.rows,
-            schema=list(partition.columns),
-            orient="row",
-            strict=False,
-        )
+        frame = _partition_frame(partition)
         frame.write_parquet(staging_path, compression="zstd", statistics=True)
         _verify_readback(
             staging_path,
