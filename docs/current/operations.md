@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-28T09:47:19+09:00`
-- 検証: `2026-08-28T09:47:19+09:00`
+- 更新: `2026-08-28T09:52:02+09:00`
+- 検証: `2026-08-28T09:52:02+09:00`
 - 状態: `現行`
 
 ---
@@ -18,9 +18,11 @@
 - 同一state rootでmarket collectorを複数起動しない。unitとlocal direct起動は同じlockを使う。
 - release cutover後も旧checkout、旧state、未追跡fileはrollback資産として削除しない。
 
-## Production P0 completion
+## Production P0 qualification
 
-`2026-08-28T09:47:19+09:00`時点のproduction P0は`P0_COMPLETE=YES`。
+`2026-08-28T09:52:02+09:00`時点のproduction P0 qualificationは`PASS`。
+P0 completion sourceの`origin/main`へのfast-forward pushはGitHubのemail privacy保護で拒否されており、
+`P0_COMPLETE=YES`とFreezeはremote反映後に確定する。
 
 - deployed source: `dc2a8d70f8247f8f49827f410e55170e37d95204`
 - clean release: `/home/tn/releases/prep-watchdeck/dc2a8d7`（detached HEAD）
@@ -30,8 +32,7 @@
 - units: `prep-watchdeck-market-db.service`、`prep-watchdeck-market.service`、
   `prep-watchdeck-web.service`、`prep-watchdeck-market-maintenance.service`、
   `prep-watchdeck-market-maintenance.timer`
-- timer: enabledかつactive/waiting。production Archive確認後の次回予定は
-  `2026-08-28T10:02:14+09:00`
+- timer: enabledかつactive/waiting。`OnCalendar=hourly`、`RandomizedDelaySec=5min`
 - unit rollback backup: `~/.config/systemd/user/prep-watchdeck-*.bak.20260828-093628.2151863`
 - legacy rollback checkout: `/home/tn/projects/prep-watchdeck`をdirty状態のまま保持
 
