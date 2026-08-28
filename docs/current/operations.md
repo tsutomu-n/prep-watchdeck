@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T18:30:30+09:00`
-- 検証: `2026-08-27T18:30:30+09:00`
+- 更新: `2026-08-28T09:47:19+09:00`
+- 検証: `2026-08-28T09:47:19+09:00`
 - 状態: `現行`
 
 ---
@@ -17,6 +17,56 @@
   非標準target overrideは隔離test/shadowだけに使い、production env fileではinstallerが拒否する。
 - 同一state rootでmarket collectorを複数起動しない。unitとlocal direct起動は同じlockを使う。
 - release cutover後も旧checkout、旧state、未追跡fileはrollback資産として削除しない。
+
+## Production P0 completion
+
+`2026-08-28T09:47:19+09:00`時点のproduction P0は`P0_COMPLETE=YES`。
+
+- deployed source: `dc2a8d70f8247f8f49827f410e55170e37d95204`
+- clean release: `/home/tn/releases/prep-watchdeck/dc2a8d7`（detached HEAD）
+- state root: `/home/tn/.local/share/prep-watchdeck-market`
+- database: dedicated Compose project `prep-watchdeck-market`、
+  `127.0.0.1:55432/prep_watchdeck_market`、migration `1`から`4`
+- units: `prep-watchdeck-market-db.service`、`prep-watchdeck-market.service`、
+  `prep-watchdeck-web.service`、`prep-watchdeck-market-maintenance.service`、
+  `prep-watchdeck-market-maintenance.timer`
+- timer: enabledかつactive/waiting。production Archive確認後の次回予定は
+  `2026-08-28T10:02:14+09:00`
+- unit rollback backup: `~/.config/systemd/user/prep-watchdeck-*.bak.20260828-093628.2151863`
+- legacy rollback checkout: `/home/tn/projects/prep-watchdeck`をdirty状態のまま保持
+
+`aa57beb7fe1026c3adcfb9ccd39299443dd8ea88`以後のproduction必須修正は次の3件。
+
+1. `8e4804887d97967f7b9b61426a60f3a905142c74`: 既存Postgres data directoryを
+   unit再起動時にhost userへ`chmod`せず、container所有権を維持する。
+2. `99ac0cf83e33872eacb56936ee5025cfda820548`: production backupを、明示した
+   非production Compose projectとdatabaseの組だけへatomic restoreできるようにする。
+3. `dc2a8d70f8247f8f49827f410e55170e37d95204`: Parquet numeric schemaを
+   `Decimal(38,18)`へ固定し、row順依存のscale推論による丸めを防ぐ。
+
+`2026-08-28T09:38:57+09:00`から`09:45:06+09:00`のproduction maintenanceはexit 0。
+Fundingは1,178件すべて成功し、completed UTC day `2026-08-27`について次の9 partitionを
+generation 1、schema version 1、status `confirmed`で生成した。合計2,132,729行についてmanifest row
+count、unique key数、min/max timestamp、Parquet readback、file SHA-256が一致し、source row削除は0件。
+
+| dataset | Venue | rows | SHA-256 |
+| --- | --- | ---: | --- |
+| `market_state_1m` | Aster | 492,376 | `b4f7ea39540467611d17bf885c5f20116a9a505b112f15a49435d89fc1d71d1a` |
+| `market_state_1m` | Bitget | 421,344 | `694c1b239795205c79c3f22ad188f397d65e880134d21c8dde821820fd77798a` |
+| `market_state_1m` | Hyperliquid | 160,512 | `4dd54183719c470642366c6613c518a947f79e2e59b68b0fac6e4552e04a42c1` |
+| `candle_1m` | Aster | 490,661 | `6da68cb54d7686f8e5cc31e94aa71771acf9f8e0ce0336ce8faacc415302a9bd` |
+| `candle_1m` | Bitget | 421,392 | `22eae361cf9f0e5e5b5b9ac67bd2758f337c3192c3e4240c105c0c02979f4864` |
+| `candle_1m` | Hyperliquid | 137,252 | `1cbd74c25fff4bd4094356d69e520dad21fd26d69267554b4aa1e23fb305238a` |
+| `funding_events` | Aster | 5,352 | `c46e8a56e3997473235d16153bcf16335ad04e4b5b669c306497b8a739133e74` |
+| `funding_events` | Bitget | 1,200 | `8032d24e629ebb270592ae92c271bb9e5a854128b7d8cec57a4bd2ad7610b9d8` |
+| `funding_events` | Hyperliquid | 2,640 | `58300c5a33815354483d98ecfd1b36bb035b069ae6030663da080d431893e85e` |
+
+復旧可能backupは別disk `/data`にある
+`/data/watchdeck-backups/market-postgres/prep-watchdeck-market-20260828T002319Z.dump`
+（244,250,226 bytes、SHA-256
+`676d96a83afdda427e588d08383c9d6fa78e3752582f7afff3bc387ced909163`）。このbackupは
+isolated project `prep-watchdeck-market-archive-diagnose-20260828`、port `55443`へrestore済みで、
+migration `1`から`4`、主要tableのrow存在、3 normalized datasetのduplicate key 0を確認した。
 
 ## 初期設定
 
