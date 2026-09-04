@@ -1,8 +1,8 @@
 # Prep Watchdeck Agent Guide
 
 - 作成: `2026-06-26T16:12:22+09:00`
-- 更新: `2026-08-15T11:21:14+09:00`
-- 検証: `2026-08-15T11:21:14+09:00`
+- 更新: `2026-09-04T20:49:47+09:00`
+- 検証: `2026-09-04T20:49:47+09:00`
 - 状態: `現行`
 
 ---
@@ -38,8 +38,8 @@ runtime files、Postgres data、Parquet、`.svelte-kit`、`node_modules`、test 
 
 将来予定を `docs/current/` へ現行事実として書かない。
 `docs/current/`はRepositoryの現行仕様であり、commit、push、merge、live cutover、現在hostで稼働中の
-versionとは別の状態である。`docs/plans/active/`は作業証拠であり、[docs index](docs/README.md)から
-リンクされたplanだけを候補としてcodeと現在差分へ照合する。
+versionとは別の状態である。`docs/plans/active/`には未完了作業のplanだけを置き、[docs index](docs/README.md)
+からリンクされたplanだけを候補としてcodeと現在差分へ照合する。
 
 ## Core Rules
 
@@ -60,6 +60,9 @@ versionとは別の状態である。`docs/plans/active/`は作業証拠であ�
 `docs/plans/active/<task>/` に goal、scope、checkpoint、完了条件、検証、rollback、未解決事項を
 記録する。破壊的変更、依存・directory・architecture・API・type・DB schemaの変更、複数ファイルの
 仕様変更では、作業前に `ai/<task-slug>-YYYYMMDD-HHMM` branch を作る。
+
+Planが完了、中止、または別の判断により置換された場合は、現行事実を`docs/current/`、採用済み判断を
+`docs/decisions/`へ反映してから、そのplanを現行treeから削除する。過去planはGit履歴で参照する。
 
 ## Toolchain and Style
 
