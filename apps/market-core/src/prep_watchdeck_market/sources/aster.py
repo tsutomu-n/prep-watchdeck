@@ -30,6 +30,8 @@ ASTER_DOCUMENTATION_URL = (
     "aster-finance-futures-api-v3.md"
 )
 
+_ASTER_CRYPTO_SUBTYPES = frozenset({"AI", "Meme", "STORAGE", "Top"})
+
 
 async def fetch_aster_catalog(
     session: aiohttp.ClientSession,
@@ -134,7 +136,17 @@ def _aster_exclusion_reason(row: dict[str, object], *, symbol: str | None) -> st
         return "not_usdt_quote"
     if text(row.get("marginAsset")) != "USDT":
         return "not_usdt_collateral"
+    if not _aster_underlying_subtype_is_crypto(row.get("underlyingSubType")):
+        return "rwa_or_unconfirmed"
     return None
+
+
+def _aster_underlying_subtype_is_crypto(value: object) -> bool:
+    if not isinstance(value, list):
+        return False
+    if any(not isinstance(item, str) or not item for item in value):
+        return False
+    return set(value) <= _ASTER_CRYPTO_SUBTYPES
 
 
 def _definition_symbol(value: object) -> str:

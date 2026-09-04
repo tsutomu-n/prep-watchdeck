@@ -28,6 +28,65 @@ def test_aster_uses_official_v3_hosts() -> None:
 
 
 @pytest.mark.parametrize(
+    "underlying_subtype",
+    [[], ["Top"], ["AI"], ["Meme"], ["STORAGE"], ["Top", "Meme"]],
+)
+def test_aster_accepts_confirmed_crypto_subtypes(underlying_subtype: list[str]) -> None:
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    row = payload["symbols"][0]
+    row["underlyingSubType"] = underlying_subtype
+
+    batch = parse_aster_catalog(payload, observed_at=OBSERVED_AT)
+
+    instrument = next(item for item in batch.instruments if item.source_symbol == "BTCUSDT")
+    assert instrument.asset_class == "crypto"
+
+
+@pytest.mark.parametrize(
+    "underlying_subtype",
+    [
+        ["STOCK"],
+        ["ETF"],
+        ["Commodities"],
+        ["pre-launch", "STOCK"],
+        ["AOS2"],
+        ["Top", "AOS2"],
+        ["Top", "STOCK"],
+        None,
+        "Top",
+        [""],
+        [1],
+    ],
+)
+def test_aster_rejects_rwa_synthetic_and_unconfirmed_subtypes(
+    underlying_subtype: object,
+) -> None:
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    row = payload["symbols"][0]
+    row["underlyingSubType"] = underlying_subtype
+
+    batch = parse_aster_catalog(payload, observed_at=OBSERVED_AT)
+
+    assert all(item.source_symbol != "BTCUSDT" for item in batch.instruments)
+    exclusion = next(item for item in batch.exclusions if item.source_symbol == "BTCUSDT")
+    assert exclusion.reason == "rwa_or_unconfirmed"
+    assert exclusion.raw_definition["underlyingSubType"] == underlying_subtype
+
+
+def test_aster_rejects_missing_underlying_subtype() -> None:
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    row = payload["symbols"][0]
+    del row["underlyingSubType"]
+
+    batch = parse_aster_catalog(payload, observed_at=OBSERVED_AT)
+
+    assert all(item.source_symbol != "BTCUSDT" for item in batch.instruments)
+    exclusion = next(item for item in batch.exclusions if item.source_symbol == "BTCUSDT")
+    assert exclusion.reason == "rwa_or_unconfirmed"
+    assert "underlyingSubType" not in exclusion.raw_definition
+
+
+@pytest.mark.parametrize(
     (
         "fixture_name",
         "parser",

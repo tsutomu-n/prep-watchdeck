@@ -168,6 +168,14 @@ class MarketService:
                     error_type=type(result).__name__,
                 )
                 continue
+            if not result.instruments:
+                failed.append(venue)
+                logger.warning(
+                    "catalog source unavailable venue={venue} errorType={error_type}",
+                    venue=venue,
+                    error_type="EmptyCatalog",
+                )
+                continue
             succeeded[venue] = result
 
         started_at = datetime.now(UTC)
