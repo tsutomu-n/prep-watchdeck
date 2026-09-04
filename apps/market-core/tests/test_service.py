@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Sequence
+from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -84,6 +85,67 @@ def test_catalog_is_published_only_for_venues_that_persist(
         assert service._instruments("bitget")[0].source_symbol == "BTCUSDT"
         assert service._instruments("hyperliquid")[0].source_symbol == "OLD"
         assert service._instruments("aster")[0].source_symbol == "BTCUSDT"
+
+    asyncio.run(scenario())
+
+
+def test_empty_catalog_is_a_source_failure_and_retains_last_safe_catalog(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def scenario() -> None:
+        service = MarketService("postgresql://not-used", Path("/not-used"))
+        service._session = cast(aiohttp.ClientSession, object())
+        previous_aster = _batch("aster", "BTCUSDT")
+        service._catalogs["aster"] = previous_aster
+        fetched = {
+            "bitget": _batch("bitget", "BTCUSDT"),
+            "hyperliquid": _batch("hyperliquid", "BTC"),
+            "aster": replace(_batch("aster", "UNKNOWN"), instruments=()),
+        }
+
+        async def fetch_bitget(_session: aiohttp.ClientSession) -> CatalogBatch:
+            return fetched["bitget"]
+
+        async def fetch_hyperliquid(_session: aiohttp.ClientSession) -> CatalogBatch:
+            return fetched["hyperliquid"]
+
+        async def fetch_aster(_session: aiohttp.ClientSession) -> CatalogBatch:
+            return fetched["aster"]
+
+        def fake_persist(
+            _database_url: str,
+            changed_batches: Sequence[CatalogBatch],
+            current_batches: Sequence[CatalogBatch],
+            _started_at: datetime,
+            source_failures: Sequence[Venue],
+        ) -> tuple[Venue, ...]:
+            assert tuple(batch.provenance.venue for batch in changed_batches) == (
+                "bitget",
+                "hyperliquid",
+            )
+            current_by_venue = {batch.provenance.venue: batch for batch in current_batches}
+            assert current_by_venue["aster"] is previous_aster
+            assert source_failures == ("aster",)
+            return ("bitget", "hyperliquid")
+
+        monkeypatch.setattr("prep_watchdeck_market.service.fetch_bitget_catalog", fetch_bitget)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.fetch_hyperliquid_catalog", fetch_hyperliquid
+        )
+        monkeypatch.setattr("prep_watchdeck_market.service.fetch_aster_catalog", fetch_aster)
+        monkeypatch.setattr("prep_watchdeck_market.service._persist_catalog_refresh", fake_persist)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service._load_current_candle_version_starts_url",
+            lambda _database_url: {},
+        )
+
+        result = await service.refresh_catalog()
+
+        assert result.status == "partial"
+        assert result.venues_succeeded == ("bitget", "hyperliquid")
+        assert result.venues_failed == ("aster",)
+        assert result.instruments_received == 2
+        assert service._catalogs["aster"] is previous_aster
 
     asyncio.run(scenario())
 
