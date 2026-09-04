@@ -37,7 +37,7 @@ def test_capacity_projection_is_buffered_and_empty_samples_fail_closed(tmp_path:
         elapsed_seconds=3_600,
     )
     assert empty.projectedParquetBytesPerDay == 0
-    assert empty.status == "optional_no_rows"
+    assert empty.status == "insufficient_data"
 
     missing_required = project_partition_sample(
         dataset="candle_1m",

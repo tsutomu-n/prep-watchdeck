@@ -178,6 +178,15 @@ def _hyperliquid_capabilities() -> tuple[SourceCapability, ...]:
         ),
         SourceCapability(
             venue="hyperliquid",
+            capability="funding_history",
+            available=True,
+            source_kind="native_rest",
+            endpoint_or_channel="/info:type=fundingHistory,dex=default",
+            documentation_url=HYPERLIQUID_DOCUMENTATION_URL,
+            details={"capture": "settled_events", "catchupHours": 48},
+        ),
+        SourceCapability(
+            venue="hyperliquid",
             capability="open_interest",
             available=True,
             source_kind="native_rest",

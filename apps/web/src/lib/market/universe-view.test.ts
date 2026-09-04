@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
-import { filterAndSortUniverse } from "./universe-view";
+import { coverageLabel, filterAndSortUniverse, groupVenueCounts } from "./universe-view";
 
 describe("Universe Explorer filtering", () => {
   test("sorts base then venue and keeps coverage, venue, search and quality explicit", () => {
@@ -34,6 +34,18 @@ describe("Universe Explorer filtering", () => {
         quality: "partial"
       }).map((item) => item.venueInstrumentId)
     ).toEqual(["aster:ETHUSDT"]);
+  });
+
+  test("counts distinct venues and presents coverage as a neutral axis", () => {
+    const items = [
+      instrument("bitget:BTCUSDT", "BTC", "bitget", "crypto:BTC:linear-perp", "ready"),
+      instrument("hyperliquid:BTC", "BTC", "hyperliquid", "crypto:BTC:linear-perp", "ready"),
+      instrument("aster:ETHUSDT", "ETH", "aster", null, "ready")
+    ];
+    const counts = groupVenueCounts(items);
+    expect(counts.get("crypto:BTC:linear-perp")).toBe(2);
+    expect(coverageLabel(items[0], counts)).toBe("2 Venue");
+    expect(coverageLabel(items[2], counts)).toBe("未group");
   });
 });
 

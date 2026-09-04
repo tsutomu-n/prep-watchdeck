@@ -11,23 +11,38 @@ export type UniverseFilters = {
   quality: QualityFilter;
 };
 
+export function groupVenueCounts(items: UniverseInstrumentArtifact[]) {
+  const venues = new Map<string, Set<UniverseInstrumentArtifact["venue"]>>();
+  for (const item of items) {
+    if (!item.active || !item.groupId) continue;
+    const current = venues.get(item.groupId) ?? new Set<UniverseInstrumentArtifact["venue"]>();
+    current.add(item.venue);
+    venues.set(item.groupId, current);
+  }
+  return new Map([...venues].map(([groupId, values]) => [groupId, values.size]));
+}
+
+export function coverageLabel(
+  item: UniverseInstrumentArtifact,
+  counts: ReadonlyMap<string, number>
+) {
+  if (!item.groupId) return "未group";
+  const count = counts.get(item.groupId) ?? 1;
+  return count >= 2 ? `${count} Venue` : "単独";
+}
+
 export function filterAndSortUniverse(
   items: UniverseInstrumentArtifact[],
   filters: UniverseFilters
 ) {
   const search = filters.search.trim().toLocaleUpperCase("en-US");
-  const groupSizes = new Map<string, number>();
-  for (const item of items) {
-    if (item.active && item.groupId) {
-      groupSizes.set(item.groupId, (groupSizes.get(item.groupId) ?? 0) + 1);
-    }
-  }
+  const groupSizes = groupVenueCounts(items);
   return items
     .filter((item) => item.active)
     .filter((item) => filters.venue === "all" || item.venue === filters.venue)
     .filter((item) => filters.quality === "all" || item.quality === filters.quality)
     .filter((item) => {
-      const coverage = item.groupId ? (groupSizes.get(item.groupId) ?? 0) : 0;
+      const coverage = item.groupId ? (groupSizes.get(item.groupId) ?? 1) : 0;
       if (filters.coverage === "multi") return coverage >= 2;
       if (filters.coverage === "single") return coverage < 2;
       return true;

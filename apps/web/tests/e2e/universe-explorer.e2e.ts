@@ -24,17 +24,28 @@ test.afterEach(async () => {
   await rm(runtimeRoot, { recursive: true, force: true });
 });
 
-test("Universe Explorerの主要な監視flowを表示・操作できる", async ({ page }) => {
+test("Universe Explorerの主要な監視flowと品質表示を操作できる", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Perp Universe Explorer" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
   await expect(page.getByText("3 / 3", { exact: true })).toBeVisible();
+  await expect(page.getByText("最終検証", { exact: true })).toBeVisible();
+  await expect(page.getByText("2 Venue", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("単独", { exact: true }).first()).toBeVisible();
+
+  const operational = page.getByLabel("運用上の注意");
+  await expect(operational).toContainText("表示用データの一部を書き込めませんでした");
+  const qualityReasons = page.getByLabel("データ品質理由");
+  await expect(qualityReasons).toContainText("正常でないinstrumentを含みます");
+  await expect(qualityReasons).not.toContainText("表示用データの一部を書き込めませんでした");
 
   const inspector = page.getByRole("complementary");
   await expect(inspector.getByRole("heading", { name: "参考mark中央値" })).toBeVisible();
   await expect(inspector.getByText(/Parity仮定・reference only/)).toBeVisible();
-  await expect(inspector.getByText("USD、USDC、USDTは参考中央値だけ等価扱い", { exact: true })).toBeVisible();
+  await expect(
+    inspector.getByText("USD、USDC、USDTは参考中央値だけ等価扱い", { exact: true })
+  ).toBeVisible();
   await expect(inspector.getByRole("heading", { name: "Venue L1" })).toBeVisible();
   await expect(inspector.getByText("Quote", { exact: true })).toBeVisible();
   await expect(inspector.getByText("Collateral", { exact: true })).toBeVisible();
@@ -45,11 +56,19 @@ test("Universe Explorerの主要な監視flowを表示・操作できる", async
   await expect(
     selectedMarket.getByRole("columnheader", { name: "板上概算" }).first()
   ).toBeVisible();
-  await expect(selectedMarket.getByRole("rowheader", { name: "$100", exact: true }).first()).toBeVisible();
-  await expect(selectedMarket.getByRole("rowheader", { name: "$500", exact: true }).first()).toBeVisible();
-  await expect(selectedMarket.getByRole("rowheader", { name: "$1,000", exact: true }).first()).toBeVisible();
+  await expect(
+    selectedMarket.getByRole("rowheader", { name: "$100", exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    selectedMarket.getByRole("rowheader", { name: "$500", exact: true }).first()
+  ).toBeVisible();
+  await expect(
+    selectedMarket.getByRole("rowheader", { name: "$1,000", exact: true }).first()
+  ).toBeVisible();
   await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true }).first()).toBeVisible();
   await expect(selectedMarket.getByText("直近約定 1件", { exact: true })).toBeVisible();
+  await selectedMarket.getByText("直近約定 1件", { exact: true }).click();
+  await expect(selectedMarket.getByRole("row", { name: /— bitget buy 65,000 0.01/ })).toBeVisible();
 
   const theme = page.getByLabel("配色", { exact: true });
   const font = page.getByLabel("フォント", { exact: true });
@@ -71,6 +90,8 @@ test("Universe Explorerの主要な監視flowを表示・操作できる", async
   await expect
     .poll(async () => (await readSelectionCommand())?.venueInstrumentId ?? null)
     .toBe("hyperliquid:BTC");
+  await expect(selectedMarket.getByText(/選択groupのartifactを待っています/)).toBeVisible();
+  await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true })).toHaveCount(0);
 
   const command = await readSelectionCommand();
   expect(command).toMatchObject({
@@ -86,6 +107,11 @@ test("Universe Explorerの主要な監視flowを表示・操作できる", async
     "venueInstrumentId"
   ]);
 
+  await rm(resolve(artifactRoot, "service-state.json"), { force: true });
+  await expect(page.getByText("更新停止", { exact: true })).toBeVisible({ timeout: 8_000 });
+  await expect(page.getByText(/最後に検証できたsnapshotです/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
+
   const horizontalOverflow = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
     return root.scrollWidth - root.clientWidth;
@@ -99,8 +125,8 @@ async function publishArtifacts(now: Date) {
   const universe: UniverseSnapshotArtifact = {
     schemaVersion: 1,
     generatedAt,
-    status: "ready",
-    qualityReasons: [],
+    status: "partial",
+    qualityReasons: ["contains_non_ready_instruments"],
     parityAssumption: {
       code: "usd_usdc_usdt_reference_only",
       appliedTo: "reference_mark_median_only",
@@ -213,7 +239,7 @@ async function publishArtifacts(now: Date) {
           side: "buy",
           price: 65_000,
           sizeBase: 0.01,
-          sourceAt: generatedAt,
+          sourceAt: null,
           receivedAt: generatedAt
         }
       ]
@@ -222,8 +248,8 @@ async function publishArtifacts(now: Date) {
   const service: MarketServiceStateArtifact = {
     schemaVersion: 1,
     generatedAt,
-    status: "ready",
-    qualityReasons: [],
+    status: "partial",
+    qualityReasons: ["artifact_write_failure"],
     collectors: [],
     catalog: {
       status: "ready",

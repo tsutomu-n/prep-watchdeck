@@ -4,8 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 COMPOSE_FILE="$REPO_ROOT/deploy/market-postgres/compose.yaml"
-PROJECT_NAME="prep-watchdeck-market"
-EXPECTED_DATABASE="prep_watchdeck_market"
+PRODUCTION_PROJECT_NAME="prep-watchdeck-market"
+PRODUCTION_DATABASE="prep_watchdeck_market"
+PROJECT_NAME="$PRODUCTION_PROJECT_NAME"
+TARGET_DATABASE="$PRODUCTION_DATABASE"
 
 usage() {
   cat <<'EOF'
@@ -14,11 +16,14 @@ Usage:
     --state-root /absolute/repo-external/state \
     --env-file /absolute/repo-external/postgres.env \
     --backup /absolute/repo-external/prep-watchdeck-market-TIMESTAMP.dump \
+    [--compose-project prep-watchdeck-market] \
+    [--target-database prep_watchdeck_market] \
     --confirm-target prep_watchdeck_market \
     --apply
 
 Inspects the archive, rejects active target connections, then restores only the dedicated
-market database in one transaction. Stop watchdeck-market before running it.
+market database in one transaction. Stop watchdeck-market before restoring production.
+An isolated restore must override both --compose-project and --target-database.
 EOF
 }
 
@@ -87,6 +92,16 @@ while [[ $# -gt 0 ]]; do
       BACKUP_PATH="$2"
       shift 2
       ;;
+    --compose-project)
+      require_value "$@"
+      PROJECT_NAME="$2"
+      shift 2
+      ;;
+    --target-database)
+      require_value "$@"
+      TARGET_DATABASE="$2"
+      shift 2
+      ;;
     --confirm-target)
       require_value "$@"
       CONFIRM_TARGET="$2"
@@ -112,8 +127,23 @@ if [[ -z "$STATE_ROOT" || -z "$ENV_FILE" || -z "$BACKUP_PATH" ]]; then
   usage >&2
   exit 2
 fi
-if [[ "$CONFIRM_TARGET" != "$EXPECTED_DATABASE" || "$APPLY" != true ]]; then
-  echo "restore requires --confirm-target prep_watchdeck_market and --apply" >&2
+if [[ ! "$PROJECT_NAME" =~ ^[a-z0-9][a-z0-9_-]*$ ]]; then
+  printf 'invalid Compose project name: %s\n' "$PROJECT_NAME" >&2
+  exit 2
+fi
+if [[ ! "$TARGET_DATABASE" =~ ^[a-z_][a-z0-9_]*$ ]]; then
+  printf 'invalid target database name: %s\n' "$TARGET_DATABASE" >&2
+  exit 2
+fi
+if { [[ "$PROJECT_NAME" == "$PRODUCTION_PROJECT_NAME" ]] && \
+     [[ "$TARGET_DATABASE" != "$PRODUCTION_DATABASE" ]]; } || \
+   { [[ "$PROJECT_NAME" != "$PRODUCTION_PROJECT_NAME" ]] && \
+     [[ "$TARGET_DATABASE" == "$PRODUCTION_DATABASE" ]]; }; then
+  echo "isolated restore must override both project and database" >&2
+  exit 2
+fi
+if [[ "$CONFIRM_TARGET" != "$TARGET_DATABASE" || "$APPLY" != true ]]; then
+  printf 'restore requires --confirm-target %s and --apply\n' "$TARGET_DATABASE" >&2
   exit 2
 fi
 
@@ -145,7 +175,7 @@ if [[ ! -f "$COMPOSE_FILE" ]]; then
   printf 'missing dedicated Compose file: %s\n' "$COMPOSE_FILE" >&2
   exit 2
 fi
-for command_name in awk docker realpath stat; do
+for command_name in awk cat docker mktemp realpath stat; do
   command -v "$command_name" >/dev/null || {
     printf '%s is required\n' "$command_name" >&2
     exit 2
@@ -186,7 +216,7 @@ fi
 ACTUAL_DATABASE="$(
   "${compose[@]}" exec -T postgres sh -ceu 'printf "%s\n" "$POSTGRES_DB"'
 )"
-if [[ "$ACTUAL_DATABASE" != "$EXPECTED_DATABASE" ]]; then
+if [[ "$ACTUAL_DATABASE" != "$TARGET_DATABASE" ]]; then
   printf 'unexpected target database: %s\n' "$ACTUAL_DATABASE" >&2
   exit 2
 fi
@@ -195,13 +225,15 @@ ARCHIVE_DATABASE="$(
   "${compose[@]}" exec -T postgres pg_restore --list <"$BACKUP_PATH" \
     | awk -F ': ' '/^;[[:space:]]+dbname: / { value=$2 } END { if (value == "") exit 1; print value }'
 )"
-if [[ "$ARCHIVE_DATABASE" != "$EXPECTED_DATABASE" ]]; then
+if [[ "$ARCHIVE_DATABASE" != "$PRODUCTION_DATABASE" ]]; then
   printf 'backup archive database mismatch: %s\n' "$ARCHIVE_DATABASE" >&2
   exit 2
 fi
 
 ACTIVE_CONNECTIONS="$(
-  "${compose[@]}" exec -T postgres sh -ceu '
+  "${compose[@]}" exec -T \
+    --env "RESTORE_TARGET_DATABASE=$TARGET_DATABASE" \
+    postgres sh -ceu '
     export PGPASSWORD="$POSTGRES_PASSWORD"
     exec psql \
       --host=127.0.0.1 \
@@ -210,7 +242,7 @@ ACTIVE_CONNECTIONS="$(
       --dbname=postgres \
       --no-align \
       --tuples-only \
-      --command="SELECT count(*) FROM pg_stat_activity WHERE datname = '\''prep_watchdeck_market'\'' AND pid <> pg_backend_pid();"
+      --command="SELECT count(*) FROM pg_stat_activity WHERE datname = '\''${RESTORE_TARGET_DATABASE}'\'' AND pid <> pg_backend_pid();"
   '
 )"
 if [[ "$ACTIVE_CONNECTIONS" != "0" ]]; then
@@ -219,20 +251,32 @@ if [[ "$ACTIVE_CONNECTIONS" != "0" ]]; then
   exit 2
 fi
 
-"${compose[@]}" exec -T postgres sh -ceu '
+RESTORE_SQL_PATH="$(mktemp "$STATE_ROOT/.market-restore.XXXXXX.sql")"
+cleanup() {
+  rm -f -- "$RESTORE_SQL_PATH"
+}
+trap cleanup EXIT
+chmod 0600 "$RESTORE_SQL_PATH"
+"${compose[@]}" exec -T postgres pg_restore \
+  --file=- \
+  --no-owner \
+  --no-privileges <"$BACKUP_PATH" >"$RESTORE_SQL_PATH"
+
+{
+  printf 'DROP SCHEMA IF EXISTS public CASCADE;\nCREATE SCHEMA public;\n'
+  cat "$RESTORE_SQL_PATH"
+} | "${compose[@]}" exec -T postgres sh -ceu '
   export PGPASSWORD="$POSTGRES_PASSWORD"
-  exec pg_restore \
+  exec psql \
     --host=127.0.0.1 \
     --port=5432 \
     --username="$POSTGRES_USER" \
     --dbname="$POSTGRES_DB" \
-    --clean \
-    --if-exists \
     --single-transaction \
-    --exit-on-error \
-    --no-owner \
-    --no-privileges
-' <"$BACKUP_PATH"
+    --set=ON_ERROR_STOP=on
+'
+rm -f -- "$RESTORE_SQL_PATH"
+trap - EXIT
 
 printf 'restored=%s\n' "$BACKUP_PATH"
-printf 'target=%s\n' "$EXPECTED_DATABASE"
+printf 'target=%s\n' "$TARGET_DATABASE"

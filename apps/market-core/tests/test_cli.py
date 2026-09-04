@@ -3,12 +3,15 @@ from __future__ import annotations
 import asyncio
 from datetime import date, datetime
 from pathlib import Path
+from uuid import uuid4
 
 from typer.testing import CliRunner
 
 from prep_watchdeck_market.cli import app
 from prep_watchdeck_market.config import Settings
 from prep_watchdeck_market.database import DatabaseError, DatabaseHealth, MigrationResult
+from prep_watchdeck_market.funding_runtime import FundingSweepSummary
+from prep_watchdeck_market.funding_store import FundingStoreResult
 from prep_watchdeck_market.maintenance import MaintenanceResult
 from prep_watchdeck_market.retention import RawRetentionResult, SelectedRetentionResult
 from prep_watchdeck_market.runtime_lock import exclusive_runtime_lock
@@ -129,6 +132,69 @@ def test_service_calls_runtime_boundary_and_stops_cleanly(monkeypatch, tmp_path:
     assert seen == [(DATABASE_URL, state_dir.resolve())]
     assert DATABASE_URL not in result.output
     assert "secret" not in result.output
+
+
+def test_funding_sync_reports_success_and_partial_without_secret(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    monkeypatch.setenv("PREP_WATCHDECK_MARKET_DATABASE_URL", DATABASE_URL)
+    monkeypatch.setenv("PREP_WATCHDECK_MARKET_STATE_DIR", str(tmp_path / "state"))
+
+    async def fake_success(_database_url: str) -> FundingSweepSummary:
+        return FundingSweepSummary(
+            requests_attempted=3,
+            requests_succeeded=3,
+            instruments_not_due=7,
+            failures=0,
+            store=FundingStoreResult(
+                run_id=uuid4(),
+                status="succeeded",
+                records_received=4,
+                records_written=2,
+                records_unchanged=2,
+                raw_payloads_written=3,
+                admission_rejected=0,
+                commit_seconds=0.01,
+            ),
+        )
+
+    monkeypatch.setattr("prep_watchdeck_market.cli.run_funding_sync_once", fake_success)
+    succeeded = runner.invoke(app, ["funding-sync"])
+
+    assert succeeded.exit_code == 0
+    assert "status=succeeded" in succeeded.output
+    assert "attempted=3" in succeeded.output
+    assert "written=2" in succeeded.output
+    assert DATABASE_URL not in succeeded.output
+    assert "secret" not in succeeded.output
+
+    async def fake_partial(_database_url: str) -> FundingSweepSummary:
+        return FundingSweepSummary(
+            requests_attempted=3,
+            requests_succeeded=2,
+            instruments_not_due=0,
+            failures=1,
+            store=FundingStoreResult(
+                run_id=uuid4(),
+                status="partial",
+                records_received=2,
+                records_written=2,
+                records_unchanged=0,
+                raw_payloads_written=2,
+                admission_rejected=0,
+                commit_seconds=0.01,
+            ),
+        )
+
+    monkeypatch.setattr("prep_watchdeck_market.cli.run_funding_sync_once", fake_partial)
+    partial = runner.invoke(app, ["funding-sync"])
+
+    assert partial.exit_code == 3
+    assert "status=partial" in partial.output
+    assert "failures=1" in partial.output
+    assert DATABASE_URL not in partial.output
+    assert "secret" not in partial.output
 
 
 def test_maintenance_uses_explicit_completed_utc_day(monkeypatch, tmp_path: Path) -> None:

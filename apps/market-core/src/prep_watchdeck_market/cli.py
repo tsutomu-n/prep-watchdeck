@@ -18,6 +18,8 @@ from prep_watchdeck_market.database import (
     check_database,
     migrate_database,
 )
+from prep_watchdeck_market.funding_runtime import run_funding_sync_once
+from prep_watchdeck_market.funding_store import FundingStoreError
 from prep_watchdeck_market.maintenance import MaintenanceError, run_daily_maintenance
 from prep_watchdeck_market.runtime_lock import RuntimeLockUnavailable, exclusive_runtime_lock
 from prep_watchdeck_market.service import MarketServiceError, run_market_service
@@ -87,6 +89,45 @@ def health() -> None:
         f"currentVersion={result.current_version} "
         f"latestVersion={result.latest_version}"
     )
+
+
+@app.command("funding-sync")
+def funding_sync() -> None:
+    """Fetch bounded settled funding history for current active instruments."""
+    settings = _load_settings()
+    _require_database_target(settings)
+    try:
+        with exclusive_runtime_lock(settings.state_dir / "market-funding.lock"):
+            result = asyncio.run(run_funding_sync_once(settings.database_url))
+    except FundingStoreError as exc:
+        logger.error("funding sync failed: {error_type}", error_type=type(exc).__name__)
+        console.print("[red]funding sync failed[/red]")
+        raise typer.Exit(code=2) from exc
+    except RuntimeLockUnavailable as exc:
+        logger.error("funding sync lock unavailable")
+        console.print("[red]funding sync already running[/red]")
+        raise typer.Exit(code=2) from exc
+    except OSError as exc:
+        logger.error("funding sync lock failed: {error_type}", error_type=type(exc).__name__)
+        console.print("[red]funding sync failed[/red]")
+        raise typer.Exit(code=2) from exc
+
+    store = result.store
+    status = "idle" if store is None else store.status
+    console.print(
+        "[green]funding sync complete[/green] "
+        f"status={status} "
+        f"attempted={result.requests_attempted} "
+        f"succeeded={result.requests_succeeded} "
+        f"notDue={result.instruments_not_due} "
+        f"failures={result.failures} "
+        f"written={0 if store is None else store.records_written} "
+        f"unchanged={0 if store is None else store.records_unchanged}"
+    )
+    if store is not None and store.status == "failed":
+        raise typer.Exit(code=2)
+    if store is not None and store.status == "partial":
+        raise typer.Exit(code=3)
 
 
 @app.command()

@@ -200,7 +200,19 @@ for executable in "$systemctl_bin" "$uv_bin" "$bun_bin" "$docker_bin"; do
     exit 2
   fi
 done
-install -d -m 0700 "$market_state_root" "$market_state_root/postgres" "$unit_dir"
+install -d -m 0700 "$market_state_root" "$unit_dir"
+postgres_dir="$market_state_root/postgres"
+if [[ -L "$postgres_dir" ]]; then
+  printf 'market Postgres data directory must not be a symlink: %s\n' "$postgres_dir" >&2
+  exit 2
+elif [[ -e "$postgres_dir" ]]; then
+  if [[ ! -d "$postgres_dir" ]]; then
+    printf 'market Postgres data path must be a directory: %s\n' "$postgres_dir" >&2
+    exit 2
+  fi
+else
+  install -d -m 0700 "$postgres_dir"
+fi
 backup_suffix="$(date +%Y%m%d-%H%M%S).$$"
 for name in "${unit_names[@]}"; do
   target="$unit_dir/$name"

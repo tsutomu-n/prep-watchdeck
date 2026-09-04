@@ -64,6 +64,7 @@ bun test \
   scripts/maintenance/test-database-url.test.mjs \
   scripts/maintenance/web-port.test.mjs \
   scripts/ops/install-user-services.test.mjs \
+  scripts/ops/market-postgres-restore.test.mjs \
   scripts/ops/run-isolated-shadow.test.mjs
 
 echo "== document metadata =="
@@ -83,7 +84,7 @@ echo "== market-core: ruff check =="
 uv run ruff check src tests
 
 echo "== market-core: ruff format --check =="
-uv run ruff format --check src tests
+uv run ruff format --check --diff src tests
 
 echo "== market-core: pyrefly check =="
 uv run pyrefly check

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T03:18:13+09:00`
-- 検証: `2026-08-15T03:18:13+09:00`
+- 更新: `2026-08-27T18:30:30+09:00`
+- 検証: `2026-08-27T18:30:30+09:00`
 - 状態: `現行`
 
 ---
@@ -30,6 +30,7 @@ uv run pyrefly check
 - catalog: 3 adapter table、provenance、SCD2、除外、partial failure
 - identity: exact base、collision、multiplier、quantity unit unknown
 - L1/candle: 20秒fetch、50秒deadline、single-flight、no stale reuse、3 finality契約
+- funding: settled event限定、最大48時間、Catalog version境界、冪等・conflict拒否、Venue障害分離
 - selected: 1 group、primary switch、TTL、heartbeat、old task close、max20 depth、100 trades、
   stale/板不足/null book walk
 - artifact: schema、median freshness/skew/parity、atomic write、invalid numeric拒否
@@ -61,18 +62,20 @@ bun test \
   scripts/maintenance/monitoring-only-boundary.test.mjs \
   scripts/maintenance/web-port.test.mjs \
   scripts/ops/install-user-services.test.mjs \
+  scripts/ops/market-postgres-restore.test.mjs \
   scripts/ops/run-isolated-shadow.test.mjs
 
 bun scripts/maintenance/check-document-metadata.mjs
 bun scripts/maintenance/check-document-links.mjs
 bash -n scripts/start-all.sh scripts/start-local.sh scripts/update-live.sh \
   scripts/ops/install-user-services.sh scripts/ops/run-market-maintenance.sh \
-  scripts/ops/run-isolated-shadow.sh
+  scripts/ops/market-postgres-restore.sh scripts/ops/run-isolated-shadow.sh
 git diff --check
 ```
 
 installer testは外部credential file、unit directory、systemctl/uv/dockerをfixtureへ隔離する。
-実user unitをinstall/start/restartしない。
+restore testはproduction既定targetの互換性、隔離project/databaseの対指定、片側だけの変更拒否を
+fake Dockerで確認する。実user unit、container、databaseをinstall/start/restart/restoreしない。
 
 ## Full local gate
 
@@ -104,6 +107,7 @@ DB testのskipはfull gate成功として扱わない。
 - L1 fresh 120秒以内が99%以上。95%未満が2周期続けば失敗。
 - 60秒cycle p95 30秒以下、max 50秒以下、overlap/backlog 0、429 0。
 - confirmed/derived candleの受信分保存率100%、duplicate 0、activeの95%以上に直近5分bar。
+- 3 Venueの精算済みFundingを保存し、現在値・推定値の混入、version境界以前、key conflictが0。
 - Aster OIは明示null、Hyperliquid oracleをindexとして公開しない。
 - Postgres commit p95 2秒以下、connection leakと次cycleまで続くlock 0。
 - 選択変更後10秒以内に旧subscription解除、orphan 0。
@@ -132,9 +136,8 @@ Dockerはambient context/remote hostを使わず、`DOCKER_CONTEXT`をunsetし�
 
 容量sampleはread-only DB sessionから当日UTCの`market_state_1m`、`candle_1m`、`funding_events`を
 Venue別にproduction archiveと同じcolumns、schema、ZSTDで一時Parquet化する。経過時間で1日へ
-外挿し25% safety marginを加える。行がないpartitionは0と断定せず`insufficient_data`とし、容量gateを
-HOLDにする。ただし現行productでproducerを持たず、funding値を`market_state_1m`へ保持する
-`funding_events`はoptionalとし、空なら`optional_no_rows`と0を明示してcomplete判定から除外する。
+外挿し25% safety marginを加える。行がないpartitionはFundingを含めて0と断定せず
+`insufficient_data`とし、容量gateをHOLDにする。
 一時Parquetは削除し、JSON証拠だけをRepo外へ残す。
 
 ```bash

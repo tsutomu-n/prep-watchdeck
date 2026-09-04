@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from prep_watchdeck_market.archive import (
     ArchiveDataset,
     _fetch_partition,
+    _partition_frame,
     _PartitionRows,
 )
 from prep_watchdeck_market.config import Settings
@@ -73,7 +74,7 @@ def project_partition_sample(
             sampleElapsedSeconds=elapsed_seconds,
             projectedRowsPerDay=0,
             projectedParquetBytesPerDay=0,
-            status=("optional_no_rows" if dataset == "funding_events" else "insufficient_data"),
+            status="insufficient_data",
         )
     if parquet_bytes <= 0:
         raise ValueError("a non-empty sample must have Parquet bytes")
@@ -133,14 +134,7 @@ def sample_capacity(
 
     projected_bytes = sum(item.projectedParquetBytesPerDay for item in projections)
     required_missing = [
-        f"{item.dataset}:{item.venue}"
-        for item in projections
-        if item.dataset != "funding_events" and item.status != "projected"
-    ]
-    optional_empty = [
-        f"{item.dataset}:{item.venue}"
-        for item in projections
-        if item.dataset == "funding_events" and item.status == "optional_no_rows"
+        f"{item.dataset}:{item.venue}" for item in projections if item.status != "projected"
     ]
     return {
         "schemaVersion": 1,
@@ -150,7 +144,7 @@ def sample_capacity(
         "safetyFactor": PROJECTION_SAFETY_FACTOR,
         "projectionComplete": not required_missing,
         "requiredMissingPartitions": required_missing,
-        "optionalEmptyPartitions": optional_empty,
+        "optionalEmptyPartitions": [],
         "observedRows": sum(item.rowCount for item in projections),
         "observedParquetBytes": sum(item.parquetBytes for item in projections),
         "projectedParquetBytesPerDay": projected_bytes,
@@ -162,12 +156,7 @@ def sample_capacity(
 def _write_temporary_parquet(partition: _PartitionRows, path: Path) -> int:
     if not partition.rows:
         return 0
-    frame = pl.DataFrame(
-        partition.rows,
-        schema=list(partition.columns),
-        orient="row",
-        strict=False,
-    )
+    frame = _partition_frame(partition)
     frame.write_parquet(path, compression="zstd", statistics=True)
     readback = pl.read_parquet(path)
     if readback.columns != list(partition.columns) or readback.height != len(partition.rows):

@@ -101,6 +101,13 @@ def test_catalog_parsers_table(
             == batch.provenance.payload_hash
         )
     assert any(capability.capability == "catalog" for capability in batch.capabilities)
+    funding_history = next(
+        capability
+        for capability in batch.capabilities
+        if capability.capability == "funding_history"
+    )
+    assert funding_history.available is True
+    assert funding_history.details == {"capture": "settled_events", "catchupHours": 48}
     if first.venue == "hyperliquid":
         assert batch.instruments[1].quote_asset == "USDC"
         assert batch.provenance.source_at is None

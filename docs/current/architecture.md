@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T03:18:13+09:00`
-- 検証: `2026-08-15T03:18:13+09:00`
+- 更新: `2026-08-27T12:18:27+09:00`
+- 検証: `2026-08-27T12:18:27+09:00`
 - 状態: `現行`
 
 ---
@@ -31,8 +31,9 @@ Bitget / Hyperliquid Core / Aster public API
 - `prep-watchdeck-market.service`はcatalog、L1、candle、selected stream、DB write、artifact発行を
   1 processで行う。file lockで同一state rootのcollector重複起動を拒否する。
 - `prep-watchdeck-web.service`はJSON read modelだけを読む。Postgresへ接続しない。
-- `prep-watchdeck-market-maintenance.timer`は毎時archive/readback/retentionを起動し、各dataset/Venueの
-  最古未archive日から最大3日と指定日を処理して停止期間を段階的にcatch-upする。
+- `prep-watchdeck-market-maintenance.timer`は毎時、精算済みFundingの同期後に
+  archive/readback/retentionを起動する。各dataset/Venueの最古未archive日から最大3日と指定日を
+  処理して停止期間を段階的にcatch-upする。
 
 JustPassのPostgres、port 5432、container、volume、database、roleは共有しない。
 
@@ -62,6 +63,13 @@ L1は60秒gridのfixed-rate single-flight。Venue fetch上限20秒、cycle deadl
 Candle queueは20,000、flushは最大250件または1秒、DB writerは1接続。instrument version境界を
 跨ぐbar、version不明、複数versionへ一致するbarはbatchごと拒否する。gapは補間しない。
 
+### Settled Funding
+
+毎時maintenanceの`funding-sync`は3 Venueの公開履歴endpointを独立取得し、現在有効なCatalog versionの
+開始時刻以後、かつ最大48時間の範囲にある精算済みeventだけを`funding_events`へ保存する。現在値や
+推定値は履歴へ入れない。同じinstrument version・精算時刻・rateは冪等、同じkeyでrateが異なる場合は
+transactionをrollbackする。周期不明時は1時間換算を作らず、1 Venueの失敗で他Venueの成功分を失わない。
+
 ### Selected group
 
 Webは`control/selection.json`をatomic writeする。market serviceはlast-write-wins、500ms debounce、
@@ -79,9 +87,8 @@ primary消失、group membership変更、non-CLOB、非linear、非USD-like、�
 - JSON: Web用の再生成可能read model。正本DBの代わりに書き戻さない。
 - Past Note: `venueInstrumentId`単位のlocal annotation。market dataではない。
 
-現行collectorは`funding_events`のproducerを持たない。funding値は`market_state_1m`に保持する。
-`funding_events`はtableとarchive/retentionのcontractだけが存在し、同tableが空であることを
-収集失敗として扱わない。
+現在値と推定値は`market_state_1m`に保持し、精算済み履歴だけを`funding_events`に保持する。
+`funding_events`も容量sampleとarchive/retentionの必須対象であり、空を成功値0として扱わない。
 
 Parquetは`dataset=<type>/venue=<venue>/date=YYYY-MM-DD/generation=<n>/part-0000.parquet`へ
 ZSTDで書く。row count、unique key、timestamp、row digest、file SHA-256をreadbackし、manifestを

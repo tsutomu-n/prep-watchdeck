@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T11:04:37+09:00`
-- 検証: `2026-08-15T11:04:37+09:00`
+- 更新: `2026-08-28T09:47:19+09:00`
+- 検証: `2026-08-28T09:47:19+09:00`
 - 状態: `現行`
 
 ---
@@ -30,6 +30,12 @@ alias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthe
 
 USD、USDC、USDTのparity仮定は参考mark中央値だけに適用する。Venue値を変換・合算・rankingせず、
 実行可能価格として扱わない。
+
+## Parquet archive
+
+`market_state_1m`、`candle_1m`、`funding_events`のnumeric列は、Parquetで
+`Decimal(38,18)`へ固定する。入力値がこの型で可逆表現できずsource row digestとreadback row digestが
+一致しない場合はmanifestをconfirmしない。行順からdecimal scaleを推測せず、丸めた値を履歴正本にしない。
 
 ## JSON read model
 
