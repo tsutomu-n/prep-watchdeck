@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-28T09:47:19+09:00`
-- 検証: `2026-08-28T09:47:19+09:00`
+- 更新: `2026-09-04T21:23:29+09:00`
+- 検証: `2026-09-04T21:23:29+09:00`
 - 状態: `現行`
 
 ---
@@ -16,6 +16,11 @@
   base数量、multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する。
 
 alias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQは自動group化しない。
+
+Asterは`underlyingType=COIN`に加えて、`underlyingSubType`が空配列、または`AI`、`Meme`、
+`STORAGE`、`Top`だけで構成される場合にcryptoとして採用する。field欠落、型不正、未知tag、
+`STOCK`、`ETF`、`Commodities`、`pre-launch`を含む行は`rwa_or_unconfirmed`として除外する。
+新しいtagをsymbol名から推測して採用しない。
 
 ## 値と単位
 

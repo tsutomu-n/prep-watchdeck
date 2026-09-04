@@ -11,6 +11,7 @@
       "quoteAsset": "USDT",
       "marginAsset": "USDT",
       "underlyingType": "COIN",
+      "underlyingSubType": ["Top"],
       "filters": [
         {"filterType": "PRICE_FILTER", "tickSize": "0.1"},
         {"filterType": "LOT_SIZE", "stepSize": "0.001"}

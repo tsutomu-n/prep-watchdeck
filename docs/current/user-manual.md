@@ -1,8 +1,8 @@
 # prep-watchdeck ユーザーマニュアル
 
 - 作成: `2026-08-15T11:04:37+09:00`
-- 更新: `2026-09-04T14:48:31+09:00`
-- 検証: `2026-09-04T14:48:31+09:00`
+- 更新: `2026-09-04T21:23:29+09:00`
+- 検証: `2026-09-04T21:23:29+09:00`
 - 状態: `現行`
 
 ---
@@ -455,8 +455,9 @@ systemctl --user stop prep-watchdeck-market-db.service
 - 全市場の板と全tradeの長期保存
 - HFT（高頻度取引）や深いhistorical backfill（過去データの遡及取得）
 
-RWA、HIP-3、synthetic、RFQの厳密な定義は、このRepositoryの現行資料にはありません。
-このマニュアルでは、いずれも対象外の市場区分としてのみ扱います。
+Asterは公開Catalogの`underlyingType`と`underlyingSubType`を使い、既知のcrypto tagまたは空tagだけを
+採用します。株式、ETF、商品、pre-launch、未知tag、tag欠落は対象外として除外し、Symbol名から
+cryptoかどうかを推測しません。HIP-3、synthetic、RFQも対象外の市場区分として扱います。
 
 Group化は、取扱中、crypto、linear perpetual、Base完全一致、契約1単位に対応するBase数量、
 multiplier 1、Venue内候補1件をすべて確認できた場合だけ行います。単独または未GroupはQuality不良
