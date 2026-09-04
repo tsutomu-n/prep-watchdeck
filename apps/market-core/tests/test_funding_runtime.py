@@ -102,7 +102,7 @@ def test_one_sweep_isolates_source_failure_and_persists_successes(
                 observed_at=NOW,
                 payload_hash=_hash(raw),
                 events=(event,),
-                raw_payload=raw,
+                raw_payload=cast(list[object], raw),
             )
 
         def fake_persist(

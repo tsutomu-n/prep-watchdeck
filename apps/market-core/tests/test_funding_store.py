@@ -5,7 +5,7 @@ import os
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import psycopg
 import pytest
@@ -177,5 +177,5 @@ def _batch(venue: str, symbol: str, rate: str) -> FundingBatch:
         observed_at=OBSERVED,
         payload_hash=canonical_json_sha256(raw),
         events=(event,),
-        raw_payload=raw,
+        raw_payload=cast(list[object], raw),
     )
