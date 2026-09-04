@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-08-18T22:00:00+09:00`
-- 検証: `2026-08-18T22:00:00+09:00`
+- 更新: `2026-09-04T20:49:47+09:00`
+- 検証: `2026-09-04T20:49:47+09:00`
 - 状態: `現行`
 
 ---
@@ -39,15 +39,14 @@ Decision 0011は、旧Bitget scanner、DuckDB snapshot、Candidate/Ranking、VPI
 
 ## 実装計画
 
-- [3 Venue Crypto Perp Universe Replacement](plans/active/perp-universe-replacement/IMPLEMENTATION_PLAN.md)
-
-active planはcheckpointと検証証拠を保持する作業文書であり、現行code/schemaより優先しない。
+現在進行中のactive planはない。`docs/plans/active/<task>/`は未完了作業が開始された場合だけ作成し、
+完了、中止、または置換後は現行treeから削除する。過去planはGit履歴で参照する。
 
 ## 正本の優先順位
 
 1. 現行code、schema、migration、tests、CLI help
 2. `docs/current/`
 3. `docs/decisions/0011-perp-universe-replacement.md`
-4. active plan
+4. 現在進行中のactive plan（存在する場合）
 
 現在の稼働状態はsystemd、service log、DB、`artifacts/service-state.json`、実画面で確認する。

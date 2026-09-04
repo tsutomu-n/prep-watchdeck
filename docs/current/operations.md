@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-04T14:09:52+09:00`
-- 検証: `2026-09-04T14:09:52+09:00`
+- 更新: `2026-09-04T20:49:47+09:00`
+- 検証: `2026-09-04T20:49:47+09:00`
 - 状態: `現行`
 
 ---
@@ -25,7 +25,7 @@ Production P0 qualificationとremote closureは`PASS`。qualified historyからc
 `origin/main`へmergeした。force pushとhistory rewriteは使用していない。
 
 `P0_COMPLETE=YES`。WatchDeck v1 P0はFreeze済みとし、旧dirty checkout、rollback release / unit
-backup、production stateを保持する。CP1以降は別taskで設計し、このFreezeには含めない。
+backup、production stateを保持する。P0以後の変更は別taskで設計し、このFreezeには含めない。
 
 - deployed source: `dc2a8d70f8247f8f49827f410e55170e37d95204`
 - clean release: `/home/tn/releases/prep-watchdeck/dc2a8d7`（detached HEAD）

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント管理
 
 - 作成: `2026-07-18T11:29:04+09:00`
-- 更新: `2026-08-15T11:04:37+09:00`
-- 検証: `2026-08-15T11:04:37+09:00`
+- 更新: `2026-09-04T20:49:47+09:00`
+- 検証: `2026-09-04T20:49:47+09:00`
 - 状態: `現行`
 
 ---
@@ -42,6 +42,15 @@
 `docs/current/`へ将来予定、一回限りのPID/件数、未検証のlive主張を置かない。未完了checkpointと
 証拠はactive plan、短期再開情報が必要なtaskだけroot `HANDOFF.md`へ分ける。
 
+## Active planのlifecycle
+
+`docs/plans/active/<task>/`には、未完了checkpointまたは未解決事項があり、再開対象になっているplanだけを
+置く。完了、中止、または置換済みのplanを「履歴」としてactiveへ残さない。
+
+Planを閉じる前に、現行仕様へ残る事実を`docs/current/`、採用済みの設計判断を`docs/decisions/`へ反映する。
+その後、planを現行treeから削除する。過去の計画、検証値、当時の判断が必要な場合はGit履歴から参照し、
+Repo内に別のArchive階層を作らない。
+
 ## 旧仕様
 
 Decision 0003、0004、0006〜0010と旧scanner関連の文書は、Decision 0011がproduction契約を
@@ -56,8 +65,9 @@ Decision 0003、0004、0006〜0010と旧scanner関連の文書は、Decision 001
 1. `git status --short`と対象diffを確認する。
 2. CLI help、schema、migration、route、unit、scriptへ主張を照合する。
 3. 現行事実だけを局所更新し、過去証拠と将来計画を分離する。
-4. metadata/link checkerと変更箇所のfocused gateを実行する。
-5. 置換済みpath、固定runtime値、壊れたlocal linkを再検索する。
+4. 完了・中止・置換済みplanを`docs/plans/active/`から削除する。
+5. metadata/link checkerと変更箇所のfocused gateを実行する。
+6. 置換済みpath、固定runtime値、壊れたlocal linkを再検索する。
 
 ```bash
 bun test scripts/maintenance/document-metadata.test.mjs
