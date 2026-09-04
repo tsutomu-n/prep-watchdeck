@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-28T09:52:02+09:00`
-- 検証: `2026-08-28T09:52:02+09:00`
+- 更新: `2026-09-04T14:09:52+09:00`
+- 検証: `2026-09-04T14:09:52+09:00`
 - 状態: `現行`
 
 ---
@@ -20,9 +20,12 @@
 
 ## Production P0 qualification
 
-`2026-08-28T09:52:02+09:00`時点のproduction P0 qualificationは`PASS`。
-P0 completion sourceの`origin/main`へのfast-forward pushはGitHubのemail privacy保護で拒否されており、
-`P0_COMPLETE=YES`とFreezeはremote反映後に確定する。
+Production P0 qualificationとremote closureは`PASS`。qualified historyからcode closure
+`9e4a2c5731f437162a29416c31456eb721520f85`まで、およびこのdocs closureを既存PR #9経由で
+`origin/main`へmergeした。force pushとhistory rewriteは使用していない。
+
+`P0_COMPLETE=YES`。WatchDeck v1 P0はFreeze済みとし、旧dirty checkout、rollback release / unit
+backup、production stateを保持する。CP1以降は別taskで設計し、このFreezeには含めない。
 
 - deployed source: `dc2a8d70f8247f8f49827f410e55170e37d95204`
 - clean release: `/home/tn/releases/prep-watchdeck/dc2a8d7`（detached HEAD）
@@ -45,7 +48,11 @@ P0 completion sourceの`origin/main`へのfast-forward pushはGitHubのemail pri
 3. `dc2a8d70f8247f8f49827f410e55170e37d95204`: Parquet numeric schemaを
    `Decimal(38,18)`へ固定し、row順依存のscale推論による丸めを防ぐ。
 
-`2026-08-28T09:38:57+09:00`から`09:45:06+09:00`のproduction maintenanceはexit 0。
+最初のproduction maintenanceは`2026-08-28T09:00:23+09:00`に開始し、Funding成功後のArchiveで
+`MaintenanceError`となり、`09:01:57+09:00`にexit 2で終了した。manifestとarchive fileは作成されず、
+このrunはqualification成功として扱っていない。
+
+修正後の`2026-08-28T09:38:57+09:00`から`09:45:06+09:00`のproduction maintenanceはexit 0。
 Fundingは1,178件すべて成功し、completed UTC day `2026-08-27`について次の9 partitionを
 generation 1、schema version 1、status `confirmed`で生成した。合計2,132,729行についてmanifest row
 count、unique key数、min/max timestamp、Parquet readback、file SHA-256が一致し、source row削除は0件。
