@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント管理
 
 - 作成: `2026-07-18T11:29:04+09:00`
-- 更新: `2026-09-14T18:18:00+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-14T22:34:31+09:00`
+- 検証: `2026-09-14T22:34:31+09:00`
 - 状態: `現行`
 
 ---
@@ -97,9 +97,8 @@ architecture baselineとして有効だが、Decision 0012が製品境界部分�
 7. 置換済みpath、固定runtime値、壊れたlocal link、supersede漏れを再検索する。
 
 ```bash
-bun test scripts/maintenance/document-metadata.test.mjs
+bun test scripts/maintenance/document-contracts.test.mjs
 bun scripts/maintenance/check-document-metadata.mjs
-bun test scripts/maintenance/document-links.test.mjs
 bun scripts/maintenance/check-document-links.mjs
 git diff --check
 ```

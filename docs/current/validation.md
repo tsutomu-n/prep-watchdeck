@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-14T20:04:38+09:00`
-- 検証: `2026-09-14T20:04:38+09:00`
+- 更新: `2026-09-14T22:34:31+09:00`
+- 検証: `2026-09-14T22:34:31+09:00`
 - 状態: `現行`
 
 ---
@@ -26,12 +26,16 @@ test green、HTTP health、単一snapshotだけをruntime/data quality/deploy/cu
 
 | 変更 | 実行する主なgate |
 | --- | --- |
-| `docs/`, `README.md`, `AGENTS.md`, `DESIGN.md`, docs tooling | document contract / metadata / link |
-| `apps/market-core/`, `schemas/`, Python workspace | isolated Postgres + pytest + Ruff + Pyrefly |
+| `docs/`, root文書、`apps/scripts/config`配下のREADME、docs tooling | document contract / metadata / link |
+| `apps/market-core/`, `schemas/`, Python workspace / `.python-version` | isolated Postgres + pytest + Ruff + Pyrefly |
 | `apps/web/`, `schemas/` | generated types + unit + Svelte check + build |
-| Webのroute/component/style/theme/market UI、E2E、schema | desktop E2E |
+| Webのsource/static/E2E、依存・lock・build設定、schema | desktop E2E。source内unit testだけの変更は除く |
 | ops/runtime script、systemd、deploy | runtime target + install + restore safety |
-| workflow自体 | 全surface |
+| workflow、`scripts/verify-local.sh`、未分類の新しいpath | 全surface |
+
+文書だけのPRは、入れ子のREADMEを含めてdocs gateだけを実行する。例外は明示的な全surface対象である。
+全PRでmerge-baseからheadまで、pushではbeforeからheadまでの差分全体を`git diff --check`で検査する。
+選択されたgateがskip/failure/cancelledなら必須`verify`を失敗させ、意図して選択しなかったgateのskipだけを許容する。
 
 `main`へのpushは全surfaceを実行し、Web E2Eはdesktopとmobileの両方を確認する。
 
@@ -75,8 +79,9 @@ bun run check
 bun run build
 ```
 
-route、component、style、theme、market UI、E2E fixture、schemaなどbrowser behaviorへ影響する変更では、続けて
+Webのsource/static、E2E fixture、依存・lock・build設定、schemaなどbrowser behaviorへ影響する変更では、続けて
 `bun run test:e2e`を実行する。通常PR E2Eはdesktop smokeを1回だけ実行する。
+source内のunit testだけの変更ではunit/check/buildまでとし、E2Eは省略する。
 
 E2Eは画面表示、検索、selection command、stale/error表示、layout破綻などbrowser境界でしか確認できない主要flowへ
 限定する。テーマ個数、フォント個数、固定notional等の変更可能な現在値をE2Eで永久固定しない。
