@@ -1,21 +1,44 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T18:30:30+09:00`
-- 検証: `2026-08-27T18:30:30+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
 ## 原則
 
-変更箇所に最も近いfocused testから実行し、Repo横断`verify-local.sh`は最終確認で1回だけ使う。
-test green、HTTP health、単一snapshotだけをruntime/data quality/cutover完了の証拠にしない。
+変更箇所に最も近いfocused testから実行し、Repo横断`verify-local.sh`は最終確認で使う。
 
-外部API、Postgres、Webを使う検証は専用database、Repo外の一時state root、別Web portへ隔離する。
-現役DuckDB、旧scanner service、JustPass Postgres、port 5432へ接続しない。
+test green、HTTP health、単一snapshotだけをruntime/data quality/deploy/cutover完了の証拠にしない。
 
-## Market core focused gate
+外部API、Postgres、Webを使う検証はproductionから隔離したdatabase、state root、port、credentialを使う。
+他projectのDB/stateへ接触しない。
+
+製品境界の正本は[`product-boundary.md`](product-boundary.md)と
+[Decision 0012](../decisions/0012-product-evolution-boundary.md)。
+旧P0の禁止事項を回帰testとして永久固定しない。
+
+## Product-boundary gate
+
+```bash
+bun test scripts/maintenance/product-boundary.test.mjs
+```
+
+このtestは次を確認する。
+
+- ranking、Stocks、paid market data、ML、backtest、Decision Memo / Trade Journal等が製品境界内である
+- 自動注文、資金移動、無人executionは別Decisionが必要である
+- 現在のtimeframe、bar数、artifact数等を永久制約にしない
+- AGENTSが新product boundaryを旧P0文書より優先する
+- P0 Scope Freezeが終了済みbaselineとして扱われる
+- Decision 0011が将来product scopeをDecision 0012へ委譲する
+
+旧`monitoring-only-boundary.test.mjs`のように、Trade Memo、Weekly Review、Pre-Trade等のfeature名そのものを
+production codeから禁止しない。
+
+## Market Core focused gate
 
 ```bash
 cd apps/market-core
@@ -25,19 +48,33 @@ uv run ruff format --check src tests
 uv run pyrefly check
 ```
 
-変更種別ごとの最低確認:
+現在のPerp runtime変更では、変更箇所に応じて次を確認する。
 
-- catalog: 3 adapter table、provenance、SCD2、除外、partial failure
-- identity: exact base、collision、multiplier、quantity unit unknown
-- L1/candle: 20秒fetch、50秒deadline、single-flight、no stale reuse、3 finality契約
-- funding: settled event限定、最大48時間、Catalog version境界、冪等・conflict拒否、Venue障害分離
-- selected: 1 group、primary switch、TTL、heartbeat、old task close、max20 depth、100 trades、
-  stale/板不足/null book walk
-- artifact: schema、median freshness/skew/parity、atomic write、invalid numeric拒否
-- archive: normalized readback、manifest generation、checksum、late-correction停止、bounded retention、
-  ephemeral raw age条件、selected FK順
+- catalog / identity / provenance
+- L1 / candle / freshness / no stale reuse
+- settled funding / version boundary / conflict guard
+- selected market / cleanup / TTL / depth/trade
+- artifact schema / atomic write / invalid numeric
+- archive / readback / checksum / retention
 
-DB integrationは専用Postgres 17を一時portで起動し、終了時に専用containerだけを停止する。
+現在の20秒fetch、50秒deadline、48時間Funding catch-up、1 selection、20 depth、100 trades等は現行実装値。
+変更時はtestとcapacity/rate-limit検証を更新できる。
+
+## 新しいsource / asset class / model
+
+Stocks、新Venue、aggregator、paid/read-only API、prediction、ML、ranking、backtest等を追加する場合、既存Perp gateへ
+無理に押し込まず、次をtaskごとに定義する。
+
+- source terms / rate limits / auth scope
+- identity / unit / timestamp / timezone
+- freshness / missing / correction semantics
+- storage / retention / capacity
+- ranking/model feature definitionとversion
+- leakage / lookahead / survivorship等のbacktest risk
+- failure isolation
+- rollback
+
+credential付きread-only APIを使うこと自体を失敗条件にしない。write/trading scopeが混入していないかを確認する。
 
 ## Web focused gate
 
@@ -49,17 +86,18 @@ bun run check
 bun run build
 ```
 
-route、selection、responsiveを変えた場合は関連Playwrightを追加する。最低でもDesktop 1440pxと
-Mobile 390pxで、検索/filter、行選択、primary変更、Chart、partial/unavailable、selected depth/trades、
-Past Note、keyboard focus、横overflowを確認する。
+route、interaction、selection、ranking、Chart、responsive等を変えた場合は関連Playwrightを実行する。
 
-## Docs/ops focused gate
+1440px / 390pxは現在の主要visual check例であり永久の唯一targetではない。Desktopとnarrow viewportの双方で主要flowを
+確認する。
+
+## Docs / Ops focused gate
 
 ```bash
 bun test \
   scripts/maintenance/document-metadata.test.mjs \
   scripts/maintenance/document-links.test.mjs \
-  scripts/maintenance/monitoring-only-boundary.test.mjs \
+  scripts/maintenance/product-boundary.test.mjs \
   scripts/maintenance/web-port.test.mjs \
   scripts/ops/install-user-services.test.mjs \
   scripts/ops/market-postgres-restore.test.mjs \
@@ -67,15 +105,10 @@ bun test \
 
 bun scripts/maintenance/check-document-metadata.mjs
 bun scripts/maintenance/check-document-links.mjs
-bash -n scripts/start-all.sh scripts/start-local.sh scripts/update-live.sh \
-  scripts/ops/install-user-services.sh scripts/ops/run-market-maintenance.sh \
-  scripts/ops/market-postgres-restore.sh scripts/ops/run-isolated-shadow.sh
 git diff --check
 ```
 
-installer testは外部credential file、unit directory、systemctl/uv/dockerをfixtureへ隔離する。
-restore testはproduction既定targetの互換性、隔離project/databaseの対指定、片側だけの変更拒否を
-fake Dockerで確認する。実user unit、container、databaseをinstall/start/restart/restoreしない。
+ops testは実user unit、production container/database、他project資源へ接触しない。
 
 ## Full local gate
 
@@ -83,94 +116,34 @@ fake Dockerで確認する。実user unit、container、databaseをinstall/start
 bash scripts/verify-local.sh
 ```
 
-`TEST_DATABASE_URL`が未指定の場合、scriptは固定digestのPostgres 17を専用一時containerと動的loopback
-portで起動し、全Postgres integration testを実行後に削除する。指定する場合も隔離test DBに限定する。
-DB testのskipはfull gate成功として扱わない。
+`TEST_DATABASE_URL`が未指定の場合、現行scriptは隔離Postgres 17を一時起動してintegration testを実行する。
+指定する場合もisolated test DBに限定する。
 
-順序:
+現在のfull gate順序:
 
-1. current maintenance/ops tests
-2. document metadata/link
+1. maintenance / ops / product-boundary tests
+2. document metadata / link
 3. workspace lock
-4. market-core全pytest、Ruff、format、Pyrefly
-5. Web type generation、unit、Svelte check、build
+4. market-core pytest / Ruff / format / Pyrefly
+5. Web type generation / unit / Svelte check / build
 6. Playwright E2E
 
-未実行、skip、timeout、既存失敗を成功扱いしない。無関係な既存失敗は回帰と分離し、原因と
-再開条件を記録する。
+未実行、skip、timeout、既存失敗を成功扱いしない。
 
-## Isolated live smoke
+## Runtime smoke / shadow
 
-3 Venueのread-only smokeは各APIを必要最小回数だけ呼ぶ。確認対象:
+現行3 Venue Perp runtimeを変更する場合、必要に応じてisolated smoke/shadowでcatalog、L1、candle、Funding、DB、
+artifact、selected subscription、capacity、429、resource usageを確認する。
 
-- catalogが3回連続成功し、除外/provenance/capabilityが保存される。
-- L1 fresh 120秒以内が99%以上。95%未満が2周期続けば失敗。
-- 60秒cycle p95 30秒以下、max 50秒以下、overlap/backlog 0、429 0。
-- confirmed/derived candleの受信分保存率100%、duplicate 0、activeの95%以上に直近5分bar。
-- 3 Venueの精算済みFundingを保存し、現在値・推定値の混入、version境界以前、key conflictが0。
-- Aster OIは明示null、Hyperliquid oracleをindexとして公開しない。
-- Postgres commit p95 2秒以下、connection leakと次cycleまで続くlock 0。
-- 選択変更後10秒以内に旧subscription解除、orphan 0。
+旧P0 cutover時の15分baseline / 60分shadow、旧DuckDB writer、旧snapshot比較等は当時のqualification methodであり、
+すべての将来featureへ固定適用しない。現在の変更riskに合った受入時間・metricをplanで定義する。
 
-単一成功cycleで合格にしない。private/paid endpoint、Hyperliquid requester-pays S3は使用しない。
-
-## Shadow gate
-
-現役runtimeを変更せず、専用DB/state/portで15分baselineと60分shadowを各1回測る。
-
-- 旧snapshot p95がbaseline比120%以内
-- 旧service `NRestarts=0`
-- 現役DuckDB writer 1
-- 新serviceのCPU、memory、network、DB size、raw/parquet増分を記録
-- `7*raw_GB/day + 365*parquet_GB/day + 30GB <= 0.75*開始時free`
-
-容量式、rate limit、data quality、既存影響のどれかが不合格ならcutoverへ進まない。
-
-単一入口は`scripts/ops/run-isolated-shadow.sh`。既定はdry-runであり、state/evidence、現役read-only
-snapshot/DuckDB/unit、Compose project、DB/Web portをすべて明示する。production既定55432/5173と
-JustPass 5432、Repo配下state/evidence、live stateとの重複は拒否する。`--execute`時だけ15分baseline、
-専用Postgres/collector/Web、60分shadow、容量sampleを順に実行する。
-Webはbaseline前にproduction buildを1回完了し、shadow中はdev/HMRではなくpreviewを専用portで使う。
-Dockerはambient context/remote hostを使わず、`DOCKER_CONTEXT`をunsetしてrootful local
-`unix:///var/run/docker.sock`へ固定する。socketがなければ開始しない。
-
-容量sampleはread-only DB sessionから当日UTCの`market_state_1m`、`candle_1m`、`funding_events`を
-Venue別にproduction archiveと同じcolumns、schema、ZSTDで一時Parquet化する。経過時間で1日へ
-外挿し25% safety marginを加える。行がないpartitionはFundingを含めて0と断定せず
-`insufficient_data`とし、容量gateをHOLDにする。
-一時Parquetは削除し、JSON証拠だけをRepo外へ残す。
-
-```bash
-bash scripts/ops/run-isolated-shadow.sh --dry-run \
-  --state-root /absolute/repo-outside/shadow-state \
-  --evidence-root /absolute/repo-outside/shadow-evidence \
-  --live-state-root /absolute/live-state \
-  --live-snapshot /absolute/live-state/snapshots/latest.json \
-  --live-duckdb /absolute/live-state/watchdeck.duckdb \
-  --live-scanner-unit prep-watchdeck-service.service \
-  --compose-project prep-watchdeck-market-shadow-YYYYMMDD \
-  --db-port 55442 --web-port 5183
-```
-
-短時間overrideはharnessのdry-run/動作確認専用で、AC-11/AC-12の受入値は15分/60分から変更しない。
-cleanupは記録済みmarket/Web PIDと指定Compose projectだけに限定し、production unit/stateを停止・変更・
-削除しない。network値はprocess帰属を証明できないため、shadow中のhost totalを上限、baseline差引後を
-推定値として区別し、その限界を証拠へ残す。
-
-harnessはHEAD、tracked binary diff、untracked file hashを含むsource digestをshadow前後で比較し、
-不一致なら受入証拠としない。一致が証明するのはshadow実行中の不変だけであり、
-実行後のsource変更は別に記録し、そのshadowで検証済みとは扱わない。
-
-harnessの`summary.json`が自動判定するのは既存runtime影響、429、容量だけであり、CP-08全体のPASSでは
-ない。AC-03/AC-04/AC-05/AC-07/AC-09は`database-summary.tsv`、market service log、artifactを別途
-集計・照合する。429は`l1_cycle`のstructured `error_codes`にある`http_429`または
-`bitget_business_429`だけを数え、ログ中の無関係な裸の数値は判定へ使わない。未照合のままsummaryだけで
-cutoverへ進まない。
+production既定port/state、JustPass等の他project資源、live runtimeへ無断で接触しない原則は維持する。
 
 ## 証拠
 
-branch、HEAD、既存差分、JST時刻、command、exit code、隔離DB/state/port、実行件数、未実行項目、
-runtime mutation有無、rollbackを記録する。credential、raw secret、固定PIDを文書へ残さない。
+branch、HEAD、既存差分、時刻、command、exit code、隔離target、実行件数、未実行項目、runtime mutation有無、
+rollbackを必要に応じて記録する。credential、raw secretを証拠へ残さない。
 
-実装、focused gate、full gate、isolated smoke/shadow、最終diffのmandatory条件がすべて証拠付きで
-満たされた場合だけPASS。push、merge、cutoverは別承認であり、local PASSへ含めない。
+実装、focused gate、必要なintegration/runtime validation、最終diffのmandatory条件が満たされた場合だけPASSとする。
+push、merge、deploy、cutoverはそれぞれ別の状態として扱う。
