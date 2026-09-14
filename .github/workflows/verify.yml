@@ -57,7 +57,7 @@ jobs:
           e2e=false
           ops=false
 
-          if matches '^(docs/|README\.md$|AGENTS\.md$|DESIGN\.md$|scripts/maintenance/(check-document-|document-|update-document-timestamp|product-boundary))'; then
+          if matches '^(docs/|README\.md$|AGENTS\.md$|DESIGN\.md$|(apps|scripts|config)/.+/README\.md$|scripts/maintenance/(check-document-|document-|update-document-timestamp|product-boundary))'; then
             docs=true
           fi
           if matches '^(apps/market-core/|schemas/|pyproject\.toml$|uv\.lock$)'; then
