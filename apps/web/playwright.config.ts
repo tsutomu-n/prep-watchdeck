@@ -1,6 +1,16 @@
 import { resolve } from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
+const desktop = {
+  name: "desktop-1440",
+  use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 960 } }
+};
+const mobile = {
+  name: "mobile-390",
+  use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } }
+};
+const fullE2e = process.env.PREP_WATCHDECK_FULL_E2E === "1";
+
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.e2e.ts",
@@ -14,18 +24,9 @@ export default defineConfig({
     screenshot: "only-on-failure",
     trace: "on-first-retry"
   },
-  projects: [
-    {
-      name: "desktop-1440",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 1440, height: 960 } }
-    },
-    {
-      name: "mobile-390",
-      use: { ...devices["Desktop Chrome"], viewport: { width: 390, height: 844 } }
-    }
-  ],
+  projects: fullE2e ? [desktop, mobile] : [desktop],
   webServer: {
-    command: "bun run build && bun run preview -- --port 4174 --strictPort",
+    command: "bun run preview -- --port 4174 --strictPort",
     env: {
       PREP_WATCHDECK_MARKET_STATE_DIR: resolve(
         process.cwd(),
