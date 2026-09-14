@@ -14,6 +14,7 @@ const agents = read("AGENTS.md");
 const design = read("DESIGN.md");
 const operations = read("docs/current/operations.md");
 const p0Baseline = read("docs/current/watchdeck-v1-scope.md");
+const decision0007 = read("docs/decisions/0007-monitoring-only-product-boundary.md");
 const decision0011 = read("docs/decisions/0011-perp-universe-replacement.md");
 
 describe("extensible product boundary", () => {
@@ -70,6 +71,13 @@ describe("extensible product boundary", () => {
   test("P0 freeze is recorded as completed history, not an active ban", () => {
     expect(p0Baseline).toContain("P0後の製品拡張を禁止する文書ではない");
     expect(p0Baseline).not.toContain("P0完了前後に次を追加しない");
+  });
+
+  test("Decision 0007 no longer keeps the monitoring-only boundary active", () => {
+    expect(decision0007).toContain("製品境界はsuperseded");
+    expect(decision0007).toContain("Decision 0012");
+    expect(decision0007).toContain("旧feature名をCIで禁止しない");
+    expect(decision0007).not.toContain("市場監視専用、Past Note、state、退役APIの境界は引き続き有効");
   });
 
   test("Decision 0011 delegates future product scope to Decision 0012", () => {
