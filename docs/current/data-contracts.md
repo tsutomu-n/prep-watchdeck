@@ -1,94 +1,111 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-04T21:23:29+09:00`
-- 検証: `2026-09-04T21:23:29+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
-## Identity
+## この文書の範囲
 
-- `venueInstrumentId=<venue>:<sourceSymbol>`。例: `bitget:BTCUSDT`。
-- `venueInstrumentVersionId`はPostgres SCD2 versionの内部ID。
-- `groupId=crypto:<BASE>:linear-perp`。
-- `mappingMethod=exact_base_heuristic`は、active、crypto、linear perpetual、base完全一致、
-  base数量、multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する。
+この文書は現在productionの3 Venue Perp runtimeが実装しているdata contractを記述する。
+現在のfield、Venue、artifact数、timeframe、retention等を将来の永久上限として扱わない。
+製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
 
-alias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQは自動group化しない。
+## 現行Identity
 
-Asterは`underlyingType=COIN`に加えて、`underlyingSubType`が空配列、または`AI`、`Meme`、
-`STORAGE`、`Top`だけで構成される場合にcryptoとして採用する。field欠落、型不正、未知tag、
-`STOCK`、`ETF`、`Commodities`、`pre-launch`を含む行は`rwa_or_unconfirmed`として除外する。
-新しいtagをsymbol名から推測して採用しない。
+- `venueInstrumentId=<venue>:<sourceSymbol>`
+- `venueInstrumentVersionId`はPostgres SCD2 versionの内部ID
+- `groupId=crypto:<BASE>:linear-perp`
+- `mappingMethod=exact_base_heuristic`は、active、crypto、linear perpetual、base完全一致、base数量、
+  multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する
 
-## 値と単位
+現行Perp coreではalias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQを
+自動group化しない。
 
-- `markPrice`と`referencePrice`を分け、`referencePriceKind=index|oracle|none`を保持する。
-- Hyperliquid oracleをindexと表示しない。
-- Fundingは`fundingRateRaw`、`fundingIntervalSeconds`、`nextFundingAt`を保存する。
-  周期確認時だけ`fundingRatePerHour`を公開する。
-- OIは`openInterestRaw`と`openInterestRawUnit`を常に由来どおり保持する。base数量を確認できる時だけ
-  `openInterestBase`、markと両方が有効な時だけ`openInterestNotional`を算出する。
-- 24時間出来高は`volume24hRaw`と`volume24hUnit`をVenue別に表示し、時間窓の差分率を作らない。
-- `sourceAt`が配信されないsourceではnullを維持し、`observedAt`で鮮度を判定する。
+これは現在のPerp auto-grouping contractであり、別asset-class surfaceや、明示的に検証されたmapping table、
+新しいidentity schemeを将来禁止しない。symbol名だけから推測して同一視しない原則は維持する。
 
-USD、USDC、USDTのparity仮定は参考mark中央値だけに適用する。Venue値を変換・合算・rankingせず、
-実行可能価格として扱わない。
+## 現行値と単位
 
-## Parquet archive
+- `markPrice`と`referencePrice`を分け、`referencePriceKind=index|oracle|none`を保持する
+- Fundingはraw、interval、nextFundingを保存し、interval確認時だけper-hourを公開する
+- OIはraw値とraw unitを保持し、確認できる時だけbase/notionalへ派生する
+- 24h volumeはsource由来値とunitを保持する
+- source timestampがない場合はnullを維持する
 
-`market_state_1m`、`candle_1m`、`funding_events`のnumeric列は、Parquetで
-`Decimal(38,18)`へ固定する。入力値がこの型で可逆表現できずsource row digestとreadback row digestが
-一致しない場合はmanifestをconfirmしない。行順からdecimal scaleを推測せず、丸めた値を履歴正本にしない。
+現行参考mark中央値以外でUSD/USDC/USDT parityを無条件に仮定しない。
 
-## JSON read model
+将来のranking/feature engineeringでは、意味、unit、window、timestamp、identityを確認できるfeatureについて
+正規化、集約、比較できる。比較不能な値を無理にscoreへ入れない。
 
-正本schemaは次の4 file。すべて`schemaVersion=1`、unknown property禁止、NaN/Infinity禁止、
-ISO 8601 UTC timestampを使う。
+## Storage truth
+
+現行runtime:
+
+- Postgres: current/recent catalog、identity、collector run、market state、candle、funding、selected data、manifest
+- confirmed Parquet: retention後のnormalized history
+- JSON artifact: Web用の再生成可能read model
+- local files: selection control、Past Note等
+
+現在のdataset名やstorage engineを将来永久固定しない。新しいasset class、ranking feature、model output、journal等は
+必要に応じて別table/dataset/artifact/storage laneを持てる。
+
+## 現行Parquet archive
+
+`market_state_1m`、`candle_1m`、`funding_events`のnumeric列は現行Parquetで`Decimal(38,18)`を使う。
+readback/digest/checksum確認前に対応するhistoryを削除しない。
+
+このprecision、dataset集合、retention日数は現行runtimeのcontract。変更時はmigrationとreadback検証を行う。
+
+## 現行JSON read model
+
+現在は次のschemaを使う。
 
 - `schemas/universe-snapshot.schema.json`
 - `schemas/market-chart.schema.json`
 - `schemas/selected-market.schema.json`
 - `schemas/service-state.schema.json`
 
-Python Pydantic modelからschemaを検証し、Web typeは`bun run generate:types`で生成する。
-生成済み`.d.ts`を手編集しない。
+すべて現行`schemaVersion=1`。unknown property禁止、NaN/Infinity禁止、timestamp契約等は各schemaに従う。
+
+**4 artifactだけに永久固定しない。** Ranking、model output、Stocks、portfolio、journal等は新artifact/schema/APIを
+追加できる。
 
 ### universe-snapshot.json
 
-Top-levelは`generatedAt`、`status`、`qualityReasons`、`parityAssumption`、`items`。
-各itemはidentity、Venue/source symbol、quote/settle/collateral、execution model、catalog provenance、
-L1値、単位、freshness、collector run、source payload hash、error code、参考mark中央値を持つ。
+現在のUniverse itemはidentity、Venue/source symbol、quote/settle/collateral、execution model、catalog provenance、
+L1値、unit、freshness、collector run、payload hash、error、参考mark中央値等を持つ。
 
-`quality=stale|unavailable`の値をfreshとして公開しない。参考中央値は同一group、同一cycle、
-2 Venue以上、age 120秒以内、skew 30秒以内、USD-like quote/settle/collateralをすべて満たす時だけ
-`ready`にする。24時間出来高の中央値は作らない。
+`quality=stale|unavailable`の値をfreshとして公開しない。
 
 ### market-chart.json
 
-Top-levelは`venueInstrumentId`と`timeframes`。timeframeは`5m|15m|1h|4h|24h`、各最大500 bars。
-barはOHLC、base/notional volume、trade count、`confirmed|derived_final`、source/observed時刻、
-source bar数、complete、quality理由を持つ。version境界を跨ぐbar、欠落barを補間しない。
+現在は1 selected `venueInstrumentId`と`5m|15m|1h|4h|24h`を持ち、各timeframe最大500 bars。
+barはOHLC、volume、trade count、finality、source/observed時刻、complete、quality理由等を持つ。
+
+**5 timeframe、500 bars、単一selected instrumentは現行実装値であり永久制約ではない。**
+将来任意timeframe、長期履歴、indicator、comparison、multi-chart等へ拡張できる。
 
 ### selected-market.json
 
-1 active selectionまたはnullを持つ。selectionには`selectionId`、`groupId`、
-`primaryVenueInstrumentId`、`expiresAt`、group instruments、直近100 tradesを含む。
-各instrumentは最大20 bids/asks、depth時刻/age、quality、$100/$500/$1,000 book walkを持つ。
+現在は1 active selectionまたはnull。group instruments、最大20 bids/asks、直近100 trades、
+`$100/$500/$1,000` book walk等を持つ。
 
-depthが10秒超、板不足、非USD-like、非CLOB、単位不明なら概算をnullにし理由を返す。
-`includesFees=false`、`predictsFutureImpact=false`、`confirmsOrderAvailability=false`を固定する。
+現在のschemaではbook walkに`includesFees=false`、`predictsFutureImpact=false`、
+`confirmsOrderAvailability=false`を固定する。
+
+**selection数、20段、100件、notional、fee/impact非対応は現行値。** 将来別schema/versionまたは別artifactで
+可変値、確認済みfee、impact model等を追加できる。
 
 ### service-state.json
 
-catalog/L1の最新collector run、freshness、artifactごとのwrite結果を持つ。`ready`以外でも
-取得できたstatusと理由を残す。Web healthとmarket data qualityは別契約であり、HTTP 200だけを
-market data readyの証拠にしない。
+現行collector/artifactのfreshnessとwrite結果を持つ。Web process healthとmarket data qualityを混同しない。
 
-## Selection command
+## 現行Selection command
 
-Webは`control/selection.json`をlock付きatomic replaceする。
+現在のWebは`control/selection.json`をlock付きatomic replaceする。
 
 ```json
 {
@@ -100,25 +117,33 @@ Webは`control/selection.json`をlock付きatomic replaceする。
 }
 ```
 
-選択identityが同じheartbeatでは`requestedAt`を維持する。Universeのactive grouped instrumentで
-ないcommand、不正timestamp、future revision、期限切れcommandはfail-closedに無視する。
+現行validationはactive grouped instrument、timestamp、expiry等をfail-closedに確認する。
+将来、単独instrument、複数selection、pinned/watch queue等の別command contractを追加できる。
 
-## Past Note
+## 現行Past Note
 
-`past-notes/<venueInstrumentId>.json`にschema version 1、`venueInstrumentId`、notesを保存する。
-noteはreason、本文、`observedAt`、`expiresAt`を持ち、60日後に読取時pruneする。
-reasonが空なら`過去注記`を保存する。同じ`venueInstrumentId + reason`で再保存した場合は、既存noteを
-新しいnoteで置き換える。
-旧Bitget symbol noteをheuristic groupへ自動移行しない。
+`past-notes/<venueInstrumentId>.json`に観測annotationを保存する。現在は60日後にread時pruneし、同じ
+`venueInstrumentId + reason`は置換する。
 
-## Web API
+60日は現行policy。Decision Memo、Trade Journal、review workflowは別data modelとして追加できる。
 
-| method | path | contract |
+## 現行Web API
+
+| method | path | 現行contract |
 | --- | --- | --- |
-| GET | `/api/market-data` | 4 artifactのschema検証済みbundle、`no-store` |
-| POST | `/api/selection` | localhost限定。group/primaryをatomic write |
-| GET | `/api/market-past-notes?venueInstrumentId=...` | instrument note読取 |
-| POST | `/api/market-past-notes` | localhost限定。instrument note保存 |
-| GET | `/api/health` | Web process health。market qualityとは別 |
+| GET | `/api/market-data` | 現行artifact bundle、`no-store` |
+| POST | `/api/selection` | 現在はlocalhost限定でselection write |
+| GET | `/api/market-past-notes?venueInstrumentId=...` | Past Note読取 |
+| POST | `/api/market-past-notes` | 現在はlocalhost限定で保存 |
+| GET | `/api/health` | Web process health |
 
-不正JSON、schema不一致、missing fileは推測で補完せず503、unavailable、または空stateとして扱う。
+localhost限定、route数、bundle構成は現行runtime値。将来remote accessや新surfaceを追加できるが、authentication、
+authorization、CSRF、secret、conflict等をその変更で設計する。
+
+## 拡張時の原則
+
+- `未実装`を`禁止`としてschemaへ焼き付けない。
+- 既存schemaを無理に全asset classへ拡張せず、必要なら新しいbounded context/schemaを作る。
+- backward compatibilityが必要ならversionを上げ、reader/writer移行を明示する。
+- data quality、unit、identity、timestamp、provenanceを新featureでも維持する。
+- ranking/model outputのsource dataとcalculation versionを追跡可能にする。
