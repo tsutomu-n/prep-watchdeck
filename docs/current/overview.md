@@ -1,50 +1,73 @@
 # prep-watchdeck 現行概要
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-15T11:04:37+09:00`
-- 検証: `2026-08-15T11:04:37+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
 ## 製品の役割
 
-`prep-watchdeck`は、運用資金5,000 USD以下の裁量Perp traderが、複数Venueの市場状態、
-鮮度、由来、流動性の概算を同じ画面で確認するためのlocal-first監視アプリである。
+`prep-watchdeck`は、裁量トレーダーが市場から注目対象を発見し、分析し、比較し、最終判断を行うための
+local-first market intelligence workspaceである。
 
-対象はBitget、Hyperliquid Core、Asterのactive crypto linear perpetual。base完全一致、
-base数量、multiplier 1、単一候補を確認できるinstrumentだけを自動group化する。
-同じgroupにできない銘柄もVenue単独instrumentとして表示し、推測でalias変換しない。
+現在のproduction surfaceはBitget、Hyperliquid Core、Asterのactive crypto linear perpetualを扱う
+Perp Universe Explorer。これは現行実装範囲であり、将来のasset class、Venue、データ源、ranking、
+forecast、Chart、保存方式の上限ではない。
 
-## 現行機能
+製品境界の正本は[`product-boundary.md`](product-boundary.md)。
+
+## 現行production機能
 
 - 3 Venueのcatalogを15分周期、L1を60秒fixed-rateで取得する。
-- mark、reference price種別、BBO、funding raw/周期/1時間換算、OI raw/単位、24時間出来高を
-  Venue別に表示する。取得不能、stale、単位不明はnullと理由を公開する。
-- 検索、Venue、coverage、quality filterでinstrumentを絞る。既定sortはbase、次にVenue。
-- 厳格な鮮度と同一cycle条件を満たす2 Venue以上のmarkだけ、USD/USDC/USDT parity仮定を
-  明示した参考中央値として表示する。値を変換・合算・rankingしない。
-- 選択groupだけ最大20段の板と直近100 tradesを購読し、$100/$500/$1,000の板上概算を表示する。
-- 安全にgroup化できた選択instrumentの5m、15m、1h、4h、24h Chartを表示する。
+- mark、reference price種別、BBO、funding、OI、24時間出来高、quality、freshness、provenanceを
+  Venue別に表示する。
+- 検索、Venue、coverage、quality filterでinstrumentを絞る。現在の既定sortはbase、次にVenue。
+- 条件を満たすgroupでは参考mark中央値を表示する。
+- 選択groupのdepth、trades、book walkを表示する。
+- 選択instrumentのChartを表示する。
 - Past Noteを`venueInstrumentId`単位でローカル保存する。
-- Postgresの期限後履歴を、照合済みParquetへ保存してからbounded retentionする。
+- Postgresの期限後履歴を照合済みParquetへ保存してbounded retentionする。
 
-## 責任範囲外
+現在の3 Venue、更新周期、sort、timeframe、bar数、depth/trade件数、book-walk notional、artifact数、retention等は
+実装値であり、将来変更可能である。
 
-- 売買推奨、将来価格予測、裁定機会の断定、価格差ranking
-- 自動売買、注文、残高、position、Private API、秘密API key
-- RWA、HIP-3、synthetic、RFQ、alias、multiplier contract
-- 全市場の板・全trade永続化、HFT、深いhistorical backfill
+## 将来拡張
 
-板上概算は現在受信したbookを指定notionalまでwalkした参考値であり、fee、将来impact、
-実際の注文可否を含まない。
+必要なdata contract、検証、運用設計を伴えば次を追加できる。
 
-## 構成
+- Attention / momentum / direction / LONG・SHORT候補等のrankingとscore
+- Stocks、ETF、RWAその他のasset class
+- 追加Venue、aggregator、read-only broker/market-data source
+- 正規paid market data、credential付きread-only API
+- prediction、ML、forecast model
+- backtest、feature engineering、bounded historical backfill
+- cross-market comparison、正規化可能なfeature集約、dispersion/opportunity ranking
+- Decision Memo、Trade Journal、review workflow
+- read-only portfolio/account context
+- remote access / multi-device
+
+## 既定で含めないもの
+
+自動注文、資金移動、無人executionは現在の既定責務に含めない。これらを導入する場合はsecurity、権限、
+kill switch、audit、rollbackを扱う別Decisionを要求する。
+
+これはranking、score、方向評価、prediction、read-only account data、journalを禁止する意味ではない。
+
+## Data integrity
+
+- 取得不能、stale、単位不明を0や前回値へ変換しない。
+- source、時刻、単位、identity、quality、provenanceを保持する。
+- symbol名だけからaliasやcross-market identityを推測しない。
+- rankingやpredictionを保証された利益や確実な約定可能性として表示しない。
+
+## 現行構成
 
 - `apps/market-core`: Python 3.13、CLI `watchdeck-market`
-- `apps/web`: SvelteKit 2 / Svelte 5、localhost UIとlocal file API
+- `apps/web`: SvelteKit 2 / Svelte 5、現在はlocalhost UI
 - `deploy/market-postgres`: 専用Postgres 17 Compose
-- `schemas`: Webが読む4つのJSON schema
-- `config/systemd`: DB、collector、maintenance、Webのuser unit template
+- `schemas`: 現行Web read model schema
+- `config/systemd`: 現行user unit template
 
-現在値は`watchdeck-market status`、`artifacts/service-state.json`、service log、実画面で確認する。
+現在値は`watchdeck-market status`、artifact、service log、実画面で確認する。

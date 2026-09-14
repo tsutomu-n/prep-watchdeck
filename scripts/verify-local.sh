@@ -60,7 +60,7 @@ cd "$ROOT_DIR"
 bun test \
   scripts/maintenance/document-metadata.test.mjs \
   scripts/maintenance/document-links.test.mjs \
-  scripts/maintenance/monitoring-only-boundary.test.mjs \
+  scripts/maintenance/product-boundary.test.mjs \
   scripts/maintenance/test-database-url.test.mjs \
   scripts/maintenance/web-port.test.mjs \
   scripts/ops/install-user-services.test.mjs \

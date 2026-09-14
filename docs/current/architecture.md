@@ -1,13 +1,19 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T12:18:27+09:00`
-- 検証: `2026-08-27T12:18:27+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
-## Process境界
+## この文書の範囲
+
+この文書は現在productionの3 Venue Perp runtime architectureを記述する。
+現在のprocess数、DB、artifact数、poll周期、selection数等を将来のWatchdeck全体へ永久固定しない。
+製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
+
+## 現行Process境界
 
 ```text
 Bitget / Hyperliquid Core / Aster public API
@@ -27,94 +33,94 @@ Bitget / Hyperliquid Core / Aster public API
           +-- past-notes ---------+
 ```
 
-- `prep-watchdeck-market-db.service`は専用Compose projectとloopback port 55432だけを所有する。
-- `prep-watchdeck-market.service`はcatalog、L1、candle、selected stream、DB write、artifact発行を
-  1 processで行う。file lockで同一state rootのcollector重複起動を拒否する。
-- `prep-watchdeck-web.service`はJSON read modelだけを読む。Postgresへ接続しない。
-- `prep-watchdeck-market-maintenance.timer`は毎時、精算済みFundingの同期後に
-  archive/readback/retentionを起動する。各dataset/Venueの最古未archive日から最大3日と指定日を
-  処理して停止期間を段階的にcatch-upする。
+- `prep-watchdeck-market-db.service`は現在の専用Compose project/DBを所有する。
+- `prep-watchdeck-market.service`は現在catalog、L1、candle、selected stream、DB write、artifact発行を1 processで行う。
+- 現行WebはJSON read modelを読み、Postgresへ直接接続しない。
+- maintenance timerはFunding sync、archive/readback/retentionを実行する。
 
-JustPassのPostgres、port 5432、container、volume、database、roleは共有しない。
+このprocess topologyは現行runtimeの安全なbaseline。将来のranking worker、Stocks core、model service、追加artifact、
+remote API等を必要に応じて別process/bounded contextとして追加できる。
 
-## Collector lane
+他projectのDB/container/stateを共有しない原則は維持する。
 
-### Catalogとidentity
+## 現行Collector lane
 
-Catalogは15分周期で全Venueを独立取得する。成功したVenueだけをPostgresへSCD2保存し、
-DB commit成功後にin-memory catalogを入れ替える。source kind、endpoint、payload hash、観測時刻、
-source時刻、capability、除外理由を保持する。
+### Catalog / Identity
 
-自動group条件はactive crypto linear perpetual、base完全一致、base数量、multiplier 1、
-Venue内候補1件である。条件を満たさないinstrumentは自動groupへ含めない。
+Catalogは現在15分周期でVenue別に取得し、成功sourceをSCD2保存する。source kind、endpoint、payload hash、
+observed/source time、capability、exclusion reasonを保持する。
+
+現行auto-groupはactive crypto linear perpetual、base完全一致、base数量、multiplier 1、Venue内候補1件を要求する。
+条件外instrumentを推測でgroupへ入れない。
+
+将来の別asset classやexplicit mappingは別contractで追加できる。
 
 ### L1
 
-L1は60秒gridのfixed-rate single-flight。Venue fetch上限20秒、cycle deadline 50秒で、
-一部Venue障害は他Venueを停止させない。前周期値をfreshとして再利用せず、missing instrumentは
-そのcycleで`unavailable`として保存する。
+現在は60秒grid、single-flight、Venue fetch deadlineを持ち、一部Venue障害を他Venueへ波及させない。
+前周期値をfreshとして再利用しない。
+
+周期/deadlineは現行capacity値で変更可能。
 
 ### Candle
 
-- Bitget: finished 1分足RESTを120秒ごとに分散取得し、直近3本をdedupeする。
-- Hyperliquid: 1 WebSocketから足終了5秒後の最終値を`derived_final`として保存する。
-- Aster: sharded WebSocketのkline `x=true`だけを`confirmed`として保存する。
+現在は3 Venueからfinished/confirmed/derived-final 1分足を収集し、queue/batch writerでPostgresへ保存する。
+version境界、unknown version、invalid barを安全側に拒否し、gapを捏造補間しない。
 
-Candle queueは20,000、flushは最大250件または1秒、DB writerは1接続。instrument version境界を
-跨ぐbar、version不明、複数versionへ一致するbarはbatchごと拒否する。gapは補間しない。
+将来、別timeframe/source/backfill laneを追加できる。
 
 ### Settled Funding
 
-毎時maintenanceの`funding-sync`は3 Venueの公開履歴endpointを独立取得し、現在有効なCatalog versionの
-開始時刻以後、かつ最大48時間の範囲にある精算済みeventだけを`funding_events`へ保存する。現在値や
-推定値は履歴へ入れない。同じinstrument version・精算時刻・rateは冪等、同じkeyでrateが異なる場合は
-transactionをrollbackする。周期不明時は1時間換算を作らず、1 Venueの失敗で他Venueの成功分を失わない。
+現在のmaintenanceは3 Venueのsettled fundingを同期する。現在値/estimatedとsettled historyを区別し、version boundary、
+idempotency、conflictを検証する。
 
-### Selected group
+48時間catch-up等は現行runtime値。より深いhistorical laneを別設計で追加できる。
 
-Webは`control/selection.json`をatomic writeする。market serviceはlast-write-wins、500ms debounce、
-15分TTL、5分heartbeatで1 groupだけを購読する。primary変更時は旧taskをclose/awaitしてから
-新taskを開始し、旧subscriptionを10秒以内に解除する。
+### Selected market
 
-選択groupの各CLOB instrumentだけ、最大20段とtradesを正規化する。catalog fingerprintを再確認し、
-primary消失、group membership変更、non-CLOB、非linear、非USD-like、単位不明はfail-closedにする。
+現在Webはselection commandをlocal fileへatomic writeし、market serviceが1 groupを購読する。
+現行値は500ms debounce、15分TTL、5分heartbeat、旧subscription cleanup、CLOB depth/trade等。
+
+1 selection、20 depth、100 trades等は永久上限ではない。複数selection、pinned/ranked capture、単独instrument detail等を
+将来追加できる。
 
 ## Storage truth
 
-- Postgres: current catalog、SCD2、identity、collector run、ephemeral raw market、直近L1/candle/funding、
-  selected lease/depth/trade/raw、archive manifest。
-- Parquet: confirmed後の`market_state_1m`、`candle_1m`、存在する`funding_events`。
-- JSON: Web用の再生成可能read model。正本DBの代わりに書き戻さない。
-- Past Note: `venueInstrumentId`単位のlocal annotation。market dataではない。
+現在:
 
-現在値と推定値は`market_state_1m`に保持し、精算済み履歴だけを`funding_events`に保持する。
-`funding_events`も容量sampleとarchive/retentionの必須対象であり、空を成功値0として扱わない。
+- Postgres: current/recent catalog、identity、collector run、market state、candle、funding、selected、manifest
+- Parquet: confirmed normalized history
+- JSON: Web用再生成可能read model
+- local files: selection control、Past Note等
 
-Parquetは`dataset=<type>/venue=<venue>/date=YYYY-MM-DD/generation=<n>/part-0000.parquet`へ
-ZSTDで書く。row count、unique key、timestamp、row digest、file SHA-256をreadbackし、manifestを
-confirmしてからだけ対応するnormalized期限切れ行を削除する。最新generationと直近3 superseded
-fileを残す。
-
-`raw_market_observations`とselected raw/historyはParquet履歴正本の対象外としたephemeral dataである。
-rawは7日+2時間、selected normalized/historyは8日のage条件を満たしてからbounded deleteする。
+新しいranking features、model outputs、Stocks、journal等は既存tableへ無理に詰め込まず、必要に応じて別dataset/schemaを
+追加できる。
 
 ## Artifact lane
 
-`~/.local/share/prep-watchdeck-market/artifacts/`へ次を同一filesystem内でfsync後atomic replaceする。
+現在はstate rootの`artifacts/`へ4 JSONを同一filesystem内でatomic publishする。
 
 - `universe-snapshot.json`
 - `market-chart.json`
 - `selected-market.json`
 - `service-state.json`
 
-Webは各schemaをAjvで検証し、不正fileを部分的に推測せずunavailableとして扱う。
+Webはschema validationに失敗したartifactを推測で補完しない。
+
+**4 artifactは現行構成であり永久固定ではない。** Ranking、prediction、Stocks、portfolio等の新artifact/APIを追加できる。
 
 ## State境界
 
-標準rootは`PREP_WATCHDECK_MARKET_STATE_DIR`、未指定時は
-`~/.local/share/prep-watchdeck-market`。Postgres、archive、artifact、control、Past Note、serviceと
-maintenanceのlockを
-このrootへ置く。E2E、smoke、shadowは別のstate root、DB、Web portへ隔離する。
+現在の標準rootは`PREP_WATCHDECK_MARKET_STATE_DIR`。Postgres、archive、artifact、control、notes、lock等を配置する。
+E2E/smoke/shadowはproductionから隔離する。
 
-旧DuckDB stateと旧unit backupはrollback用であり、新serviceから読まない。cutover承認前に
-旧runtimeを停止・削除・上書きしない。
+path、port、DB engine、single-host構成は現行runtime値。local-first原則を保ちながら将来変更できる。
+
+## Architecture拡張原則
+
+- 現行Perp contractを壊す必要がない新domainは別app/service/schemaを優先する。
+- `未実装`を理由に共通base class等を先行汎用化しない。
+- 2つ以上の実装で実際に共通化価値が確認できた部分を後から抽象化する。
+- source failure、model failure、ranking failureを既存market ingestion全体へ波及させない。
+- provenance、quality、unit、identity、timestampを新laneでも維持する。
+- production state/DBとtest/shadow/他project資源を隔離する。

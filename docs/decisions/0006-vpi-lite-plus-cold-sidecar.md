@@ -1,31 +1,30 @@
 # Decision 0006: VPI-Lite+をCold snapshotの補助sidecarに限定する
 
 - 作成: `2026-07-19T15:39:27+09:00`
-- 更新: `2026-07-19T15:39:27+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
 - 状態: `設計判断`
 
 ---
 
-## 決定
+> **旧scannerの履歴:** Decision 0011でproduction contractは置換済み。
+> score、ranking、model outputをmain rankingへ入れない等の制約を将来機能へ適用しない。
+> 現在のproduct boundaryはDecision 0012を正本とする。
 
-VPI-Lite+ V0は、`watchdeck service`が生成するCold snapshotでだけ計算する。
-closed 1分足を入力にし、`summary.vpiLitePlus`を正本、存在するrowの
-`display.vpiLitePlus`を表示用の任意複製とする。
+## 当時の決定
 
-VPI scoreとstateを既存main ranking、filter、category、attention scoreへ入れない。
-1 symbolの計算失敗は隔離し、既存snapshot発行を止めない。
+VPI-Lite+ V0は`watchdeck service`が生成するCold snapshotだけで計算した。
+closed 1分足を入力にし、`summary.vpiLitePlus`を正本、存在するrowの`display.vpiLitePlus`を表示用複製とした。
 
-## 理由
+当時はVPI score/stateを既存main ranking、filter、category、attention scoreへ入れず、1 symbolの計算失敗を隔離した。
 
-VPIは異常な市場活動を見つける補助情報であり、価格方向や将来収益を予測する主張ではない。
-既存scanner判断と更新頻度を変えずに導入し、Cold/Hot laneの責任境界と単一DuckDB writerを
-維持する必要がある。
+## 当時の理由
 
-## 帰結
+VPIを異常な市場活動を見つける補助情報として導入し、旧scanner判断と更新頻度を変えず、Cold/Hot laneと
+単一DuckDB writerを維持するためだった。
 
-- configはservice起動境界で一度だけ読み込む。
-- 5分足集約前のclosed 1分足だけをVPIへ渡す。
-- benchmarkはscanner rowがなくてもsummaryへ出せる。
-- 内部pressure、diagnostics、raw barsを公開payloadへ含めない。
-- config未指定、disabled、通常scanではVPI blockを追加しない。
-- UIは高scoreを売買推奨として表現しない。
+## 現在の解釈
+
+- feature/model failureを他のmarket ingestionへ波及させない考え方は維持できる。
+- ranking/score/model outputへfeatureを組み込むこと自体は禁止しない。
+- closed bar、timeframe、config load、payload公開範囲等は新featureの要件から再設計できる。
+- 高scoreを保証された利益や自動注文と同義にしない原則はDecision 0005に従う。

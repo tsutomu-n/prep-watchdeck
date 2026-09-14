@@ -1,142 +1,99 @@
-# Watchdeck v1 P0 スコープと完成条件
+# Watchdeck v1 P0 完成baseline
 
 - 作成: `2026-08-18T22:00:00+09:00`
-- 更新: `2026-09-04T20:49:47+09:00`
-- 検証: `2026-09-04T20:49:47+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
-## 結論
+## この文書の役割
 
-Watchdeck v1は、Bitget、Hyperliquid Core、Asterのpublic crypto linear perpetualを継続観測し、
-値の意味、単位、時刻、取得元、品質を失わずに保存・表示するlocal-firstの市場監視アプリである。
+この文書は、Watchdeck v1 P0として完成・運用確認した3 Venue Perp Universe Explorerのbaselineを記録する。
+P0完成時にscopeを凍結した事実は履歴として残すが、**P0後の製品拡張を禁止する文書ではない**。
 
-P0の完成は、Repository内の実装・契約・検証が完成した状態と、実hostへinstall・migration・cutoverして
-日常運用を確認した状態を分けて扱う。前者だけで後者を完了扱いしない。
+将来の製品境界は[`product-boundary.md`](product-boundary.md)と
+[Decision 0012](../decisions/0012-product-evolution-boundary.md)を正本とする。
 
-## P0の意味と後続範囲
+## P0で完成したもの
 
-`P0`は、このRepositoryでWatchDeck v1として必須と定めた製品範囲の名称である。試作品、version 0、
-または実装だけが終わった状態を意味しない。下記のRepository実装完了条件と実host運用完了条件の両方を
-満たした状態をWatchDeck v1 P0の完成とする。
+P0では、Bitget、Hyperliquid Core、Asterのpublic crypto linear perpetualを継続観測し、値の意味、単位、
+時刻、取得元、品質を失わずに保存・表示するlocal-first Perp Universe Explorerを完成させた。
 
-現在、承認済みの`P1`または`v1.1`製品範囲、実施順序、完成条件はない。過去の個別課題に付けたP1、
-隔離中の実験実装、R2などの候補は、それぞれの採用判断と新しい完了条件が確定するまでWatchDeckの
-正式な後続ロードマップとして扱わない。
+Repository実装の完成と、実hostへinstall / migration / cutoverして日常運用を確認した状態を分けて検証した。
+これは今後の変更でも有効な検証原則である。
 
-## 責務
+## P0 runtime baseline
 
-Watchdeckが所有する責務:
+P0時点の主要責務:
 
-- 3 Venueのinstrument catalogとcapability
+- 3 Venue instrument catalogとcapability
 - 60秒L1 market state
 - 確定または導出確定した1分足
 - 精算済みFunding event
-- 選択中1 groupのdepthとtrade
+- 選択中groupのdepthとtrade
 - current Postgres、confirmed Parquet、Web read model
-- data quality、freshness、coverage、source provenanceの表示
-- archive、bounded retention、backup、restoreの安全な運用入口
+- data quality、freshness、coverage、source provenance
+- archive、bounded retention、backup、restore
 
-Watchdeckが所有しない責務:
+これらのVenue数、周期、選択数、保存量、artifact数はP0の実装値であり、将来変更できる。
 
-- 売買推奨、BUY / SELL、価格予測、alpha score
-- backtest、strategy adoption、TimesFMその他のforecast model
-- 注文、残高、position、wallet、Private API
-- Copy Tradingの委任管理、Grid / Botの自動停止・制御
-- 全市場のfull depth・全tradeの長期保存
-- 深いhistorical backfill
+## P0 Data Plane
 
-研究、予測、戦略検証はMarketLens Strikeへ分離する。
-
-## Data Plane
-
-### 長期正本
-
-| Dataset | 内容 | 正本 |
+| Dataset | P0内容 | P0正本 |
 | --- | --- | --- |
 | `market_state_1m` | mark、reference、BBO、current Funding、OI、24h volume、quality | confirmed Parquet |
 | `candle_1m` | OHLC、base/notional volume、trade count、finality | confirmed Parquet |
 | `funding_events` | 精算時刻、精算済みrate、確認できるinterval、観測時刻 | confirmed Parquet |
 | instrument version | 契約定義、単位、tick/step、capability、SCD2有効期間 | Postgres |
 
-Postgresはcurrent/recent truth、confirmed Parquetは期限後の履歴正本、4つのJSON artifactは
-再生成可能なWeb read modelである。JSONをDBまたはParquetへ書き戻さない。
+Postgresをcurrent/recent truth、confirmed Parquetを期限後履歴正本、JSON artifactを再生成可能なWeb read modelと
+した。将来、新dataset、artifact、storage laneを追加することを妨げない。
 
-### Funding境界
+## P0 Funding境界
+
+現在のFunding runtimeでは次を維持する。
 
 - currentまたはestimated Funding rateは`market_state_1m`へ保存する。
 - 精算済み履歴だけを`funding_events`へ保存する。
-- 初回および停止復帰時の自動catch-upは現在時刻から最大48時間に限定する。
+- 現行自動catch-upは最大48時間。
 - catalog version開始以前のeventを自動採用しない。
-- 同一instrument version・同一精算時刻の同率はidempotent、異率はfail-closedで停止する。
-- intervalが確認できないVenueではrate per hourを推測せずnullにする。
-- source failureはVenue / instrument単位で隔離し、成功したsourceのeventは保存する。
-- deep historical backfillはMarketLens側の責務とする。
+- 同一instrument version・同一精算時刻のconflictはfail-closed。
+- interval不明時はrate per hourを推測しない。
+- source failureをVenue / instrument単位で隔離する。
 
-### 短期データ
+48時間等の値は現行runtimeの既定値であり永久制約ではない。historical backfillを別laneで追加できる。
 
-選択中1 groupのdepth、trade、raw selected eventは短期保持する。板上概算は現在受信した板からの派生値で、
-fee、将来impact、注文可能性を含まず、長期履歴正本にしない。
+## P0 UI / data-quality baseline
 
-## UI完成条件
+P0で確立した次の原則は維持する。
 
-画面は次を混同しない。
+- Data Quality、Freshness、Coverage、Operational state、Selection stateを混同しない。
+- 更新失敗時は直前snapshotを現在値と誤認させない。
+- stale / unavailableを復活させず、nullを0へ変換しない。
+- raw reasonと人間向け説明の両方を確認できる。
+- source、unit、timestamp、identity、provenanceを失わない。
 
-- Data Quality: `ready / partial / stale / unavailable`
-- Freshness: 値が現在値として利用できるか
-- Coverage: 安全なcross-Venue groupに属するか
-- Operational state: Web、artifact、collectorの動作状態
-- Selection state: 選択groupのTTL、depth、tradeの状態
+一方、ranking、score、方向評価、prediction、Chart構成、UI hierarchy等をP0の表示へ永久固定しない。
 
-更新失敗時は直前のschema検証済みsnapshotを残していることを明示し、画面上の値を現在値と誤認させない。
-stale / unavailableの値を表示用に復活させず、nullを0へ変換しない。raw reason codeは技術情報として
-確認可能にし、主要画面では人間向け説明を表示する。
+## P0 completion evidenceの意味
 
-Coverage、参考mark中央値、色、並び順を売買推奨または裁定機会として表現しない。
+P0で使用したRepository gate、実host確認、archive readback、backup/restore、reboot確認等は、当時のruntimeが
+受入条件を満たした証拠である。将来のfeatureを禁止する根拠にはしない。
 
-## 運用完成条件
+将来変更では、その変更に近いfocused testと必要なintegration/runtime validationを新しく定義する。
 
-Repository実装完了の必須条件:
+## P0後に許可される拡張
 
-1. isolated Postgres 17を使う全integration testがskipなしで成功する。
-2. Python test、Ruff、format、Pyreflyが成功する。
-3. Web type生成、unit test、Svelte check、build、Desktop/Mobile Playwrightが成功する。
-4. docs/ops test、metadata、link、lockfileが成功する。
-5. secret、Private API、注文、予測model、不要dependencyを追加していない。
-6. mainへmergeする前に差分と未実行項目が明示されている。
+Decision 0012に従い、P0後はranking、Stocks/ETF/RWA、新Venue、aggregator、paid/read-only API、ML、forecast、
+backtest、feature engineering、bounded backfill、journal、read-only portfolio context等を採用できる。
 
-実host運用完了の必須条件:
+旧Scope Freezeに列挙した項目は、P0完成までscope creepを防ぐための一時制約であり、現在は終了している。
 
-1. 専用Postgres、collector、maintenance timer、Webが対象checkoutから起動する。
-2. 3 Venue catalog/L1/candleとFunding同期を実APIで確認する。
-3. 完了UTC日を跨ぎ、archive readback、manifest confirm、retentionを確認する。
-4. backupを作成し、隔離targetでrestore手順を確認する。
-5. rebootまたは明示再起動後に重複writerなしで復帰する。
-6. 日常利用でUniverse、選択、Chart、depth、trade、quality、Past Noteを確認する。
+## 利用者価値として維持するもの
 
-Repository gate成功はlive cutover、actual runtime、将来の継続稼働を証明しない。
-
-## 利用者レビュー境界
-
-v1は主に次の意思決定を支援する。
-
-- 発見: 今、どの市場を詳しく見るか
-- 選別: data quality、freshness、liquidity contextを踏まえて見送るか
-- 反証: Funding、OI、volume、Venue差から一方向の解釈を疑うか
-- 検証: 表示値の由来、時刻、単位を再確認できるか
-
-Copy Tradingの委任リスク管理とGrid / Botの自動化管理は、v1の責務外である。
-
-## Scope freeze
-
-P0完了前後に次を追加しない。
-
-- TimesFM、Chronos、ML、forecast overlay
-- 新Venue、aggregator、deep-capture lane
-- 全市場depth/trade長期保存
-- portfolio、execution、private account data
-- MarketLens向けfeature engineering
-
-P0後の追加は独立した製品判断とし、承認済みの`P1`または`v1.1`があると推定しない。
-Watchdeck内部を将来の研究用途の想像だけで汎用化しない。
+- 発見: 今どの市場・銘柄を見るか
+- 選別: quality、freshness、liquidity、ranking等から確認対象を絞る
+- 反証: 複数featureやVenue差から単純な解釈を疑う
+- 検証: 表示値の由来、時刻、単位、不確実性を確認する
+- 判断: 最終的なtrade decisionは人間が行う
