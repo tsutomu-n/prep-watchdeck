@@ -1,29 +1,37 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-08-15T11:04:37+09:00`
-- 検証: `2026-08-15T11:04:37+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
-`prep-watchdeck`は、Bitget、Hyperliquid Core、Asterのpublic market dataを集め、
-crypto linear perpetualをVenue横断で確認するlocal-firstのUniverse Explorerです。
-価格、資金調達率、建玉、24時間出来高、鮮度、取得元、安全にgroup化できた選択銘柄の
+`prep-watchdeck`は、裁量トレーダーが市場から注目対象を発見し、分析し、比較し、最終判断を行うための
+local-first market intelligence workspaceです。
+
+現在のproduction runtimeはBitget、Hyperliquid Core、Asterのpublic crypto linear perpetualを扱う
+Perp Universe Explorerです。価格、Funding、OI、24時間出来高、鮮度、取得元、安全にgroup化できた選択銘柄の
 板・約定・Chartを表示します。
 
-売買推奨、自動売買、注文、残高、position、秘密API、RWA、HIP-3、synthetic/RFQ市場は扱いません。
+**現在の3 Venue Perp実装を、将来のWatchdeck全体の上限として扱いません。** Ranking、Stocks/ETF/RWA、
+追加Venue、read-only paid API、prediction/ML、backtest、Decision Memo / Trade Journal等は、必要な契約と検証を
+伴って追加できます。自動注文、資金移動、無人executionは現在の既定責務に含めません。
 
-初めて操作する場合は、[正本ユーザーマニュアル](docs/current/user-manual.md)から読んでください。
-このREADMEは初期設定と運用入口をまとめています。
+製品境界は[現行product boundary](docs/current/product-boundary.md)と
+[Decision 0012](docs/decisions/0012-product-evolution-boundary.md)を正本とします。
+
+初めて現在のPerp runtimeを操作する場合は[ユーザーマニュアル](docs/current/user-manual.md)から読んでください。
 
 ## 必要なもの
+
+現在のPerp runtime:
 
 - Python 3.13と`uv`
 - Bun
 - Docker Compose
-- systemd user serviceを使う場合はLinuxのuser manager
-- public market APIへ接続できるnetwork
+- systemd user serviceを使う場合はLinux user manager
+- 現在のpublic market APIへ接続できるnetwork
 
 依存を準備します。
 
@@ -37,9 +45,8 @@ cd ../..
 
 ## Dedicated Postgres
 
-既定のstate rootは`~/.local/share/prep-watchdeck-market`、専用Postgresのloopback portは
-`127.0.0.1:55432`です。JustPassなど他projectのPostgres、port 5432、container、volume、
-database、roleを再利用しません。
+現在のPerp runtimeの既定state rootは`~/.local/share/prep-watchdeck-market`、専用Postgresのloopback portは
+`127.0.0.1:55432`です。他projectのPostgres、container、volume、database、roleを再利用しません。
 
 ```bash
 install -d -m 0700 "$HOME/.config/prep-watchdeck-market"
@@ -48,8 +55,7 @@ touch "$HOME/.config/prep-watchdeck-market/postgres.env"
 chmod 0600 "$HOME/.config/prep-watchdeck-market/postgres.env"
 ```
 
-`postgres.env`へ次を設定します。`POSTGRES_PASSWORD`はローカル専用の十分に長い値を作り、
-URL側ではpercent-encodeしてください。このfileはcommitしません。
+`postgres.env`へ現在のPerp DB設定を置きます。実credentialはcommitしません。
 
 ```text
 POSTGRES_DB=prep_watchdeck_market
@@ -58,43 +64,42 @@ POSTGRES_PASSWORD=<local-secret>
 PREP_WATCHDECK_MARKET_DATABASE_URL=postgresql://prep_watchdeck_market:<url-encoded-secret>@127.0.0.1:55432/prep_watchdeck_market
 ```
 
-productionのinstallerとCLIは、user/databaseが`prep_watchdeck_market`、host/portが
-`127.0.0.1:55432`であることを検証します。隔離test/shadowで別targetを使う場合だけ、専用state/portと
-`PREP_WATCHDECK_MARKET_ALLOW_NONSTANDARD_DATABASE_TARGET=true`を明示します。このoverrideを
-productionの`postgres.env`へ書いてはいけません。
+現在のproduction installer/CLIはこの専用targetを検証します。別targetを使うtest/shadowはproductionから隔離します。
 
 ## systemd user service
 
-まずrender差分を確認します。
+render差分を確認します。
 
 ```bash
 bash scripts/ops/install-user-services.sh --dry-run
 ```
 
-承認済みのローカル環境だけへunitをinstallします。`--apply`は既存unitをtimestamp付きでbackupし、
-daemon-reloadとenableだけを行います。serviceのstart/restartは行いません。
+承認済みlocal environmentへ適用します。
 
 ```bash
 bash scripts/ops/install-user-services.sh --apply
 bash scripts/start-all.sh
 ```
 
-既定URLは`http://127.0.0.1:5173/`です。installされる境界は次の5 unitです。
+現在の既定URLは`http://127.0.0.1:5173/`です。現在installされる主なunit:
 
 - `prep-watchdeck-market-db.service`: 専用Postgres 17 Compose
 - `prep-watchdeck-market.service`: catalog、L1、candle、selected stream、artifact発行
-- `prep-watchdeck-market-maintenance.service`: confirmed archiveとbounded retention
-- `prep-watchdeck-market-maintenance.timer`: 毎時maintenance
-- `prep-watchdeck-web.service`: localhost SvelteKit Web
+- `prep-watchdeck-market-maintenance.service`: archiveとbounded retention
+- `prep-watchdeck-market-maintenance.timer`: maintenance timer
+- `prep-watchdeck-web.service`: SvelteKit Web
 
-Webだけをforegroundで起動する開発入口です。collectorは起動しないため、既存のmarket serviceを
-重複起動しません。
+これらのport、unit構成、localhost配置は現行runtimeの実装値であり、将来の永久制約ではありません。
+
+Webだけをforegroundで起動する開発入口:
 
 ```bash
 bash scripts/start-local.sh
 ```
 
 ## Stateとread model
+
+現在のPerp runtime:
 
 ```text
 ~/.local/share/prep-watchdeck-market/
@@ -111,11 +116,10 @@ bash scripts/start-local.sh
   market-maintenance.lock
 ```
 
-Postgresが直近データの正本、confirmed Parquetが期限後履歴の正本、4つのJSONは再生成可能な
-Web read modelです。WebはPostgresへ接続しません。選択commandとPast Noteの書込みは
-localhost requestだけに許可されます。
+Postgresがcurrent/recent truth、confirmed Parquetが期限後履歴正本、現在の4 JSONはWeb用read modelです。
+**4 artifactだけに将来固定しません。** Ranking、Stocks、model output、journal等は新artifact/schema/APIを追加できます。
 
-現在のartifact状態だけを確認します。別collectorやone-shot scanは起動しません。
+現在のartifact状態を確認します。
 
 ```bash
 bash scripts/update-live.sh
@@ -123,25 +127,20 @@ bash scripts/update-live.sh
 
 ## Maintenanceとbackup
 
-毎時timerと同じ処理を手動で実行します。
+現在のmaintenanceを手動で実行します。
 
 ```bash
 bash scripts/ops/run-market-maintenance.sh
 ```
 
-毎時maintenanceは、各dataset/Venueの最古未archive日から重複を除いた最大3日と、直前の
-完了UTC日を自動で処理します。`--partition-date`を指定すると、直前日ではなく指定した完了日を
-優先対象へ加え、同じ自動catch-upも行います。
+現在はnormalized datasetをParquet readback/manifest確認後にbounded retentionします。raw、normalized、selectedの
+具体的保持期間やbatch上限は現在のcapacity policyであり、検証を伴って変更できます。
+
+指定日を加える場合:
 
 ```bash
 bash scripts/ops/run-market-maintenance.sh --partition-date YYYY-MM-DD
 ```
-
-maintenanceは完了UTC日のnormalized datasetをParquetへ書き、readbackとmanifest確認後だけ8日超を
-削除します。Parquet対象外と明示したephemeral rawは7日+2時間、selected raw/historyは各保持期限後に
-bounded deleteします。各DELETEは最大10,000行、1回の上限はnormalized 180 batch、raw 10 batch、
-selected 250 batchです。source更新のないactive manifestは再生成せず、空datasetをarchive成功として
-扱いません。
 
 Postgres backup:
 
@@ -152,54 +151,40 @@ bash scripts/ops/market-postgres-backup.sh \
   --backup-dir "$HOME/watchdeck-local-archive/market-postgres"
 ```
 
-restoreはmarket serviceを停止し、対象名と`--apply`を明示する別操作です。手順は
-[現行運用](docs/current/operations.md)を参照してください。
+restoreは破壊的操作なので[現行運用](docs/current/operations.md)に従います。
 
 ## 検証
 
-Repo横断gateは最後に1回だけ実行します。
+Repo横断gate:
 
 ```bash
 bash scripts/verify-local.sh
 ```
 
-`TEST_DATABASE_URL`が未指定なら、gateは固定digestのPostgres 17を一時containerとして起動し、
-実DB integrationをskipせず実行後にcontainerを削除します。他projectのDBは使用しません。
+現在のgateはproduct boundary、docs、isolated Postgres integration、Python quality gate、Web test/build/E2E等を実行します。
+詳細は[現行検証](docs/current/validation.md)を参照してください。
 
-実market API、Postgres、Webを使うsmoke/shadowは、現役state/serviceから隔離した
-DB、state root、portで実施します。test greenだけでlive cutover済みとは扱いません。
-
-隔離shadowは最初にdry-runで全targetを確認します。state/evidence、Compose project、DB/Web port、
-現役snapshot/DuckDB/unitをすべて明示し、production既定port 55432/5173とJustPass 5432は使いません。
-
-```bash
-bash scripts/ops/run-isolated-shadow.sh --dry-run \
-  --state-root /absolute/repo-outside/shadow-state \
-  --evidence-root /absolute/repo-outside/shadow-evidence \
-  --live-state-root /absolute/live-state \
-  --live-snapshot /absolute/live-state/snapshots/latest.json \
-  --live-duckdb /absolute/live-state/watchdeck.duckdb \
-  --live-scanner-unit prep-watchdeck-service.service \
-  --compose-project prep-watchdeck-market-shadow-YYYYMMDD \
-  --db-port 55442 --web-port 5183
-```
-
-dry-run差分を確認した同じ引数で`--dry-run`を`--execute`へ変更すると、15分baselineと60分shadowを
-1回実行します。短い`--baseline-seconds`/`--shadow-seconds`はharness確認用で、受入証拠にはしません。
-Webはbaseline前に1回buildし、shadow中はdev/HMRではなくpreviewを使います。終了時は記録した
-process groupと指定Compose projectだけを停止し、証拠と専用stateはRepo外へ残します。Dockerは
-ambient remote contextを使わず、rootful local `unix:///var/run/docker.sock`だけに固定します。
+P0移行時に使用した旧DuckDB baseline、固定15分/60分shadow等は当時のqualification evidenceであり、すべての将来
+featureへ永久適用しません。新しいsource、ranking、asset class、model等では変更riskに合うvalidationを定義します。
 
 ## 正本
 
-- [正本ユーザーマニュアル](docs/current/user-manual.md)
-- [現行ドキュメント](docs/README.md)
+### 製品境界
+
+- [現行製品境界](docs/current/product-boundary.md)
+- [Decision 0012](docs/decisions/0012-product-evolution-boundary.md)
+
+### 現在のPerp runtime
+
+- [ユーザーマニュアル](docs/current/user-manual.md)
+- [現行ドキュメントindex](docs/README.md)
 - [アーキテクチャ](docs/current/architecture.md)
 - [データ契約](docs/current/data-contracts.md)
 - [UIワークフロー](docs/current/ui-workflow.md)
 - [運用](docs/current/operations.md)
 - [検証](docs/current/validation.md)
-- [UI設計規則](DESIGN.md)
+- [Design Guide](DESIGN.md)
 - [Decision 0011](docs/decisions/0011-perp-universe-replacement.md)
 
-旧scannerのstate、unit backup、稼働checkoutはcutover後のrollback確認が完了するまで削除しません。
+旧scanner/state/unit等はrollbackまたは履歴資産として残る場合がありますが、存在だけを現行機能や将来禁止の根拠に
+しません。
