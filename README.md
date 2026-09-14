@@ -156,8 +156,8 @@ restoreは破壊的操作なので[現行運用](docs/current/operations.md)に�
 ## 検証
 
 PRでは変更範囲に近いgateだけを実行します。docs-only変更でPostgresやChromiumを起動せず、Market Core変更では
-isolated Postgresを含むPython gate、Web変更ではunit/check/buildとdesktop E2E、ops変更ではruntime/install/restore
-safety testを実行します。
+isolated Postgresを含むPython gate、Web変更ではunit/check/build、browser behaviorへ影響するUI/schema変更だけ
+Desktop E2Eを実行します。ops変更ではruntime/install/restore safety testを実行します。
 
 Repo横断のfull local gate:
 
