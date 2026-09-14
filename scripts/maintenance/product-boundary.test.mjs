@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dirname, "../..");
@@ -11,6 +11,8 @@ function read(path) {
 const productBoundary = read("docs/current/product-boundary.md");
 const decision0012 = read("docs/decisions/0012-product-evolution-boundary.md");
 const agents = read("AGENTS.md");
+const design = read("DESIGN.md");
+const operations = read("docs/current/operations.md");
 const p0Baseline = read("docs/current/watchdeck-v1-scope.md");
 const decision0011 = read("docs/decisions/0011-perp-universe-replacement.md");
 
@@ -42,6 +44,21 @@ describe("extensible product boundary", () => {
     expect(productBoundary).toContain("artifact");
   });
 
+  test("allows design evolution while retaining UX and accessibility principles", () => {
+    expect(design).toContain("永久禁止しない");
+    expect(design).toContain("gradient");
+    expect(design).toContain("shadow");
+    expect(design).toContain("animation");
+    expect(design).toContain("accessibility");
+  });
+
+  test("allows reviewed credentialed read-only sources", () => {
+    expect(productBoundary).toContain("credential付きread-only API");
+    expect(operations).toContain(
+      "paid APIやcredential付きread-only APIであること自体は製品全体の停止条件ではない"
+    );
+  });
+
   test("agents use the new product boundary before legacy P0 decisions", () => {
     expect(agents).toContain("docs/current/product-boundary.md");
     expect(agents).toContain("0012-product-evolution-boundary.md");
@@ -58,5 +75,11 @@ describe("extensible product boundary", () => {
   test("Decision 0011 delegates future product scope to Decision 0012", () => {
     expect(decision0011).toContain("Decision 0012");
     expect(decision0011).toContain("製品境界は一部superseded");
+  });
+
+  test("retired monitoring-only vocabulary ban is not part of the active gate", () => {
+    expect(
+      existsSync(resolve(repoRoot, "scripts/maintenance/monitoring-only-boundary.test.mjs"))
+    ).toBe(false);
   });
 });
