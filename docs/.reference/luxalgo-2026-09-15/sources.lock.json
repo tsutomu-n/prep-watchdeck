@@ -1,0 +1,141 @@
+{
+  "repository": "tsutomu-n/prep-watchdeck",
+  "base_commit": "9b83b5313271e7a76a53e3a06241ee010446f58e",
+  "base_tree": "8c7776e7a16fba07018e3e7696c1521221b7ced6",
+  "delivery_branch": "ai/luxalgo-reference-20260915-0837",
+  "inspected_at": "2026-09-15T08:37:15+09:00",
+  "watchdeck_files": [
+    [
+      "AGENTS.md",
+      "4462d7bea4c8d0e4ade0d328372fb789ccefd82b",
+      "full"
+    ],
+    [
+      "docs/current/product-boundary.md",
+      "276474adaab561311eb05104fe1c445b18fa94b2",
+      "full"
+    ],
+    [
+      "docs/current/architecture.md",
+      "df18e3cfea3d5c87dbd20cebf083fc9146dff5d7",
+      "full"
+    ],
+    [
+      "docs/current/data-contracts.md",
+      "d6ad941f8e5c0ec671f06455b2086a0af838af39",
+      "full"
+    ],
+    [
+      "docs/current/validation.md",
+      "a7bc3263a6b18b1d9a20be3eb667570b1a35ee96",
+      "full"
+    ],
+    [
+      "docs/current/ui-workflow.md",
+      "477dff1b81bf421ea22c96195617d4629765ee4e",
+      "full"
+    ],
+    [
+      "DESIGN.md",
+      "86763cdd31c3a04110f90976b4fba1583a85829f",
+      "full"
+    ],
+    [
+      "apps/market-core/pyproject.toml",
+      "dcc2e038851b84319466f28f1f8884cf69458b32",
+      "full"
+    ],
+    [
+      "apps/market-core/src/prep_watchdeck_market/models.py",
+      "f1b1f4cc65b29d3765b6eee8b37dc54e170cedc2",
+      "full"
+    ],
+    [
+      "apps/market-core/src/prep_watchdeck_market/artifacts.py",
+      "d38f487cedaf3cf8d2aa05f48ab0e6250c732cbc",
+      "1-185"
+    ],
+    [
+      "apps/market-core/src/prep_watchdeck_market/service.py",
+      "a79a46abfae35a8868d15a26789ffb03651f36c0",
+      "1-235"
+    ],
+    [
+      "apps/market-core/src/prep_watchdeck_market/cli.py",
+      "e519b86ac67b65f15ad1723fd493ac38c34e9dc2",
+      "1-150"
+    ],
+    [
+      "apps/web/src/lib/server/market-artifact-repository.ts",
+      "03fb23c51545935f8c1001464d2f5199289ce6c4",
+      "full"
+    ],
+    [
+      "scripts/maintenance/check-document-metadata.mjs",
+      "1dfcf8aedfb1af19140ee0f0e5c7afb0876ae0fd",
+      "full"
+    ]
+  ],
+  "upstream_files": [
+    {
+      "repository": "LuxAlgo/edge-stats",
+      "commit": "7cfa6d52f561e2c764ba900252e80356b03af9fe",
+      "path": "packages/core/src/stats/stats.ts",
+      "blob": "7410e7b2a97b6bf3a32bb2285bb31d580d144bde",
+      "read_range": "full"
+    },
+    {
+      "repository": "LuxAlgo/edge-stats",
+      "commit": "7cfa6d52f561e2c764ba900252e80356b03af9fe",
+      "path": "packages/core/src/query/execute.ts",
+      "blob": "904af8d6c204290299e64c4a5d8a1c7f42c5ebe9",
+      "read_range": "100-325"
+    },
+    {
+      "repository": "LuxAlgo/whale-options",
+      "commit": "11f9c072827426f100193102a64451278787825b",
+      "path": "packages/core/src/score/score.ts",
+      "blob": "a1f92e0475ba61c6107bae6271738d06de1154a3",
+      "read_range": "155-220; earlier conversation full"
+    },
+    {
+      "repository": "LuxAlgo/market-trackers",
+      "commit": "9bf1045b6953e42a56f112445481d411a92261c9",
+      "path": "docs/market-trackers-data.md",
+      "read_range": "layout, delta, snapshots, manifest; tail truncated"
+    },
+    {
+      "repository": "LuxAlgo/market-trackers",
+      "commit": "9bf1045b6953e42a56f112445481d411a92261c9",
+      "path": "packages/core/src/schema/datasets.ts",
+      "blob": "2d926e592e6857a975dfdbe426701ba262ffcb08",
+      "read_range": "1-200"
+    },
+    {
+      "repository": "LuxAlgo/market-trackers",
+      "commit": "9bf1045b6953e42a56f112445481d411a92261c9",
+      "path": "packages/core/src/schema/fed-communication.ts",
+      "blob": "264d0325b5c95875f76eace3f0a4e72bff77ee08",
+      "read_range": "full"
+    }
+  ],
+  "official_sources": [
+    "https://efdsearch.senate.gov/search/home/",
+    "https://www.finra.org/rules-guidance/notices/information-notice-051019",
+    "https://creativecommons.org/publicdomain/zero/1.0/legalcode.en"
+  ],
+  "not_verified": [
+    "full upstream suites",
+    "full watchdeck suites",
+    "production runtime",
+    "market profitability",
+    "current live Fed transport",
+    "archive history completeness"
+  ],
+  "ruleset": {
+    "id": 20273827,
+    "main_requires_pr": true,
+    "current_user_can_bypass": "never",
+    "changed": false
+  }
+}
