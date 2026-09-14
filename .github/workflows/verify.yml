@@ -21,6 +21,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       core: ${{ steps.filter.outputs.core }}
       web: ${{ steps.filter.outputs.web }}
+      e2e: ${{ steps.filter.outputs.e2e }}
       ops: ${{ steps.filter.outputs.ops }}
     steps:
       - name: Checkout
@@ -34,7 +35,7 @@ jobs:
         run: |
           set -euo pipefail
           if [[ "${{ github.event_name }}" == "push" ]]; then
-            printf '%s\n' 'docs=true' 'core=true' 'web=true' 'ops=true' >> "$GITHUB_OUTPUT"
+            printf '%s\n' 'docs=true' 'core=true' 'web=true' 'e2e=true' 'ops=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -42,7 +43,7 @@ jobs:
           printf '%s\n' "$files"
 
           if grep -Eq '^\.github/workflows/' <<<"$files"; then
-            printf '%s\n' 'docs=true' 'core=true' 'web=true' 'ops=true' >> "$GITHUB_OUTPUT"
+            printf '%s\n' 'docs=true' 'core=true' 'web=true' 'e2e=true' 'ops=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -53,6 +54,7 @@ jobs:
           docs=false
           core=false
           web=false
+          e2e=false
           ops=false
 
           if matches '^(docs/|README\.md$|AGENTS\.md$|DESIGN\.md$|scripts/maintenance/(check-document-|document-|update-document-timestamp|product-boundary))'; then
@@ -64,11 +66,15 @@ jobs:
           if matches '^(apps/web/|schemas/)'; then
             web=true
           fi
+          if matches '^(apps/web/(src/routes/|src/lib/components/|src/lib/styles/|src/lib/theme/|src/lib/market/|tests/e2e/|playwright\.config\.ts$)|schemas/)'; then
+            e2e=true
+          fi
           if matches '^(scripts/(ops/|start-all\.sh$|start-local\.sh$|update-live\.sh$|verify-local\.sh$|lib/select-web-port\.sh$|lib/validate-test-database-url\.mjs$)|scripts/maintenance/runtime-targets\.test\.mjs$|config/systemd/|deploy/)'; then
             ops=true
           fi
 
-          printf 'docs=%s\ncore=%s\nweb=%s\nops=%s\n' "$docs" "$core" "$web" "$ops" >> "$GITHUB_OUTPUT"
+          printf 'docs=%s\ncore=%s\nweb=%s\ne2e=%s\nops=%s\n' \
+            "$docs" "$core" "$web" "$e2e" "$ops" >> "$GITHUB_OUTPUT"
 
   docs:
     needs: changes
@@ -154,10 +160,6 @@ jobs:
         working-directory: apps/web
         run: bun install --frozen-lockfile
 
-      - name: Install Playwright Chromium
-        working-directory: apps/web
-        run: bunx playwright install --with-deps chromium
-
       - name: Web unit and build gate
         working-directory: apps/web
         run: |
@@ -166,13 +168,18 @@ jobs:
           bun run check
           bun run build
 
+      - name: Install Playwright Chromium
+        if: needs.changes.outputs.e2e == 'true'
+        working-directory: apps/web
+        run: bunx playwright install --with-deps chromium
+
       - name: Desktop E2E
-        if: github.event_name == 'pull_request'
+        if: needs.changes.outputs.e2e == 'true' && github.event_name == 'pull_request'
         working-directory: apps/web
         run: bun run test:e2e
 
       - name: Full desktop and mobile E2E
-        if: github.event_name == 'push'
+        if: needs.changes.outputs.e2e == 'true' && github.event_name == 'push'
         working-directory: apps/web
         env:
           PREP_WATCHDECK_FULL_E2E: "1"
