@@ -204,7 +204,7 @@ jobs:
             scripts/ops/install-user-services.test.mjs \
             scripts/ops/market-postgres-restore.test.mjs
 
-  gate:
+  verify:
     needs: [changes, docs, core, web, ops]
     if: always()
     runs-on: ubuntu-latest
