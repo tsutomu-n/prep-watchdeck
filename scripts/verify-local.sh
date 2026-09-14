@@ -55,17 +55,14 @@ else
   printf '%s\n' 'isolatedPostgres=external TEST_DATABASE_URL supplied'
 fi
 
-echo "== repository maintenance tests =="
+echo "== repository contract tests =="
 cd "$ROOT_DIR"
 bun test \
-  scripts/maintenance/document-metadata.test.mjs \
-  scripts/maintenance/document-links.test.mjs \
+  scripts/maintenance/document-contracts.test.mjs \
   scripts/maintenance/product-boundary.test.mjs \
-  scripts/maintenance/test-database-url.test.mjs \
-  scripts/maintenance/web-port.test.mjs \
+  scripts/maintenance/runtime-targets.test.mjs \
   scripts/ops/install-user-services.test.mjs \
-  scripts/ops/market-postgres-restore.test.mjs \
-  scripts/ops/run-isolated-shadow.test.mjs
+  scripts/ops/market-postgres-restore.test.mjs
 
 echo "== document metadata =="
 bun scripts/maintenance/check-document-metadata.mjs
@@ -102,5 +99,5 @@ bun run check
 echo "== web: build =="
 bun run build
 
-echo "== web: Playwright E2E =="
-bun run test:e2e
+echo "== web: Playwright E2E (desktop + mobile) =="
+PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e
