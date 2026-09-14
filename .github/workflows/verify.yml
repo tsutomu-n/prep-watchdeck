@@ -15,10 +15,103 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  verify:
+  changes:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+      core: ${{ steps.filter.outputs.core }}
+      web: ${{ steps.filter.outputs.web }}
+      ops: ${{ steps.filter.outputs.ops }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
+      - name: Detect changed surfaces
+        id: filter
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            printf '%s\n' 'docs=true' 'core=true' 'web=true' 'ops=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          files="$(git diff --name-only "${{ github.event.pull_request.base.sha }}" "${{ github.event.pull_request.head.sha }}")"
+          printf '%s\n' "$files"
+
+          if grep -Eq '^\.github/workflows/' <<<"$files"; then
+            printf '%s\n' 'docs=true' 'core=true' 'web=true' 'ops=true' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          matches() {
+            grep -Eq "$1" <<<"$files"
+          }
+
+          docs=false
+          core=false
+          web=false
+          ops=false
+
+          if matches '^(docs/|README\.md$|AGENTS\.md$|DESIGN\.md$|scripts/maintenance/(check-document-|document-|update-document-timestamp|product-boundary))'; then
+            docs=true
+          fi
+          if matches '^(apps/market-core/|schemas/|pyproject\.toml$|uv\.lock$)'; then
+            core=true
+          fi
+          if matches '^(apps/web/|schemas/)'; then
+            web=true
+          fi
+          if matches '^(scripts/(ops/|start-all\.sh$|start-local\.sh$|update-live\.sh$|verify-local\.sh$|lib/select-web-port\.sh$|lib/validate-test-database-url\.mjs$)|scripts/maintenance/runtime-targets\.test\.mjs$|config/systemd/|deploy/)'; then
+            ops=true
+          fi
+
+          printf 'docs=%s\ncore=%s\nweb=%s\nops=%s\n' "$docs" "$core" "$web" "$ops" >> "$GITHUB_OUTPUT"
+
+  docs:
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Document contracts
+        run: |
+          bun test \
+            scripts/maintenance/document-contracts.test.mjs \
+            scripts/maintenance/product-boundary.test.mjs
+          bun scripts/maintenance/check-document-metadata.mjs
+          bun scripts/maintenance/check-document-links.mjs
+          git diff --check HEAD^ HEAD
+
+  core:
+    needs: changes
+    if: needs.changes.outputs.core == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17@sha256:e42539a54ee3e82e21f19d7eded61b579869585f86b90b5e851ff0d3dd8b4001
+        env:
+          POSTGRES_DB: prep_watchdeck_test
+          POSTGRES_USER: prep_watchdeck_test
+          POSTGRES_PASSWORD: watchdeck_test_only
+        ports:
+          - 55439:5432
+        options: >-
+          --health-cmd "pg_isready -U prep_watchdeck_test -d prep_watchdeck_test"
+          --health-interval 2s
+          --health-timeout 2s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://prep_watchdeck_test:watchdeck_test_only@127.0.0.1:55439/prep_watchdeck_test
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -31,11 +124,29 @@ jobs:
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-
       - name: Install market-core dependencies
         run: uv sync --package prep-watchdeck-market --group dev
+
+      - name: Market Core gate
+        run: |
+          uv lock --check
+          cd apps/market-core
+          uv run python -m pytest -q
+          uv run ruff check src tests
+          uv run ruff format --check --diff src tests
+          uv run pyrefly check
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install web dependencies
         working-directory: apps/web
@@ -45,5 +156,62 @@ jobs:
         working-directory: apps/web
         run: bunx playwright install --with-deps chromium
 
-      - name: Run local verification suite
-        run: bash scripts/verify-local.sh
+      - name: Web unit and build gate
+        working-directory: apps/web
+        run: |
+          bun run generate:types
+          bun test
+          bun run check
+          bun run build
+
+      - name: Desktop E2E
+        if: github.event_name == 'pull_request'
+        working-directory: apps/web
+        run: bun run test:e2e
+
+      - name: Full desktop and mobile E2E
+        if: github.event_name == 'push'
+        working-directory: apps/web
+        env:
+          PREP_WATCHDECK_FULL_E2E: "1"
+        run: bun run test:e2e
+
+  ops:
+    needs: changes
+    if: needs.changes.outputs.ops == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Runtime and operations safety
+        run: |
+          bun test \
+            scripts/maintenance/runtime-targets.test.mjs \
+            scripts/ops/install-user-services.test.mjs \
+            scripts/ops/market-postgres-restore.test.mjs
+
+  gate:
+    needs: [changes, docs, core, web, ops]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all selected gates to pass
+        shell: bash
+        run: |
+          set -euo pipefail
+          for result in \
+            "${{ needs.changes.result }}" \
+            "${{ needs.docs.result }}" \
+            "${{ needs.core.result }}" \
+            "${{ needs.web.result }}" \
+            "${{ needs.ops.result }}"; do
+            case "$result" in
+              success|skipped) ;;
+              *) printf 'verification gate failed: %s\n' "$result" >&2; exit 1 ;;
+            esac
+          done
