@@ -1,57 +1,50 @@
 # Decision 0007: 市場監視専用の製品境界
 
 - 作成: `2026-08-02T22:00:39+09:00`
-- 更新: `2026-08-12T21:38:47+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
 - 状態: `設計判断`
 
 ---
 
-> **一部superseded:** Candidateをproduction surfaceへ含める記述は
-> [Decision 0010](0010-retire-74h-candidate-deep-backfill.md)により置換された。
-> 市場監視専用、Past Note、state、退役APIの境界は引き続き有効である。
+> **製品境界はsuperseded:** [Decision 0012](0012-product-evolution-boundary.md)により、
+> Watchdeckをmonitoring-onlyへ永久固定する判断、Trade Memo / Attack Ticket / Weekly Review / Pre-Trade等の
+> feature名をproductionから禁止する判断、Past Noteだけを唯一の判断記録にする境界は置換された。
+>
+> 旧state/archive/routeの履歴と、当時退役させた実装を理解するためにこのDecisionを残す。
 
-## 決定
+## 当時の決定
 
-`prep-watchdeck`のproduction surfaceを市場監視へ限定する。Cold snapshot、Hot ticker、
-detail chart、Candidate、Watchlist、選択銘柄detail、Smart Rank、Symbol Monitoring Rail、
-VPI-Lite+補助表示、Past Note、Dashboard settingsを維持する。
+当時はproduction surfaceを市場監視へ限定し、Cold snapshot、Hot ticker、detail chart、Candidate、Watchlist、
+Smart Rank、VPI-Lite+、Past Note等を残し、Attack Ticket、Trade Memo、TRADE/SKIP memo、Weekly Review、
+Deal Check、Pre-Trade Check、Position Size Pressure等を退役させた。
 
-Attack Ticket、Trade Memo、TRADE / SKIP memo、Quick SKIP、Full SKIP、Weekly Review、
-Deal Check、Pre-Trade Check、Position Size Pressureは退役させる。対応するproduction UI、
-domain、repository、CSV export、state path、API routeを置かない。旧API
-`/api/trade-memos`、`/api/attack-tickets`、`/api/weekly-review`は全methodで404となる。
+旧API routeやstate pathも退役対象とした。
 
-## Past Noteの境界
+## 当時のPast Note境界
 
-Past Noteは取引記録の代替ではなく、銘柄、観測理由、観測日時、有効期限、短い注記を持つ
-monitoring annotationである。作成時の`expiresAt`は60日後で、`observedAt`から60日経過または
-期限到達時に月別Archiveへ移す。localhost write boundary、atomic write、lockを維持する。
+Past Noteを60日monitoring annotationとし、trade journalやexecution historyの代替にしなかった。
 
-## 表示契約
+現在はPast Noteを観測annotationとして維持しつつ、Decision Memo、Trade Journal、review workflowを別conceptとして
+追加できる。
 
-scanner snapshotの内部category `NO_TRADE`はschema、fixture、filter、過去snapshotとの互換性のため
-変更しない。利用者向け表示だけを`監視除外候補`へ統一する。ranking、score、上昇色、VPI、
-選択状態は確認順または市場状態であり、売買推奨ではない。
+## 当時の表示契約
 
-## Stateと履歴
+ranking、score、VPI、selection等を自動的な売買推奨と同義にしない方針は、Decision 0005のexecution分離として
+現在も有用である。
 
-active state layout v2はDB/WAL、snapshots、past-notes、dashboard-view-settings、usage-events、
-opsだけを持つ。retired recordは新しいactive targetへcopyせず、source全体を検証付きRepo外Archiveへ
-保持する。sourceは自動削除しない。version markerがない既存Archiveはlayout v1として検証でき、
-未知versionはfail-closedにする。
+一方、ranking、score、direction、predictionを表示すること自体は禁止しない。
 
-日次サマリーはschema v2としてmonitoring stateだけを読み、`ops/daily/v2/`へ出力する。
-過去のschema v1出力とlegacy usage eventは履歴として保持し、現行機能へ再昇格させない。
+## State / Archiveの履歴
 
-## 理由
+旧scanner時代のstate layout、retired records archive、legacy usage event等はrollback/data preservationの履歴として
+残る場合がある。存在だけをproduction機能復活の根拠にも、再実装禁止の根拠にも使わない。
 
-市場監視と取引ライフサイクル管理を同じ製品に持たせると、監視signalがexecution判断に見え、
-UI、API、state、review責務が過大になる。監視に必要なannotationと表示設定だけを残すことで、
-市場dataの発見・絞り込み・context確認へ責任を限定できる。
+新しいDecision Memo / Trade Journal等を追加する場合、旧Archiveから自動restoreする必要はない。新しいschema、
+state、migration、UI/APIを現在要件から設計する。
 
-## 帰結
+## 現在の解釈
 
-- 取引journal、損益集計、position sizing、注文連携を新規実装しない。
-- 旧機能を戻す場合はこのDecisionを置換する新しいADR、state migration、API/UIの再設計、
-  Archiveからの明示的restore手順が必要である。
-- Archiveの存在だけをproduction機能復活の根拠にしない。
+- 市場監視だけでなく、発見、ranking、分析、decision support、journal/reviewをWatchdeck内へ持てる。
+- 自動注文、資金移動、無人executionはDecision 0005に従い別Decisionを要求する。
+- 旧feature名をCIで禁止しない。
+- 旧feature実装をそのまま復元する義務もない。必要な価値だけ現在architectureへ再設計する。
