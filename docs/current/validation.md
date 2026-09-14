@@ -28,7 +28,8 @@ test green、HTTP health、単一snapshotだけをruntime/data quality/deploy/cu
 | --- | --- |
 | `docs/`, `README.md`, `AGENTS.md`, `DESIGN.md`, docs tooling | document contract / metadata / link |
 | `apps/market-core/`, `schemas/`, Python workspace | isolated Postgres + pytest + Ruff + Pyrefly |
-| `apps/web/`, `schemas/` | generated types + unit + Svelte check + build + desktop E2E |
+| `apps/web/`, `schemas/` | generated types + unit + Svelte check + build |
+| Webのroute/component/style/theme/market UI、E2E、schema | desktop E2E |
 | ops/runtime script、systemd、deploy | runtime target + install + restore safety |
 | workflow自体 | 全surface |
 
@@ -72,12 +73,13 @@ bun run generate:types
 bun test
 bun run check
 bun run build
-bun run test:e2e
 ```
 
-通常のPR E2Eはdesktop smokeを1回実行する。E2Eは画面表示、検索、selection command、stale/error表示、layout破綻など
-browser境界でしか確認できない主要flowへ限定する。テーマ個数、フォント個数、固定notional等の変更可能な現在値をE2Eで
-永久固定しない。
+route、component、style、theme、market UI、E2E fixture、schemaなどbrowser behaviorへ影響する変更では、続けて
+`bun run test:e2e`を実行する。通常PR E2Eはdesktop smokeを1回だけ実行する。
+
+E2Eは画面表示、検索、selection command、stale/error表示、layout破綻などbrowser境界でしか確認できない主要flowへ
+限定する。テーマ個数、フォント個数、固定notional等の変更可能な現在値をE2Eで永久固定しない。
 
 full E2E:
 
