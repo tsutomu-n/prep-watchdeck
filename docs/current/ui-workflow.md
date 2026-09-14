@@ -1,135 +1,134 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-18T23:30:00+09:00`
-- 検証: `2026-08-18T23:30:00+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
-## 主要flow
+## この文書の範囲
 
-1. Universeの全instrumentをbase、Venue順で確認する。
-2. 検索、Venue、coverage、quality filterで監視対象を絞る。
-3. mark、reference種別、funding、OI、24時間出来高、鮮度、provenanceをVenue別に確認する。
+この文書は**現在実装済みのPerp Universe UI**の挙動を説明する。
+将来のranking、Stocks、prediction、journal、複数selection、追加Chart等を禁止する製品境界ではない。
+製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
+
+## 現行主要flow
+
+1. Universeのinstrumentを確認する。
+2. 検索、Venue、coverage、quality filterで対象を絞る。
+3. mark、reference種別、funding、OI、24時間出来高、freshness、provenanceをVenue別に確認する。
 4. group化済みinstrumentでは、条件を満たす時だけ参考mark中央値を確認する。
 5. 行を選び、primary Venue、Chart、groupの板・約定・book walkを確認する。
-6. 後で再確認する文脈だけPast Noteへ保存する。
+6. 後で再確認する文脈をPast Noteへ保存できる。
 
-売買方向、期待収益、裁定機会、推奨Venue、ランキングは表示しない。
+現在の画面はbase→Venueの既定順でありranking UIは未実装。ただしranking、score、direction等は製品境界内で
+追加できる。
 
 ## 状態軸
 
-UIは次の状態を混ぜない。
+現行UIは次を必要に応じて分離する。
 
-- **Data quality**: `ready / partial / stale / unavailable`
-- **Freshness**: 観測後の秒数と許容時間
-- **Coverage**: `3 Venue / 2 Venue / 単独 / 未group`
-- **Operational state**: artifact refresh失敗、selection失敗、pending、heartbeat
-- **Selection**: 選択中または未選択
+- Data quality: `ready / partial / stale / unavailable`
+- Freshness: 観測後の経過と利用可能性
+- Coverage: cross-Venue groupingの状態
+- Operational state: artifact refresh、selection、service等の動作状態
+- Selection: 選択中または未選択
 
-Data qualityはそれぞれ`正常 / 一部取得 / 期限切れ / 取得不能`と表示する。Coverageが単独または
-未groupであることは品質不良ではないためneutralに表示する。selectionやWeb refreshの操作失敗も
-market data qualityへ読み替えない。
+新しいranking/model state等を追加する場合も、data qualityとmodel outputを混同しない。
 
-Market Coreが`stale / unavailable`としてnullにした値を、Webが前回値や0で補わない。ageがない場合は
-`取得時刻なし`と表示する。
+Market Coreが`stale / unavailable`としてnullにした値を、Webが前回値や0で補わない。
 
 ## 更新停止とvalidated snapshot
 
-Webは5秒ごとに4 artifactを再取得する。すでにschema・generation・freshnessを検証済みのbundleを
-表示している状態で再取得に失敗した場合、既存DOMを消さず次を表示する。
+現行Webは5秒ごとにartifact bundleを再取得する。再取得に失敗し、直前のschema検証済みbundleを表示し続ける
+場合は、更新停止であることと最終検証時刻を表示する。
 
-> 更新停止
-> 最新データを取得できません。以下は最後に検証できたsnapshotです。
-
-これはartifact statusへ新しい値を追加するものではなくWebのoperational stateである。表示中の
-`ready / partial / stale / unavailable`を勝手に変更しない。bannerには`service-state.generatedAt`を
-最終検証時刻として併記し、再取得成功時にbannerを消す。5秒pollごとに強いalertを反復しない。
+5秒、artifact数、poll方式は現行実装値であり変更可能。
 
 ## 品質理由
 
-artifactの`qualityReasons`と`errorCode`はWeb presentation layerで人間向け日本語へ変換する。通常表示は
-理由の意味を示し、raw codeは展開可能な`技術情報`へ残す。未知codeを握り潰さず、未定義理由として
-raw codeを表示する。
+artifactの`qualityReasons`と`errorCode`は人間向け説明とraw codeを確認できるようにする。
+unknown codeを握り潰さない。
 
-Chart、参考mark中央値、selected depth、book walkにも同じ規則を適用する。`partial`は原因ではなく
-集約結果なので、可能な範囲で子statusまたはreasonを併記する。
+新しいranking、prediction、backtest、portfolio等でも、入力dataのqualityや不足理由を表示できる設計を優先する。
 
 ## Universe Explorer
 
-各行は少なくともbase、Venue、source symbol、group/単独状態、mark、funding、OI、24時間出来高、
-quality、観測時刻を識別できるようにする。quote、settle、collateral、reference price kind、
-source endpointは詳細またはprovenance表示から確認できる。
+現行各行ではbase、Venue、source symbol、group/単独状態、mark、funding、OI、24時間出来高、quality、観測時刻等を
+確認できる。
 
-検索はbase、source symbol、`venueInstrumentId`、quote、settleを対象にする。filterはnative
-input/selectを使い、labelを常時表示する。絞り込みで値のないitemを黙って除外する場合は、適用中filterと
-件数を示す。
+現在のfilterはsearch、Venue、coverage、quality。現在の既定sortはbase→Venue。
 
-group coverageとdata qualityは別軸である。単独instrumentは「品質不良」ではなく未group、
-stale/unavailableはcoverageに関係なく品質状態として示す。
+将来はranking、custom sort、score、asset class、strategy/model filter等を追加できる。
 
-参考mark中央値には次を併記する。
-
-- 参加Venue数
-- cycle/freshness条件
-- `USD/USDC/USDT parityを参考中央値だけに仮定`
-- executable priceでも売買推奨でもないこと
+参考mark中央値はreference valueであり、現在のcontractではexecutable priceではない。将来別のexecution contextを
+追加する場合は、その計算前提を別に示す。
 
 ## 選択
 
-行の選択は視覚state、keyboard focus、collector subscriptionを混同しない。Webは500ms debounce後に
-`/api/selection`へ1 commandを送り、その後market serviceの選択処理とartifact更新を待つ。同じ
-`groupId + venueInstrumentId`を5分ごとにheartbeatする。primaryを変える時は同じgroupでも新しい
-selection revisionとして扱う。
+現行実装では1 instrument/groupを選択し、500ms debounce後にselection commandを送り、5分ごとにheartbeatする。
 
-選択対象が次のUniverseから消えた、group membershipが変わった、commandが期限切れになった場合は、
-旧detailを有効なまま見せず選択解除またはunavailable理由を表示する。selection POST失敗は
-operational warningとして表示し、data quality色へ混ぜない。
+この`1 selection`、debounce、TTL、heartbeatは現在のruntime値であり永久制約ではない。
+将来は複数selection、pinned symbol、ranking shortlist等へ拡張できる。
 
-## 選択detail
+## Selected detail
 
-detailは次の順で表示する。
+現行detailは主に次を表示する。
 
-1. primary instrument identity、coverage、quote/settle/collateral、freshness
-2. 5m / 15m / 1h / 4h / 24h Chart
+1. instrument identity、coverage、quote/settle/collateral、freshness
+2. `5m / 15m / 1h / 4h / 24h` Chart
 3. Venue別depth最大20段
 4. group横断の直近100 trades
-5. $100 / $500 / $1,000 book walk
+5. `$100 / $500 / $1,000` book walk
 6. Past Note
 
-Chartは選択した`venueInstrumentId`だけを描画する。artifactは`derived_final`と`confirmed`を保持するが、
-現画面ではfinalityを識別表示しない。欠落bar、version境界、不完全barを埋めず、timeframe変更で
-選択instrumentを変えない。partial/incomplete理由は人間向け文言とraw codeの両方を確認できる。
+これらのtimeframe、bar数、depth段数、trade件数、notional、section順は現行値であり変更可能。
 
-book walkはbuy/sellを分け、平均価格とtop-of-bookからのbpsだけを表示する。10秒超、板不足、
-非USD-like、単位不明では数値の代わりに理由を表示する。常に次を明記する。
+Chart、indicator、rankingはcross-Venue group化と別責務として扱える。将来、単独instrumentでもidentityとsourceが
+確認できればChart/indicator/rankingを提供できる。
 
-> 現在受信した板だけの概算。fee、将来impact、実際の注文可否を含まない。
+book walk等のexecution contextは、fee inclusion、impact assumption、data age、order availabilityの意味を明示する。
+現在の実装がfee/impactを含まないことを、将来も永久禁止とはしない。
 
-## Past Note
+## Notes / Journal
 
-Past Noteは`venueInstrumentId`単位の監視annotationで、trade journalではない。reasonまたは本文を
-必須とし、保存中の重複submitを防ぐ。選択が変わっても別instrumentのdraft、feedback、noteを
-混在させない。reasonが空なら`過去注記`とし、同じreasonで再保存した場合は同じinstrumentの既存noteを
-新しいnoteで置き換える。60日を過ぎたnoteは再表示しない。
+現行Past Noteは`venueInstrumentId`単位の観測annotationで、現在は60日後にread時pruneする。
+60日は現行policyであり変更可能。
+
+将来、Past Noteとは別にDecision Memo、Trade Journal、review workflowを追加できる。
+annotation、decision、execution recordを同一概念へ無理に統合しない。
+
+## Ranking / Prediction
+
+将来のUIはAttention Rank、Momentum、Volume、Breakout、LONG/SHORT候補、prediction等を表示できる。
+
+追加時は可能な範囲で次を示す。
+
+- rank/scoreの意味
+- timeframe
+- component / reason
+- data-as-of
+- data quality
+- model/ruleset version
+- insufficient-data reason
+
+高rankや方向評価を自動注文と同義にしない。
 
 ## Qualityと障害
 
-- missing、partial、stale、invalidを空文字や0へ変換しない。
-- source timestampがない場合は「なし」とし、observed timeへ置き換えない。
-- Web process healthとmarket data qualityを同じbadgeにしない。
-- 一部Venue障害では取得できたVenueを残し、失敗Venueと理由を表示する。
-- artifact schema不一致やrefresh失敗では更新停止bannerを表示する。直前の検証済みDOMが残る場合も、
-  その全値を現在値として扱わない。
+- missing、partial、stale、invalidを空文字や0、前回値へ変換しない。
+- source timestampがない場合は勝手にsource timeを捏造しない。
+- Web process healthとmarket data qualityを混同しない。
+- 一部source障害では成功データと失敗理由を区別する。
+- schema不一致やrefresh失敗を黙って正常表示しない。
 
-## Responsiveとaccessibility
+## Responsive / Accessibility
 
-Desktop 1440pxはUniverseとdetailを同時に走査できる密度を保つ。Mobile 390pxはfilter、行、
-selected detailを縦方向へ並べ、横overflowで主要操作を隠さない。tap targetは44px以上、主要actionは
-48pxを目安にする。
+- Desktopとnarrow viewportの双方で主要flowへ到達できる。
+- semantic table/list/form control、可視focus、keyboard操作、status textを使う。
+- 色だけでmovement、quality、coverage、selection、ranking stateを表さない。
+- IME compositionを壊さない。
+- reduced-motionを尊重する。
 
-semantic table/list、native form control、可視focus、keyboard操作、status textを使う。
-色だけでmovement、quality、coverage、selectionを表さない。検索IME composition中にfilterを確定しない。
-自動scroll、点滅、常時animation、hover必須操作を追加しない。自動refresh失敗はpolite status、
-明示的なselection操作失敗だけ必要に応じてalertを使う。
+旧版の固定breakpoint、row height、layout、animation禁止等はdesign defaultとして変更できる。
