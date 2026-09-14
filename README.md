@@ -1,8 +1,8 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-09-14T18:18:00+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-14T20:04:38+09:00`
+- 検証: `2026-09-14T20:04:38+09:00`
 - 状態: `現行`
 
 ---
@@ -64,7 +64,7 @@ POSTGRES_PASSWORD=<local-secret>
 PREP_WATCHDECK_MARKET_DATABASE_URL=postgresql://prep_watchdeck_market:<url-encoded-secret>@127.0.0.1:55432/prep_watchdeck_market
 ```
 
-現在のproduction installer/CLIはこの専用targetを検証します。別targetを使うtest/shadowはproductionから隔離します。
+現在のproduction installer/CLIはこの専用targetを検証します。別targetを使うtestはproductionから隔離します。
 
 ## systemd user service
 
@@ -155,17 +155,21 @@ restoreは破壊的操作なので[現行運用](docs/current/operations.md)に�
 
 ## 検証
 
-Repo横断gate:
+PRでは変更範囲に近いgateだけを実行します。docs-only変更でPostgresやChromiumを起動せず、Market Core変更では
+isolated Postgresを含むPython gate、Web変更ではunit/check/build、browser behaviorへ影響するUI/schema変更だけ
+Desktop E2Eを実行します。ops変更ではruntime/install/restore safety testを実行します。
+
+Repo横断のfull local gate:
 
 ```bash
 bash scripts/verify-local.sh
 ```
 
-現在のgateはproduct boundary、docs、isolated Postgres integration、Python quality gate、Web test/build/E2E等を実行します。
+`main`へのpushとfull local gateでは全surfaceを確認し、Playwrightはdesktopとmobileを実行します。
 詳細は[現行検証](docs/current/validation.md)を参照してください。
 
-P0移行時に使用した旧DuckDB baseline、固定15分/60分shadow等は当時のqualification evidenceであり、すべての将来
-featureへ永久適用しません。新しいsource、ranking、asset class、model等では変更riskに合うvalidationを定義します。
+P0移行時に使用した旧DuckDB baseline、固定15分/60分shadow harnessと専用capacity samplerは退役済みです。
+新しいsource、ranking、asset class、model等では変更riskに合うvalidationを定義します。
 
 ## 正本
 

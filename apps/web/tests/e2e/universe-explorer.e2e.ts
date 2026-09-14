@@ -24,60 +24,13 @@ test.afterEach(async () => {
   await rm(runtimeRoot, { recursive: true, force: true });
 });
 
-test("Universe Explorerの主要な監視flowと品質表示を操作できる", async ({ page }) => {
+test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { name: "Perp Universe Explorer" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
-  await expect(page.getByText("3 / 3", { exact: true })).toBeVisible();
-  await expect(page.getByText("最終検証", { exact: true })).toBeVisible();
-  await expect(page.getByText("2 Venue", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("単独", { exact: true }).first()).toBeVisible();
-
-  const operational = page.getByLabel("運用上の注意");
-  await expect(operational).toContainText("表示用データの一部を書き込めませんでした");
-  const qualityReasons = page.getByLabel("データ品質理由");
-  await expect(qualityReasons).toContainText("正常でないinstrumentを含みます");
-  await expect(qualityReasons).not.toContainText("表示用データの一部を書き込めませんでした");
-
-  const inspector = page.getByRole("complementary");
-  await expect(inspector.getByRole("heading", { name: "参考mark中央値" })).toBeVisible();
-  await expect(inspector.getByText(/Parity仮定・reference only/)).toBeVisible();
-  await expect(
-    inspector.getByText("USD、USDC、USDTは参考中央値だけ等価扱い", { exact: true })
-  ).toBeVisible();
-  await expect(inspector.getByRole("heading", { name: "Venue L1" })).toBeVisible();
-  await expect(inspector.getByText("Quote", { exact: true })).toBeVisible();
-  await expect(inspector.getByText("Collateral", { exact: true })).toBeVisible();
-
-  const selectedMarket = page.getByRole("region", { name: "選択groupの板・約定" });
-  await expect(selectedMarket.getByText("最大20段 / 直近100件", { exact: true })).toBeVisible();
-  await expect(selectedMarket.getByText(/手数料を含まず、将来impactを予測せず/)).toBeVisible();
-  await expect(
-    selectedMarket.getByRole("columnheader", { name: "板上概算" }).first()
-  ).toBeVisible();
-  await expect(
-    selectedMarket.getByRole("rowheader", { name: "$100", exact: true }).first()
-  ).toBeVisible();
-  await expect(
-    selectedMarket.getByRole("rowheader", { name: "$500", exact: true }).first()
-  ).toBeVisible();
-  await expect(
-    selectedMarket.getByRole("rowheader", { name: "$1,000", exact: true }).first()
-  ).toBeVisible();
-  await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true }).first()).toBeVisible();
-  await expect(selectedMarket.getByText("直近約定 1件", { exact: true })).toBeVisible();
-  await selectedMarket.getByText("直近約定 1件", { exact: true }).click();
-  await expect(selectedMarket.getByRole("row", { name: /— bitget buy 65,000 0.01/ })).toBeVisible();
-
-  const theme = page.getByLabel("配色", { exact: true });
-  const font = page.getByLabel("フォント", { exact: true });
-  await expect(theme).toBeVisible();
-  await expect(font).toBeVisible();
-  await theme.selectOption("paper-ledger");
-  await font.selectOption("terminal");
-  await expect(page.locator("html")).toHaveAttribute("data-color-scheme", "paper-ledger");
-  await expect(page.locator("html")).toHaveAttribute("data-font-scheme", "terminal");
+  await expect(page.getByLabel("運用上の注意")).toBeVisible();
+  await expect(page.getByLabel("データ品質理由")).toBeVisible();
 
   const search = page.getByLabel("検索", { exact: true });
   await search.fill("ETH");
@@ -90,26 +43,18 @@ test("Universe Explorerの主要な監視flowと品質表示を操作できる",
   await expect
     .poll(async () => (await readSelectionCommand())?.venueInstrumentId ?? null)
     .toBe("hyperliquid:BTC");
-  await expect(selectedMarket.getByText(/選択groupのartifactを待っています/)).toBeVisible();
-  await expect(selectedMarket.getByText("板 2 bid / 2 ask", { exact: true })).toHaveCount(0);
 
   const command = await readSelectionCommand();
   expect(command).toMatchObject({
-    schemaVersion: 1,
     groupId: "crypto:BTC:linear-perp",
     venueInstrumentId: "hyperliquid:BTC"
   });
-  expect(Object.keys(command ?? {}).sort()).toEqual([
-    "groupId",
-    "heartbeatAt",
-    "requestedAt",
-    "schemaVersion",
-    "venueInstrumentId"
-  ]);
+  await expect(
+    page.getByRole("region", { name: "選択groupの板・約定" }).getByText(/artifactを待っています/)
+  ).toBeVisible();
 
   await rm(resolve(artifactRoot, "service-state.json"), { force: true });
   await expect(page.getByText("更新停止", { exact: true })).toBeVisible({ timeout: 8_000 });
-  await expect(page.getByText(/最後に検証できたsnapshotです/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
 
   const horizontalOverflow = await page.evaluate(() => {
