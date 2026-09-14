@@ -1,52 +1,65 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-09-04T20:49:47+09:00`
-- 検証: `2026-09-04T20:49:47+09:00`
+- 更新: `2026-09-14T18:18:00+09:00`
+- 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
 ---
 
-このindexは、3 Venue Perp Universe Explorerの現行仕様と有効な設計判断を案内する。
-固定されたmarket件数、PID、artifact時刻、test件数は現行事実として置かない。
+このindexは、現行production runtimeと、今後のWatchdeck製品境界を分けて案内する。
+固定されたmarket件数、PID、artifact時刻、test件数、benchmark値を将来の製品制約にしない。
 
-## まず読む
+## 最初に読む
 
-- [user-manual.md](current/user-manual.md): 人間向けの操作・読み方とAI向け最小参照をまとめた正本
-- [watchdeck-v1-scope.md](current/watchdeck-v1-scope.md): v1 P0の責務、完成条件、scope freeze
-- [overview.md](current/overview.md): 製品価値、対象市場、責任範囲
-- [ui-workflow.md](current/ui-workflow.md): Universeの絞り込み、選択、Chart、板・約定、Past Note
-- [operations.md](current/operations.md): 専用Postgres、systemd、state、Funding同期、maintenance、rollback
+- [product-boundary.md](current/product-boundary.md): **製品境界と将来拡張の最優先正本**
+- [0012 Product evolution boundary](decisions/0012-product-evolution-boundary.md): 製品境界更新の設計判断
+- [user-manual.md](current/user-manual.md): 現行production UIの操作・読み方
+- [overview.md](current/overview.md): 現在の製品価値とproduction実装範囲
+- [architecture.md](current/architecture.md): 現行market-core、Postgres、Parquet、artifact、Webの境界
 
-## 現行仕様
+## 現行runtime仕様
 
-- [architecture.md](current/architecture.md): market-core、Postgres、Parquet、artifact、Webの境界
-- [data-contracts.md](current/data-contracts.md): identity、保存単位、Funding、4 JSON、local write API
-- [validation.md](current/validation.md): focused gate、full gate、isolated smoke/shadow
+- [data-contracts.md](current/data-contracts.md): 現在実装済みのidentity、保存単位、schema、API
+- [ui-workflow.md](current/ui-workflow.md): 現在実装済みのUniverse、selection、Chart、depth/trade、Past Note
+- [operations.md](current/operations.md): 専用Postgres、systemd、state、maintenance、backup、rollback
+- [validation.md](current/validation.md): focused / full / runtime validation
 - [documentation.md](current/documentation.md): 文書の正本と更新規則
-- [../DESIGN.md](../DESIGN.md): theme/fontを維持したUniverse Explorerのdesign contract
+- [watchdeck-v1-scope.md](current/watchdeck-v1-scope.md): 完成済みv1 P0 baselineと当時のscope記録
+- [../DESIGN.md](../DESIGN.md): 現行visual defaultsと維持するUX/accessibility原則
+
+上記runtime文書にあるVenue数、timeframe、bar数、selection数、depth/trade件数、artifact数、retention、
+localhost配置等は現在実装を説明する。`product-boundary.md`に反する形で永久禁止として解釈しない。
 
 ## 有効な設計判断
 
-- [0001 Local-first](decisions/0001-local-first.md)
-- [0002 public API only](decisions/0002-public-api-only.md)
-- [0005 自動売買を含めない](decisions/0005-no-automatic-trading.md)
-- [0011 3 Venue Perp Universeへ置換](decisions/0011-perp-universe-replacement.md)
+- [0001 Local-first](decisions/0001-local-first.md): local-firstを維持。古いstorage実装詳細は現行契約ではない
+- [0005 自動executionを含めない](decisions/0005-no-automatic-trading.md): ranking/scoreは許可し、既定で自動注文へ接続しない
+- [0011 3 Venue Perp Universeへ置換](decisions/0011-perp-universe-replacement.md): **現行Perp runtimeのarchitecture baseline**
+- [0012 製品境界を拡張可能な裁量支援へ更新](decisions/0012-product-evolution-boundary.md): **将来の製品境界**
 
-Decision 0011は、旧Bitget scanner、DuckDB snapshot、Candidate/Ranking、VPI、Hot ticker、
-3市場pilotに関するDecision 0003、0004、0006〜0010のproduction契約を置換する。旧Decisionは
-履歴とrollback文脈として残すが、現行実装の導線にはしない。
+Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴として参照できるが、Decision 0012と
+現行product boundaryに反する部分を将来機能の禁止根拠にしない。
 
 ## 実装計画
 
-現在進行中のactive planはない。`docs/plans/active/<task>/`は未完了作業が開始された場合だけ作成し、
-完了、中止、または置換後は現行treeから削除する。過去planはGit履歴で参照する。
+`docs/plans/active/<task>/`には未完了で再開対象のplanだけを置く。完了、中止、置換後は現行treeから削除し、
+過去planはGit履歴で参照する。
 
 ## 正本の優先順位
 
-1. 現行code、schema、migration、tests、CLI help
-2. `docs/current/`
-3. `docs/decisions/0011-perp-universe-replacement.md`
-4. 現在進行中のactive plan（存在する場合）
+製品境界・将来機能の可否:
 
-現在の稼働状態はsystemd、service log、DB、`artifacts/service-state.json`、実画面で確認する。
+1. `docs/current/product-boundary.md`
+2. `docs/decisions/0012-product-evolution-boundary.md`
+3. 現行code/schemaの実装上の事実
+4. その他の`docs/current/`
+5. Decision 0011以前の履歴
+
+現在productionの挙動:
+
+1. 現行code、schema、migration、tests、CLI help
+2. 対応する`docs/current/`
+3. Decision 0011
+
+現在の稼働状態はsystemd、service log、DB、artifact、実画面で確認する。
