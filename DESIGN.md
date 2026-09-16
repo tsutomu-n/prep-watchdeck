@@ -1,7 +1,7 @@
 # Prep Watchdeck Design Guide
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-16T21:23:15+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -142,7 +142,7 @@ UI変更では変更範囲に応じて次を組み合わせる。
 
 ```bash
 cd apps/web
-bun test
+bun run test
 bun run check
 bun run build
 ```
@@ -151,3 +151,27 @@ interaction / route / responsive変更は関連Playwrightを実行する。
 
 固定の1440px/390pxだけを永久のdesign targetにはしないが、Desktopとnarrow viewportの両方で主要flowを検証する。
 visual lintがtoolchainに存在する場合は利用するが、旧版の美観ルールを維持するためだけに新しい妥当なdesignを拒否しない。
+
+## 現行UniverseのChartと約定騰落率
+
+約定騰落率はMarkと別の指標としてlabelを持たせ、正負にはmovement色、欠測には理由のtextを使う。
+Desktopは独立列、MobileはMarkの下へ表示する。基準時刻inputはJSTとHH:mmを示し、
+選択detailには基準日時・基準価格・約定価格・取得時刻を併記する。
+
+Chartは「時間足」と実際の「表示期間」を分け、日足は1D、日付境界はJST 09:00と示す。
+「最新へ」「全体表示」「さらに過去を読み込む」を区別し、定期更新でズームを戻さない。
+native履歴の未確定足とcollectorのfinalityを同一視しない。
+
+## 独立ランキングの画面
+
+`/rankings`はUniverse Explorerから移動する独立した一覧と単一参照Chartを持つ。既存の色・罫線・
+余白・数値桁揃えを使い、上昇はup、下落はdown、要確認・更新停止はwarningで表す。
+比較時刻、対応数・有効数、選択条件、参照取引所と元の取扱い取引所を別々に読める配置とする。
+
+Desktopは一覧とChartを左右に配置し、Mobileは一覧の後にChartを置く。狭い幅ではJST基準設定が
+control行全体を使い、44px以上の操作高さを確保する。長い契約名・理由は折り返し、page全体を
+横scrollさせない。表内は限定した高さでscrollでき、表示pageに関係なく全対応銘柄から順位を求める。
+
+比較期間とChartの足間隔を別controlにする。選択をIDで保持し、filter対象外では選択名と警告を残す。
+mapから削除された選択はChartを停止する。Widgetの配色はアプリのdark/light modeに合わせ、
+TradingViewのcreditを表示する。ランキング更新でChartの閲覧範囲を初期化しない。

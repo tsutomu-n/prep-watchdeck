@@ -1,7 +1,7 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-16T21:23:15+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -9,7 +9,7 @@
 
 ## この文書の範囲
 
-この文書は現在productionの3 Venue Perp runtime architectureを記述する。
+この文書はRepositoryの現行実装を記述する。稼働中の配置versionは運用記録とunitから別に確認する。
 現在のprocess数、DB、artifact数、poll周期、selection数等を将来のWatchdeck全体へ永久固定しない。
 製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
 
@@ -124,3 +124,78 @@ path、port、DB engine、single-host構成は現行runtime値。local-first原�
 - source failure、model failure、ranking failureを既存market ingestion全体へ波及させない。
 - provenance、quality、unit、identity、timestampを新laneでも維持する。
 - production state/DBとtest/shadow/他project資源を隔離する。
+
+## Chart履歴の取得
+
+Webの`GET /api/chart-history`は検証済みUniverseのactive grouped instrumentだけを解決し、
+選択したVenueのnative時間足を取得する。Bitgetはv2の`candles`と`history-candles`、
+Hyperliquidは`candleSnapshot`、Asterは`klines`を使う。日足はUTC 00:00開始へ揃え、
+Bitgetでは`1Dutc`を指定する。Webへ取引所の秘密API keyを追加しない。
+
+1ページ最大500本、server cacheは30秒・32件、同時取得は8件までで同じ要求をまとめる。
+BitgetへのHTTP開始間隔はWeb process内で全銘柄・時間足共通の1秒以上とする。
+1 HTTP requestは10秒、待機を含むページ全体は30秒でtimeoutする。最新を60秒ごとに更新し、
+過去へのスクロールまたは追加ボタンで古いページを取得する。Browserは1銘柄・1時間足につき
+最大10,000本を保持する。取得量は取引所の配信範囲に依存し、DBの8日保持には依存しない。
+
+この履歴は表示用であり、Postgres・Parquet・既存4 artifactへ書き戻さない。
+`market-chart.json`はcollectorが保存した1分足の集約read modelとして引き続き検証するが、
+画面の長期Chartはnative履歴を描画する。native履歴にcollectorのSCD2履歴や
+`confirmed` / `derived_final`の判定を付け替えない。
+
+## 指定時刻からの約定騰落率
+
+Webの`GET /api/price-change`は同じUniverse照合・native candle取得を使い、指定したJST時刻の
+直前の確定1分足と最新の約定1分足を少量取得する。基準価格を日次anchor・契約version別に再利用し、
+最新価格のcacheと取得中要求は、設定時刻と独立した取得開始分ごとのkeyにする。分をまたいだ旧要求を
+新しい日次基準へ再利用しない。Bitgetの開始間隔はChartと同じqueueを使う。
+可視行と選択銘柄だけをBrowserから最大2要求で取得し、全Universeの定期一括要求を避ける。
+
+設定はBrowser単位のHH:mmで既定00:00。Collectorの状態・artifact schema・DB接続を増やさず、
+ユーザーごとに異なる時刻を選べる。約定価格同士の比率であり、L1のMarkや参考中央値へ混ぜない。
+native APIの欠測・鮮度は騰落率欄の理由として示し、Market Coreの品質判定を書き換えない。
+
+## 独立したデイトレランキング
+
+/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/apps/ranking-core/ は、Bybit・Binanceの公開USDT perpetualを
+別processで継続取得する。元の3 Venueから価格・売買代金を補完しない。既存artifactからは
+名簿作成時にidentityだけを抽出し、確認済みmapとして保存する。通常収集は保存済みmapで動作し、
+元のcollector、4 artifact bundleの鮮度、Postgres、Parquet、Selection、Past Noteへ依存しない。
+
+```text
+Bybit / Binance public trade klines
+                |
+                v
+       independent ranking process
+       | SQLite | frozen generation |
+                |
+       loopback read API (8769)
+                |
+       SvelteKit /api/rankings
+                |
+          /rankings page ------> one public TradingView Widget
+```
+
+元の銘柄名簿とランキングmapのversionを分ける。契約revisionごとに履歴を保存し、変更された参照契約の
+履歴を連結しない。銘柄別の取得先はmapで固定する。通常の確定足はWebSocket、初期履歴と欠測はRESTを
+使う。毎分の終了時刻Tから8秒後に入力を固定し、12秒の処理deadlineを超えた世代はAPIへ発行しない。
+計算・保存・発行は重複起動しない。計算入力は24時間分を固定し、同じ世代の期間・HH:mm別の再計算で
+後着足を混ぜない。
+
+保存先は /home/tn/.local/share/prep-watchdeck-ranking が既定。SQLiteは最大48時間の確定足を保持し、
+元stateと同一・内包関係の保存先を起動前に拒否する。公開HTTP接続に環境のproxyやDB接続設定を使わない。
+通常の制限付き起動は /home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/scripts/ranking/run-isolated.py を使う。
+bubblewrapでhost filesystemをread-onlyにし、専用stateと一時領域だけを書込み可能にする。
+新規unitはtemplateだけであり、既存installerの操作対象には追加していない。
+
+外部RESTはcatalog取得と履歴workerを共通の上限で制御し、各Provider 2 request/秒・同時2接続とする。
+WebSocketは全体6接続以内、再試行backoffは最大60秒、
+補完queueはProviderごと2,000、対象参照は最大1,500、問い合わせcacheは世代ごと32件。
+これらは上限であり、対応数や稼働受入の証明ではない。Browser数やHH:mmの変更で外部取得を増やさない。
+
+
+順位変化のため、発行済みの現在世代と直前1世代の固定入力を保持する。過去世代の連鎖は保持せず、
+各世代の条件cacheは32件以内。次世代を組み立てて公開する間だけ候補入力が加わる。
+再起動後は現在のDBから新しい世代を発行し、初回の比較元はなしとする。
+平常比とJST当日高安位置は、世代作成時のOHLC・quote turnoverから計算して固定し、
+指標を読むための追加REST、保存期間拡大、別Provider、Widgetデータ取得は加えない。

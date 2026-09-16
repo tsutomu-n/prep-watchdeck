@@ -1,7 +1,7 @@
 # prep-watchdeck 現行概要
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-16T21:23:15+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -12,13 +12,14 @@
 `prep-watchdeck`は、裁量トレーダーが市場から注目対象を発見し、分析し、比較し、最終判断を行うための
 local-first market intelligence workspaceである。
 
-現在のproduction surfaceはBitget、Hyperliquid Core、Asterのactive crypto linear perpetualを扱う
-Perp Universe Explorer。これは現行実装範囲であり、将来のasset class、Venue、データ源、ranking、
+Repositoryの現行surfaceはBitget、Hyperliquid Core、Asterのactive crypto linear perpetualを扱う
+Perp Universe Explorerと、確認済みの外部参照を使うデイトレランキング。稼働配置は運用記録で確認する。
+これは現行実装範囲であり、将来のasset class、Venue、データ源、ranking、
 forecast、Chart、保存方式の上限ではない。
 
 製品境界の正本は[`product-boundary.md`](product-boundary.md)。
 
-## 現行production機能
+## 現行実装の機能
 
 - 3 Venueのcatalogを15分周期、L1を60秒fixed-rateで取得する。
 - mark、reference price種別、BBO、funding、OI、24時間出来高、quality、freshness、provenanceを
@@ -26,7 +27,9 @@ forecast、Chart、保存方式の上限ではない。
 - 検索、Venue、coverage、quality filterでinstrumentを絞る。現在の既定sortはbase、次にVenue。
 - 条件を満たすgroupでは参考mark中央値を表示する。
 - 選択groupのdepth、trades、book walkを表示する。
-- 選択instrumentのChartを表示する。
+- 選択Venueのnative時間足をChartに表示し、過去履歴を追加できる。更新時の表示範囲を保持する。
+- 指定したJST時刻を基準に、同じVenue・契約の約定騰落率を表示する。
+- 固定参照の騰落率・売買代金ランキングと、順位変化・平常比・JST当日高安位置を表示する。
 - Past Noteを`venueInstrumentId`単位でローカル保存する。
 - Postgresの期限後履歴を照合済みParquetへ保存してbounded retentionする。
 
@@ -65,6 +68,7 @@ kill switch、audit、rollbackを扱う別Decisionを要求する。
 ## 現行構成
 
 - `apps/market-core`: Python 3.13、CLI `watchdeck-market`
+- `apps/ranking-core`: Python 3.13、独立collector・SQLite・loopback API
 - `apps/web`: SvelteKit 2 / Svelte 5、現在はlocalhost UI
 - `deploy/market-postgres`: 専用Postgres 17 Compose
 - `schemas`: 現行Web read model schema
