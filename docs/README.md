@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-16T22:14:16+09:00`
+- 検証: `2026-09-16T22:14:16+09:00`
 - 状態: `現行`
 
 ---
@@ -45,9 +45,8 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 
 ## 実装計画
 
-- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/plans/active/ranking-chart-release/PLAN.md](plans/active/ranking-chart-release/PLAN.md): ランキングとチャートの統合・公開・D05稼働反映。
-- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/plans/active/ranking-daily-use/GOALS.md](plans/active/ranking-daily-use/GOALS.md): 改訂D01〜D04はPASS。D05の受入契約と独立した数量・Chart未確認。
-- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/plans/active/ranking-daily-use/EVIDENCE.md](plans/active/ranking-daily-use/EVIDENCE.md): 実装・隔離実Provider受入の記録。
+ランキング・チャート統合とD05稼働受入は完了した。現行の運用・検証正本へ結果を反映し、
+完了planは削除した。過去の要求・試行・証拠台帳はPR #15のGit履歴で参照する。
 
 `docs/plans/active/<task>/`には未完了で再開対象のplanだけを置く。完了、中止、置換後は現行treeから削除し、
 過去planはGit履歴で参照する。

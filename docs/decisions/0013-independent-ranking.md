@@ -1,8 +1,8 @@
 # 独立した外部参照ランキング
 
 - 作成: `2026-09-12T09:20:26+09:00`
-- 更新: `2026-09-16T19:56:52+09:00`
-- 検証: `2026-09-16T19:56:52+09:00`
+- 更新: `2026-09-16T22:14:16+09:00`
+- 検証: `2026-09-16T22:14:16+09:00`
 - 状態: `設計判断`
 
 元の3取引所の全銘柄ランキングを、既存の可視行向け価格取得・artifact鮮度判定・保存先から分離する。
@@ -27,7 +27,7 @@ Widgetの価格・出来高や非公開APIをランキングへ取り込まな�
 毎分のランキング更新ではframeを再生成しない。
 
 起動wrapperはhost filesystemを読取り専用にし、新規stateだけを書込み可能にする。
-既存stateの権限やservice設定は変更しない。systemd templateは作成までとし、installや本番反映は別操作。
+既存stateの権限やservice設定は変更しない。systemd templateの作成と、承認されたhostへのinstall・稼働反映は別操作として扱う。
 2026-09-16の要求改訂により、ランキングの採用資格、元契約の数量換算、Widget対応を分離した。
 4指標は固定参照契約の確定足とUSDT quote turnoverから計算し、元契約の数量倍率を使わないためである。
 行の`verified`は原資産同一性と固定参照契約の確認を示し、元数量倍率nullやWidget reviewは
@@ -37,6 +37,7 @@ Widgetの価格・出来高や非公開APIをランキングへ取り込まな�
 map/APIのschema世代はv2とし、旧意味のmapを黙って読み替えない。
 採用先の対応契約不在を根拠から確認した`unsupported`と、同一性・参照の`review`を区別する。
 旧基準での未達・旧mapでの受入は当時の証拠であり、この改訂だけでPASSへ変更しない。
-進捗と未解決は
-[/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/docs/plans/active/independent-daytrade-ranking/EVIDENCE.md](../plans/active/independent-daytrade-ranking/EVIDENCE.md)
-で管理する。
+稼働受入と残る独立未確認は
+[/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/validation.md](../current/validation.md)、
+配置・復旧は
+[/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/operations.md](../current/operations.md)で管理する。

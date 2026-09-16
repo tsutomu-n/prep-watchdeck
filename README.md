@@ -1,8 +1,8 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-09-16T21:42:34+09:00`
-- 検証: `2026-09-16T21:42:34+09:00`
+- 更新: `2026-09-16T22:14:16+09:00`
+- 検証: `2026-09-16T22:14:16+09:00`
 - 状態: `現行`
 
 ---
@@ -14,8 +14,8 @@ local-first market intelligence workspaceです。
 Perp Universe Explorerです。価格、Funding、OI、24時間出来高、鮮度、取得元、安全にgroup化できた選択銘柄の
 板・約定・Chartを表示します。
 
-Repositoryには、取引所のnativeチャート履歴・JST基準の約定騰落率と、固定参照のデイトレランキングも
-実装しています。ランキングは専用collectorを使用します。操作・準備・稼働versionの確認方法は
+取引所のnativeチャート履歴・JST基準の約定騰落率と、固定参照のデイトレランキングも
+2026-09-16に通常稼働へ反映しました。ランキングは専用collectorを使用します。稼働versionの確認方法は
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/user-manual.md](docs/current/user-manual.md)と
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/operations.md](docs/current/operations.md)を参照してください。
 
