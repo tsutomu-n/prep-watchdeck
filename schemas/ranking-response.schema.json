@@ -1,0 +1,629 @@
+{
+  "$defs": {
+    "Coverage": {
+      "additionalProperties": false,
+      "properties": {
+        "sourceInstruments": {
+          "title": "Sourceinstruments",
+          "type": "integer"
+        },
+        "rows": {
+          "title": "Rows",
+          "type": "integer"
+        },
+        "cryptoRows": {
+          "title": "Cryptorows",
+          "type": "integer"
+        },
+        "supported": {
+          "title": "Supported",
+          "type": "integer"
+        },
+        "widgetSupported": {
+          "title": "Widgetsupported",
+          "type": "integer"
+        },
+        "valid": {
+          "title": "Valid",
+          "type": "integer"
+        },
+        "ranked": {
+          "title": "Ranked",
+          "type": "integer"
+        },
+        "reasons": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Reasons",
+          "type": "object"
+        }
+      },
+      "required": [
+        "sourceInstruments",
+        "rows",
+        "cryptoRows",
+        "supported",
+        "widgetSupported",
+        "valid",
+        "ranked",
+        "reasons"
+      ],
+      "title": "Coverage",
+      "type": "object"
+    },
+    "Indicator": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "history_missing",
+            "no_baseline",
+            "unsupported_period",
+            "starting",
+            "no_range",
+            "invalid_data",
+            "reference_unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "status"
+      ],
+      "title": "Indicator",
+      "type": "object"
+    },
+    "OriginalInstrument": {
+      "additionalProperties": false,
+      "properties": {
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "instrumentId": {
+          "title": "Instrumentid",
+          "type": "string"
+        },
+        "versionId": {
+          "title": "Versionid",
+          "type": "integer"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "baseAsset": {
+          "title": "Baseasset",
+          "type": "string"
+        },
+        "multiplier": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Original underlying quantity per unit; null means conversion is unverified. This does not determine fixed-reference ranking eligibility.",
+          "title": "Multiplier"
+        }
+      },
+      "required": [
+        "venue",
+        "instrumentId",
+        "versionId",
+        "symbol",
+        "baseAsset",
+        "multiplier"
+      ],
+      "title": "OriginalInstrument",
+      "type": "object"
+    },
+    "RankChange": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "compared",
+            "new",
+            "unavailable",
+            "not_ranked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "previousRank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previousrank"
+        },
+        "delta": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Delta"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        }
+      },
+      "required": [
+        "status",
+        "previousRank",
+        "delta",
+        "reason"
+      ],
+      "title": "RankChange",
+      "type": "object"
+    },
+    "RankedRow": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "mappingStatus": {
+          "description": "Asset identity and fixed-reference qualification; not a claim that all original quantity conversions or Widgets are verified.",
+          "enum": [
+            "verified",
+            "unsupported",
+            "review",
+            "out_of_scope"
+          ],
+          "title": "Mappingstatus",
+          "type": "string"
+        },
+        "venues": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Venues",
+          "type": "array"
+        },
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/OriginalInstrument"
+          },
+          "title": "Originals",
+          "type": "array"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "widget": {
+          "$ref": "#/$defs/Widget"
+        },
+        "state": {
+          "enum": [
+            "ready",
+            "starting",
+            "history_missing",
+            "source_delayed",
+            "source_unavailable",
+            "mapping_review",
+            "unsupported",
+            "out_of_scope",
+            "filtered",
+            "direction_excluded",
+            "invalid_data",
+            "reference_invalid"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "returnPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Returnpct"
+        },
+        "quoteTurnover": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Quoteturnover"
+        },
+        "rank": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rank"
+        },
+        "rankChange": {
+          "$ref": "#/$defs/RankChange",
+          "default": {
+            "status": "unavailable",
+            "previousRank": null,
+            "delta": null,
+            "reason": "no_previous_generation"
+          }
+        },
+        "turnoverRatio": {
+          "$ref": "#/$defs/Indicator",
+          "default": {
+            "value": null,
+            "status": "history_missing"
+          }
+        },
+        "dayRangePosition": {
+          "$ref": "#/$defs/Indicator",
+          "default": {
+            "value": null,
+            "status": "history_missing"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "asset",
+        "mappingStatus",
+        "venues",
+        "originals",
+        "reference",
+        "widget",
+        "state",
+        "reason",
+        "returnPct",
+        "quoteTurnover",
+        "rank",
+        "rankChange",
+        "turnoverRatio",
+        "dayRangePosition"
+      ],
+      "title": "RankedRow",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "enum": [
+            "bybit",
+            "binance"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "symbol": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Symbol",
+          "type": "string"
+        },
+        "baseAsset": {
+          "minLength": 1,
+          "title": "Baseasset",
+          "type": "string"
+        },
+        "multiplier": {
+          "exclusiveMinimum": 0,
+          "title": "Multiplier",
+          "type": "integer"
+        },
+        "quoteAsset": {
+          "const": "USDT",
+          "default": "USDT",
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "settleAsset": {
+          "const": "USDT",
+          "default": "USDT",
+          "title": "Settleasset",
+          "type": "string"
+        },
+        "contractType": {
+          "const": "linear_perpetual",
+          "default": "linear_perpetual",
+          "title": "Contracttype",
+          "type": "string"
+        },
+        "revision": {
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "symbol",
+        "baseAsset",
+        "multiplier",
+        "quoteAsset",
+        "settleAsset",
+        "contractType",
+        "revision"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "Widget": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "review"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Symbol"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Referencekey"
+        }
+      },
+      "required": [
+        "status",
+        "symbol",
+        "reason",
+        "evidence",
+        "referenceKey"
+      ],
+      "title": "Widget",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "ranking-v2",
+      "default": "ranking-v2",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "generationId": {
+      "title": "Generationid",
+      "type": "string"
+    },
+    "mapVersion": {
+      "title": "Mapversion",
+      "type": "string"
+    },
+    "metricVersion": {
+      "const": "trade-close-quote-turnover-analysis-v2",
+      "default": "trade-close-quote-turnover-analysis-v2",
+      "title": "Metricversion",
+      "type": "string"
+    },
+    "cutoff": {
+      "title": "Cutoff",
+      "type": "integer"
+    },
+    "generatedAt": {
+      "title": "Generatedat",
+      "type": "integer"
+    },
+    "rosterGeneratedAt": {
+      "title": "Rostergeneratedat",
+      "type": "integer"
+    },
+    "rosterStale": {
+      "title": "Rosterstale",
+      "type": "boolean"
+    },
+    "stale": {
+      "title": "Stale",
+      "type": "boolean"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "starting",
+        "stale"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "period": {
+      "enum": [
+        "15m",
+        "1h",
+        "daily"
+      ],
+      "title": "Period",
+      "type": "string"
+    },
+    "dailyReferenceJst": {
+      "title": "Dailyreferencejst",
+      "type": "string"
+    },
+    "anchor": {
+      "title": "Anchor",
+      "type": "integer"
+    },
+    "order": {
+      "enum": [
+        "gainers",
+        "losers",
+        "turnover"
+      ],
+      "title": "Order",
+      "type": "string"
+    },
+    "minTurnover": {
+      "title": "Minturnover",
+      "type": "number"
+    },
+    "previousGenerationId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previousgenerationid"
+    },
+    "previousCutoff": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previouscutoff"
+    },
+    "coverage": {
+      "$ref": "#/$defs/Coverage"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/RankedRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generationId",
+    "mapVersion",
+    "metricVersion",
+    "cutoff",
+    "generatedAt",
+    "rosterGeneratedAt",
+    "rosterStale",
+    "stale",
+    "status",
+    "period",
+    "dailyReferenceJst",
+    "anchor",
+    "order",
+    "minTurnover",
+    "previousGenerationId",
+    "previousCutoff",
+    "coverage",
+    "rows"
+  ],
+  "title": "RankingResponse",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

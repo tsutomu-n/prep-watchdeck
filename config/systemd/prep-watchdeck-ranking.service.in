@@ -1,0 +1,20 @@
+[Unit]
+Description=prep-watchdeck independent public perpetual rankings
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO_ROOT@
+ExecStart=@PYTHON_BIN@ @REPO_ROOT@/scripts/ranking/run-isolated.py --mapping @RANKING_MAP@ --state-dir @RANKING_STATE_ROOT@ --original-state-dir @MARKET_STATE_ROOT@ --port @RANKING_PORT@
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=30s
+UMask=0077
+MemoryMax=768M
+CPUQuota=100%
+TasksMax=32
+LimitNOFILE=128
+
+[Install]
+WantedBy=default.target

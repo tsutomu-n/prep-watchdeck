@@ -10,6 +10,7 @@ resolution-markers = [
 members = [
     "prep-watchdeck",
     "prep-watchdeck-market",
+    "prep-watchdeck-ranking",
 ]
 
 [[package]]
@@ -392,6 +393,35 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.14.1" },
     { name = "rich", specifier = ">=15.0.0" },
     { name = "typer", specifier = ">=0.26.7" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyrefly", specifier = ">=1.0.0" },
+    { name = "pytest", specifier = ">=9.1.0" },
+    { name = "ruff", specifier = ">=0.15.17" },
+]
+
+[[package]]
+name = "prep-watchdeck-ranking"
+version = "0.1.0"
+source = { editable = "apps/ranking-core" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pyrefly" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = "<3.13" },
+    { name = "pydantic", specifier = ">=2.13.4" },
 ]
 
 [package.metadata.requires-dev]

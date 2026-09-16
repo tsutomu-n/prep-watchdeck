@@ -1,7 +1,7 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-16T21:23:15+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -37,11 +37,17 @@ localhost配置等は現在実装を説明する。`product-boundary.md`に反�
 - [0005 自動executionを含めない](decisions/0005-no-automatic-trading.md): ranking/scoreは許可し、既定で自動注文へ接続しない
 - [0011 3 Venue Perp Universeへ置換](decisions/0011-perp-universe-replacement.md): **現行Perp runtimeのarchitecture baseline**
 - [0012 製品境界を拡張可能な裁量支援へ更新](decisions/0012-product-evolution-boundary.md): **将来の製品境界**
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/decisions/0013-independent-ranking.md](decisions/0013-independent-ranking.md): 固定参照ランキングと資格判定の分離。
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/decisions/0014-native-chart-history.md](decisions/0014-native-chart-history.md): native履歴・時間足とJST基準騰落率。
 
 Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴として参照できるが、Decision 0012と
 現行product boundaryに反する部分を将来機能の禁止根拠にしない。
 
 ## 実装計画
+
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/plans/active/ranking-chart-release/PLAN.md](plans/active/ranking-chart-release/PLAN.md): ランキングとチャートの統合・公開・D05稼働反映。
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/plans/active/ranking-daily-use/GOALS.md](plans/active/ranking-daily-use/GOALS.md): 改訂D01〜D04はPASS。D05の受入契約と独立した数量・Chart未確認。
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/plans/active/ranking-daily-use/EVIDENCE.md](plans/active/ranking-daily-use/EVIDENCE.md): 実装・隔離実Provider受入の記録。
 
 `docs/plans/active/<task>/`には未完了で再開対象のplanだけを置く。完了、中止、置換後は現行treeから削除し、
 過去planはGit履歴で参照する。
