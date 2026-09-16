@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-16T22:14:16+09:00`
+- 検証: `2026-09-16T22:14:16+09:00`
 - 状態: `現行`
 
 ---
@@ -285,7 +285,7 @@ uv run --package prep-watchdeck-ranking python scripts/ranking/run-isolated.py \
 初期履歴不足、取得停止、catalog変更、古い名簿はそれぞれ別の状態として示す。
 
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/config/systemd/prep-watchdeck-ranking.service.in](../../config/systemd/prep-watchdeck-ranking.service.in)
-は未installのtemplateであり、既存installerには組み込まれていない。placeholderを実効pathへ解決して
+は専用unitのtemplateであり、既存installerには組み込まれていない。placeholderを実効pathへ解決して
 内容を確認した後、unitのinstall・enable・startは別途承認された操作として行う。
 templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 128。
 手動試験へこのcgroup上限を適用したとは扱わない。
@@ -328,3 +328,29 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須fieldが異なる場合があるため、
 片側だけを戻すとWebは形式不一致として取得待ちになる。必要なsource/mapを別の場所に保全し、
 既存の未commit差分を上書きしない。切戻し時も専用collectorの停止・再開以外に元DBの操作を加えない。
+
+### 通常稼働への配置記録
+
+2026-09-16にPR #15をmergeし、main CIが成功した`d1c44d5c3e57a1b75421e35284248a9c1257a871`を
+`/home/tn/releases/prep-watchdeck/d1c44d5`へ配置した。D05の通常稼働・再開・切戻し受入はPASS。
+これは当該host・観測時点の記録であり、将来の稼働versionはunitの実効WorkingDirectoryで確認する。
+
+- `prep-watchdeck-ranking.service`: enabled/active、127.0.0.1:8769、専用stateは
+  `/home/tn/.local/share/prep-watchdeck-ranking`。元Market state・Postgresへ書き込まない。
+- `prep-watchdeck-web.service`: 127.0.0.1:5173、配置版のWebを既存のdev起動commandで稼働する。
+  `/home/tn/.config/systemd/user/prep-watchdeck-web.service.d/ranking-chart-release.conf`で
+  WorkingDirectoryとランキングportだけを指定する。Market state・Tailscale host設定は保持した。
+- 実cgroupはmemory.max=805306368、cpu.max=100000 100000、pids.max=32。
+  実collectorのファイル記述子上限は128、hostはread-only、専用stateはread-writeである。
+- Market Core・DB・maintenanceのunit設定を変更せず、Market CoreのPID・起動時刻の継続を確認した。
+
+切戻しでは上記追加drop-inだけを外し、daemon-reloadとWeb再起動で
+`/home/tn/releases/prep-watchdeck/dc2a8d7/apps/web`へ戻す。ランキングunitを停止し、stateを保持する。
+実際に旧UniverseのHTTP 200・旧WorkingDirectory・ランキング停止を確認した後、
+ランキングの再起動と全件受入を経て追加drop-inを再適用し、配置版の画面を再確認した。
+
+元数量換算とWidgetの各3件は未確認を維持する。名簿は固定の審査済みsnapshotであり、
+24時間経過後の「取扱い名簿の更新が止まっています」は仕様どおり表示する。現在の全上場銘柄を
+自動追随したことや、全Widgetの個別描画を確認したことを、この配置結果から主張しない。
+詳細な検証結果は
+[/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/validation.md](validation.md)を参照する。

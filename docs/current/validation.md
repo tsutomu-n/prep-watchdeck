@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
-- 検証: `2026-09-14T22:34:31+09:00`
+- 更新: `2026-09-16T22:14:16+09:00`
+- 検証: `2026-09-16T22:14:16+09:00`
 - 状態: `現行`
 
 ---
@@ -227,3 +227,42 @@ uv run pyrefly check --config pyproject.toml --use-ignore-files=false src/prep_w
 
 Desktop/Mobileでは実レスポンスと表示値、設定変更、選択保持、初回・更新停止の理由、
 Widgetの契約・足・価格描画を確認する。fixtureのWidgetと実TradingView受入の記録は分離する。
+
+## ランキング・チャート統合版の受入記録
+
+2026-09-16、配置source `d1c44d5c3e57a1b75421e35284248a9c1257a871`、
+map `07bfd5c76b6fc8cbc882aeba`について、改訂D01〜D05をPASSと判定した。
+元1,203契約・691行を保持し、参照対応534（Bybit482/Binance52）、未対応36、対象外121、
+原資産・固定参照のreview0。元数量未確認3、Widget未確認3、Widget対応531は別判定である。
+
+| 証拠層 | 結果 |
+| --- | --- |
+| 統合版local full gate | maintenance18、Market77、Ranking122、Web147、Desktop/Mobile E2E36。型・lint・format・schema・build・文書検査も成功 |
+| 公開 | [PR #15](https://github.com/tsutomu-n/prep-watchdeck/pull/15)のCIと[merge後CI](https://github.com/tsutomu-n/prep-watchdeck/actions/runs/35097736443)が成功 |
+| 実native API | 3 VenueのBTC×15分/日足×最新/過去の12ページ、JST基準価格3件の独立照合に成功 |
+| 実unit | 空stateの通常起動、保存stateからの再起動、切戻し後の再開で各534参照・3期間・3連続世代が成立 |
+| 実画面 | 1440px/390pxで全期間の比較可能534、BTC参照Widgetの描画、native日足、JST設定共有、未確認数量・Chart停止、横はみ出し・JS例外なしを確認 |
+| 切戻し | 旧Webへ戻してrankingを停止し、stateを保持して新配置へ再切替。Marketの継続と元2checkout保全を確認 |
+
+実unitの観測最大memory.peakは361684992 bytes、generation処理最大1276ms。
+初回の順位差は比較元なし、その後の連続世代は比較可能であった。900秒/phase、12秒処理deadline、
+150秒鮮度、Provider取得上限は変更していない。
+
+ランキングsource/map/helperの30ファイルは受入済みcommit `006983931df3b2ff0646474ecd9b441b761c97c7`と
+byte単位で同一だった。この版で先に確認した6契約×3期間のDecimal独立計算18比較、
+WS切断・再接続、75秒停止・復旧、12条件読取りで外部REST取得が増えないことの証拠を継承し、
+今回の実unit/cgroup受入と区別する。旧mapや旧条件の未達をPASSへ読み替えていない。
+
+今回のartifactは
+`/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/var/tmp/ranking-chart-release`。
+source・公開・稼働の証拠を分け、全体の入口を
+`/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/var/tmp/ranking-chart-release/final-runtime-audit.json`
+へ保存した。実unitで12条件を読み取っても両ProviderのREST要求数が増えないことも確認した。
+先行の独立計算・隔離受入は
+`/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/var/tmp/ranking/qualification-v2-20260916-190841`。
+各artifactはlocal保存であり、GitHubに実データを公開したことを意味しない。
+
+初回canaryのBitget過去日足502は有限の再確認で再現せず、原因は未確定。
+試験用artifactの更新間隔による503は試験側で修正した。製品の判定・鮮度条件は緩めていない。
+全534契約の数値を独立再計算したこと、全531 Widgetを実描画したこと、名簿の現時点の完全性は
+本受入の確認範囲に含めない。元数量換算3件・追加3 Widgetは引き続き利用制限を維持する。
