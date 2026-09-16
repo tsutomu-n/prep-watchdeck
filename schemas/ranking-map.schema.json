@@ -1,0 +1,312 @@
+{
+  "$defs": {
+    "MappingRow": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "status": {
+          "description": "Asset identity and fixed-reference qualification only; original quantity conversion and Widget qualification are independent.",
+          "enum": [
+            "verified",
+            "unsupported",
+            "review",
+            "out_of_scope"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/OriginalInstrument"
+          },
+          "title": "Originals",
+          "type": "array"
+        },
+        "reference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Reference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "widget": {
+          "$ref": "#/$defs/Widget"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "asset",
+        "status",
+        "reason",
+        "originals",
+        "reference",
+        "widget",
+        "evidence"
+      ],
+      "title": "MappingRow",
+      "type": "object"
+    },
+    "OriginalInstrument": {
+      "additionalProperties": false,
+      "properties": {
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "instrumentId": {
+          "title": "Instrumentid",
+          "type": "string"
+        },
+        "versionId": {
+          "title": "Versionid",
+          "type": "integer"
+        },
+        "symbol": {
+          "title": "Symbol",
+          "type": "string"
+        },
+        "baseAsset": {
+          "title": "Baseasset",
+          "type": "string"
+        },
+        "multiplier": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Original underlying quantity per unit; null means conversion is unverified. This does not determine fixed-reference ranking eligibility.",
+          "title": "Multiplier"
+        }
+      },
+      "required": [
+        "venue",
+        "instrumentId",
+        "versionId",
+        "symbol",
+        "baseAsset",
+        "multiplier"
+      ],
+      "title": "OriginalInstrument",
+      "type": "object"
+    },
+    "Reference": {
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "enum": [
+            "bybit",
+            "binance"
+          ],
+          "title": "Provider",
+          "type": "string"
+        },
+        "symbol": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Symbol",
+          "type": "string"
+        },
+        "baseAsset": {
+          "minLength": 1,
+          "title": "Baseasset",
+          "type": "string"
+        },
+        "multiplier": {
+          "exclusiveMinimum": 0,
+          "title": "Multiplier",
+          "type": "integer"
+        },
+        "quoteAsset": {
+          "const": "USDT",
+          "default": "USDT",
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "settleAsset": {
+          "const": "USDT",
+          "default": "USDT",
+          "title": "Settleasset",
+          "type": "string"
+        },
+        "contractType": {
+          "const": "linear_perpetual",
+          "default": "linear_perpetual",
+          "title": "Contracttype",
+          "type": "string"
+        },
+        "revision": {
+          "minLength": 1,
+          "title": "Revision",
+          "type": "string"
+        }
+      },
+      "required": [
+        "provider",
+        "symbol",
+        "baseAsset",
+        "multiplier",
+        "quoteAsset",
+        "settleAsset",
+        "contractType",
+        "revision"
+      ],
+      "title": "Reference",
+      "type": "object"
+    },
+    "Widget": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "supported",
+            "unsupported",
+            "review"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "symbol": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Symbol"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "evidence": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Referencekey"
+        }
+      },
+      "required": [
+        "status",
+        "symbol",
+        "reason",
+        "evidence",
+        "referenceKey"
+      ],
+      "title": "Widget",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "ranking-map-v2",
+      "default": "ranking-map-v2",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "version": {
+      "title": "Version",
+      "type": "string"
+    },
+    "verifiedAt": {
+      "title": "Verifiedat",
+      "type": "integer"
+    },
+    "rosterGeneratedAt": {
+      "title": "Rostergeneratedat",
+      "type": "integer"
+    },
+    "rosterFingerprint": {
+      "title": "Rosterfingerprint",
+      "type": "string"
+    },
+    "rosterSource": {
+      "title": "Rostersource",
+      "type": "string"
+    },
+    "sourceInstrumentCount": {
+      "title": "Sourceinstrumentcount",
+      "type": "integer"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/MappingRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "version",
+    "verifiedAt",
+    "rosterGeneratedAt",
+    "rosterFingerprint",
+    "rosterSource",
+    "sourceInstrumentCount",
+    "rows"
+  ],
+  "title": "RankingMap",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

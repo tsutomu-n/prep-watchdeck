@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T18:30:30+09:00`
-- 検証: `2026-08-27T18:30:30+09:00`
+- 更新: `2026-09-16T19:56:52+09:00`
+- 検証: `2026-09-16T19:56:52+09:00`
 - 状態: `現行`
 
 ---
@@ -12,7 +12,7 @@
 変更箇所に最も近いfocused testから実行し、Repo横断`verify-local.sh`は最終確認で1回だけ使う。
 test green、HTTP health、単一snapshotだけをruntime/data quality/cutover完了の証拠にしない。
 
-外部API、Postgres、Webを使う検証は専用database、Repo外の一時state root、別Web portへ隔離する。
+外部API、Postgres、Webを使う検証は専用database、専用の一時state root、別Web portへ隔離する。
 現役DuckDB、旧scanner service、JustPass Postgres、port 5432へ接続しない。
 
 ## Market core focused gate
@@ -44,7 +44,7 @@ DB integrationは専用Postgres 17を一時portで起動し、終了時に専用
 ```bash
 cd apps/web
 bun run generate:types
-bun test
+bun run test
 bun run check
 bun run build
 ```
@@ -93,11 +93,57 @@ DB testのskipはfull gate成功として扱わない。
 2. document metadata/link
 3. workspace lock
 4. market-core全pytest、Ruff、format、Pyrefly
-5. Web type generation、unit、Svelte check、build
-6. Playwright E2E
+5. ranking-core全pytest、Ruff、format、Pyrefly、schema整合、map根拠整合とランキング採用資格の全件照合gate
+6. Web type generation、unit、Svelte check、build
+7. Playwright E2E
 
 未実行、skip、timeout、既存失敗を成功扱いしない。無関係な既存失敗は回帰と分離し、原因と
 再開条件を記録する。
+
+## 独立ランキングの検証
+
+```bash
+cd /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core
+uv run pytest -q
+uv run ruff check src tests
+uv run ruff format --check src tests
+uv run pyrefly check
+cd /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700
+uv run --package prep-watchdeck-ranking python scripts/ranking/generate-schema.py --check
+uv run --package prep-watchdeck-ranking python scripts/ranking/verify-map-evidence.py
+uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-ranking-qualified
+```
+
+最後のcommandは原資産同一性・固定参照契約の全件照合gateであり、行の要確認が残る間は終了code 1になる。
+/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/scripts/verify-local.sh にも組み込み、未照合のままfull gateを成功させない。
+元数量倍率・Widgetの未確認は件数と機能への影響を独立して報告する。両方も確認済みであることを
+要求する旧`--require-reviewed`は維持し、未確認が残る間は終了1とする。
+map根拠整合commandの成功、`rankingQualified`、`qualificationComplete`、実データ受入を区別する。
+全件照合gateで停止した後にWebを個別検証しても、full gateの終了結果は失敗のまま記録する。
+要確認の件数・理由は /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core/data/README.md を参照する。
+
+計算では確定終値、同じ期間のquote売買代金、欠測、実0、JST日跨ぎ・任意分基準、古い要求、後着訂正、
+immutable generationを検証する。Providerの不正な応答構造は検証エラーとして扱い、収集の再接続と
+補完workerの継続を確認する。RESTはcatalog取得も含めて各Provider同時2接続以内とする。
+Webでは期間・方向・下限・保存失敗、選択のID保持、遅れて返る旧要求を確認する。
+mapから削除された選択については、その後の期間・並び順・下限変更で応答が遅延・失敗しても
+旧Widgetが復活しないこと、新しく選んだ有効銘柄のWidgetを表示できることを確認する。
+
+実Providerの有限受入は
+[/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/scripts/ranking/accept-live.py](../../scripts/ranking/accept-live.py)
+を専用state・別port・OS書込み制限下で実行する。全対応数について15分・1時間・JST基準の
+3連続世代、12条件の読取りと外部取得量の分離、実WS切断・再接続、75秒の収集停止と再開を記録する。
+時間上限は900秒。原stateを隠した試験と、専用state外の書込みが拒否された証拠も別に残す。
+map versionと対応範囲を受入証拠へ結び付け、異なるmapでの全件成功を新mapの全件受入へ流用しない。
+実Widgetの追加銘柄が表示できても、追加後mapの全Provider取得・連続更新の受入とは区別する。
+
+[/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/scripts/ranking/verify-live-values.py](../../scripts/ranking/verify-live-values.py)
+は同じTの実API応答を独立したDecimal計算で照合する。`--port`の代わりに`--snapshot`で
+有限受入が保存した全期間の同一世代を指定でき、`--asset`の繰り返しで追加の必須対象を選べる。
+元数量未確認の新規採用行も指定し、同じ参照のREST足と4指標を照合する。
+Widgetの通常E2Eはfixtureへ隔離し、
+実Widgetは契約種別・倍率・文字種・Desktop/Mobile・URL指定・検索・比較を別途確認する。
+銘柄名だけでなく足・価格の描画を実画像で確認し、公開した全契約を実表示した証拠とは混同しない。
 
 ## Isolated live smoke
 
@@ -174,3 +220,35 @@ runtime mutation有無、rollbackを記録する。credential、raw secret、固
 
 実装、focused gate、full gate、isolated smoke/shadow、最終diffのmandatory条件がすべて証拠付きで
 満たされた場合だけPASS。push、merge、cutoverは別承認であり、local PASSへ含めない。
+
+## 日常利用の追加指標と再開受入
+
+順位変化は、直前の発行済み世代・同条件の再計算・同順位・新規・現在順位外・欠落・再起動・
+map/指標変更・JST基準切替・後着訂正を検証する。直近24時間内の同期間中央値との比較は
+最新窓除外・95窓/23窓・0・基準0・1本の欠測を、当日高安位置はhigh/lowと終値の違い・
+JST 00:00・値幅0・範囲外入力を手計算fixtureで照合する。新指標の欠測で既存順位を変えない。
+
+Gitの除外設定によりPyreflyのproject検査が未追跡testsを省略する作業先では、対象fileを明示して
+検査した結果も残す。現在のランキングmoduleの補完commandは次のとおり。
+
+```bash
+cd /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core
+uv run pyrefly check --config pyproject.toml --use-ignore-files=false src/prep_watchdeck_ranking/*.py tests/*.py
+```
+
+有限helperの`--prepare-only`は空の専用stateの履歴準備と通常3連続世代だけを確認する。
+全対応契約について既存3期間に加え、15分/1時間の平常比とJST当日高安位置の入力がそろうことを
+検査する。各指標のstatus内訳、順位変化のstatus、除外理由、共通T、処理時間、RSS、Provider取得数を
+世代ごとに残す。各実行は最大900秒を維持し、成功した準備証拠はpreparation.jsonへ出力する。
+
+復旧は`--prepare-only`なしの別実行とし、通常3連続世代、12条件読取り、実WS切断・再接続、
+75秒停止、保存済みstateから再開後3連続世代をacceptance.jsonへ記録する。初回と再開時に
+比較元の世代がないこと、その後の世代が同条件で比較可能なことも確認する。空state受入を
+保存済みstateからの試験で置き換えない。source hash/map/実行時刻と隔離証拠を各実行へ結び付ける。
+
+実API照合helperは、代表Bybit/Binance契約と対応する数量倍率契約について同じTの24時間確定足を
+独立したDecimal計算で比較する。既存の騰落率・売買代金と新しい中央値比・high/low位置を照合し、
+元API応答・入力窓・中央値・高値・安値・終値・差を保存する。これも全契約の実値照合とは区別する。
+
+Desktop/Mobileでは実レスポンスと表示値、設定変更、選択保持、初回・更新停止の理由、
+Widgetの契約・足・価格描画を確認する。fixtureのWidgetと実TradingView受入の記録は分離する。

@@ -189,6 +189,7 @@
       <span>Bitget / Hyperliquid / Aster の公開データ監視。売買推奨ではありません。</span>
     </div>
     <div class="preferences" aria-label="表示設定">
+      <a class="ranking-link" href="/rankings">デイトレランキング</a>
       <ThemeSelector />
       <FontSelector />
     </div>
@@ -561,12 +562,13 @@
 <style>
   :global(*) { box-sizing: border-box; }
   .universe-page { min-height: 100vh; padding: var(--space-page); background: var(--bg); color: var(--text); }
-  .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-lg); padding: var(--space-sm) 0 var(--space-md); border-bottom: 1px solid var(--line-strong); }
+  .topbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-lg); padding: var(--space-sm) 0 var(--space-md); border-bottom: 1px solid var(--line-strong); }
+  .ranking-link { align-self: center; color: var(--focus); font-size: var(--type-body-sm-size); text-decoration: none; padding: var(--space-sm) 0; }
   .identity p, .identity h1, .identity span, .section-title h2, .section-title p, .instrument-heading p, .instrument-heading h2, .reference-block h3, .reference-block p, .selection-state h3, .selection-state p, .waiting-panel h2, .waiting-panel h3, .waiting-panel p, .subheading h3, .subheading p, .venue-depth h4, .disclaimer, .waiting-copy { margin: 0; }
   .identity p { color: var(--focus); font-size: var(--type-label-caps-size); font-weight: 800; }
   .identity h1 { margin-top: var(--space-xs); font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
   .identity span, .section-title p, .subheading p { display: block; margin-top: var(--space-xs); color: var(--muted); font-size: var(--type-body-sm-size); }
-  .preferences { display: flex; align-items: end; gap: var(--space-md); }
+  .preferences { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-md); }
   .status-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line-strong); background: var(--surface); }
   .status-strip div { min-width: 0; padding: var(--space-sm) var(--space-md); border-right: 1px solid var(--line); }
   .status-strip span, .status-strip strong { display: block; }

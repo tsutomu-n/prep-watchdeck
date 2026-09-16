@@ -89,12 +89,23 @@ uv run ruff format --check --diff src tests
 echo "== market-core: pyrefly check =="
 uv run pyrefly check
 
+echo "== ranking-core: tests, lint, types and schemas =="
+cd "$ROOT_DIR/apps/ranking-core"
+uv run python -m pytest -q
+uv run ruff check src tests
+uv run ruff format --check --diff src tests
+uv run pyrefly check
+cd "$ROOT_DIR"
+uv run --package prep-watchdeck-ranking python scripts/ranking/generate-schema.py --check
+uv run --package prep-watchdeck-ranking python scripts/ranking/verify-map-evidence.py
+uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-ranking-qualified
+
 echo "== web: generated types =="
 cd "$ROOT_DIR/apps/web"
 bun run generate:types
 
-echo "== web: bun test =="
-bun test
+echo "== web: package test script =="
+bun run test
 
 echo "== web: svelte-check =="
 bun run check

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-09-04T20:49:47+09:00`
-- 検証: `2026-09-04T20:49:47+09:00`
+- 更新: `2026-09-16T19:56:52+09:00`
+- 検証: `2026-09-16T19:56:52+09:00`
 - 状態: `現行`
 
 ---
@@ -32,6 +32,7 @@
 - [0002 public API only](decisions/0002-public-api-only.md)
 - [0005 自動売買を含めない](decisions/0005-no-automatic-trading.md)
 - [0011 3 Venue Perp Universeへ置換](decisions/0011-perp-universe-replacement.md)
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/docs/decisions/0013-independent-ranking.md](decisions/0013-independent-ranking.md): 外部参照ランキングの分離・計算・Widgetと受入境界。
 
 Decision 0011は、旧Bitget scanner、DuckDB snapshot、Candidate/Ranking、VPI、Hot ticker、
 3市場pilotに関するDecision 0003、0004、0006〜0010のproduction契約を置換する。旧Decisionは
@@ -39,7 +40,15 @@ Decision 0011は、旧Bitget scanner、DuckDB snapshot、Candidate/Ranking、VPI
 
 ## 実装計画
 
-現在進行中のactive planはない。`docs/plans/active/<task>/`は未完了作業が開始された場合だけ作成し、
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/docs/plans/active/independent-daytrade-ranking/GOAL.md](plans/active/independent-daytrade-ranking/GOAL.md):
+  外部参照によるデイトレ向け統合ランキング初期版。実装・隔離受入を進行中。
+
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/docs/plans/active/ranking-daily-use/GOALS.md](plans/active/ranking-daily-use/GOALS.md):
+  D01〜D05は包括承認済み。資格判定を改訂し534行の参照を採用。改訂D01〜D04の実装・隔離受入はPASS。元数量・Chart各3件は独立した未確認で、D05は未実施。
+- [/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/docs/plans/active/ranking-daily-use/RESUME.md](plans/active/ranking-daily-use/RESUME.md):
+  一時中断時の詳細記録。現在の作業tree、証拠、承認、未確認、次に実行する一作業と再開command。
+
+`docs/plans/active/<task>/`は未完了作業が開始された場合だけ作成し、
 完了、中止、または置換後は現行treeから削除する。過去planはGit履歴で参照する。
 
 ## 正本の優先順位
