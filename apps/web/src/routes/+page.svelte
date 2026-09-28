@@ -3,8 +3,13 @@
   import type { PageProps } from "./$types";
   import FontSelector from "$lib/components/FontSelector.svelte";
   import ThemeSelector from "$lib/components/ThemeSelector.svelte";
+  import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import UniverseChart from "$lib/components/universe/UniverseChart.svelte";
+  import PriceChangeValue from "$lib/components/universe/PriceChangeValue.svelte";
+  import { DEFAULT_REFERENCE_TIME } from "$lib/market/price-change";
+  import { PriceChangeClient, type PriceChangeState } from "$lib/market/price-change-client";
+  import type { Timeframe } from "$lib/market/chart-history";
   import type { SelectedInstrumentArtifact } from "$lib/generated/selected-market";
   import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
   import {
@@ -51,6 +56,15 @@
   let selectedVenueInstrumentId = $state<string | null>(initialSelection(initialMarket));
   let selectionMessage = $state<string | null>(null);
   let selectionError = $state<string | null>(null);
+  let chartTimeframe = $state<Timeframe>("15m");
+  let referenceTime = $state(DEFAULT_REFERENCE_TIME);
+  let referenceReady = $state(false);
+  let priceNow = $state(Date.now());
+  let priceChanges = $state<Record<string, PriceChangeState>>({});
+  let visiblePriceIds = $state<Set<string>>(new Set());
+  let priceChangeClient = $state<PriceChangeClient | null>(null);
+  let priceObserver: IntersectionObserver | null = null;
+  const observedPriceRows = new Map<Element, string>();
 
   let items = $derived(market?.universe.items ?? []);
   let groupCounts = $derived(groupVenueCounts(items));
@@ -64,9 +78,6 @@
       market.selected.selection.primaryVenueInstrumentId === selectedVenueInstrumentId
       ? market.selected.selection
       : null
-  );
-  let chartMatchesSelection = $derived(
-    market?.chart.venueInstrumentId === selectedVenueInstrumentId
   );
   let groupVenueCount = $derived(
     selectedGroupId ? (groupCounts.get(selectedGroupId) ?? 1) : 1
@@ -82,8 +93,81 @@
 
   onMount(() => {
     const timer = window.setInterval(() => void refreshArtifacts(), artifactPollMs);
-    return () => window.clearInterval(timer);
+    const client = new PriceChangeClient({
+      onUpdate: (id, state) => { priceChanges[id] = state; }
+    });
+    priceChangeClient = client;
+    function refreshPriceChanges() {
+      priceNow = Date.now();
+      client.refresh();
+    }
+    const priceTimer = window.setInterval(refreshPriceChanges, 15_000);
+    let boundaryTimer: ReturnType<typeof setTimeout>;
+    function watchMinuteBoundary() {
+      boundaryTimer = setTimeout(() => {
+        refreshPriceChanges();
+        watchMinuteBoundary();
+      }, 60_000 - (Date.now() % 60_000) + 10);
+    }
+    watchMinuteBoundary();
+    function syncVisibility() {
+      priceNow = Date.now();
+      client.setPaused(document.visibilityState === "hidden");
+    }
+    document.addEventListener("visibilitychange", syncVisibility);
+    syncVisibility();
+    return () => {
+      window.clearInterval(timer);
+      window.clearInterval(priceTimer);
+      window.clearTimeout(boundaryTimer);
+      document.removeEventListener("visibilitychange", syncVisibility);
+      priceObserver?.disconnect();
+      client.dispose();
+      priceChangeClient = null;
+    };
   });
+
+  $effect(() => {
+    const client = priceChangeClient;
+    if (!client || !referenceReady) return;
+    const time = referenceTime;
+    const wanted = new Set([selectedVenueInstrumentId, ...visiblePriceIds]);
+    const ordered = [selectedInstrument, ...items.filter((item) => visiblePriceIds.has(item.venueInstrumentId))];
+    const targets = ordered.filter((item): item is UniverseInstrumentArtifact => Boolean(
+      item?.active && item.groupId && wanted.has(item.venueInstrumentId)
+    ));
+    untrack(() => {
+      priceNow = Date.now();
+      client.setReferenceTime(time);
+      client.setTargets(targets);
+    });
+  });
+
+  function observePriceRow(node: HTMLElement, id: string) {
+    if (!priceObserver) {
+      priceObserver = new IntersectionObserver((entries) => {
+        const next = new Set(visiblePriceIds);
+        for (const entry of entries) {
+          const rowId = observedPriceRows.get(entry.target);
+          if (!rowId) continue;
+          if (entry.isIntersecting) next.add(rowId);
+          else next.delete(rowId);
+        }
+        visiblePriceIds = next;
+      });
+    }
+    observedPriceRows.set(node, id);
+    priceObserver.observe(node);
+    return {
+      destroy() {
+        priceObserver?.unobserve(node);
+        observedPriceRows.delete(node);
+        const next = new Set(visiblePriceIds);
+        next.delete(id);
+        visiblePriceIds = next;
+      }
+    };
+  }
 
   $effect(() => {
     if (selectedVenueInstrumentId && selectedInstrument) return;
@@ -189,8 +273,10 @@
       <span>Bitget / Hyperliquid / Aster の公開データ監視。売買推奨ではありません。</span>
     </div>
     <div class="preferences" aria-label="表示設定">
+      <a class="ranking-link" href="/rankings">デイトレランキング</a>
       <ThemeSelector />
       <FontSelector />
+      <DailyReferenceSetting bind:value={referenceTime} bind:ready={referenceReady} />
     </div>
   </header>
 
@@ -227,6 +313,7 @@
       <div>
         <span>最終検証</span>
         <strong>{formatTimestamp(lastVerifiedAt)}</strong>
+        <span>JST</span>
       </div>
     </section>
 
@@ -266,7 +353,7 @@
         <div class="section-title">
           <div>
             <h2 id="universe-title">Instrument Universe</h2>
-            <p>既定順: base asset → Venue。順位や売買方向を示しません。</p>
+            <p>既定順: base asset → Venue。約定騰落率はJST {referenceTime}基準。</p>
           </div>
           <strong>{visibleItems.length} / {items.length}</strong>
         </div>
@@ -312,6 +399,7 @@
               <tr>
                 <th scope="col">Instrument</th>
                 <th scope="col">Mark</th>
+                <th scope="col" class="change-column">約定騰落率<small>JST {referenceTime}基準</small></th>
                 <th scope="col">Bid / Ask</th>
                 <th scope="col">Funding / h</th>
                 <th scope="col" class="optional-column">OI notional</th>
@@ -321,7 +409,10 @@
             </thead>
             <tbody>
               {#each visibleItems as item (item.venueInstrumentId)}
-                <tr class:selected={item.venueInstrumentId === selectedVenueInstrumentId}>
+                <tr
+                  class:selected={item.venueInstrumentId === selectedVenueInstrumentId}
+                  use:observePriceRow={item.venueInstrumentId}
+                >
                   <td>
                     <button
                       type="button"
@@ -335,7 +426,28 @@
                       <small class="coverage-label">{coverageLabel(item, groupCounts)}</small>
                     </button>
                   </td>
-                  <td class="numeric">{formatFinite(item.markPrice)}</td>
+                  <td class="numeric">
+                    {formatFinite(item.markPrice)}
+                    <div class="mobile-change">
+                      <small>約定騰落率</small>
+                      <PriceChangeValue
+                        state={priceChanges[item.venueInstrumentId]}
+                        {referenceTime}
+                        versionId={item.venueInstrumentVersionId}
+                        now={priceNow}
+                        supported={Boolean(item.groupId)}
+                      />
+                    </div>
+                  </td>
+                  <td class="numeric change-column">
+                    <PriceChangeValue
+                      state={priceChanges[item.venueInstrumentId]}
+                      {referenceTime}
+                      versionId={item.venueInstrumentVersionId}
+                      now={priceNow}
+                      supported={Boolean(item.groupId)}
+                    />
+                  </td>
                   <td class="numeric">{formatFinite(item.bestBid)}<br />{formatFinite(item.bestAsk)}</td>
                   <td class="numeric">{formatRate(item.fundingRatePerHour)}</td>
                   <td class="numeric optional-column">{formatCompact(item.openInterestNotional)}</td>
@@ -348,7 +460,7 @@
                   </td>
                 </tr>
               {:else}
-                <tr><td colspan="7" class="empty-row">条件に一致するinstrumentはありません</td></tr>
+                <tr><td colspan="8" class="empty-row">条件に一致するinstrumentはありません</td></tr>
               {/each}
             </tbody>
           </table>
@@ -368,6 +480,22 @@
               {statusLabel(selectedInstrument.quality)}
             </span>
           </div>
+
+          <section class="daily-change-block" aria-labelledby="daily-change-title">
+            <div class="subheading">
+              <h3 id="daily-change-title">約定価格の騰落率</h3>
+              <span>JST {referenceTime}基準</span>
+            </div>
+            <PriceChangeValue
+              state={priceChanges[selectedInstrument.venueInstrumentId]}
+              {referenceTime}
+              versionId={selectedInstrument.venueInstrumentVersionId}
+              now={priceNow}
+              supported={Boolean(selectedInstrument.groupId)}
+              detailed
+            />
+            <p>指定時刻直前の1分足終値から計算。同じ取引所の約定価格を使用し、約1分ごとに更新します。</p>
+          </section>
 
           <section class="reference-block" aria-labelledby="median-title">
             <h3 id="median-title">参考mark中央値</h3>
@@ -432,12 +560,15 @@
             {/if}
           </section>
 
-          {#if chartMatchesSelection}
-            <UniverseChart payload={market.chart} venueInstrumentId={selectedInstrument.venueInstrumentId} />
+          {#if selectedGroupId}
+            <UniverseChart
+              venueInstrumentId={selectedVenueInstrumentId!}
+              bind:timeframe={chartTimeframe}
+            />
           {:else}
             <section class="waiting-panel">
               <h3>価格・出来高</h3>
-              <p>{selectedGroupId ? "選択反映後のchart artifactを待っています" : "group未確定のためchartを要求しません"}</p>
+              <p>group未確定のためチャートを要求しません</p>
             </section>
           {/if}
 
@@ -561,12 +692,13 @@
 <style>
   :global(*) { box-sizing: border-box; }
   .universe-page { min-height: 100vh; padding: var(--space-page); background: var(--bg); color: var(--text); }
-  .topbar { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--space-lg); padding: var(--space-sm) 0 var(--space-md); border-bottom: 1px solid var(--line-strong); }
+  .topbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-lg); padding: var(--space-sm) 0 var(--space-md); border-bottom: 1px solid var(--line-strong); }
+  .ranking-link { align-self: center; color: var(--focus); font-size: var(--type-body-sm-size); text-decoration: none; padding: var(--space-sm) 0; }
   .identity p, .identity h1, .identity span, .section-title h2, .section-title p, .instrument-heading p, .instrument-heading h2, .reference-block h3, .reference-block p, .selection-state h3, .selection-state p, .waiting-panel h2, .waiting-panel h3, .waiting-panel p, .subheading h3, .subheading p, .venue-depth h4, .disclaimer, .waiting-copy { margin: 0; }
   .identity p { color: var(--focus); font-size: var(--type-label-caps-size); font-weight: 800; }
   .identity h1 { margin-top: var(--space-xs); font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
   .identity span, .section-title p, .subheading p { display: block; margin-top: var(--space-xs); color: var(--muted); font-size: var(--type-body-sm-size); }
-  .preferences { display: flex; align-items: end; gap: var(--space-md); }
+  .preferences { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-md); }
   .status-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line-strong); background: var(--surface); }
   .status-strip div { min-width: 0; padding: var(--space-sm) var(--space-md); border-right: 1px solid var(--line); }
   .status-strip span, .status-strip strong { display: block; }
@@ -594,6 +726,12 @@
   .instrument-select span, td small, .coverage-label { display: block; color: var(--muted); font-size: var(--type-label-caps-size); }
   .coverage-label { margin-top: var(--space-xxs); color: var(--subtle); }
   .numeric, dd, code { font-variant-numeric: tabular-nums; }
+  .mobile-change { display: none; }
+  .change-column small { display: block; margin-top: var(--space-xxs); font: inherit; white-space: nowrap; }
+  .daily-change-block { padding: var(--space-md); border-bottom: 1px solid var(--line); }
+  .daily-change-block h3 { margin: 0; font-size: var(--type-heading-md-size); }
+  .daily-change-block > :global(.price-change) { display: block; margin-top: var(--space-sm); }
+  .daily-change-block p { margin: var(--space-sm) 0 0; color: var(--muted); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-leading); }
   .empty-row { padding: var(--space-xl); color: var(--muted); text-align: center; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .instrument-heading { padding: var(--space-md); border-bottom: 1px solid var(--line-strong); background: var(--panel-selected); }
@@ -649,6 +787,8 @@
     .search-control { grid-column: auto; }
     input, select, .instrument-select, summary, .fatal-state button { min-height: var(--control-height-touch); }
     .optional-column { display: none; }
+    .change-column { display: none; }
+    .mobile-change { display: block; margin-top: var(--space-xs); }
     th, td { padding: var(--space-sm) var(--space-xs); }
     .instrument-select span { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .metric-grid, .provenance { grid-template-columns: repeat(2, minmax(0, 1fr)); }

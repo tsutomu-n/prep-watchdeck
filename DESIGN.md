@@ -1,8 +1,8 @@
 # Prep Watchdeck Design Constitution
 
 - 作成: `2026-06-27T11:11:19+09:00`
-- 更新: `2026-08-14T22:07:54+09:00`
-- 検証: `2026-08-14T22:07:54+09:00`
+- 更新: `2026-09-12T09:20:26+09:00`
+- 検証: `2026-09-12T09:21:36+09:00`
 - 状態: `現行`
 
 ---
@@ -421,11 +421,18 @@ quality色はmissing/stale/partial、focus色は選択だけに使う。referenc
 group coverageとqualityを同じbadgeへ押し込まない。単独instrumentはneutral、unavailableはquality riskで示す。
 mark、funding、OI、volumeのnullを`0`、dashだけ、前回値へ変換せず、理由またはaccessible labelを付ける。
 
+約定騰落率はMarkと別の指標としてlabelを持たせ、正負にはmovement色、欠測には理由のtextを使う。
+Desktopは独立列、MobileはMarkの下へ「約定騰落率」として表示する。画面上部の基準時刻inputは
+JSTと現在のHH:mmを常時示す。選択detailには基準日時・基準価格・約定価格・取得時刻を併記する。
+時刻設定の変更によって既存Chartの時間足、色、ズームを変更しない。
+
 ## Selected Detail Visual Contract
 
 selected identity、Chart、Venue別depth、trades、book walk、Past Noteを一つのcontinuous workspaceにする。
 Chartを中心となる単一frameとして、二重borderやnested chart cardを作らない。5 timeframe controlは
-active fillとtextで選択を示し、`derived_final`と`confirmed`を同一視しない。
+active fillとtextで選択を示す。「時間足」を表示し、日足は`1D`とする。実際に見えている「表示期間」、
+「最新へ」「全体表示」「さらに過去を読み込む」を区別する。時刻はJST、日足の区切りは09:00と示す。
+native履歴の未確定足とcollector artifactの`derived_final` / `confirmed`を同一視しない。
 
 depthはbid/askを色だけで区別せずlabelを持つ。book walkは$100/$500/$1,000を同じ尺度で並べ、
 fee、将来impact、注文可否を含まないdisclaimerを数値から離さない。staleまたは板不足では空欄を
@@ -467,3 +474,18 @@ npx -p @google/design.md designmd lint DESIGN.md
 layout、interaction、responsive behaviorを変えた場合は関連Playwright E2Eと1440px / 390pxのvisual
 確認も実行する。現行の挙動と検証根拠は
 [`docs/current/ui-workflow.md`](docs/current/ui-workflow.md)に従う。
+
+
+## 独立ランキングの画面
+
+`/rankings`はUniverse Explorerから移動する独立した一覧と単一参照Chartを持つ。既存の色・罫線・
+余白・数値桁揃えを使い、上昇はup、下落はdown、要確認・更新停止はwarningで表す。
+比較時刻、対応数・有効数、選択条件、参照取引所と元の取扱い取引所を別々に読める配置とする。
+
+Desktopは一覧とChartを左右に配置し、Mobileは一覧の後にChartを置く。狭い幅ではJST基準設定が
+control行全体を使い、44px以上の操作高さを確保する。長い契約名・理由は折り返し、page全体を
+横scrollさせない。表内は限定した高さでscrollでき、表示pageに関係なく全対応銘柄から順位を求める。
+
+比較期間とChartの足間隔を別controlにする。選択をIDで保持し、filter対象外では選択名と警告を残す。
+mapから削除された選択はChartを停止する。Widgetの配色はアプリのdark/light modeに合わせ、
+TradingViewのcreditを表示する。ランキング更新でChartの閲覧範囲を初期化しない。

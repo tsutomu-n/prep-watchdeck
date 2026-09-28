@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
-import { coverageLabel, filterAndSortUniverse, groupVenueCounts } from "./universe-view";
+import { coverageLabel, filterAndSortUniverse, formatTimestamp, groupVenueCounts } from "./universe-view";
+
+test("market timestamps use JST rather than the browser time zone", () => {
+  expect(formatTimestamp("2026-09-09T23:00:00Z")).toBe("09/10 08:00:00");
+});
 
 describe("Universe Explorer filtering", () => {
   test("sorts base then venue and keeps coverage, venue, search and quality explicit", () => {

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-04T20:49:47+09:00`
-- 検証: `2026-09-04T20:49:47+09:00`
+- 更新: `2026-09-12T09:20:26+09:00`
+- 検証: `2026-09-12T09:57:08+09:00`
 - 状態: `現行`
 
 ---
@@ -292,3 +292,51 @@ installerは既存`prep-watchdeck-web.service`を`.bak.<timestamp>`へ保存す�
 - L1 fresh率、cycle deadline、disk容量式、shadow既存影響のacceptanceを満たさない。
 
 停止時は新shadowだけを止め、旧runtimeは変更しない。
+
+## 独立ランキングの起動・停止・復旧
+
+ランキングは独立した公開データcollectorとSQLiteを使う。元のMarket Core、Postgres、artifactへ
+書き込まず、既存serviceの環境変数やDB接続情報を引き継がない。初期mapの全件照合は未完了であり、
+要確認行を除いた参照契約だけを取得する。対応表の更新方法は
+[/home/tn/projects/prep-watchdeck/apps/ranking-core/data/README.md](/home/tn/projects/prep-watchdeck/apps/ranking-core/data/README.md)を参照する。
+
+隔離した確認用の起動例。指定したstateだけを新規作成し、書込み可能にする。
+`bwrap`が利用できない場合は開始しない。
+
+```bash
+cd /home/tn/projects/prep-watchdeck
+uv sync --frozen
+uv run --package prep-watchdeck-ranking python scripts/ranking/run-isolated.py \
+  --mapping /home/tn/projects/prep-watchdeck/apps/ranking-core/data/initial-map.json \
+  --state-dir /home/tn/projects/prep-watchdeck/var/tmp/ranking/manual \
+  --original-state-dir /home/tn/.local/share/prep-watchdeck-market \
+  --port 18769 \
+  --run-seconds 900
+```
+
+| 入力・操作 | 起きること | 次へ進める条件 |
+| --- | --- | --- |
+| 上記command | 公開catalogを確認し、保存済み履歴を再利用して不足分を補完する。起動直後は準備中または履歴不足を返す。 | `/health`にgenerationがあり、必要な比較期間の有効数が対応数と一致する。 |
+| Webに`PREP_WATCHDECK_RANKING_PORT=18769`を設定して別portで起動 | `/rankings`がloopbackの専用APIから結果を読む。Browserによる外部価格取得は増えない。 | 比較時刻、対応数、参照契約、順位の方向を確認できる。 |
+| foregroundでCtrl+C、または指定時間の経過 | 当該collectorとAPIだけが終了する。SQLiteと証拠は残る。 | 別processの元収集は継続する。 |
+| 同じstateとmapで再起動 | 欠けた確定1分足をRESTで補完し、WSを再購読する。 | 同じ契約の履歴がそろうまで不足表示を維持する。 |
+| mapの参照契約を変更して再起動 | 新しいreference revisionを別の履歴として扱う。 | 新契約の履歴がそろってから順位へ戻る。 |
+
+保存先の同一・内包・symlinkを起動前に検査し、SQLite関連fileのsymlinkも拒否する。
+起動wrapperはhost filesystemを読取り専用、専用stateだけを書込み可能にし、環境を最小化する。
+直接`watchdeck-ranking serve`を呼ぶ場合、source上の検査は働くがOSの書込み制限は付かない。
+通常の手動起動にもwrapperを使う。
+
+各ProviderはREST 2 request/秒・同時2、WS最大3接続、接続再試行上限60秒、履歴約48時間、
+HH:mm別cache 32件。全体1,500参照契約を超えるmapは再測定を要する。通常は分境界8秒後に
+発行し、処理が12秒を超えた世代は公開しない。150秒以上古い比較結果は更新停止表示になる。
+初期履歴不足、取得停止、catalog変更、古い名簿はそれぞれ別の状態として示す。
+
+[/home/tn/projects/prep-watchdeck/config/systemd/prep-watchdeck-ranking.service.in](/home/tn/projects/prep-watchdeck/config/systemd/prep-watchdeck-ranking.service.in)
+は未installのtemplateであり、既存installerには組み込まれていない。placeholderを実効pathへ解決して
+内容を確認した後、unitのinstall・enable・startは別途承認された操作として行う。
+templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 128。
+手動試験へこのcgroup上限を適用したとは扱わない。
+
+独立ランキングを切り離す場合は、そのcollectorを停止し、WebのUniverse Explorerを使う。
+元DBのmigration・rollback・既存unitの変更は必要ない。stateや未commitの差分を自動削除しない。

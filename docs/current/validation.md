@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-08-27T18:30:30+09:00`
-- 検証: `2026-08-27T18:30:30+09:00`
+- 更新: `2026-09-12T09:20:26+09:00`
+- 検証: `2026-09-12T09:57:08+09:00`
 - 状態: `現行`
 
 ---
@@ -12,7 +12,7 @@
 変更箇所に最も近いfocused testから実行し、Repo横断`verify-local.sh`は最終確認で1回だけ使う。
 test green、HTTP health、単一snapshotだけをruntime/data quality/cutover完了の証拠にしない。
 
-外部API、Postgres、Webを使う検証は専用database、Repo外の一時state root、別Web portへ隔離する。
+外部API、Postgres、Webを使う検証は専用database、専用の一時state root、別Web portへ隔離する。
 現役DuckDB、旧scanner service、JustPass Postgres、port 5432へ接続しない。
 
 ## Market core focused gate
@@ -44,7 +44,7 @@ DB integrationは専用Postgres 17を一時portで起動し、終了時に専用
 ```bash
 cd apps/web
 bun run generate:types
-bun test
+bun run test
 bun run check
 bun run build
 ```
@@ -52,6 +52,18 @@ bun run build
 route、selection、responsiveを変えた場合は関連Playwrightを追加する。最低でもDesktop 1440pxと
 Mobile 390pxで、検索/filter、行選択、primary変更、Chart、partial/unavailable、selected depth/trades、
 Past Note、keyboard focus、横overflowを確認する。
+
+Chart履歴はprovider/route unitで、銘柄の解決、native時間足、UTC境界、数値検証、排他的な
+pagination、cache・timeout・Bitgetの取得間隔を確認する。E2Eは履歴APIをfixtureへ隔離し、
+時間足の保持、定期更新後のズーム保持、古い応答の排除、JST表示、過去追加時の表示範囲を確認する。
+接続確認では公開銘柄だけを使い、最新ページと過去ページのOHLC・日時・重複・ページ境界を照合する。
+実APIの有限canary成功は、全銘柄・継続運転・本番反映の受入とは区別する。
+
+約定騰落率は任意HH:mmのJST日次境界、基準足の完全一致、最新価格の鮮度、同じ契約versionの
+価格同士の計算と、分境界をまたいだ取得中要求を新しい基準へ共有しないことをunit/APIで確認する。
+Browser側は同時取得数、可視対象、非表示tab、設定・日付・
+version変更後の古い応答排除、保存失敗を確認する。E2Eでは騰落率APIもfixtureへ隔離し、設定の変更・
+保存・再読込、日次切替、欠測の理由表示をDesktop/Mobileで検証する。
 
 ## Docs/ops focused gate
 
@@ -93,11 +105,41 @@ DB testのskipはfull gate成功として扱わない。
 2. document metadata/link
 3. workspace lock
 4. market-core全pytest、Ruff、format、Pyrefly
-5. Web type generation、unit、Svelte check、build
-6. Playwright E2E
+5. ranking-core全pytest、Ruff、format、Pyrefly、schema整合
+6. Web type generation、unit、Svelte check、build
+7. Playwright E2E
 
 未実行、skip、timeout、既存失敗を成功扱いしない。無関係な既存失敗は回帰と分離し、原因と
 再開条件を記録する。
+
+## 独立ランキングの検証
+
+```bash
+cd /home/tn/projects/prep-watchdeck/apps/ranking-core
+uv run pytest -q
+uv run ruff check src tests
+uv run ruff format --check src tests
+uv run pyrefly check
+cd /home/tn/projects/prep-watchdeck
+uv run --package prep-watchdeck-ranking python scripts/ranking/generate-schema.py --check
+uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-reviewed
+```
+
+最後のcommandは全件照合のgateであり、現行の要確認44行が残る間は終了code 1になる。
+構造検証やfixture成功と全名簿の受入を区別する。計算では確定終値、同じ期間のquote売買代金、
+欠測、実0、JST日跨ぎ・任意分基準、古い要求、後着訂正、immutable generationを検証する。
+Webでは期間・方向・下限・保存失敗、選択のID保持、mapから削除された選択、遅れて返る旧要求を確認する。
+
+実Providerの有限受入は
+[/home/tn/projects/prep-watchdeck/scripts/ranking/accept-live.py](/home/tn/projects/prep-watchdeck/scripts/ranking/accept-live.py)
+を専用state・別port・OS書込み制限下で実行する。全対応数について15分・1時間・JST基準の
+3連続世代、12条件の読取りと外部取得量の分離、実WS切断・再接続、75秒の収集停止と再開を記録する。
+時間上限は900秒。原stateを隠した試験と、専用state外の書込みが拒否された証拠も別に残す。
+
+[/home/tn/projects/prep-watchdeck/scripts/ranking/verify-live-values.py](/home/tn/projects/prep-watchdeck/scripts/ranking/verify-live-values.py)
+は同じTの実API応答を独立したDecimal計算で照合する。Widgetの通常E2Eはfixtureへ隔離し、
+実Widgetは契約種別・倍率・文字種・Desktop/Mobile・URL指定・検索・比較を別途確認する。
+銘柄名だけでなく足・価格の描画を実画像で確認し、公開した全契約を実表示した証拠とは混同しない。
 
 ## Isolated live smoke
 
