@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T22:14:16+09:00`
-- 検証: `2026-09-16T22:14:16+09:00`
+- 更新: `2026-09-28T20:57:00+09:00`
+- 検証: `2026-09-28T20:57:00+09:00`
 - 状態: `現行`
 
 ---
@@ -28,6 +28,8 @@ P0 qualification時の個別commit SHA、row件数、backup hash等は当時の�
 - 非標準target overrideは隔離test/shadowだけに使う。
 - 同一state rootでmarket collectorを複数起動しない。
 - rollback確認前に旧checkout/stateを不可逆削除しない。
+
+Markets workspaceを配置する場合はMarket Core、Ranking Core、Webの契約を同じ検証済みsource組で切り替える。追加の`market-metrics.json`は任意laneで、旧4 artifactへ混ぜない。NoteFile v2を一度書いた後に旧Webへ戻す際は、対象stateを別場所へ退避して旧版用の状態を復元する必要がある。旧Webがv2を安全に読めると仮定して元ファイルへ上書きしない。現時点の開発branchは稼働releaseへ未反映で、実データの180秒lag/300秒上限の受入も未確認。
 
 これらの具体的project名、port、pathは現行runtime値であり、将来の新app/sourceへ永久固定しない。
 

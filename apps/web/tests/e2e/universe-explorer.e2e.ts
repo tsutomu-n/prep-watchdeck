@@ -14,6 +14,82 @@ import {
   dailyBaselineAt,
   type DailyPriceChange
 } from "../../src/lib/market/price-change";
+import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
+
+test("参照一覧からID/version一致のnative詳細を開き条件付きで戻る", async ({ page }) => {
+  await page.route("**/api/rankings?*", (route) => route.fulfill({
+    json: rankingFixture(new URL(route.request().url()).searchParams)
+  }));
+  await page.goto("/");
+  await expect(page.getByLabel("ランキングの比較期間")).toHaveValue("24h");
+  await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator("button.select-row").click();
+  await page.getByRole("link", { name: "bitget · BTCUSDT のnative詳細" }).click();
+  await expect(page).toHaveURL(/mode=native.*instrument=bitget/);
+  await expect(page.getByRole("region", { name: "価格・出来高" })).toContainText("bitget:BTCUSDT");
+  await page.getByRole("link", { name: "参照市場へ戻る" }).click();
+  await expect(page.getByLabel("ランキングの比較期間")).toHaveValue("24h");
+  await expect(page.getByLabel("ランキングの並び順")).toHaveValue("turnover");
+});
+
+test("取引所別のお気に入りと名前付き表示を再読込後に使える", async ({ page }) => {
+  await page.goto("/?mode=native");
+  const favorite = page.getByRole("button", { name: "BTC bitgetをお気に入り登録" });
+  await favorite.click();
+  await expect(page.getByRole("button", { name: "BTC bitgetをお気に入り解除" }))
+    .toHaveAttribute("aria-pressed", "true");
+  await page.getByLabel("取引所別の表示名").fill("BTC確認");
+  await page.getByRole("button", { name: "表示条件を保存" }).click();
+  await expect(page.getByLabel("取引所別の保存した表示").locator("option"))
+    .toContainText(["選択してください", "BTC確認"]);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "BTC bitgetをお気に入り解除" }))
+    .toHaveAttribute("aria-pressed", "true");
+  await page.getByLabel("取引所別の保存した表示").selectOption({ label: "BTC確認" });
+  await expect(page.getByLabel("取引所別の表示名")).toHaveValue("BTC確認");
+});
+
+test("追加指標は現行IDとversionが一致する時だけ表示する", async ({ page }) => {
+  const universe = JSON.parse(await readFile(resolve(artifactRoot, "universe-snapshot.json"), "utf-8")) as UniverseSnapshotArtifact;
+  const instrument = universe.items.find((item) => item.venueInstrumentId === "bitget:BTCUSDT")!;
+  const now = Date.now();
+  const cutoff = new Date(Math.floor(now / 60_000) * 60_000 - 180_000).toISOString();
+  const observed = new Date(now - 5_000).toISOString();
+  const metric = (value: number, endAt: string) => ({
+    value, availability: "available", reasonCode: null,
+    startAt: endAt, endAt, startValue: 100, endValue: 110,
+    endSourceAt: endAt, endObservedAt: observed, endFinality: "confirmed", unit: "base"
+  });
+  let version = instrument.venueInstrumentVersionId + 1;
+  await page.route("**/api/market-metrics", (route) => route.fulfill({ json: {
+    schemaVersion: 1, metricVersion: "native-endpoints-v1", generationId: "fixture-1",
+    generatedAt: new Date().toISOString(), candleCutoff: cutoff,
+    timingPolicy: { candleLagSeconds: 180, candleMaxAgeSeconds: 300 },
+    rows: [{ venueInstrumentId: instrument.venueInstrumentId, venueInstrumentVersionId: version,
+      venue: instrument.venue, sourceSymbol: instrument.sourceSymbol,
+      quoteAsset: instrument.quoteAsset, settleAsset: instrument.settleAsset, priceTick: null,
+      oiChange: { "15m": metric(10, observed), "1h": metric(20, observed) },
+      tradeChange: { "15m": metric(5, cutoff), "1h": metric(6, cutoff), "24h": metric(7, cutoff) }
+    }]
+  } }));
+  await page.goto("/?mode=native");
+  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await expect(page.getByRole("region", { name: "追加の市場変化指標" })).toContainText("追加指標は準備中です");
+  version = instrument.venueInstrumentVersionId;
+  await expect(page.getByRole("region", { name: "追加の市場変化指標" })).toContainText("数量OI: 15m +10.00%", { timeout: 10_000 });
+});
+
+test("groupのないactive契約も単体チャートとJST変化を表示する", async ({ page }) => {
+  const path = resolve(artifactRoot, "universe-snapshot.json");
+  const universe = JSON.parse(await readFile(path, "utf-8")) as UniverseSnapshotArtifact;
+  const item = universe.items.find((entry) => entry.venueInstrumentId === "bitget:BTCUSDT")!;
+  item.groupId = null;
+  await writeFile(path, JSON.stringify(universe));
+  await page.goto(`/?mode=native&instrument=${encodeURIComponent(item.venueInstrumentId)}&version=${item.venueInstrumentVersionId}`);
+  await expect(page.getByRole("region", { name: "価格・出来高" })).toBeVisible();
+  await expect(page.getByText("板・約定購読は行いません。")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "約定価格の騰落率" })).toBeVisible();
+  await expect(page.locator(".daily-change-block")).not.toContainText("group未確定");
+});
 
 const runtimeRoot = resolve(process.cwd(), "../../var/tmp/e2e/runtime");
 const artifactRoot = resolve(runtimeRoot, "artifacts");
@@ -42,7 +118,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?mode=native");
 
   await expect(page.getByRole("heading", { name: "Perp Universe Explorer" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
@@ -82,7 +158,7 @@ test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
 });
 
 test("約定騰落率の基準を分単位で変更して再読み込み後も保持する", async ({ page }, testInfo) => {
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const setting = page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true });
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   const row = page.getByRole("row").filter({
@@ -139,7 +215,7 @@ test("約定騰落率の古い基準の遅延応答で変更後の値を上書�
     }
     await route.fallback();
   });
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const pending = await delayedRoute;
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   await expect(change).toContainText("取得中");
@@ -174,7 +250,7 @@ test.describe("約定騰落率のJST日付切替", () => {
       }
       await route.fulfill({ json: priceChangeFixture(url, now) });
     });
-    await page.goto("/");
+    await page.goto("/?mode=native");
     const change = page.getByRole("region", { name: "約定価格の騰落率" });
     await expect(change.getByText("+3.00%", { exact: true })).toBeVisible();
     expect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone))
@@ -210,7 +286,7 @@ test("約定騰落率の基準足欠損と取得失敗を0%に置き換えない
       changePercent: null
     } satisfies DailyPriceChange });
   });
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   await expect(change).toContainText("基準足なし");
   await expect(change.getByText(/^[+-]?\d[\d,.]*%$/)).toHaveCount(0);
@@ -228,7 +304,7 @@ test("約定騰落率の設定はstorageが使えなくても画面内で変更�
       get() { throw new DOMException("Storage is disabled", "SecurityError"); }
     });
   });
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const setting = page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true });
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   await expect(setting).toHaveValue("00:00");
@@ -272,7 +348,7 @@ async function browserNow(page: Page): Promise<Date> {
 }
 
 test("チャートの時間足をVenue切り替えと履歴到着後も保持する", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await chart.getByRole("button", { name: "1h", exact: true }).click();
   await expect(chart.getByRole("button", { name: "1h", exact: true })).toHaveAttribute(
@@ -299,7 +375,7 @@ test("チャートの時間足をVenue切り替えと履歴到着後も保持す
 
 test("チャートのズームを市場データと履歴の定期更新で戻さない", async ({ page }) => {
   await page.clock.install();
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await expect(chart).toHaveAccessibleDescription(/15m 120本/);
   const candles = chart.locator("canvas").first();
@@ -352,7 +428,7 @@ test("チャートの古い履歴応答で新しく選んだ時間足を上書�
     }
     await route.fallback();
   });
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await expect(chart).toHaveAccessibleDescription(/15m 120本/);
   await chart.getByRole("button", { name: "1h", exact: true }).click();
@@ -383,7 +459,7 @@ test("チャートを過去へスクロールすると履歴を追加し表示�
     firstBucket = fixture.bars[0].bucketAt;
     await route.fulfill({ json: { ...fixture, hasMore: true, nextBefore: firstBucket } });
   });
-  await page.goto("/");
+  await page.goto("/?mode=native");
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await expect(chart).toHaveAccessibleDescription(/15m 180本/);
   const candles = chart.locator("canvas").first();
@@ -419,7 +495,7 @@ test.describe("チャートのJST表示", () => {
   test.use({ timezoneId: "America/Los_Angeles" });
 
   test("1Dは120日分の日足を表示し日足の区切りをJSTで明示する", async ({ page }, testInfo) => {
-    await page.goto("/");
+    await page.goto("/?mode=native");
     const chart = page.getByRole("region", { name: "価格・出来高" });
     const timeframes = chart.getByLabel("チャート時間足", { exact: true });
     await expect(timeframes.getByRole("button", { name: "24h", exact: true })).toHaveCount(0);
@@ -447,6 +523,7 @@ function chartHistoryFixture(url: URL, now: Date, count = 120) {
   }
   return {
     venueInstrumentId: url.searchParams.get("instrument"),
+    venueInstrumentVersionId: Number(url.searchParams.get("expectedVersion")),
     timeframe,
     generatedAt: now.toISOString(),
     bars: Array.from({ length: count }, (_, index) => {

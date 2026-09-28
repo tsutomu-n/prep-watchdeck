@@ -48,6 +48,32 @@ def test_real_window_turnover_and_endpoint_price(store: Store) -> None:
         assert result.anchor == CUTOFF - minutes * MINUTE
 
 
+def test_24h_needs_boundary_close_and_windows_share_one_generation(store: Store) -> None:
+    seed(store, reference())
+    generation = Generation(mapping("BTC"), CUTOFF, CUTOFF + 8000, store)
+    result = generation.response("24h", "00:00", "gainers", 0, CUTOFF + 8000)
+    row = result.rows[0]
+    assert result.schema_version == "ranking-v3"
+    assert result.anchor == CUTOFF - DAY
+    assert row.reference_close.value == 110
+    assert row.windows["15m"].state == "ready"
+    assert row.windows["1h"].state == "ready"
+    assert row.windows["24h"].return_pct == pytest.approx(10)
+    assert row.windows["24h"].quote_turnover == 1440 * 5
+    assert row.turnover_ratio.status == "unsupported_period"
+    assert row.turnover_ratios["15m"].status == "ready"
+    with store.connection:
+        store.connection.execute("DELETE FROM minute_bars WHERE end=?", (CUTOFF - DAY,))
+    missing = (
+        Generation(mapping("BTC"), CUTOFF, CUTOFF + 8000, store)
+        .response("24h", "00:00", "gainers", 0, CUTOFF + 8000)
+        .rows[0]
+    )
+    assert missing.windows["24h"].state == "history_missing"
+    assert missing.windows["15m"].state == "ready"
+    assert missing.reference_close.value == 110
+
+
 @pytest.mark.parametrize("period", ["15m", "1h", "daily"])
 def test_unknown_original_quantity_and_widget_preserve_reference_metrics(
     store: Store,

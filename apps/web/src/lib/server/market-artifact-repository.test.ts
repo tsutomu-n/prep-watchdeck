@@ -105,14 +105,18 @@ describe("market artifact and local selection repositories", () => {
       () => now
     );
     try {
-      const first = await repository.write("crypto:BTC:linear-perp", "bitget:BTCUSDT");
+      const target = { groupId: "crypto:BTC:linear-perp", venueInstrumentId: "bitget:BTCUSDT",
+        venueInstrumentVersionId: 1 };
+      const first = await repository.execute({ action: "select", ...target });
       now = new Date("2026-08-14T12:05:00.000Z");
-      const heartbeat = await repository.write("crypto:BTC:linear-perp", "bitget:BTCUSDT");
+      const heartbeat = await repository.execute({ action: "heartbeat", ...target,
+        expectedRequestedAt: first.requestedAt });
       expect(heartbeat.requestedAt).toBe(first.requestedAt);
       expect(heartbeat.heartbeatAt).toBe("2026-08-14T12:05:00.000Z");
-      await expect(repository.write("crypto:ETH:linear-perp", "bitget:BTCUSDT")).rejects.toThrow(
-        /not an active grouped instrument/
-      );
+      await expect(repository.execute({ action: "heartbeat", ...target,
+        expectedRequestedAt: "2026-08-14T11:59:00.000Z" })).rejects.toMatchObject({ status: 409 });
+      await expect(repository.execute({ action: "select", ...target,
+        groupId: "crypto:ETH:linear-perp" })).rejects.toMatchObject({ status: 409 });
       expect(JSON.parse(await readFile(paths.selectionCommandPath, "utf-8"))).toEqual(heartbeat);
     } finally {
       await rm(root, { recursive: true, force: true });

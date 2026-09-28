@@ -26,6 +26,7 @@
   type ChartModule = typeof import("lightweight-charts");
   type HistoryContext = {
     instrument: string;
+    versionId: number;
     timeframe: Timeframe;
     controller: AbortController;
     loadingLatest: boolean;
@@ -36,9 +37,11 @@
 
   let {
     venueInstrumentId,
+    venueInstrumentVersionId,
     timeframe = $bindable<Timeframe>("15m")
   }: {
     venueInstrumentId: string;
+    venueInstrumentVersionId: number;
     timeframe?: Timeframe;
   } = $props();
 
@@ -62,7 +65,7 @@
   let historyError = $state<string | null>(null);
   let renderError = $state<string | null>(null);
   let visiblePeriod = $state("—");
-  let selectionKey = $derived(`${venueInstrumentId}/${timeframe}`);
+  let selectionKey = $derived(`${venueInstrumentId}/${venueInstrumentVersionId}/${timeframe}`);
   let incompleteCount = $derived(bars.filter((bar) => !bar.complete).length);
   let summary = $derived(
     `${venueInstrumentId} ${timeframe === "24h" ? "1D" : timeframe} ${bars.length}本、未確定 ${incompleteCount}本`
@@ -98,6 +101,7 @@
     return untrack(() => {
       const current: HistoryContext = {
         instrument: venueInstrumentId,
+        versionId: venueInstrumentVersionId,
         timeframe,
         controller: new AbortController(),
         loadingLatest: false,
@@ -135,6 +139,7 @@
   async function requestPage(current: HistoryContext, before?: string): Promise<ChartHistory> {
     const query = new URLSearchParams({
       instrument: current.instrument,
+      expectedVersion: String(current.versionId),
       timeframe: current.timeframe
     });
     if (before) query.set("before", before);
@@ -144,7 +149,9 @@
     });
     if (!response.ok) throw new Error("chart history unavailable");
     const result = await response.json() as ChartHistory;
-    if (result.venueInstrumentId !== current.instrument || result.timeframe !== current.timeframe) {
+    if (result.venueInstrumentId !== current.instrument ||
+        result.venueInstrumentVersionId !== current.versionId ||
+        result.timeframe !== current.timeframe) {
       throw new Error("chart history identity mismatch");
     }
     return result;

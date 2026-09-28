@@ -12,6 +12,8 @@ export type MarketStatePaths = {
   serviceStatePath: string;
   selectionCommandPath: string;
   pastNotesDir: string;
+  userWorkspacePath: string;
+  marketMetricsPath: string;
 };
 
 export function resolveMarketStatePaths(env: Environment = process.env): MarketStatePaths {
@@ -29,6 +31,8 @@ export function resolveMarketStatePaths(env: Environment = process.env): MarketS
     selectedMarketPath: resolve(artifactDir, "selected-market.json"),
     serviceStatePath: resolve(artifactDir, "service-state.json"),
     selectionCommandPath: resolve(stateDir, "control", "selection.json"),
-    pastNotesDir: resolve(stateDir, "past-notes")
+    pastNotesDir: resolve(stateDir, "past-notes"),
+    userWorkspacePath: resolve(stateDir, "user-workspace.json"),
+    marketMetricsPath: resolve(artifactDir, "market-metrics.json")
   };
 }

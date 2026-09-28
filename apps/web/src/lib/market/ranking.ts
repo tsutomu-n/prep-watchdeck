@@ -13,7 +13,7 @@ export const CHART_INTERVAL_KEY = "prep-watchdeck:ranking-chart-interval";
 export const RANKING_MAX_AGE_MS = 150_000;
 
 export function rankingQuery(period: RankingPeriod, reference: string, order: RankingOrder, minimum: number) {
-  if (!["15m", "1h", "daily"].includes(period) || !isReferenceTime(reference)
+  if (!["15m", "1h", "24h", "daily"].includes(period) || !isReferenceTime(reference)
       || !["gainers", "losers", "turnover"].includes(order)
       || !Number.isFinite(minimum) || minimum < 0 || minimum > 1e18) {
     throw new RangeError("ランキング条件が不正です");

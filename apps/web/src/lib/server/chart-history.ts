@@ -24,6 +24,7 @@ const MIN_CANDLE_TIME_MS = Date.UTC(2009, 0, 1);
 type ErrorCode =
   | "chart_invalid_request"
   | "chart_instrument_unavailable"
+  | "chart_instrument_changed"
   | "chart_market_unavailable"
   | "chart_source_unavailable"
   | "chart_source_invalid"
@@ -38,6 +39,7 @@ export class ChartHistoryError extends Error {
 
 interface Query {
   instrument: string;
+  expectedVersion: number;
   timeframe: Timeframe;
   before: number | null;
 }
@@ -81,6 +83,9 @@ export class ChartHistoryService {
     const now = this.now();
     const query = parseQuery(parameters, now);
     const instrument = await this.resolveInstrument(query.instrument, now);
+    if (instrument.venueInstrumentVersionId !== query.expectedVersion) {
+      throw new ChartHistoryError(409, "chart_instrument_changed");
+    }
     const key = JSON.stringify([
       instrument.venueInstrumentId, instrument.venueInstrumentVersionId,
       instrument.quoteAsset, instrument.settleAsset, query.timeframe, query.before
@@ -97,7 +102,11 @@ export class ChartHistoryService {
     if (this.inflight.size + this.minuteRequests >= MAX_INFLIGHT) {
       throw new ChartHistoryError(503, "chart_history_busy");
     }
-    const request = this.load(instrument, query, now).then((value) => {
+    const request = this.load(instrument, query, now).then(async (value) => {
+      const latest = await this.resolveInstrument(query.instrument, this.now());
+      if (latest.venueInstrumentVersionId !== query.expectedVersion) {
+        throw new ChartHistoryError(409, "chart_instrument_changed");
+      }
       this.cache.set(key, { expiresAt: this.now() + CACHE_MS, value });
       while (this.cache.size > CACHE_ENTRIES) {
         this.cache.delete(this.cache.keys().next().value!);
@@ -121,7 +130,7 @@ export class ChartHistoryService {
       throw new ChartHistoryError(503, "chart_market_unavailable");
     }
     const instrument = universe.items.find((item) => item.venueInstrumentId === id);
-    if (!instrument?.active || !instrument.groupId || instrument.marketType !== "linear_perpetual" ||
+    if (!instrument?.active || instrument.marketType !== "linear_perpetual" ||
         instrument.venueInstrumentId !== `${instrument.venue}:${instrument.sourceSymbol}`) {
       throw new ChartHistoryError(404, "chart_instrument_unavailable");
     }
@@ -161,6 +170,7 @@ export class ChartHistoryService {
     const ordered = normalizeBars(bars, before, now, step).slice(-PAGE_SIZE);
     return {
       venueInstrumentId: instrument.venueInstrumentId,
+      venueInstrumentVersionId: instrument.venueInstrumentVersionId,
       timeframe: query.timeframe,
       generatedAt: new Date(now).toISOString(),
       bars: ordered,
@@ -301,22 +311,25 @@ function waitForRequestSlot(milliseconds: number, signal: AbortSignal): Promise<
 }
 
 function parseQuery(parameters: URLSearchParams, now: number): Query {
-  if ([...parameters.keys()].some((key) => !["instrument", "timeframe", "before"].includes(key)) ||
-      ["instrument", "timeframe", "before"].some((key) => parameters.getAll(key).length > 1)) {
+  if ([...parameters.keys()].some((key) => !["instrument", "timeframe", "before", "expectedVersion"].includes(key)) ||
+      ["instrument", "timeframe", "before", "expectedVersion"].some((key) => parameters.getAll(key).length > 1)) {
     throw new ChartHistoryError(400, "chart_invalid_request");
   }
   const instrument = parameters.get("instrument") ?? "";
+  const expectedVersionText = parameters.get("expectedVersion") ?? "";
+  const expectedVersion = Number(expectedVersionText);
   const timeframe = parameters.get("timeframe") ?? "";
   const beforeText = parameters.get("before");
   const before = beforeText === null ? null : Date.parse(beforeText);
   if (!instrument || instrument.length > 160 || instrument !== instrument.trim() ||
+      !/^[1-9]\d*$/.test(expectedVersionText) || !Number.isSafeInteger(expectedVersion) ||
       !CHART_TIMEFRAMES.includes(timeframe as Timeframe) ||
       (beforeText !== null && (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(beforeText) ||
         !Number.isSafeInteger(before) || before! <= 0 || before! > now ||
         new Date(before!).toISOString().replace(".000Z", "Z") !== beforeText.replace(".000Z", "Z")))) {
     throw new ChartHistoryError(400, "chart_invalid_request");
   }
-  return { instrument, timeframe: timeframe as Timeframe, before };
+  return { instrument, expectedVersion, timeframe: timeframe as Timeframe, before };
 }
 
 function assertSupportedInstrument(instrument: UniverseInstrumentArtifact) {

@@ -1,15 +1,15 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-28T20:57:00+09:00`
+- 検証: `2026-09-28T20:57:00+09:00`
 - 状態: `現行`
 
 ---
 
 ## この文書の範囲
 
-この文書は現在productionの3 Venue Perp runtimeが実装しているdata contractを記述する。
+この文書はRepositoryの3 Venue Perp実装のdata contractを記述する。稼働releaseの版と反映状況は別に確認する。
 現在のfield、Venue、artifact数、timeframe、retention等を将来の永久上限として扱わない。
 製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
 
@@ -185,21 +185,21 @@ native履歴は取引所が当該symbolへ配信した履歴であり、collecto
 `status`、`reason`、`baselinePrice`、`currentPrice`、`currentCandleAt`、`changePercent`。
 `status=unavailable`では`changePercent=null`とし、`baseline_missing`、`latest_missing`、
 `latest_stale`で不足を区別する。HTTP取得・応答検証の失敗は非200と限定したerror codeにする。
-freshな検証済みUniverseのactive grouped linear perpetualだけを解決し、cacheも契約version・
+freshな検証済みUniverseのactive linear perpetualだけを解決し、cacheも契約version・
 quote・settleを区別する。HTTP応答は`no-store`で、任意URLや独立symbolは受け取らない。
 
 ## 独立ランキングの契約
 
-/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/schemas/ranking-map.schema.json と
-/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/schemas/ranking-response.schema.json は既存4 artifactと独立している。
-Pythonの検証modelを正本とし、/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/scripts/ranking/generate-schema.py で生成する。
+[`ranking-map.schema.json`](../../schemas/ranking-map.schema.json)と
+[`ranking-response.schema.json`](../../schemas/ranking-response.schema.json)は既存4 artifactと独立している。
+Pythonの検証modelを正本とし、[`generate-schema.py`](../../scripts/ranking/generate-schema.py)で生成する。
 Web型は既存の `bun run generate:types` に含む。
 
 mapは元の全instrument ID・version、名簿fingerprint・確認時刻、共通row ID、元Venue、
 原資産・数量倍率、固定参照のProvider・symbol・quote/settle・perpetual種別・revision、
 Widgetの別symbolと根拠を持つ。`verified / unsupported / review / out_of_scope`を区別する。
 `review`を対応済みとして価格取得せず、異なる原資産や数量を名前だけで結合しない。
-`ranking-map-v2`の行statusと`ranking-v2`応答の`mappingStatus`は、元の原資産同一性と
+`ranking-map-v2`の行statusと`ranking-v3`応答の`mappingStatus`は、元の原資産同一性と
 固定参照契約の採用資格を表す。元契約の`originals[].multiplier=null`は数量換算未確認であり、
 確認済み参照契約によるランキングを止めない。元数量を使う換算には利用できない。
 Widget symbolは独立に照合し、参照契約keyへ結び付ける。Widgetの`review`はChartだけを停止する。
@@ -238,7 +238,7 @@ mapの要確認・未対応・対象外、下限未満・方向対象外を分�
 
 ### 順位比較と追加指標
 
-`metricVersion`は`trade-close-quote-turnover-analysis-v2`。応答の`previousGenerationId`と
+`metricVersion`は`trade-close-quote-turnover-analysis-v3`。応答の`previousGenerationId`と
 `previousCutoff`は比較元として保持した発行済み世代を示す。現在Tに対してT−60,000msの世代を、
 同じmap/metric version、期間、順序、下限、JST HH:mmで再計算する。JST可変期間の基準日時が
 切り替わる世代間は比較しない。初回とprocess再起動では比較元を持たず、保存済みsnapshotや
@@ -263,3 +263,11 @@ Webも取得停止時のclockで無効化する。過去世代の入力は後着
 
 high/lowと売買代金は世代作成時にSQLiteから一度読み、指標を固定する。Web/APIの読取り時には
 DBを再参照しない。SQLiteの表・保存期間は変更せず、指標は保存済みOHLCにも適用できる。
+
+### Markets workspaceの追加契約
+
+Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
+
+`market-metrics.json`は既存4 artifactから独立した任意の読取laneで、`native-endpoints-v1`、`generationId`、`candleCutoff`、現行ID/version別の`oiChange`と`tradeChange`を保持する。数量OIは同一versionのL1 bucketの15分・1時間差。終値変化は全行共通cutoffの確定1分足の15分・1時間・24時間差であり、JST騰落率とは別の値である。180秒lagと300秒上限は設計初期値で、実データから測定した数値ではない。欠損や古い値を0へ置換しない。
+
+`GET /api/market-metrics`はartifactだけをschema検証して返す。未生成・不正は503、正常な古いartifactは元の時刻のまま返し、Browserで鮮度を判定する。`GET/POST /api/user-workspace`はfavoriteの望む状態と名前付きviewの条件付き更新を扱う。メモは読取bytesのSHA-256 tokenを条件に保存し、`context`を添付する保存ではNoteFile v2へ移る。旧v1項目も読み続ける。

@@ -53,6 +53,7 @@ class CandleRuntime:
         *,
         catalog_update_lock: asyncio.Lock,
         current_version_starts: CurrentVersionStartSupplier,
+        on_persisted: Callable[[], None] | None = None,
         utc_clock: UtcClock | None = None,
     ) -> None:
         self._database_url = database_url
@@ -60,6 +61,7 @@ class CandleRuntime:
         self._instrument_supplier = instrument_supplier
         self._catalog_update_lock = catalog_update_lock
         self._current_version_starts = current_version_starts
+        self._on_persisted = on_persisted
         self._utc_clock = utc_clock or (lambda: datetime.now(UTC))
 
     async def run_forever(self, stop_event: asyncio.Event) -> None:
@@ -73,6 +75,7 @@ class CandleRuntime:
             catalog_update_lock=self._catalog_update_lock,
             active_instrument_ids=self._active_instrument_ids,
             current_version_starts=self._current_version_starts,
+            on_persisted=self._on_persisted,
         )
         writer_task = asyncio.create_task(writer.run(), name="candle-batch-writer")
         producer_tasks = (
@@ -208,6 +211,7 @@ class CandleBatchWriter:
         catalog_update_lock: asyncio.Lock | None = None,
         active_instrument_ids: ActiveInstrumentIdSupplier | None = None,
         current_version_starts: CurrentVersionStartSupplier | None = None,
+        on_persisted: Callable[[], None] | None = None,
     ) -> None:
         if not 0 < batch_size <= CANDLE_BATCH_SIZE:
             raise ValueError("candle batch_size must be between 1 and 250")
@@ -221,6 +225,7 @@ class CandleBatchWriter:
         self._catalog_update_lock = catalog_update_lock
         self._active_instrument_ids = active_instrument_ids
         self._current_version_starts = current_version_starts
+        self._on_persisted = on_persisted
         self._queue: asyncio.Queue[Candle1m | None] = asyncio.Queue(maxsize=CANDLE_QUEUE_SIZE)
         self._closed = False
 
@@ -333,6 +338,8 @@ class CandleBatchWriter:
             stored=result.stored,
             ignored=filtered + result.ignored,
         )
+        if result.stored and self._on_persisted is not None:
+            self._on_persisted()
         return result
 
 

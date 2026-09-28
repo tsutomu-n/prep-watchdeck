@@ -1,26 +1,86 @@
 <script lang="ts">
-  import type { MarketPastNote } from "$lib/market-past-note/market-past-note";
-  import { marketPastNotesFromPayload } from "$lib/market-past-note/market-past-note";
+  import type { MarketPastNote, MarketPastNoteContext } from "$lib/market-past-note/market-past-note";
+  import { pastNoteSnapshotFromPayload } from "$lib/market-past-note/market-past-note";
   import { formatTimestamp } from "$lib/market/universe-view";
 
-  let { venueInstrumentId }: { venueInstrumentId: string } = $props();
+  let { venueInstrumentId, venueInstrumentVersionId, metricContext = null }: {
+    venueInstrumentId: string; venueInstrumentVersionId: number;
+    metricContext?: Pick<MarketPastNoteContext, "metricGenerationId" | "oi15mPct" | "trade15mPct"> | null;
+  } = $props();
 
   let notes = $state<MarketPastNote[]>([]);
   let reason = $state("");
   let note = $state("");
+  let attachContext = $state(false);
   let loading = $state(false);
   let saving = $state(false);
   let errorMessage = $state<string | null>(null);
   let savedMessage = $state<string | null>(null);
-  let lastInstrumentId = "";
+  let storageWarning = $state<string | null>(null);
+  let revisionToken = $state<string | null>(null);
+  let draftRevision = $state(0);
+  let activeKey = "";
+  const drafts = new Map<string, { reason: string; note: string; revision: number }>();
+  const pending = new Set<string>();
+
+  function draftKey(id: string, version: number) {
+    return `${id}/${version}`;
+  }
+
+  function rememberDraft() {
+    if (!activeKey) return;
+    const draft = { reason, note, revision: draftRevision };
+    drafts.set(activeKey, draft);
+    try { window.sessionStorage.setItem(`market-note-draft:${activeKey}`, JSON.stringify(draft)); }
+    catch { storageWarning = "未保存メモはこの画面を閉じると失われます"; }
+  }
+
+  function restoredDraft(key: string) {
+    const memory = drafts.get(key);
+    if (memory) return memory;
+    try {
+      const stored = window.sessionStorage.getItem(`market-note-draft:${key}`);
+      if (!stored) return null;
+      const value: unknown = JSON.parse(stored);
+      if (!value || typeof value !== "object") return null;
+      const draft = value as { reason?: unknown; note?: unknown; revision?: unknown };
+      if (typeof draft.reason !== "string" || draft.reason.length > 200 ||
+          typeof draft.note !== "string" || draft.note.length > 10_000 ||
+          !Number.isSafeInteger(draft.revision)) return null;
+      return { reason: draft.reason, note: draft.note, revision: Number(draft.revision) };
+    } catch {
+      storageWarning = "保存済み下書きを読めません。入力中の内容はこの画面で保持します";
+      return null;
+    }
+  }
+
+  function updateReason(value: string) {
+    reason = value;
+    draftRevision += 1;
+    rememberDraft();
+  }
+
+  function updateNote(value: string) {
+    note = value;
+    draftRevision += 1;
+    rememberDraft();
+  }
 
   $effect(() => {
     const instrumentId = venueInstrumentId;
-    if (lastInstrumentId !== instrumentId) {
-      lastInstrumentId = instrumentId;
-      reason = "";
-      note = "";
+    const versionId = venueInstrumentVersionId;
+    const key = draftKey(instrumentId, versionId);
+    if (activeKey !== key) {
+      rememberDraft();
+      activeKey = key;
+      const draft = restoredDraft(key);
+      reason = draft?.reason ?? "";
+      note = draft?.note ?? "";
+      draftRevision = draft?.revision ?? 0;
       savedMessage = null;
+      notes = [];
+      revisionToken = null;
+      saving = pending.has(key);
     }
     const controller = new AbortController();
     loading = true;
@@ -30,26 +90,44 @@
     })
       .then(async (response) => {
         if (!response.ok) throw new Error(await response.text());
-        const parsed = marketPastNotesFromPayload(await response.json());
+        const parsed = pastNoteSnapshotFromPayload(await response.json());
         if (!parsed) throw new Error("invalid past notes response");
-        if (!controller.signal.aborted && venueInstrumentId === instrumentId) notes = parsed;
+        if (!controller.signal.aborted && activeKey === key) {
+          notes = parsed.notes;
+          revisionToken = parsed.revisionToken;
+        }
       })
       .catch((cause) => {
-        if (!controller.signal.aborted && venueInstrumentId === instrumentId) {
+        if (!controller.signal.aborted && activeKey === key) {
           errorMessage = cause instanceof Error ? cause.message : "銘柄注記を取得できません";
         }
       })
       .finally(() => {
-        if (!controller.signal.aborted && venueInstrumentId === instrumentId) loading = false;
+        if (!controller.signal.aborted && activeKey === key) loading = false;
       });
     return () => controller.abort();
   });
 
   async function save() {
     const instrumentId = venueInstrumentId;
+    const versionId = venueInstrumentVersionId;
+    const key = draftKey(instrumentId, versionId);
     const capturedReason = reason.trim();
     const capturedNote = note.trim();
-    if (!capturedReason && !capturedNote) return;
+    const capturedRevision = draftRevision;
+    const token = revisionToken;
+    const context: MarketPastNoteContext | undefined = attachContext ? {
+      kind: "ui-observation-v1",
+      venueInstrumentId: instrumentId,
+      venueInstrumentVersionId: versionId,
+      view: "native",
+      capturedAt: new Date().toISOString(),
+      metricGenerationId: metricContext?.metricGenerationId ?? null,
+      oi15mPct: metricContext?.oi15mPct ?? null,
+      trade15mPct: metricContext?.trade15mPct ?? null
+    } : undefined;
+    if ((!capturedReason && !capturedNote) || token === null || pending.has(key)) return;
+    pending.add(key);
     saving = true;
     errorMessage = null;
     savedMessage = null;
@@ -59,25 +137,36 @@
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           venueInstrumentId: instrumentId,
+          venueInstrumentVersionId: versionId,
           reason: capturedReason,
-          note: capturedNote
+          note: capturedNote,
+          expectedRevisionToken: token,
+          ...(context ? { context } : {})
         })
       });
       if (!response.ok) throw new Error(await response.text());
-      const parsed = marketPastNotesFromPayload(await response.json());
+      const parsed = pastNoteSnapshotFromPayload(await response.json());
       if (!parsed) throw new Error("invalid past notes response");
-      if (venueInstrumentId === instrumentId) {
-        notes = parsed;
-        reason = "";
-        note = "";
+      if (activeKey === key) {
+        notes = parsed.notes;
+        revisionToken = parsed.revisionToken;
+        if (draftRevision === capturedRevision) {
+          reason = "";
+          note = "";
+          draftRevision += 1;
+          rememberDraft();
+          try { window.sessionStorage.removeItem(`market-note-draft:${key}`); }
+          catch { /* The cleared in-memory draft remains authoritative. */ }
+        }
         savedMessage = `${instrumentId} に保存しました`;
       }
     } catch (cause) {
-      if (venueInstrumentId === instrumentId) {
-        errorMessage = cause instanceof Error ? cause.message : "銘柄注記を保存できません";
+      if (activeKey === key) {
+        errorMessage = cause instanceof Error ? cause.message : "銘柄注記を保存できません。再読込して確認してください。";
       }
     } finally {
-      if (venueInstrumentId === instrumentId) saving = false;
+      pending.delete(key);
+      if (activeKey === key) saving = false;
     }
   }
 </script>
@@ -102,6 +191,7 @@
           <strong>{item.reason}</strong>
           <time datetime={item.observedAt}>{formatTimestamp(item.observedAt)}</time>
           {#if item.note}<p>{item.note}</p>{/if}
+          {#if item.context}<small>保存時の指標: 数量OI 15m {item.context.oi15mPct === null ? "—" : `${item.context.oi15mPct}%`} · 確定終値 15m {item.context.trade15mPct === null ? "—" : `${item.context.trade15mPct}%`}</small>{/if}
         </li>
       {/each}
     </ul>
@@ -110,16 +200,17 @@
   <div class="note-form">
     <label>
       <span>理由</span>
-      <input bind:value={reason} placeholder="例: 流動性を再確認" />
+      <input value={reason} oninput={(event) => updateReason(event.currentTarget.value)} placeholder="例: 流動性を再確認" />
     </label>
     <label>
       <span>短い観測メモ</span>
-      <textarea bind:value={note} rows="2" placeholder="売買記録ではなく、後で確認する事実"></textarea>
+      <textarea value={note} oninput={(event) => updateNote(event.currentTarget.value)} rows="2" placeholder="売買記録ではなく、後で確認する事実"></textarea>
     </label>
+    <label class="context-choice"><input type="checkbox" bind:checked={attachContext} />保存時の指標を添付する</label>
     <button
       type="button"
       onclick={save}
-      disabled={saving || (!reason.trim() && !note.trim())}
+      disabled={saving || revisionToken === null || (!reason.trim() && !note.trim())}
       aria-busy={saving}
       aria-describedby="market-past-note-status"
     >{saving ? "保存中" : "注記を保存"}</button>
@@ -129,6 +220,7 @@
         : "選択中のvenueInstrumentIdへ保存します"}
     </p>
     {#if errorMessage}<p class="error" role="alert">{errorMessage}</p>{/if}
+    {#if storageWarning}<p class="error" role="status">{storageWarning}</p>{/if}
     {#if savedMessage}<p class="saved" role="status" aria-live="polite">{savedMessage}</p>{/if}
   </div>
 </section>
@@ -202,6 +294,16 @@
     gap: var(--space-xs);
     color: var(--muted);
     font-size: var(--type-body-sm-size);
+  }
+
+  .context-choice {
+    display: flex;
+    align-items: center;
+  }
+
+  .context-choice input {
+    width: auto;
+    min-height: auto;
   }
 
   input,

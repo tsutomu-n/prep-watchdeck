@@ -1,0 +1,474 @@
+{
+  "schemaVersion": 2,
+  "purpose": "Markets workspace開発受入の作業用台帳。source実装・隔離検証・実データ受入を分けて記録する。",
+  "baselineGitSha": "be281d936a44ff912e8b44d56c06a70cf28963ec",
+  "implementationStatus": "partial",
+  "runtimeAcceptance": "not_run",
+  "milestoneOrder": [
+    "M0",
+    "M1",
+    "M2",
+    "M3",
+    "M4",
+    "M5",
+    "M6"
+  ],
+  "developmentGate": "M0〜M5に割り当てた全ACが実行証拠付きでpass。M6を含めない。既存未達・未実行はPARTIAL。",
+  "realDataValidation": {
+    "status": "not_run",
+    "note": "現役DB・実provider値・実機のPF01〜03と180秒/300秒設定の受入は未確認。隔離fixtureと混同しない。"
+  },
+  "cases": [
+    {
+      "id": "AC01",
+      "requirements": [
+        "R01"
+      ],
+      "expected_behavior": "0.00000012は非ゼロ表示。0.00000121と0.00000126のBid/Askを区別。tick0.25、1e-18、null、非有限も正しく扱う",
+      "status": "pass",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "formatPrice/formatBidAskの小額・null・非有限unit test。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC02",
+      "requirements": [
+        "R02"
+      ],
+      "expected_behavior": "Aで入力→B→Aで下書き復元。A保存中→B、A→B→A、同じAで追加入力。旧応答で入力消去や保存中固定が起きない。revisionTokenの異なる別タブ保存は409、下書きは保持しblind retryしない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "銘柄/version別draft、保存中のrevision capture、CAS 409を実装。A→B→Aの遅延Browser再現は未実施。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC03",
+      "requirements": [
+        "R02"
+      ],
+      "expected_behavior": "破損JSON/項目不正/未知schema/権限エラーは読取・保存拒否し原本不変。ENOENTだけ未作成。M1後のGET/listは期限切れの表示除外のみでファイルを変更せず、正常POSTでCAS後にpruneする",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "GET無書込と破損fail-closed、CAS後保存のunit test。permission errorの専用fixture未実施。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC04",
+      "requirements": [
+        "R03"
+      ],
+      "expected_behavior": "activeでgroupなしの安全なnative契約はchart表示。数量意味不明のvolumeは換算しない。inactive・不明契約・任意URL・symbol注入・古いcatalogは拒否",
+      "status": "pass",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "groupなしactiveのchart/JST表示をDesktop/Mobile E2Eで確認。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC05",
+      "requirements": [
+        "R04"
+      ],
+      "expected_behavior": "A選択→B選択→旧A heartbeatで409、B継続。hidden heartbeat停止。初期描画／URL復元ではcollectorを奪わない。TTL切れ・A→B→A・同時刻衝突を確認し、未来requestedAtでCoreを回避しない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "action select/heartbeatとtoken条件を実装。TTL/時計衝突の専用Browser再現未実施。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC06",
+      "requirements": [
+        "R07"
+      ],
+      "expected_behavior": "24hに1441個の終値位置が必要。境界欠損・途中quote volume欠損・実0・JST基準一致・日跨ぎを独立確認",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "Ranking v3の24h窓と独立欠損unit test。全境界の専用fixture未実施。"
+      ],
+      "milestone": "M2",
+      "gate": "development"
+    },
+    {
+      "id": "AC07",
+      "requirements": [
+        "R07",
+        "R08"
+      ],
+      "expected_behavior": "1応答の4期間・終値・平常比は同generation。15m有効／24h欠測を表現。応答読取回数を増やしても外部取得が増えない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "同一Generationから4期間の窓を構築。外部取得回数の負荷試験未実施。"
+      ],
+      "milestone": "M2",
+      "gate": "development"
+    },
+    {
+      "id": "AC08",
+      "requirements": [
+        "R08",
+        "R09"
+      ],
+      "expected_behavior": "数値sortはraw、欠測最後、同値ID順。未描画行も全体sort対象。可視行だけのprice API値で順位を作らない。base/quoteの文字列だけでなく実通貨/資産が一致する範囲だけで出来高sort",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "raw値sort/filter、欠損末尾のunit test。異なる通貨の出来高sortは機能対象から外した。"
+      ],
+      "milestone": "M3",
+      "gate": "development"
+    },
+    {
+      "id": "AC09",
+      "requirements": [
+        "R08",
+        "R09"
+      ],
+      "expected_behavior": "全体順位とローカルfilter／独自sortを混同しない。初回／再起動／世代gap／metric変更で架空の順位差を作らない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "server順位を保持したlocal sort/filter。再起動/gapの既存unitとE2Eを通過。"
+      ],
+      "milestone": "M3",
+      "gate": "development"
+    },
+    {
+      "id": "AC10",
+      "requirements": [
+        "R12"
+      ],
+      "expected_behavior": "OI base1000→1100で+10%。価格上昇でnotional+65%でもOI+65%としない。基準0、version差、端点欠損、未確認unitは理由付きnull",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "隔離Postgresでbase OI 1000→1100=10%とversion一致を確認。未確認unitの全fixture未実施。"
+      ],
+      "milestone": "M4",
+      "gate": "development"
+    },
+    {
+      "id": "AC11",
+      "requirements": [
+        "R12",
+        "R13"
+      ],
+      "expected_behavior": "spreadは同snapshotのBid/Askから計算。交差板を拒否、同値は0。Funding周期不明・次回時刻なし／経過を推測しない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "同snapshot Bid/Ask spreadの交差板・同値unit test。Funding境界の新規専用試験未実施。"
+      ],
+      "milestone": "M4",
+      "gate": "development"
+    },
+    {
+      "id": "AC12",
+      "requirements": [
+        "R06",
+        "R11",
+        "R13"
+      ],
+      "expected_behavior": "参照originalsのID/version完全一致でnative詳細へ。倍率nullの参照資格、Widget欠落、複数native候補を別扱い",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "参照→現行ID/version一致nativeへのDesktop/Mobile E2E。複数候補の専用試験未実施。"
+      ],
+      "milestone": "M2",
+      "gate": "development"
+    },
+    {
+      "id": "AC13",
+      "requirements": [
+        "R06",
+        "R14",
+        "R17"
+      ],
+      "expected_behavior": "Desktop／390px相当で一覧→詳細→戻る、次／前、filter後の選択、scrollとfocusを保持。旧queryや保存画面から再訪可能",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "Desktop/Mobileの参照→native→戻るE2E。scroll/focus/次前の全組合せは未実施。"
+      ],
+      "milestone": "M3",
+      "gate": "development"
+    },
+    {
+      "id": "AC14",
+      "requirements": [
+        "R04",
+        "R16"
+      ],
+      "expected_behavior": "既存chart/selection/JST APIで、遅延応答、条件変更、削除、version変更時に古いWidget/板/値が復活しない。POST abortを未実行とみなさない。新metricsとの結合はAC28",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "chart/version、旧JST応答、旧Ranking応答のunit/E2E。selection長時間競合の全再現未実施。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC15",
+      "requirements": [
+        "R05",
+        "R16"
+      ],
+      "expected_behavior": "既存参照150秒/native L1・OIの120秒を時計だけで失効させる。hidden復帰と行順固定でも旧値をcurrentにしない。native確定足の別時間基準はAC24で検証",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "時計によるsource/metric失効を実装。hidden復帰と固定行の専用E2E未実施。"
+      ],
+      "milestone": "M1",
+      "gate": "development"
+    },
+    {
+      "id": "AC16",
+      "requirements": [
+        "R10",
+        "R18"
+      ],
+      "expected_behavior": "favoriteの重複setは1件。2タブで別favorite更新が消えない。savedView revision競合409。未知schema・容量超過時に初期化しない。同一対象の登録→解除の遅延応答で星が逆戻りしない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "atomic favoriteとsavedView CASのunit test、reload E2E。遅延連打と2タブのBrowser再現未実施。"
+      ],
+      "milestone": "M3",
+      "gate": "development"
+    },
+    {
+      "id": "AC17",
+      "requirements": [
+        "R05",
+        "R12",
+        "R16"
+      ],
+      "expected_behavior": "metrics未生成・DB timeout・invalid artifact・provider片側停止・Widget失敗・保存失敗を独立表示。他の市場laneは利用可能",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "metrics任意lane、503と古い正常artifactのunit test。故障注入の全組合せ未実施。"
+      ],
+      "milestone": "M4",
+      "gate": "development"
+    },
+    {
+      "id": "AC18a",
+      "requirements": [
+        "R02",
+        "R04",
+        "R18"
+      ],
+      "milestone": "M1",
+      "gate": "development",
+      "expected_behavior": "selection/メモのloopback/Origin/JSON/body上限/unknown key/版tokenを検査。400/403/409/413/500を保持しsecret/stack/pathを漏らさない。文字列XSSを防ぐ",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "loopback/Origin/JSON/body上限/unknown key/tokenの検査を実装。全statusのHTTP表試験未実施。"
+      ]
+    },
+    {
+      "id": "AC18b",
+      "requirements": [
+        "R10",
+        "R18"
+      ],
+      "milestone": "M3",
+      "gate": "development",
+      "expected_behavior": "user-workspaceのOrigin/loopback/64KiB/未知key/path traversal/上限/CASを検査。古い全ファイル上書きや任意パス保存を拒否",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "user-workspaceのatomic/CAS、pathを受けないAPIを実装。全異常入力表試験未実施。"
+      ]
+    },
+    {
+      "id": "AC18c",
+      "requirements": [
+        "R15",
+        "R18"
+      ],
+      "milestone": "M4",
+      "gate": "development",
+      "expected_behavior": "contextの最大16metrics/64KiB、有限数、文字列長、target/version、raw/secret混入を検査。過去証拠の署名や市場真実の再認証とは呼ばない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "2指標のみを持つcontextを有限数/target/versionで検査。参照contextと全境界表試験未実施。"
+      ]
+    },
+    {
+      "id": "AC19",
+      "requirements": [
+        "R15",
+        "R18"
+      ],
+      "expected_behavior": "v1 note全件を保持してv2保存。contextの参照/native出所・時刻・対象を保存。範囲超過拒否、再読込可能、旧版rollbackでv2を失わない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "v1→v2で旧項目保持のunit test。旧版rollbackの隔離復元試験未実施。"
+      ],
+      "milestone": "M4",
+      "gate": "development"
+    },
+    {
+      "id": "AC20",
+      "requirements": [
+        "R17"
+      ],
+      "expected_behavior": "表見出しbutton／aria-sort、keyboard、IME、focus、色に頼らない状態、reduced-motion、横はみ出しを確認",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "ranking見出しbutton/aria-sortとDesktop/Mobile E2E。IME/focus/reduced-motion専用試験未実施。"
+      ],
+      "milestone": "M3",
+      "gate": "development"
+    },
+    {
+      "id": "AC21",
+      "requirements": [
+        "R16",
+        "R18",
+        "R19"
+      ],
+      "expected_behavior": "最終差分、全必須開発AC、生成schema/型/current docs、依存lock、隔離target、再開記録、互換性/rollback準備が整合。今回追加していない本番・実使用PASSを混ぜない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "schema/型生成、docs checker、lock、lint、types、build、隔離DB、E2Eを確認。全AC未達のためPARTIAL。"
+      ],
+      "milestone": "M5",
+      "gate": "development"
+    },
+    {
+      "id": "AC22",
+      "requirements": [
+        "R19"
+      ],
+      "expected_behavior": "承認済み本番で参照/native実数値照合、保存→browser再訪、起動復帰、実使用flowを確認。未実施なら運用完了としない",
+      "status": "not_run",
+      "evidence": [],
+      "milestone": "M6",
+      "gate": "runtime"
+    },
+    {
+      "id": "AC23",
+      "requirements": [
+        "R06",
+        "R11",
+        "R14",
+        "R17"
+      ],
+      "milestone": "M2",
+      "gate": "development",
+      "expected_behavior": "1440px/390px相当で条件選択→参照詳細→native→一覧→次銘柄を実Browserで確認。探し直し/条件消失/出所誤認がない。画像の存在だけで合格にしない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "1440px/390pxで参照→native→戻るE2E。次銘柄/focusまでの全通し未実施。"
+      ]
+    },
+    {
+      "id": "AC24",
+      "requirements": [
+        "R05",
+        "R12",
+        "R16"
+      ],
+      "milestone": "M4",
+      "gate": "development",
+      "expected_behavior": "共通candleCutoff、初期lag180秒/maxAge300秒、端点bucketのoff-by-one、L1先行/足後着、同一cutoffの訂正、一部銘柄遅延、source停止の時計失効を確認。observedAt<終了の正常確定足を棄却しない。設定は仮定と実測を分離",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "共通cutoff、後着訂正、部分欠損を隔離DB/unitで確認。実到着遅延分布と時計停止の全境界未測定。"
+      ]
+    },
+    {
+      "id": "AC25",
+      "requirements": [
+        "R03",
+        "R11",
+        "R14",
+        "R16"
+      ],
+      "milestone": "M1",
+      "gate": "development",
+      "expected_behavior": "chart expectedVersion必須、実version応答、cache/inflight/過去ページ/UI照合、取得途中version変更409、旧series破棄。共通resolverとpriceChangeFailure/JST APIに回帰なし",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "expectedVersion付きchart route/responseと旧応答拒否をunit/E2E。全inflight境界試験未実施。"
+      ]
+    },
+    {
+      "id": "AC26",
+      "requirements": [
+        "R18",
+        "R19"
+      ],
+      "milestone": "M0",
+      "gate": "development",
+      "expected_behavior": "対象checkout/dirty/稼働checkout/隔離targetを確認し、PF01〜03を安全に試行または未確認記録。本番selection/メモ副作用GETなし。DB不通を全開発停止や取得済み扱いにしない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main be281d9 から独立worktree作成。稼働Web/Market dc2a8d7、Ranking d1c44d5をservice unit読取で確認。PF01/PF02実値とPF03画面は未確認。"
+      ]
+    },
+    {
+      "id": "AC27",
+      "requirements": [
+        "R12",
+        "R16",
+        "R19"
+      ],
+      "milestone": "M4",
+      "gate": "development",
+      "expected_behavior": "metricsのcommit後通知/coalesce/single-flight/read-only snapshot/5秒最短間隔/接続1/statement5秒/全体10秒/shutdown awaitを隔離確認。足保存失敗とmetrics失敗を分離し、DB可視化→投影→最大5秒poll反映を測る",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "単一worker/read-only snapshot/5秒間隔/5秒statement timeoutを実装。1201行の隔離DB読取は10秒未満。writer→Browser遅延測定未実施。"
+      ]
+    },
+    {
+      "id": "AC28",
+      "requirements": [
+        "R05",
+        "R11",
+        "R12",
+        "R13",
+        "R16"
+      ],
+      "milestone": "M4",
+      "gate": "development",
+      "expected_behavior": "新metricsを現行Universe id/versionにだけ結合し、同cutoff訂正は反映、古い世代/旧契約の遅延応答は拒否。mixed source/単一updatedAt/partial一括無効化/直近板による全市場BBO代替をしない",
+      "status": "partial",
+      "evidence": [
+        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
+        "ID/version一致の指標結合をDesktop/Mobile E2E、同cutoff訂正をDB testで確認。旧世代遅延の全再現未実施。"
+      ]
+    }
+  ]
+}

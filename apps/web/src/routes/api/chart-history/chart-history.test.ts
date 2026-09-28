@@ -6,7 +6,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe("GET chart-history", () => {
   test("serves typed history without browser caching", async () => {
-    const value = { venueInstrumentId: "aster:BTCUSDT", timeframe: "24h" as const,
+    const value = { venueInstrumentId: "aster:BTCUSDT", venueInstrumentVersionId: 1, timeframe: "24h" as const,
       generatedAt: "2026-09-10T12:00:00.000Z", bars: [], hasMore: false, nextBefore: null };
     const history = vi.spyOn(chartHistoryService, "history").mockResolvedValue(value);
     const url = new URL("http://localhost/api/chart-history?instrument=aster:BTCUSDT&timeframe=24h");

@@ -1,32 +1,50 @@
-import { error, json } from "@sveltejs/kit";
-import { isLocalhostRequest } from "$lib/server/localhost-request";
-import { createSelectionCommandRepository } from "$lib/server/selection-command-repository";
+import { json } from "@sveltejs/kit";
+import { LocalRequestError, readLocalJson } from "$lib/server/localhost-request";
+import { createSelectionCommandRepository, SelectionError } from "$lib/server/selection-command-repository";
 import type { RequestEvent } from "./$types";
 
 export async function POST(event: RequestEvent) {
-  if (!isLocalhostRequest(event)) {
-    error(403, "selection is only available from localhost");
-  }
+  const headers = { "cache-control": "no-store" };
   try {
-    const payload: unknown = await event.request.json();
-    const { groupId, venueInstrumentId } = parseSelectionPayload(payload);
+    const payload = await readLocalJson(event);
+    const command = parseSelectionPayload(payload);
     return json({
       ok: true,
-      command: await createSelectionCommandRepository().write(groupId, venueInstrumentId)
-    });
+      command: await createSelectionCommandRepository().execute(command)
+    }, { headers });
   } catch (cause) {
-    error(400, cause instanceof Error ? cause.message : "invalid selection");
+    const failure = cause instanceof SelectionError || cause instanceof LocalRequestError
+      ? cause : new SelectionError(500, "selection_unavailable");
+    return json({ error: failure.code }, { status: failure.status, headers });
   }
 }
 
 function parseSelectionPayload(payload: unknown) {
-  if (!payload || typeof payload !== "object") throw new Error("invalid selection payload");
-  const value = payload as Record<string, unknown>;
-  const groupId = typeof value.groupId === "string" ? value.groupId.trim() : "";
-  const venueInstrumentId =
-    typeof value.venueInstrumentId === "string" ? value.venueInstrumentId.trim() : "";
-  if (!groupId || !venueInstrumentId) {
-    throw new Error("groupId and venueInstrumentId are required");
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new LocalRequestError(400, "invalid_selection");
   }
-  return { groupId, venueInstrumentId };
+  const value = payload as Record<string, unknown>;
+  const action = value.action;
+  const allowed = action === "heartbeat"
+    ? ["action", "groupId", "venueInstrumentId", "venueInstrumentVersionId", "expectedRequestedAt"]
+    : ["action", "groupId", "venueInstrumentId", "venueInstrumentVersionId"];
+  if ((action !== "select" && action !== "heartbeat") ||
+      Object.keys(value).some((key) => !allowed.includes(key)) ||
+      typeof value.groupId !== "string" || !value.groupId.trim() ||
+      typeof value.venueInstrumentId !== "string" || !value.venueInstrumentId.trim() ||
+      !Number.isSafeInteger(value.venueInstrumentVersionId) ||
+      Number(value.venueInstrumentVersionId) < 1 ||
+      value.groupId.length > 160 || value.venueInstrumentId.length > 160 ||
+      (action === "heartbeat" &&
+        (typeof value.expectedRequestedAt !== "string" ||
+          !Number.isFinite(Date.parse(value.expectedRequestedAt))))) {
+    throw new LocalRequestError(400, "invalid_selection");
+  }
+  return {
+    action: action as "select" | "heartbeat",
+    groupId: value.groupId,
+    venueInstrumentId: value.venueInstrumentId,
+    venueInstrumentVersionId: value.venueInstrumentVersionId as number,
+    expectedRequestedAt: action === "heartbeat" ? value.expectedRequestedAt as string : undefined
+  };
 }

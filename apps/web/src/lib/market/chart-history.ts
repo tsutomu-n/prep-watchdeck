@@ -22,6 +22,7 @@ export interface ChartCandle {
 
 export interface ChartHistory {
   venueInstrumentId: string;
+  venueInstrumentVersionId: number;
   timeframe: Timeframe;
   generatedAt: string;
   bars: ChartCandle[];

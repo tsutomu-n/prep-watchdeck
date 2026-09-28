@@ -153,6 +153,7 @@ export function priceChangeFailure(cause: unknown): PriceChangeError {
     const codes: Record<ChartHistoryError["code"], PriceChangeErrorCode> = {
       chart_invalid_request: "price_change_invalid_request",
       chart_instrument_unavailable: "price_change_instrument_unavailable",
+      chart_instrument_changed: "price_change_instrument_unavailable",
       chart_market_unavailable: "price_change_market_unavailable",
       chart_source_unavailable: "price_change_source_unavailable",
       chart_source_invalid: "price_change_source_invalid",

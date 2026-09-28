@@ -6,7 +6,7 @@
     priceChangeUnavailableLabel
   } from "$lib/market/price-change";
   import type { PriceChangeState } from "$lib/market/price-change-client";
-  import { formatFinite, formatTimestamp } from "$lib/market/universe-view";
+  import { formatPrice, formatTimestamp } from "$lib/market/universe-view";
 
   let { state, referenceTime, versionId, now, supported = true, detailed = false } = $props<{
     state?: PriceChangeState;
@@ -37,7 +37,7 @@
     return state?.message ?? "表示時に取得";
   });
   let title = $derived(result && change !== null
-    ? `約定価格: ${formatFinite(result.currentPrice)} / 基準価格: ${formatFinite(result.baselinePrice)} / 基準: ${formatTimestamp(result.baselineAt)} JST / 取得: ${formatTimestamp(result.generatedAt)} JST`
+    ? `約定価格: ${formatPrice(result.currentPrice)} / 基準価格: ${formatPrice(result.baselinePrice)} / 基準: ${formatTimestamp(result.baselineAt)} JST / 取得: ${formatTimestamp(result.generatedAt)} JST`
     : `JST ${referenceTime}基準の約定騰落率: ${reason}`);
 </script>
 
@@ -50,8 +50,8 @@
 </span>
 {#if detailed && result && change !== null}
   <dl>
-    <div><dt>約定価格</dt><dd>{formatFinite(result.currentPrice)}</dd></div>
-    <div><dt>基準価格</dt><dd>{formatFinite(result.baselinePrice)}</dd></div>
+    <div><dt>約定価格</dt><dd>{formatPrice(result.currentPrice)}</dd></div>
+    <div><dt>基準価格</dt><dd>{formatPrice(result.baselinePrice)}</dd></div>
     <div><dt>基準日時 · JST</dt><dd>{formatTimestamp(result.baselineAt)}</dd></div>
     <div><dt>取得時刻 · JST</dt><dd>{formatTimestamp(result.generatedAt)}</dd></div>
   </dl>

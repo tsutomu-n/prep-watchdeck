@@ -334,6 +334,27 @@
             "value": null,
             "status": "history_missing"
           }
+        },
+        "referenceClose": {
+          "$ref": "#/$defs/Indicator",
+          "default": {
+            "value": null,
+            "status": "history_missing"
+          }
+        },
+        "windows": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RankingWindow"
+          },
+          "title": "Windows",
+          "type": "object"
+        },
+        "turnoverRatios": {
+          "additionalProperties": {
+            "$ref": "#/$defs/Indicator"
+          },
+          "title": "Turnoverratios",
+          "type": "object"
         }
       },
       "required": [
@@ -351,9 +372,69 @@
         "rank",
         "rankChange",
         "turnoverRatio",
-        "dayRangePosition"
+        "dayRangePosition",
+        "referenceClose",
+        "windows",
+        "turnoverRatios"
       ],
       "title": "RankedRow",
+      "type": "object"
+    },
+    "RankingWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "title": "Anchor",
+          "type": "integer"
+        },
+        "returnPct": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Returnpct"
+        },
+        "quoteTurnover": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Quoteturnover"
+        },
+        "state": {
+          "enum": [
+            "ready",
+            "starting",
+            "history_missing",
+            "source_delayed",
+            "source_unavailable",
+            "mapping_review",
+            "unsupported",
+            "out_of_scope",
+            "filtered",
+            "direction_excluded",
+            "invalid_data",
+            "reference_invalid"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor",
+        "returnPct",
+        "quoteTurnover",
+        "state"
+      ],
+      "title": "RankingWindow",
       "type": "object"
     },
     "Reference": {
@@ -488,8 +569,8 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
-      "const": "ranking-v2",
-      "default": "ranking-v2",
+      "const": "ranking-v3",
+      "default": "ranking-v3",
       "title": "Schemaversion",
       "type": "string"
     },
@@ -502,8 +583,8 @@
       "type": "string"
     },
     "metricVersion": {
-      "const": "trade-close-quote-turnover-analysis-v2",
-      "default": "trade-close-quote-turnover-analysis-v2",
+      "const": "trade-close-quote-turnover-analysis-v3",
+      "default": "trade-close-quote-turnover-analysis-v3",
       "title": "Metricversion",
       "type": "string"
     },
@@ -541,6 +622,7 @@
       "enum": [
         "15m",
         "1h",
+        "24h",
         "daily"
       ],
       "title": "Period",

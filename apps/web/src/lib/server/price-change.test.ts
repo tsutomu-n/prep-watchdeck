@@ -270,7 +270,7 @@ describe("daily change native provider integration", () => {
     }
   );
 
-  test("permits catalog-matched Unicode and rejects stale, ungrouped, inactive or changed identity before cached prices", async () => {
+  test("permits catalog-matched Unicode and group-less active contracts, but rejects stale or changed identity", async () => {
     const item = instrument("aster:哈基米USDT");
     const bundle = fixture(item);
     const fetcher = vi.fn(async (url: URL) => {
@@ -281,7 +281,9 @@ describe("daily change native provider integration", () => {
     const service = new DailyPriceChangeService({ source, now: () => NOW });
     await service.change(query(item.venueInstrumentId));
     item.groupId = null;
-    await expect(service.change(query(item.venueInstrumentId))).rejects.toMatchObject({ status: 404 });
+    await expect(service.change(query(item.venueInstrumentId))).resolves.toMatchObject({
+      venueInstrumentId: item.venueInstrumentId
+    });
     item.groupId = "crypto:哈基米:linear-perp";
     item.active = false;
     await expect(service.change(query(item.venueInstrumentId))).rejects.toMatchObject({ status: 404 });
@@ -323,7 +325,9 @@ describe("daily change native provider integration", () => {
       const source = new ChartHistoryService({ artifacts: { latest: async () => fixture(item) },
         fetch: fetcher as typeof fetch, now: () => NOW, monotonicNow: Date.now });
       const service = new DailyPriceChangeService({ source, now: () => NOW });
-      const chart = source.history(new URLSearchParams({ instrument: item.venueInstrumentId, timeframe: "5m" }));
+      const chart = source.history(new URLSearchParams({
+        instrument: item.venueInstrumentId, expectedVersion: "1", timeframe: "5m"
+      }));
       const price = service.change(query(item.venueInstrumentId));
       await chart;
       expect(starts).toEqual([{ at: 0, path: "/api/v2/mix/market/candles", interval: "5m" }]);

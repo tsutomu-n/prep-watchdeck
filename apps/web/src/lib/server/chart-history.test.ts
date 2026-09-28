@@ -25,14 +25,14 @@ describe("native chart history", () => {
     }
     await expect(service.history(query("aster:UNKNOWN"))).rejects.toMatchObject({ status: 404 });
     bundle.universe.items[0].groupId = null;
-    await expect(service.history(query())).rejects.toMatchObject({ status: 404 });
+    await expect(service.history(query())).resolves.toMatchObject({ venueInstrumentVersionId: 1 });
     bundle.universe.items[0].groupId = "crypto:BTC:linear-perp";
     bundle.universe.items[0].active = false;
     await expect(service.history(query())).rejects.toMatchObject({ status: 404 });
     bundle.universe.items[0].active = true;
     bundle.universe.generatedAt = new Date(NOW - 120_001).toISOString();
     await expect(service.history(query())).rejects.toMatchObject({ status: 503 });
-    expect(fetcher).not.toHaveBeenCalled();
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
   test("returns UTC daily candles with an explicit open last bar and exclusive ISO pagination", async () => {
@@ -303,7 +303,7 @@ function fixture(venue: UniverseInstrumentArtifact["venue"]): MarketArtifactBund
 }
 
 function query(instrument = "aster:BTCUSDT", timeframe = "5m", before?: string) {
-  return new URLSearchParams({ instrument, timeframe, ...(before ? { before } : {}) });
+  return new URLSearchParams({ instrument, timeframe, expectedVersion: "1", ...(before ? { before } : {}) });
 }
 
 function asterBar(start: number): (number | string)[] {

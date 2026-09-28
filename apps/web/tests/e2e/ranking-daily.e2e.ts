@@ -24,14 +24,14 @@ test("元数量とChartが未確認でも参照ランキングを読み分けら
   await expect(btc.locator(".rank")).toContainText("1");
   await expect(btc).toContainText("+2.13%");
   await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 2.0倍");
-  await btc.getByRole("button").click();
+  await btc.locator("button.select-row").click();
   await expect(page.getByTestId("quantity-review")).toContainText("元の取引所の数量換算は未確認です");
   await expect(page.getByText("チャートの対応確認が必要です。", { exact: true })).toBeVisible();
   await expect(page.getByText("Chartの対応状況は、ランキングの数値計算には影響しません。", { exact: true })).toBeVisible();
   await page.getByText("元の取扱い契約と数量単位", { exact: true }).click();
   await expect(page.locator(".contracts")).toContainText("数量単位は要確認");
   await page.clock.fastForward(65_000);
-  await expect(btc.getByRole("button")).toHaveAttribute("aria-pressed", "true");
+  await expect(btc.locator("button.select-row")).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByTestId("quantity-review")).toBeVisible();
   expect(widgetRequests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -67,7 +67,7 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
   await expect(btc.getByTestId("rank-change")).toHaveText("比較不可（初回・再起動後）");
   await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 2.0倍");
   await expect(btc.getByTestId("day-position")).toHaveText("当日位置 50.0%");
-  await btc.getByRole("button").click();
+  await btc.locator("button.select-row").click();
   const selected = page.getByTestId("selected-metrics");
   await expect(selected).toContainText("2.0倍");
   await expect(selected).toContainText("50.0%");
@@ -76,7 +76,7 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
   await expect(btc.getByTestId("rank-change")).toHaveText("+5");
   await expect(selected).toContainText("+5");
   await expect(page.getByTestId("ranking-row").filter({ hasText: "ETH" }).getByTestId("rank-change")).toHaveText("新規");
-  await expect(btc.getByRole("button")).toHaveAttribute("aria-pressed", "true");
+  await expect(btc.locator("button.select-row")).toHaveAttribute("aria-pressed", "true");
   await page.screenshot({ path: testInfo.outputPath("daily-ranking.png"), fullPage: true });
   await writeFile(testInfo.outputPath("displayed-response.json"), JSON.stringify(latest, null, 2));
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);

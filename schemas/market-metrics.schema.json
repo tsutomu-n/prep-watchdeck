@@ -1,0 +1,313 @@
+{
+  "$defs": {
+    "MarketMetricRow": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "exclusiveMinimum": 0,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "venue": {
+          "title": "Venue",
+          "type": "string"
+        },
+        "sourceSymbol": {
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "quoteAsset": {
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "settleAsset": {
+          "title": "Settleasset",
+          "type": "string"
+        },
+        "priceTick": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Pricetick"
+        },
+        "oiChange": {
+          "additionalProperties": {
+            "$ref": "#/$defs/MetricValue"
+          },
+          "title": "Oichange",
+          "type": "object"
+        },
+        "tradeChange": {
+          "additionalProperties": {
+            "$ref": "#/$defs/MetricValue"
+          },
+          "title": "Tradechange",
+          "type": "object"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "venue",
+        "sourceSymbol",
+        "quoteAsset",
+        "settleAsset",
+        "priceTick",
+        "oiChange",
+        "tradeChange"
+      ],
+      "title": "MarketMetricRow",
+      "type": "object"
+    },
+    "MetricValue": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "availability": {
+          "enum": [
+            "available",
+            "missing",
+            "unsupported",
+            "invalid"
+          ],
+          "title": "Availability",
+          "type": "string"
+        },
+        "reasonCode": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reasoncode"
+        },
+        "startAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Startat"
+        },
+        "endAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endat"
+        },
+        "startValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Startvalue"
+        },
+        "endValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endvalue"
+        },
+        "startSourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Startsourceat"
+        },
+        "startObservedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Startobservedat"
+        },
+        "endSourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endsourceat"
+        },
+        "endObservedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endobservedat"
+        },
+        "endFinality": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endfinality"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "value",
+        "availability",
+        "reasonCode",
+        "startAt",
+        "endAt",
+        "startValue",
+        "endValue",
+        "startSourceAt",
+        "startObservedAt",
+        "endSourceAt",
+        "endObservedAt",
+        "endFinality",
+        "unit"
+      ],
+      "title": "MetricValue",
+      "type": "object"
+    },
+    "TimingPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "candleLagSeconds": {
+          "const": 180,
+          "default": 180,
+          "title": "Candlelagseconds",
+          "type": "integer"
+        },
+        "candleMaxAgeSeconds": {
+          "const": 300,
+          "default": 300,
+          "title": "Candlemaxageseconds",
+          "type": "integer"
+        }
+      },
+      "title": "TimingPolicy",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "metricVersion": {
+      "const": "native-endpoints-v1",
+      "default": "native-endpoints-v1",
+      "title": "Metricversion",
+      "type": "string"
+    },
+    "generationId": {
+      "title": "Generationid",
+      "type": "string"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "candleCutoff": {
+      "format": "date-time",
+      "title": "Candlecutoff",
+      "type": "string"
+    },
+    "timingPolicy": {
+      "$ref": "#/$defs/TimingPolicy",
+      "default": {
+        "candleLagSeconds": 180,
+        "candleMaxAgeSeconds": 300
+      }
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/MarketMetricRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "generationId",
+    "generatedAt",
+    "candleCutoff",
+    "rows"
+  ],
+  "title": "MarketMetricsArtifact",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

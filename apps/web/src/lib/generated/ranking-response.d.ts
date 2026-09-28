@@ -5,17 +5,17 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Schemaversion = "ranking-v2";
+export type Schemaversion = "ranking-v3";
 export type Generationid = string;
 export type Mapversion = string;
-export type Metricversion = "trade-close-quote-turnover-analysis-v2";
+export type Metricversion = "trade-close-quote-turnover-analysis-v3";
 export type Cutoff = number;
 export type Generatedat = number;
 export type Rostergeneratedat = number;
 export type Rosterstale = boolean;
 export type Stale = boolean;
 export type Status = "ready" | "partial" | "starting" | "stale";
-export type Period = "15m" | "1h" | "daily";
+export type Period = "15m" | "1h" | "24h" | "daily";
 export type Dailyreferencejst = string;
 export type Anchor = number;
 export type Order = "gainers" | "losers" | "turnover";
@@ -90,6 +90,22 @@ export type Status3 =
   | "no_range"
   | "invalid_data"
   | "reference_unavailable";
+export type Anchor1 = number;
+export type Returnpct1 = number | null;
+export type Quoteturnover1 = number | null;
+export type State1 =
+  | "ready"
+  | "starting"
+  | "history_missing"
+  | "source_delayed"
+  | "source_unavailable"
+  | "mapping_review"
+  | "unsupported"
+  | "out_of_scope"
+  | "filtered"
+  | "direction_excluded"
+  | "invalid_data"
+  | "reference_invalid";
 export type Rows1 = RankedRow[];
 
 export interface RankingResponse {
@@ -142,6 +158,9 @@ export interface RankedRow {
   rankChange: RankChange;
   turnoverRatio: Indicator;
   dayRangePosition: Indicator1;
+  referenceClose: Indicator2;
+  windows: Windows;
+  turnoverRatios: Turnoverratios;
 }
 export interface OriginalInstrument {
   venue: Venue;
@@ -179,6 +198,26 @@ export interface Indicator {
   status: Status3;
 }
 export interface Indicator1 {
+  value: Value;
+  status: Status3;
+}
+export interface Indicator2 {
+  value: Value;
+  status: Status3;
+}
+export interface Windows {
+  [k: string]: RankingWindow;
+}
+export interface RankingWindow {
+  anchor: Anchor1;
+  returnPct: Returnpct1;
+  quoteTurnover: Quoteturnover1;
+  state: State1;
+}
+export interface Turnoverratios {
+  [k: string]: Indicator3;
+}
+export interface Indicator3 {
   value: Value;
   status: Status3;
 }

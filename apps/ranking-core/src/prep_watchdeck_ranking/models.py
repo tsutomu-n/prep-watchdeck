@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from pydantic.alias_generators import to_camel
 
 MINUTE = 60_000
-METRIC_VERSION = "trade-close-quote-turnover-analysis-v2"
+METRIC_VERSION = "trade-close-quote-turnover-analysis-v3"
 MAP_SCHEMA_VERSION = "ranking-map-v2"
 Provider = Literal["bybit", "binance"]
 MappingStatus = Literal["verified", "unsupported", "review", "out_of_scope"]
@@ -195,6 +195,13 @@ class Indicator(Contract):
     ]
 
 
+class RankingWindow(Contract):
+    anchor: int
+    return_pct: float | None
+    quote_turnover: float | None
+    state: RowState
+
+
 class RankedRow(Contract):
     id: str
     asset: str
@@ -214,6 +221,18 @@ class RankedRow(Contract):
     rank_change: RankChange = RankChange(status="unavailable", reason="no_previous_generation")
     turnover_ratio: Indicator = Indicator(status="history_missing")
     day_range_position: Indicator = Indicator(status="history_missing")
+    reference_close: Indicator = Indicator(status="history_missing")
+    windows: dict[str, RankingWindow]
+    turnover_ratios: dict[str, Indicator]
+
+    @model_validator(mode="after")
+    def complete_windows(self) -> Self:
+        if set(self.windows) != {"15m", "1h", "24h", "daily"} or set(self.turnover_ratios) != {
+            "15m",
+            "1h",
+        }:
+            raise ValueError("ranking windows must be complete")
+        return self
 
 
 class Coverage(Contract):
@@ -228,17 +247,17 @@ class Coverage(Contract):
 
 
 class RankingResponse(Contract):
-    schema_version: Literal["ranking-v2"] = "ranking-v2"
+    schema_version: Literal["ranking-v3"] = "ranking-v3"
     generation_id: str
     map_version: str
-    metric_version: Literal["trade-close-quote-turnover-analysis-v2"] = METRIC_VERSION
+    metric_version: Literal["trade-close-quote-turnover-analysis-v3"] = METRIC_VERSION
     cutoff: int
     generated_at: int
     roster_generated_at: int
     roster_stale: bool
     stale: bool
     status: Literal["ready", "partial", "starting", "stale"]
-    period: Literal["15m", "1h", "daily"]
+    period: Literal["15m", "1h", "24h", "daily"]
     daily_reference_jst: str
     anchor: int
     order: Literal["gainers", "losers", "turnover"]

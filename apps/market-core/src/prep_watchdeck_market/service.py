@@ -27,6 +27,7 @@ from prep_watchdeck_market.candle_store import (
 )
 from prep_watchdeck_market.catalog_store import CatalogStoreError, persist_catalog
 from prep_watchdeck_market.identity import resolve_market_groups
+from prep_watchdeck_market.market_metrics import publish_market_metrics
 from prep_watchdeck_market.market_state import MarketBatch
 from prep_watchdeck_market.market_store import (
     DATABASE_TIMEOUT_OPTIONS,
@@ -72,6 +73,7 @@ class MarketService:
         self._candle_version_starts: dict[str, datetime] = {}
         self._catalog_update_lock = asyncio.Lock()
         self._artifact_trigger = asyncio.Event()
+        self._metrics_trigger = asyncio.Event()
         self._artifact_publish_lock = asyncio.Lock()
         self._artifact_files: tuple[ArtifactFileStatus, ...] = ()
         self._session: aiohttp.ClientSession | None = None
@@ -93,6 +95,7 @@ class MarketService:
                 self._all_instruments,
                 catalog_update_lock=self._catalog_update_lock,
                 current_version_starts=self._current_candle_version_starts,
+                on_persisted=self._metrics_trigger.set,
             )
             selection_runtime = SelectionRuntime(
                 self._database_url,
@@ -116,6 +119,9 @@ class MarketService:
                 self._selected_artifact_loop(stop_event),
                 name="market-selected-artifact-loop",
             )
+            metrics_task = asyncio.create_task(
+                self._metrics_loop(stop_event), name="market-metrics-loop"
+            )
             try:
                 await asyncio.gather(
                     catalog_task,
@@ -124,6 +130,7 @@ class MarketService:
                     selection_task,
                     artifact_task,
                     selected_artifact_task,
+                    metrics_task,
                 )
             finally:
                 for task in (
@@ -133,6 +140,7 @@ class MarketService:
                     selection_task,
                     artifact_task,
                     selected_artifact_task,
+                    metrics_task,
                 ):
                     task.cancel()
                 await asyncio.gather(
@@ -142,6 +150,7 @@ class MarketService:
                     selection_task,
                     artifact_task,
                     selected_artifact_task,
+                    metrics_task,
                     return_exceptions=True,
                 )
                 self._session = None
@@ -300,7 +309,63 @@ class MarketService:
             await asyncio.gather(thread_task, return_exceptions=True)
             raise
         self._artifact_trigger.set()
+        self._metrics_trigger.set()
         return result
+
+    async def _metrics_loop(self, stop_event: asyncio.Event) -> None:
+        """Publish an optional read model without coupling it to the core artifacts."""
+        self._metrics_trigger.set()
+        loop = asyncio.get_running_loop()
+        next_allowed = loop.time()
+        while not stop_event.is_set():
+            delay = max(0.0, next_allowed - loop.time())
+            if delay:
+                with suppress(TimeoutError):
+                    await asyncio.wait_for(stop_event.wait(), timeout=delay)
+            if stop_event.is_set():
+                return
+            next_allowed = loop.time() + 5.0
+            self._metrics_trigger.clear()
+            started = loop.time()
+            publish_task = asyncio.create_task(
+                asyncio.to_thread(
+                    publish_market_metrics,
+                    self._database_url,
+                    self._state_dir / "artifacts",
+                    now=datetime.now(UTC),
+                ),
+                name="market-metrics-publish",
+            )
+            try:
+                count = await asyncio.shield(publish_task)
+            except asyncio.CancelledError:
+                await asyncio.gather(publish_task, return_exceptions=True)
+                raise
+            except Exception as error:
+                logger.warning(
+                    "market metrics unavailable errorType={error_type}",
+                    error_type=type(error).__name__,
+                )
+            else:
+                logger.debug(
+                    "market metrics published count={count} elapsedMs={elapsed_ms}",
+                    count=count,
+                    elapsed_ms=round((loop.time() - started) * 1000),
+                )
+            now = datetime.now(UTC)
+            minute_wait = 60 - (now.second + now.microsecond / 1_000_000)
+            trigger_task = asyncio.create_task(self._metrics_trigger.wait())
+            stop_task = asyncio.create_task(stop_event.wait())
+            done, pending = await asyncio.wait(
+                (trigger_task, stop_task),
+                timeout=minute_wait,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            for task in pending:
+                task.cancel()
+            await asyncio.gather(*pending, return_exceptions=True)
+            if stop_task in done:
+                return
 
     async def _artifact_loop(self, stop_event: asyncio.Event) -> None:
         while not stop_event.is_set():

@@ -18,11 +18,12 @@ from .models import (
     RankedRow,
     RankingMap,
     RankingResponse,
+    RankingWindow,
     RowState,
 )
 from .storage import Store
 
-Period = Literal["15m", "1h", "daily"]
+Period = Literal["15m", "1h", "24h", "daily"]
 Order = Literal["gainers", "losers", "turnover"]
 DAY = 1440 * MINUTE
 JST = 9 * 60 * MINUTE
@@ -84,6 +85,8 @@ def anchor_at(cutoff: int, period: Period, daily_reference: str) -> int:
         return cutoff - 15 * MINUTE
     if period == "1h":
         return cutoff - 60 * MINUTE
+    if period == "24h":
+        return cutoff - DAY
     if period != "daily":
         raise ValueError("unknown ranking period")
     hours, minutes = map(int, daily_reference.split(":"))
@@ -178,6 +181,55 @@ class Generation:
         )
         self.id = f"{mapping.version}:{cutoff}:{generated_at}"
         self.cache: OrderedDict[tuple[str, str, str, float], RankingResponse] = OrderedDict()
+        self.window_cache: OrderedDict[
+            str, dict[str, tuple[Indicator, dict[str, RankingWindow]]]
+        ] = OrderedDict()
+
+    def _windows(self, daily_reference: str):
+        cached = self.window_cache.get(daily_reference)
+        if cached is not None:
+            self.window_cache.move_to_end(daily_reference)
+            return cached
+        anchors = {
+            period: anchor_at(self.cutoff, cast(Period, period), daily_reference)
+            for period in ("15m", "1h", "24h", "daily")
+        }
+        result: dict[str, tuple[Indicator, dict[str, RankingWindow]]] = {}
+        for item in self.mapping.rows:
+            if not item.reference:
+                continue
+            series = self.series[item.id]
+            close = series.closes[-1]
+            close_indicator = (
+                Indicator(value=close, status="ready")
+                if close is not None
+                else Indicator(status="history_missing")
+            )
+            windows = {}
+            for period, point in anchors.items():
+                change, turnover, state = series.calculate(point, self.cutoff)
+                if item.reference.key in self.invalid_keys:
+                    change, turnover, state = None, None, "reference_invalid"
+                elif item.reference.key in self.unavailable_keys:
+                    change, turnover, state = None, None, "source_unavailable"
+                elif state == "source_delayed" and item.reference.provider in self.disconnected:
+                    state = "source_unavailable"
+                windows[period] = RankingWindow(
+                    anchor=point,
+                    return_pct=change,
+                    quote_turnover=turnover,
+                    state=cast(RowState, state),
+                )
+            if (
+                item.reference.key in self.invalid_keys
+                or item.reference.key in self.unavailable_keys
+            ):
+                close_indicator = Indicator(status="reference_unavailable")
+            result[item.id] = (close_indicator, windows)
+        self.window_cache[daily_reference] = result
+        if len(self.window_cache) > 8:
+            self.window_cache.popitem(last=False)
+        return result
 
     def _base_response(
         self, period: Period, daily_reference: str, order: Order, minimum: float
@@ -262,23 +314,35 @@ class Generation:
     ) -> RankingResponse:
         rows: list[RankedRow] = []
         valid = 0
+        all_windows = self._windows(daily_reference)
         for item in self.mapping.rows:
             change, turnover = None, None
             ratio = position = Indicator(status="reference_unavailable")
+            reference_close = Indicator(status="reference_unavailable")
+            windows: dict[str, RankingWindow] = {}
+            ratios = {
+                "15m": Indicator(status="reference_unavailable"),
+                "1h": Indicator(status="reference_unavailable"),
+            }
             reason = item.reason
             if item.reference:
                 series = self.series[item.id]
-                change, turnover, state = series.calculate(anchor, self.cutoff)
+                reference_close, windows = all_windows[item.id]
+                projection = windows[period]
+                change, turnover, state = (
+                    projection.return_pct,
+                    projection.quote_turnover,
+                    projection.state,
+                )
                 ratio = series.turnover_15m if period == "15m" else series.turnover_1h
+                ratios = {"15m": series.turnover_15m, "1h": series.turnover_1h}
                 position = series.day_position
-                if item.reference.key in self.invalid_keys:
-                    change, turnover, state = None, None, "reference_invalid"
+                if (
+                    item.reference.key in self.invalid_keys
+                    or item.reference.key in self.unavailable_keys
+                ):
                     ratio = position = Indicator(status="reference_unavailable")
-                elif item.reference.key in self.unavailable_keys:
-                    change, turnover, state = None, None, "source_unavailable"
-                    ratio = position = Indicator(status="reference_unavailable")
-                elif state == "source_delayed" and item.reference.provider in self.disconnected:
-                    state = "source_unavailable"
+                    ratios = {"15m": ratio, "1h": ratio}
                 reason = None if state == "ready" else state
                 if state == "ready":
                     valid += 1
@@ -294,7 +358,16 @@ class Generation:
                     "unsupported": "unsupported",
                     "out_of_scope": "out_of_scope",
                 }.get(item.status, "mapping_review")
-            if period == "daily":
+                windows = {
+                    name: RankingWindow(
+                        anchor=anchor_at(self.cutoff, cast(Period, name), daily_reference),
+                        return_pct=None,
+                        quote_turnover=None,
+                        state=cast(RowState, state),
+                    )
+                    for name in ("15m", "1h", "24h", "daily")
+                }
+            if period in ("daily", "24h"):
                 ratio = Indicator(status="unsupported_period")
             rows.append(
                 RankedRow(
@@ -312,6 +385,9 @@ class Generation:
                     rank=None,
                     turnover_ratio=ratio,
                     day_range_position=position,
+                    reference_close=reference_close,
+                    windows=windows,
+                    turnover_ratios=ratios,
                 )
             )
         eligible = [row for row in rows if row.state == "ready"]

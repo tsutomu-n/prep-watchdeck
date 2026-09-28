@@ -1,8 +1,8 @@
 # prep-watchdeck 現行UIワークフロー
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-28T20:57:00+09:00`
+- 検証: `2026-09-28T20:57:00+09:00`
 - 状態: `現行`
 
 ---
@@ -22,7 +22,11 @@
 5. 行を選び、primary Venue、Chart、groupの板・約定・book walkを確認する。
 6. 後で再確認する文脈をPast Noteへ保存できる。
 
-Universeはbase→Venueの既定順を保ち、外部参照のデイトレランキングは独立した画面で提供する。
+`/`は参照市場の24時間・売買代金順を既定とする共通Markets workspace。`/rankings`は従来の15分・上昇率順を入口として維持する。取引所別Universeは`/?mode=native`で開き、参照行の確認済みoriginalのID/versionが現行Universeに一致するときだけnative詳細へ進める。戻るリンクは比較期間、並び順、指定JST時刻、検索・sort等を復元する。
+
+Universeはbase→Venueの既定順。groupのないactive契約も単体詳細へ選択できる。追加metricsは現行ID/version一致時だけ結合し、欠損・障害は元のUniverseやRankingを停止しない。数量OIと確定終値の表示には別々の鮮度上限を使い、選択板のBBOを全市場のL1 spreadへ代入しない。
+
+お気に入りと名前付きviewはstate rootのuser-workspaceへatomic保存する。最近見た対象は端末localStorage、未保存メモは銘柄/version別にsessionStorageへ保存し、利用不可時は画面内保持を知らせる。メモPOSTはread token一致時だけ成功し、古い応答で編集後の下書きを消さない。
 
 ## 状態軸
 

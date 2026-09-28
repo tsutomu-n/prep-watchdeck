@@ -49,7 +49,7 @@ test("全対象の条件変更、選択維持、単一Widgetと時間足を扱�
   await page.goto("/rankings?tvwidgetsymbol=NASDAQ%3AAAPL");
   const btc = page.getByTestId("ranking-row").filter({ hasText: "BTC" });
   await expect(btc).toBeVisible();
-  await btc.getByRole("button").click();
+  await btc.locator(".select-row").click();
   const chart = page.getByTestId("ranking-chart");
   await expect(chart).toHaveAttribute("data-symbol", "BYBIT:BTCUSDT.P");
   const frame = chart.locator("iframe").contentFrame();
@@ -89,7 +89,7 @@ test("期間と下限、JST設定保存、順位外・Widget未対応の理由�
   await expect(page.getByLabel("騰落率の基準時刻（日本時間）")).toHaveValue("09:30");
   await page.getByLabel("順位外・未対応も表示").check();
   await expect(page.getByText("期間内の履歴不足", { exact: true }).first()).toBeVisible();
-  await page.getByTestId("ranking-row").filter({ hasText: "NOCHART" }).getByRole("button").click();
+  await page.getByTestId("ranking-row").filter({ hasText: "NOCHART" }).locator(".select-row").click();
   await expect(page.getByText("この参照契約のWidgetは利用できません")).toBeVisible();
   expect(probe.errors).toEqual([]);
 });
@@ -101,7 +101,7 @@ test("保存不可でも操作を続け、古い取得時刻を隠さない", as
   await page.getByLabel("騰落率の基準時刻（日本時間）").fill("08:45");
   await page.getByLabel("騰落率の基準時刻（日本時間）").blur();
   await expect(page.getByText("保存できないため、この画面だけに適用しています")).toBeVisible();
-  await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).getByRole("button").click();
+  await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator(".select-row").click();
   await expect(page.getByTestId("ranking-chart")).toHaveAttribute("data-symbol", "BYBIT:BTCUSDT.P");
   expect(probe.errors).toEqual([]);
 });
@@ -136,7 +136,7 @@ test("対応表から削除された選択は名前を維持し、旧Widgetを�
   const removedAssets = new Set<string>();
   const probe = await prepare(page, { removedAssets });
   await page.goto("/rankings");
-  await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).getByRole("button").click();
+  await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator(".select-row").click();
   await expect(page.getByTestId("ranking-chart")).toHaveAttribute("data-symbol", "BYBIT:BTCUSDT.P");
   removedAssets.add("BTC");
   await page.clock.fastForward(65_000);
@@ -172,7 +172,7 @@ test("対応表から削除された選択は名前を維持し、旧Widgetを�
   }
   await page.unroute("**/api/rankings?**", failedRefresh);
   await page.getByRole("button", { name: "再試行", exact: true }).click();
-  await page.getByTestId("ranking-row").filter({ hasText: "ETH" }).getByRole("button").click();
+  await page.getByTestId("ranking-row").filter({ hasText: "ETH" }).locator(".select-row").click();
   await expect(page.getByTestId("ranking-chart")).toHaveAttribute("data-symbol", "BYBIT:ETHUSDT.P");
   expect(probe.errors).toEqual([]);
 });
