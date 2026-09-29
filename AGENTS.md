@@ -51,10 +51,11 @@ versionとは別の状態である。`docs/plans/active/`には未完了作業�
 - 現役または他projectのPostgresへ別writerを接続しない。特にJustPassのport 5432、container、
   volume、database、roleへ接触しない。
 - E2E、smoke、shadow stateとDBは現役serviceから隔離し、専用のstate root、container、portを使う。
-- 明示承認なしにcommit、push、PR、merge、unitのinstall / enable / start / stop / restart、live DB
+- 明示承認なしにPR、merge、unitのinstall / enable / start / stop / restart、live DB
   migration、maintenance、backup、restore、deploy、cutover、旧state削除を行わない。
 - 課金、外部送信、秘密情報の変更、不可逆削除は明示指示なしに行わない。
 - test green だけで runtime、データ品質、公開、受入完了まで確認済みと扱わない。
+- PR作成は行わない。
 
 複数境界、移行、認証、互換性、高 risk、原因未確定、中断再開を伴う作業は
 `docs/plans/active/<task>/` に goal、scope、checkpoint、完了条件、検証、rollback、未解決事項を
