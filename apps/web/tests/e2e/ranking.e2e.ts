@@ -176,3 +176,34 @@ test("対応表から削除された選択は名前を維持し、旧Widgetを�
   await expect(page.getByTestId("ranking-chart")).toHaveAttribute("data-symbol", "BYBIT:ETHUSDT.P");
   expect(probe.errors).toEqual([]);
 });
+
+test("行順固定とhidden復帰でも時計で参照を失効しkeyboardのfocusを保持する", async ({ page }) => {
+  await prepare(page);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/rankings");
+  const btc = page.getByTestId("ranking-row").filter({ hasText: "BTC" });
+  await btc.locator(".select-row").focus();
+  await page.keyboard.press("Enter");
+  await expect(btc.locator(".select-row")).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "銘柄 / 取扱い", exact: true }).click();
+  await expect(page.getByRole("columnheader", { name: "銘柄 / 取扱い", exact: true })).toHaveAttribute("aria-sort", "ascending");
+  await page.getByRole("button", { name: "行順を固定", exact: true }).click();
+  const order = await page.getByTestId("ranking-row").evaluateAll(rows => rows.map(row => row.getAttribute("data-asset")));
+  await page.route("**/api/rankings?**", route => route.fulfill({ status: 503, body: "isolated stop" }));
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.clock.fastForward(160_000);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "hidden", { configurable: true, get: () => false });
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect(page.getByText(/更新が停止しています。表示値は/)).toBeVisible();
+  expect(await page.getByTestId("ranking-row").evaluateAll(rows => rows.map(row => row.getAttribute("data-asset")))).toEqual(order);
+  await expect(btc.locator(".select-row")).toHaveAttribute("aria-pressed", "true");
+  expect(await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

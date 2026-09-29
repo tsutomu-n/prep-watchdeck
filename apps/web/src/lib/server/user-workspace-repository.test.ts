@@ -28,3 +28,24 @@ test("favorite operations merge under lock and saved views use revision CAS", as
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test("unknown schemas and capacity failures preserve the existing workspace bytes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-workspace-boundary-"));
+  const path = join(root, "user-workspace.json");
+  const repository = new LocalFileUserWorkspaceRepository(path);
+  const target = { kind: "instrument" as const, id: "bitget:BTCUSDT", version: 1 };
+  try {
+    for (const bytes of [JSON.stringify({ schemaVersion: 999 }), " ".repeat(65_537)]) {
+      await writeFile(path, bytes);
+      await expect(repository.read()).rejects.toMatchObject({ status: 500 });
+      await expect(repository.setFavorite(target, true)).rejects.toMatchObject({ status: 500 });
+      expect(await readFile(path, "utf-8")).toBe(bytes);
+    }
+    const full = JSON.stringify({ schemaVersion: 1, revision: 2, savedViews: [],
+      favorites: Array.from({ length: 200 }, (_, i) => ({ ...target, id: `bitget:T${i}` })) });
+    await writeFile(path, full);
+    await expect(repository.setFavorite(target, true)).rejects.toMatchObject({ status: 413 });
+    await expect(repository.saveView({ id: "../bad", name: "bad", view: {} }, 2)).rejects.toMatchObject({ status: 400 });
+    expect(await readFile(path, "utf-8")).toBe(full);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

@@ -123,6 +123,36 @@ describe("market artifact and local selection repositories", () => {
     }
   });
 
+  test("selection tokens reject same-clock replacement, expired leases and future timestamps", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-selection-clock-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    let now = new Date("2026-08-14T12:00:00.000Z");
+    const a = { groupId: "crypto:BTC:linear-perp", venueInstrumentId: "bitget:BTCUSDT", venueInstrumentVersionId: 1 };
+    const second = { ...bundle.universe.items[0], venueInstrumentId: "bitget:ETHUSDT", baseAsset: "ETH", sourceSymbol: "ETHUSDT", groupId: "crypto:ETH:linear-perp" };
+    bundle.universe.items.push(second);
+    const b = { groupId: second.groupId, venueInstrumentId: second.venueInstrumentId, venueInstrumentVersionId: second.venueInstrumentVersionId };
+    const repository = new LocalFileSelectionCommandRepository(paths.selectionCommandPath, { latest: async () => bundle }, () => now);
+    try {
+      const first = await repository.execute({ action: "select", ...a });
+      await expect(repository.execute({ action: "select", ...b })).rejects.toMatchObject({ status: 409 });
+      now = new Date(+now + 1);
+      await repository.execute({ action: "select", ...b });
+      now = new Date(+now + 1);
+      const back = await repository.execute({ action: "select", ...a });
+      expect(back.requestedAt).not.toBe(first.requestedAt);
+      await expect(repository.execute({ action: "heartbeat", ...a, expectedRequestedAt: first.requestedAt })).rejects.toMatchObject({ status: 409 });
+      now = new Date(+now + 15 * 60_000);
+      await expect(repository.execute({ action: "heartbeat", ...a, expectedRequestedAt: back.requestedAt })).rejects.toMatchObject({ status: 409 });
+      const future = { ...back, requestedAt: new Date(+now + 60_000).toISOString(), heartbeatAt: now.toISOString() };
+      await writeFile(paths.selectionCommandPath, JSON.stringify(future));
+      for (const action of ["select", "heartbeat"] as const) {
+        await expect(repository.execute({ action, ...a, expectedRequestedAt: future.requestedAt })).rejects.toMatchObject({ status: 409 });
+        expect(JSON.parse(await readFile(paths.selectionCommandPath, "utf-8"))).toEqual(future);
+      }
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   test("requires both a localhost Host and a loopback client address", () => {
     expect(localRequest("http://localhost/api/selection", "127.0.0.1")).toBe(true);
     expect(localRequest("http://[::1]/api/selection", "::ffff:127.0.0.1")).toBe(true);

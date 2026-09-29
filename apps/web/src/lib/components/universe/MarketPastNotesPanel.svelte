@@ -1,10 +1,11 @@
 <script lang="ts">
-  import type { MarketPastNote, MarketPastNoteContext } from "$lib/market-past-note/market-past-note";
+  import type { MarketPastNote, MarketPastNoteContext, ReferenceNoteContext } from "$lib/market-past-note/market-past-note";
   import { pastNoteSnapshotFromPayload } from "$lib/market-past-note/market-past-note";
   import { formatTimestamp } from "$lib/market/universe-view";
 
-  let { venueInstrumentId, venueInstrumentVersionId, metricContext = null }: {
+  let { venueInstrumentId, venueInstrumentVersionId, metricContext = null, referenceContext = null }: {
     venueInstrumentId: string; venueInstrumentVersionId: number;
+    referenceContext?: { generationId: string; observation: ReferenceNoteContext } | null;
     metricContext?: Pick<MarketPastNoteContext, "metricGenerationId" | "oi15mPct" | "trade15mPct"> | null;
   } = $props();
 
@@ -120,11 +121,12 @@
       kind: "ui-observation-v1",
       venueInstrumentId: instrumentId,
       venueInstrumentVersionId: versionId,
-      view: "native",
+      view: referenceContext ? "reference" : "native",
       capturedAt: new Date().toISOString(),
-      metricGenerationId: metricContext?.metricGenerationId ?? null,
+      metricGenerationId: referenceContext?.generationId ?? metricContext?.metricGenerationId ?? null,
       oi15mPct: metricContext?.oi15mPct ?? null,
-      trade15mPct: metricContext?.trade15mPct ?? null
+      trade15mPct: metricContext?.trade15mPct ?? null,
+      ...(referenceContext ? { reference: referenceContext.observation } : {})
     } : undefined;
     if ((!capturedReason && !capturedNote) || token === null || pending.has(key)) return;
     pending.add(key);
@@ -191,7 +193,8 @@
           <strong>{item.reason}</strong>
           <time datetime={item.observedAt}>{formatTimestamp(item.observedAt)}</time>
           {#if item.note}<p>{item.note}</p>{/if}
-          {#if item.context}<small>保存時の指標: 数量OI 15m {item.context.oi15mPct === null ? "—" : `${item.context.oi15mPct}%`} · 確定終値 15m {item.context.trade15mPct === null ? "—" : `${item.context.trade15mPct}%`}</small>{/if}
+          {#if item.context?.reference}<small>保存時の参照: {item.context.reference.source} · {item.context.reference.symbol} · {item.context.reference.period} · {formatTimestamp(item.context.reference.cutoff)} · 騰落率 {item.context.reference.returnPct ?? "—"}%{item.context.reference.stale ? " · 期限切れ" : ""}</small>
+          {:else if item.context}<small>保存時の指標: 数量OI 15m {item.context.oi15mPct === null ? "—" : `${item.context.oi15mPct}%`} · 確定終値 15m {item.context.trade15mPct === null ? "—" : `${item.context.trade15mPct}%`}</small>{/if}
         </li>
       {/each}
     </ul>

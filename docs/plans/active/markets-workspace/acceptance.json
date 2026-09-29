@@ -16,7 +16,7 @@
   "developmentGate": "M0〜M5に割り当てた全ACが実行証拠付きでpass。M6を含めない。既存未達・未実行はPARTIAL。",
   "realDataValidation": {
     "status": "not_run",
-    "note": "現役DB・実provider値・実機のPF01〜03と180秒/300秒設定の受入は未確認。隔離fixtureと混同しない。"
+    "note": "PF01 live roster/map、PF02 live DB/Provider到着遅延、PF03本番UI負荷はunknown。専用read-only資格を特定できていないため現役DBに未接続。180秒lag/300秒上限の実データ受入は未確認。AC26の安全な未確認記録と区別する。"
   },
   "cases": [
     {
@@ -26,12 +26,25 @@
       ],
       "expected_behavior": "0.00000012は非ゼロ表示。0.00000121と0.00000126のBid/Askを区別。tick0.25、1e-18、null、非有限も正しく扱う",
       "status": "pass",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "formatPrice/formatBidAskの小額・null・非有限unit test。"
-      ],
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/market/universe-view.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/market/universe-view.test.ts",
+          "tests": [
+            "small prices remain nonzero and bid/ask do not collapse to the same text"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC02",
@@ -39,13 +52,53 @@
         "R02"
       ],
       "expected_behavior": "Aで入力→B→Aで下書き復元。A保存中→B、A→B→A、同じAで追加入力。旧応答で入力消去や保存中固定が起きない。revisionTokenの異なる別タブ保存は409、下書きは保持しblind retryしない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "銘柄/version別draft、保存中のrevision capture、CAS 409を実装。A→B→Aの遅延Browser再現は未実施。"
-      ],
+      "status": "pass",
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "メモ保存中のA→B→Aと追加入力・IMEイベントで下書きを消さない",
+            "2タブのメモCASと別favorite・savedView競合・旧selection heartbeatを分離する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "Aの保存応答がB表示中に到着してもBの下書きと保存状態を守る"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "A保存応答がB表示中に到着する独立ケースは未実施。A→B→Aと同じAへの追加入力、2タブCASは通過。"
+        }
+      ]
     },
     {
       "id": "AC03",
@@ -53,13 +106,27 @@
         "R02"
       ],
       "expected_behavior": "破損JSON/項目不正/未知schema/権限エラーは読取・保存拒否し原本不変。ENOENTだけ未作成。M1後のGET/listは期限切れの表示除外のみでファイルを変更せず、正常POSTでCAS後にpruneする",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "GET無書込と破損fail-closed、CAS後保存のunit test。permission errorの専用fixture未実施。"
-      ],
+      "status": "pass",
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-past-note-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-past-note-repository.test.ts",
+          "tests": [
+            "GET does not prune, CAS rejects a stale tab, and corruption is never replaced",
+            "invalid items, unknown schema and read permission failures never initialize notes"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC04",
@@ -68,12 +135,41 @@
       ],
       "expected_behavior": "activeでgroupなしの安全なnative契約はchart表示。数量意味不明のvolumeは換算しない。inactive・不明契約・任意URL・symbol注入・古いcatalogは拒否",
       "status": "pass",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "groupなしactiveのchart/JST表示をDesktop/Mobile E2Eで確認。"
-      ],
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/chart-history.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/chart-history.test.ts",
+          "tests": [
+            "resolves only active grouped linear instruments from a fresh universe before fetching",
+            "uses catalog quote and settlement for Bitget and rejects unsupported products"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "groupのないactive契約も単体チャートとJST変化を表示する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC05",
@@ -81,13 +177,75 @@
         "R04"
       ],
       "expected_behavior": "A選択→B選択→旧A heartbeatで409、B継続。hidden heartbeat停止。初期描画／URL復元ではcollectorを奪わない。TTL切れ・A→B→A・同時刻衝突を確認し、未来requestedAtでCoreを回避しない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "action select/heartbeatとtoken条件を実装。TTL/時計衝突の専用Browser再現未実施。"
-      ],
+      "status": "pass",
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-artifact-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-artifact-repository.test.ts",
+          "tests": [
+            "writes an atomic eligible command and preserves requestedAt on heartbeat",
+            "selection tokens reject same-clock replacement, expired leases and future timestamps"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "2タブのメモCASと別favorite・savedView競合・旧selection heartbeatを分離する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_selection_runtime.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_selection_runtime.py",
+          "tests": [
+            "test_expired_selection_cleans_lease_and_same_command_heartbeat_reactivates"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "URL初期復元はselectionを送らずhidden中heartbeatを停止する"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "hidden中heartbeat停止とURL初期復元時の無POSTをBrowser request数で確認する専用試験は未実施。TTL・同時刻・A→B→A・未来tokenはunit通過。"
+        }
+      ]
     },
     {
       "id": "AC06",
@@ -95,13 +253,29 @@
         "R07"
       ],
       "expected_behavior": "24hに1441個の終値位置が必要。境界欠損・途中quote volume欠損・実0・JST基準一致・日跨ぎを独立確認",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "Ranking v3の24h窓と独立欠損unit test。全境界の専用fixture未実施。"
-      ],
+      "status": "pass",
       "milestone": "M2",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core",
+          "command": "uv run python -m pytest tests/test_ranking.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core/tests/test_ranking.py",
+          "tests": [
+            "test_24h_needs_boundary_close_and_windows_share_one_generation",
+            "test_missing_boundary_or_interior_excludes_both_metrics",
+            "test_zero_turnover_and_flat_return_are_observed_not_missing",
+            "test_jst_anchor_boundaries"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC07",
@@ -110,13 +284,55 @@
         "R08"
       ],
       "expected_behavior": "1応答の4期間・終値・平常比は同generation。15m有効／24h欠測を表現。応答読取回数を増やしても外部取得が増えない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "同一Generationから4期間の窓を構築。外部取得回数の負荷試験未実施。"
-      ],
+      "status": "pass",
       "milestone": "M2",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core",
+          "command": "uv run python -m pytest tests/test_ranking.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core/tests/test_ranking.py",
+          "tests": [
+            "test_24h_needs_boundary_close_and_windows_share_one_generation"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core",
+          "command": "uv run python -m pytest tests/test_indicators.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core/tests/test_indicators.py",
+          "tests": [
+            "test_only_new_indicator_missing_keeps_existing_rank"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core",
+          "command": "uv run python -m pytest tests/test_service.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core/tests/test_service.py",
+          "tests": [
+            "test_repeated_http_reads_do_not_fetch_providers"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "read回数を増やした時の外部Provider call数の計測は未実施。4期間の同一generationと部分欠損は通過。"
+        }
+      ]
     },
     {
       "id": "AC08",
@@ -125,13 +341,37 @@
         "R09"
       ],
       "expected_behavior": "数値sortはraw、欠測最後、同値ID順。未描画行も全体sort対象。可視行だけのprice API値で順位を作らない。base/quoteの文字列だけでなく実通貨/資産が一致する範囲だけで出来高sort",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "raw値sort/filter、欠損末尾のunit test。異なる通貨の出来高sortは機能対象から外した。"
-      ],
+      "status": "pass",
       "milestone": "M3",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/market/market-view.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/market/market-view.test.ts",
+          "tests": [
+            "raw values sort every fetched row, with missing last and ID tie breaks"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/market/universe-view.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/market/universe-view.test.ts",
+          "tests": [
+            "native raw sort includes every row and puts missing values last"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC09",
@@ -140,13 +380,43 @@
         "R09"
       ],
       "expected_behavior": "全体順位とローカルfilter／独自sortを混同しない。初回／再起動／世代gap／metric変更で架空の順位差を作らない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "server順位を保持したlocal sort/filter。再起動/gapの既存unitとE2Eを通過。"
-      ],
+      "status": "pass",
       "milestone": "M3",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core",
+          "command": "uv run python -m pytest tests/test_rank_change.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core/tests/test_rank_change.py",
+          "tests": [
+            "test_rank_change_sign_new_and_same_conditions",
+            "test_no_previous_is_not_new_after_restart_even_with_saved_bars",
+            "test_missing_minute_map_metric_and_stale_are_not_comparable"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/ranking-daily.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/ranking-daily.e2e.ts",
+          "tests": [
+            "順位変化と追加指標が同じ世代で切り替わり選択を維持する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC10",
@@ -154,13 +424,60 @@
         "R12"
       ],
       "expected_behavior": "OI base1000→1100で+10%。価格上昇でnotional+65%でもOI+65%としない。基準0、version差、端点欠損、未確認unitは理由付きnull",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "隔離Postgresでbase OI 1000→1100=10%とversion一致を確認。未確認unitの全fixture未実施。"
-      ],
+      "status": "pass",
       "milestone": "M4",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_metrics_query_uses_migrated_schema_without_writing",
+            "test_oi_endpoint_failure_never_falls_back_to_notional"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "追加指標は現行IDとversionが一致する時だけ表示する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_current_version_does_not_splice_oi_or_infer_unknown_quantity"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "DB上のversion切替と未確認quantity unitの組合せfixtureは未実施。base差・notional非代替・欠損・ゼロ・UI version結合は通過。"
+        }
+      ]
     },
     {
       "id": "AC11",
@@ -169,13 +486,59 @@
         "R13"
       ],
       "expected_behavior": "spreadは同snapshotのBid/Askから計算。交差板を拒否、同値は0。Funding周期不明・次回時刻なし／経過を推測しない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "同snapshot Bid/Ask spreadの交差板・同値unit test。Funding境界の新規専用試験未実施。"
-      ],
+      "status": "pass",
       "milestone": "M4",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/market/universe-view.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/market/universe-view.test.ts",
+          "tests": [
+            "spread uses one valid bid/ask snapshot"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_l1_sources.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_l1_sources.py",
+          "tests": [
+            "test_l1_parsers_table"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "native L1は120秒境界とhidden復帰でもreadyを残さずFundingを推測しない"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "Funding周期不明・次回時刻欠損/経過の専用UI境界試験は未実施。spread交差板/同値は通過。"
+        }
+      ]
     },
     {
       "id": "AC12",
@@ -185,13 +548,56 @@
         "R13"
       ],
       "expected_behavior": "参照originalsのID/version完全一致でnative詳細へ。倍率nullの参照資格、Widget欠落、複数native候補を別扱い",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "参照→現行ID/version一致nativeへのDesktop/Mobile E2E。複数候補の専用試験未実施。"
-      ],
+      "status": "pass",
       "milestone": "M2",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "参照条件と選択・scroll・focusをnative往復後に復元し次前を操作できる"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/ranking-daily.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/ranking-daily.e2e.ts",
+          "tests": [
+            "元数量とChartが未確認でも参照ランキングを読み分けられる"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core",
+          "command": "uv run python -m pytest tests/test_ranking.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/ranking-core/tests/test_ranking.py",
+          "tests": [
+            "test_unknown_original_quantity_and_widget_preserve_reference_metrics"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC13",
@@ -201,13 +607,46 @@
         "R17"
       ],
       "expected_behavior": "Desktop／390px相当で一覧→詳細→戻る、次／前、filter後の選択、scrollとfocusを保持。旧queryや保存画面から再訪可能",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "Desktop/Mobileの参照→native→戻るE2E。scroll/focus/次前の全組合せは未実施。"
-      ],
+      "status": "pass",
       "milestone": "M3",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "参照条件と選択・scroll・focusをnative往復後に復元し次前を操作できる",
+            "取引所別のお気に入りと名前付き表示を再読込後に使える"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/ranking.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/ranking.e2e.ts",
+          "tests": [
+            "全対象の条件変更、選択維持、単一Widgetと時間足を扱う"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC14",
@@ -216,13 +655,80 @@
         "R16"
       ],
       "expected_behavior": "既存chart/selection/JST APIで、遅延応答、条件変更、削除、version変更時に古いWidget/板/値が復活しない。POST abortを未実行とみなさない。新metricsとの結合はAC28",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "chart/version、旧JST応答、旧Ranking応答のunit/E2E。selection長時間競合の全再現未実施。"
-      ],
+      "status": "pass",
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "約定騰落率の古い基準の遅延応答で変更後の値を上書きしない",
+            "チャートの古い履歴応答で新しく選んだ時間足を上書きしない"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/ranking.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/ranking.e2e.ts",
+          "tests": [
+            "新しい期間へ切り替えた後に届く旧要求を採用しない",
+            "対応表から削除された選択は名前を維持し、旧Widgetを停止する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/market/price-change-client.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/market/price-change-client.test.ts",
+          "tests": [
+            "instrument version changes invalidate cache and reject older in-flight versions"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "selectionの応答abort後もserver保存を認識して次の選択を維持する"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "selection POSTのabort後にserver書込が完了するBrowser再現は未実施。旧chart/JST/ranking応答拒否は通過。"
+        }
+      ]
     },
     {
       "id": "AC15",
@@ -231,13 +737,78 @@
         "R16"
       ],
       "expected_behavior": "既存参照150秒/native L1・OIの120秒を時計だけで失効させる。hidden復帰と行順固定でも旧値をcurrentにしない。native確定足の別時間基準はAC24で検証",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "時計によるsource/metric失効を実装。hidden復帰と固定行の専用E2E未実施。"
-      ],
+      "status": "pass",
       "milestone": "M1",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/ranking.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/ranking.e2e.ts",
+          "tests": [
+            "行順固定とhidden復帰でも時計で参照を失効しkeyboardのfocusを保持する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/market/price-change-client.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/market/price-change-client.test.ts",
+          "tests": [
+            "paused and cached data lose their numeric value when the candle or result expires"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "native L1は120秒境界とhidden復帰でもreadyを残さずFundingを推測しない"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "native L1/OIの120秒ちょうどとhidden復帰・固定行の組合せは未実施。参照150秒超過、native停止後310秒の失効は通過。"
+        }
+      ]
     },
     {
       "id": "AC16",
@@ -246,13 +817,43 @@
         "R18"
       ],
       "expected_behavior": "favoriteの重複setは1件。2タブで別favorite更新が消えない。savedView revision競合409。未知schema・容量超過時に初期化しない。同一対象の登録→解除の遅延応答で星が逆戻りしない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "atomic favoriteとsavedView CASのunit test、reload E2E。遅延連打と2タブのBrowser再現未実施。"
-      ],
+      "status": "pass",
       "milestone": "M3",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/user-workspace-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/user-workspace-repository.test.ts",
+          "tests": [
+            "favorite operations merge under lock and saved views use revision CAS",
+            "unknown schemas and capacity failures preserve the existing workspace bytes"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "2タブのメモCASと別favorite・savedView競合・旧selection heartbeatを分離する",
+            "お気に入り登録と解除の連打は遅延応答後も最後の意図を保持する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
+      ]
     },
     {
       "id": "AC17",
@@ -262,13 +863,88 @@
         "R16"
       ],
       "expected_behavior": "metrics未生成・DB timeout・invalid artifact・provider片側停止・Widget失敗・保存失敗を独立表示。他の市場laneは利用可能",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "metrics任意lane、503と古い正常artifactのunit test。故障注入の全組合せ未実施。"
-      ],
+      "status": "pass",
       "milestone": "M4",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_metrics_recover_known_corruption_preserving_exact_bytes",
+            "test_metrics_unknown_schema_is_never_replaced",
+            "test_metrics_recovery_stops_on_unsafe_boundaries"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-metrics-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-metrics-repository.test.ts",
+          "tests": [
+            "valid old metrics keep their source timestamp; malformed metrics fail independently"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_scheduler.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_scheduler.py",
+          "tests": [
+            "test_partial_failure_becomes_unavailable_without_blocking_other_venues"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "保存APIのHTTP異常系は状態と非公開情報を保護する",
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "実DBのstatement timeout注入とWidget network失敗を同時に与えた他laneの操作継続は未実施。DB例外はmock注入、破損復旧は実DB/worker/Browser通過。"
+        }
+      ]
     },
     {
       "id": "AC18a",
@@ -280,10 +956,62 @@
       "milestone": "M1",
       "gate": "development",
       "expected_behavior": "selection/メモのloopback/Origin/JSON/body上限/unknown key/版tokenを検査。400/403/409/413/500を保持しsecret/stack/pathを漏らさない。文字列XSSを防ぐ",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "loopback/Origin/JSON/body上限/unknown key/tokenの検査を実装。全statusのHTTP表試験未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "保存APIのHTTP異常系は状態と非公開情報を保護する",
+            "2タブのメモCASと別favorite・savedView競合・旧selection heartbeatを分離する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-artifact-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-artifact-repository.test.ts",
+          "tests": [
+            "requires both a localhost Host and a loopback client address"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "selectionとworkspaceの500応答は内部情報を漏らさず原本を保つ",
+            "参照メモは出所と時刻を保存しXSS文字列を実行せずnativeでも再読込できる"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "HTTP表は全3endpointの400/403/413、メモの409/500、selectionの409を確認。selection/workspaceの500全表とBrowser XSS描画の専用assertは未実施。"
+        }
       ]
     },
     {
@@ -295,10 +1023,40 @@
       "milestone": "M3",
       "gate": "development",
       "expected_behavior": "user-workspaceのOrigin/loopback/64KiB/未知key/path traversal/上限/CASを検査。古い全ファイル上書きや任意パス保存を拒否",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "user-workspaceのatomic/CAS、pathを受けないAPIを実装。全異常入力表試験未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "保存APIのHTTP異常系は状態と非公開情報を保護する",
+            "2タブのメモCASと別favorite・savedView競合・旧selection heartbeatを分離する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/user-workspace-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/user-workspace-repository.test.ts",
+          "tests": [
+            "unknown schemas and capacity failures preserve the existing workspace bytes",
+            "favorite operations merge under lock and saved views use revision CAS"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
       ]
     },
     {
@@ -310,10 +1068,56 @@
       "milestone": "M4",
       "gate": "development",
       "expected_behavior": "contextの最大16metrics/64KiB、有限数、文字列長、target/version、raw/secret混入を検査。過去証拠の署名や市場真実の再認証とは呼ばない",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "2指標のみを持つcontextを有限数/target/versionで検査。参照contextと全境界表試験未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "保存APIのHTTP異常系は状態と非公開情報を保護する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-past-note-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-past-note-repository.test.ts",
+          "tests": [
+            "v1 notes survive an optional v2 observation save"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-past-note-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-past-note-repository.test.ts",
+          "tests": [
+            "observation context rejects nonfinite values and unbounded nested data"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "contextはnative 2指標固定で16指標上限内。HTTPで未知key/raw、型、長さ、対象/version、時刻、64KiBを検査。直接非有限numberのvalidator表は未実施。"
+        }
       ]
     },
     {
@@ -323,13 +1127,77 @@
         "R18"
       ],
       "expected_behavior": "v1 note全件を保持してv2保存。contextの参照/native出所・時刻・対象を保存。範囲超過拒否、再読込可能、旧版rollbackでv2を失わない",
-      "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "v1→v2で旧項目保持のunit test。旧版rollbackの隔離復元試験未実施。"
-      ],
+      "status": "pass",
       "milestone": "M4",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/market-past-note-repository.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/market-past-note-repository.test.ts",
+          "tests": [
+            "v1 notes survive an optional v2 observation save"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "保存APIのHTTP異常系は状態と非公開情報を保護する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "test": "isolated v2 preservation and legacy v1 restore",
+          "command": "bun --tsconfig-override apps/web/tsconfig.json var/tmp/m5-rollback/probe.ts",
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928",
+          "result": "pass",
+          "targetVersion": "1a0432007e18742c0a2d1f2067a715b030ba3b3ac33fb65574d778677909d5f4",
+          "legacySource": "be281d936a44ff912e8b44d56c06a70cf28963ec",
+          "notes": "v1 restored=1, legacy write=2, preserved v2 reread=2; v2 SHA256 unchanged. Bun printed a directory-mismatch diagnostic after success, exit 0. No live state accessed."
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "参照メモは出所と時刻を保存しXSS文字列を実行せずnativeでも再読込できる"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "implementation_gap",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "implementation_gap",
+          "detail": "現行contextはnative view・2指標のみ。参照contextの出所保存は未実装。今回の新機能なし境界により追加していない。"
+        },
+        {
+          "category": "verification_gap",
+          "detail": "旧版切戻しは分離したv1 stateへの復元とv2保全を確認。現役stateの切戻しは対象外。"
+        }
+      ]
     },
     {
       "id": "AC20",
@@ -338,12 +1206,51 @@
       ],
       "expected_behavior": "表見出しbutton／aria-sort、keyboard、IME、focus、色に頼らない状態、reduced-motion、横はみ出しを確認",
       "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "ranking見出しbutton/aria-sortとDesktop/Mobile E2E。IME/focus/reduced-motion専用試験未実施。"
-      ],
       "milestone": "M3",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/ranking.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/ranking.e2e.ts",
+          "tests": [
+            "行順固定とhidden復帰でも時計で参照を失効しkeyboardのfocusを保持する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "参照条件と選択・scroll・focusをnative往復後に復元し次前を操作できる",
+            "メモ保存中のA→B→Aと追加入力・IMEイベントで下書きを消さない"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [
+        {
+          "category": "environment_gap",
+          "detail": "OSの実日本語IMEと実機focusは未実施。DISPLAY/WAYLAND_DISPLAYなし、ibus/fcitx5コマンドなし。compositionイベント・日本語入力・Browser keyboard/focusは1440/390で通過。GUI/IMEがある隔離端末での確認が必要。"
+        }
+      ],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ]
     },
     {
       "id": "AC21",
@@ -354,12 +1261,28 @@
       ],
       "expected_behavior": "最終差分、全必須開発AC、生成schema/型/current docs、依存lock、隔離target、再開記録、互換性/rollback準備が整合。今回追加していない本番・実使用PASSを混ぜない",
       "status": "partial",
-      "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "schema/型生成、docs checker、lock、lint、types、build、隔離DB、E2Eを確認。全AC未達のためPARTIAL。"
-      ],
       "milestone": "M5",
-      "gate": "development"
+      "gate": "development",
+      "evidence": [
+        {
+          "test": "repository cross-boundary gate",
+          "command": "env -u TEST_DATABASE_URL bash scripts/verify-local.sh",
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928",
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [
+        {
+          "category": "verification_gap",
+          "detail": "最終repo gateは終了0。AC20のOS実IME・実機focusが未確認のため、全必須開発ACの完了にはしない。PF01〜03の実データ受入とM6は別欄。"
+        }
+      ],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ]
     },
     {
       "id": "AC22",
@@ -368,9 +1291,19 @@
       ],
       "expected_behavior": "承認済み本番で参照/native実数値照合、保存→browser再訪、起動復帰、実使用flowを確認。未実施なら運用完了としない",
       "status": "not_run",
-      "evidence": [],
       "milestone": "M6",
-      "gate": "runtime"
+      "gate": "runtime",
+      "evidence": [],
+      "remaining": [
+        {
+          "category": "runtime_gate",
+          "detail": "M6本番配置・実使用・起動復帰・実数値受入は今回の対象外。"
+        }
+      ],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "runtime_gate"
+      ]
     },
     {
       "id": "AC23",
@@ -383,10 +1316,27 @@
       "milestone": "M2",
       "gate": "development",
       "expected_behavior": "1440px/390px相当で条件選択→参照詳細→native→一覧→次銘柄を実Browserで確認。探し直し/条件消失/出所誤認がない。画像の存在だけで合格にしない",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "1440px/390pxで参照→native→戻るE2E。次銘柄/focusまでの全通し未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "参照条件と選択・scroll・focusをnative往復後に復元し次前を操作できる"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
       ]
     },
     {
@@ -399,10 +1349,55 @@
       "milestone": "M4",
       "gate": "development",
       "expected_behavior": "共通candleCutoff、初期lag180秒/maxAge300秒、端点bucketのoff-by-one、L1先行/足後着、同一cutoffの訂正、一部銘柄遅延、source停止の時計失効を確認。observedAt<終了の正常確定足を棄却しない。設定は仮定と実測を分離",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "共通cutoff、後着訂正、部分欠損を隔離DB/unitで確認。実到着遅延分布と時計停止の全境界未測定。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_metrics_share_cutoff_and_keep_endpoint_quality_separate",
+            "test_later_endpoint_correction_recomputes_without_cached_values",
+            "test_metrics_query_uses_migrated_schema_without_writing"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
       ]
     },
     {
@@ -416,10 +1411,63 @@
       "milestone": "M1",
       "gate": "development",
       "expected_behavior": "chart expectedVersion必須、実version応答、cache/inflight/過去ページ/UI照合、取得途中version変更409、旧series破棄。共通resolverとpriceChangeFailure/JST APIに回帰なし",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "expectedVersion付きchart route/responseと旧応答拒否をunit/E2E。全inflight境界試験未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "bun run test -- src/lib/server/chart-history.test.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/src/lib/server/chart-history.test.ts",
+          "tests": [
+            "rejects an in-flight version change and never reuses its page for the new version",
+            "deduplicates concurrent requests and rechecks freshness before using its cache"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "チャートの古い履歴応答で新しく選んだ時間足を上書きしない",
+            "チャートを過去へスクロールすると履歴を追加し表示位置を保つ"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "catalog version変更中の過去ページと旧metricsを拒否する（旧応答before）",
+            "catalog version変更中の過去ページと旧metricsを拒否する（旧応答after）"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "取得途中version変更409と新version cache分離はunit通過。Browserの過去ページ取得中にcatalog versionを変える専用再現は未実施。"
+        }
       ]
     },
     {
@@ -431,9 +1479,32 @@
       "milestone": "M0",
       "gate": "development",
       "expected_behavior": "対象checkout/dirty/稼働checkout/隔離targetを確認し、PF01〜03を安全に試行または未確認記録。本番selection/メモ副作用GETなし。DB不通を全開発停止や取得済み扱いにしない",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main be281d9 から独立worktree作成。稼働Web/Market dc2a8d7、Ranking d1c44d5をservice unit読取で確認。PF01/PF02実値とPF03画面は未確認。"
+        {
+          "test": "PF01-PF03 safety preflight",
+          "command": "git status --short; git branch --show-current; git rev-parse HEAD; systemctl --user show prep-watchdeck-market.service prep-watchdeck-web.service prep-watchdeck-ranking.service -p Id -p ActiveState -p WorkingDirectory -p MainPID",
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928",
+          "result": "pass",
+          "targetVersion": "1a0432007e18742c0a2d1f2067a715b030ba3b3ac33fb65574d778677909d5f4",
+          "observations": {
+            "worktree": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928",
+            "branch": "ai/markets-workspace-20260928-2000",
+            "initialClean": true,
+            "originalCheckoutClean": true,
+            "originalCheckoutHead": "ebab3bbf56328041a322dd48364764e7d94227e4",
+            "marketRuntime": "/home/tn/releases/prep-watchdeck/dc2a8d7/apps/market-core",
+            "webRuntime": "/home/tn/releases/prep-watchdeck/d1c44d5/apps/web",
+            "rankingRuntime": "/home/tn/releases/prep-watchdeck/d1c44d5",
+            "PF01": "unknown: live roster/map simultaneous copy not obtained",
+            "PF02": "unknown: dedicated readonly credential not identified; no live DB/provider access",
+            "PF03": "unknown: no production browser or selection/notes side-effect GET"
+          }
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping"
       ]
     },
     {
@@ -446,10 +1517,102 @@
       "milestone": "M4",
       "gate": "development",
       "expected_behavior": "metricsのcommit後通知/coalesce/single-flight/read-only snapshot/5秒最短間隔/接続1/statement5秒/全体10秒/shutdown awaitを隔離確認。足保存失敗とmetrics失敗を分離し、DB可視化→投影→最大5秒poll反映を測る",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "単一worker/read-only snapshot/5秒間隔/5秒statement timeoutを実装。1201行の隔離DB読取は10秒未満。writer→Browser遅延測定未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_service.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_service.py",
+          "tests": [
+            "test_metrics_worker_coalesces_failures_and_waits_for_shutdown",
+            "test_metrics_notification_follows_successful_persistence_only"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_metrics_query_uses_migrated_schema_without_writing",
+            "test_metrics_recovery_stops_on_unsafe_boundaries"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_projection_deadline_kills_and_reaps_the_owner",
+            "test_real_statement_timeout_releases_projection_connection",
+            "test_projection_snapshot_is_repeatable_read_only"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_candle_runtime.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_candle_runtime.py",
+          "tests": [
+            "test_candle_failure_never_notifies_metrics_and_next_commit_does"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "implementation_gap",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "implementation_gap",
+          "detail": "statement timeout=5秒/transaction timeout=8秒/connect timeout=2秒は設定済み。ただし投影・保全・発行を含めた全体10秒のhard deadlineは未実装。1201行SQL<10秒の実測と区別する。"
+        },
+        {
+          "category": "verification_gap",
+          "detail": "実DBのtimeout、足保存失敗からmetrics通知抑止への結合、最大接続数のサーバ観測は未実施。L1成功後通知と失敗抑止・coalesce・single-flight・shutdown awaitは隔離unit確認。"
+        }
       ]
     },
     {
@@ -464,11 +1627,749 @@
       "milestone": "M4",
       "gate": "development",
       "expected_behavior": "新metricsを現行Universe id/versionにだけ結合し、同cutoff訂正は反映、古い世代/旧契約の遅延応答は拒否。mixed source/単一updatedAt/partial一括無効化/直近板による全市場BBO代替をしない",
-      "status": "partial",
+      "status": "pass",
       "evidence": [
-        "2026-09-28: origin/main起点の隔離worktreeで実装。verify-local: Market Core 80、Ranking Core 123、Web unit 155、Desktop/Mobile E2E 44件を通過。最終の鮮度表示修正はtypecheck/unit/buildとDesktop/Mobileの該当E2E 4件を追加確認。",
-        "ID/version一致の指標結合をDesktop/Mobile E2E、同cutoff訂正をDB testで確認。旧世代遅延の全再現未実施。"
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る",
+            "追加指標は現行IDとversionが一致する時だけ表示する"
+          ],
+          "viewports": [
+            1440,
+            390
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core",
+          "command": "uv run python -m pytest tests/test_market_metrics.py -q",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/market-core/tests/test_market_metrics.py",
+          "tests": [
+            "test_metrics_share_cutoff_and_keep_endpoint_quality_separate"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "隔離DB書込完了からworker・artifact・API・Browserへの後着訂正と停止復帰を測る"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        },
+        {
+          "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web",
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/universe-explorer.e2e.ts",
+          "file": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/apps/web/tests/e2e/universe-explorer.e2e.ts",
+          "tests": [
+            "catalog version変更中の過去ページと旧metricsを拒否する（旧応答before）",
+            "catalog version変更中の過去ページと旧metricsを拒否する（旧応答after）"
+          ],
+          "result": "pass",
+          "runId": "M5-resume-accepted-gate",
+          "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
+      "remaining": [],
+      "initialGapClassification": [
+        "evidence_mapping",
+        "verification_gap"
+      ],
+      "resolvedRemaining": [
+        {
+          "category": "verification_gap",
+          "detail": "同cutoff訂正、wrong version拒否、旧応答保留/解放は通過。旧世代解放直後の描画とcatalog version入替の全競合順序は未実施。"
+        }
       ]
     }
-  ]
+  ],
+  "verifiedAt": "2026-09-29T06:55:18+09:00",
+  "validationRuns": [
+    {
+      "id": "M5-final-gate",
+      "command": "env -u TEST_DATABASE_URL bash scripts/verify-local.sh",
+      "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928",
+      "result": "pass",
+      "targetVersion": "1a0432007e18742c0a2d1f2067a715b030ba3b3ac33fb65574d778677909d5f4",
+      "counts": {
+        "marketCore": 98,
+        "rankingCore": 123,
+        "webUnit": 159,
+        "desktopMobileE2E": 56
+      },
+      "checks": [
+        "isolated PostgreSQL",
+        "repository contracts",
+        "docs metadata/links",
+        "uv lock",
+        "Ruff check/format",
+        "Pyrefly",
+        "schema/TypeScript generation",
+        "ranking map evidence",
+        "Svelte check",
+        "build"
+      ],
+      "log": "/tmp/markets-m5-final-gate.log",
+      "logSha256": "55e806ba6f393f4357f9ce9973ba6970803a5e0d549d6e87f7f49d861ef82e7e"
+    },
+    {
+      "id": "M5-resume-accepted-gate",
+      "command": "env -u TEST_DATABASE_URL bash scripts/verify-local.sh",
+      "cwd": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928",
+      "result": "pass",
+      "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+      "counts": {
+        "marketCore": 103,
+        "rankingCore": 124,
+        "webUnit": 160,
+        "desktopMobileE2E": 72
+      },
+      "checks": [
+        "isolated PostgreSQL",
+        "repository contracts",
+        "docs metadata/links",
+        "uv lock",
+        "Ruff check/format",
+        "Pyrefly",
+        "schema/TypeScript generation",
+        "ranking map evidence",
+        "Svelte check",
+        "build"
+      ],
+      "log": "/tmp/markets-m5-accepted-gate.log",
+      "logSha256": "8a0f74a8e7fb82ef27abdd8b9907b836feedb9a0db9245d24fe44c09f229b76d"
+    }
+  ],
+  "metricsPipelineEvidence": [
+    {
+      "timingMeaning": "commitRequestedAt/writeCompletedAt bracket the client commit acknowledgement; observed/source timestamps are not commit timestamps. Poll is 5s, not a total latency guarantee.",
+      "events": [
+        {
+          "event": "ready",
+          "commitRequestedAt": 1790632347.5039074,
+          "writeCompletedAt": 1790632347.5050602,
+          "version": 1
+        },
+        {
+          "event": "late",
+          "commitRequestedAt": 1790632348.0733042,
+          "writeCompletedAt": 1790632348.0822487,
+          "notifiedAt": 1790632348.0822651,
+          "cutoff": "2026-09-28T21:49:00+00:00"
+        },
+        {
+          "event": "late-visible",
+          "commitRequestedAt": 1790632348.0733042,
+          "writeCompletedAt": 1790632348.0822487,
+          "notifiedAt": 1790632348.0822651,
+          "cutoff": "2026-09-28T21:49:00Z",
+          "artifactObservedAt": 1790632352.744,
+          "apiObservedAt": 1790632352.985,
+          "browserObservedAt": 1790632353.032,
+          "generation": "2026-09-28T21:49:00+00:00:2be36f155f02473a8454ac14507ef2a9",
+          "writeToBrowserSeconds": 4.949751377105713
+        },
+        {
+          "event": "correct",
+          "commitRequestedAt": 1790632358.8964758,
+          "writeCompletedAt": 1790632358.9043784,
+          "notifiedAt": 1790632358.904389,
+          "cutoff": "2026-09-28T21:49:00+00:00"
+        },
+        {
+          "event": "correction-visible",
+          "commitRequestedAt": 1790632358.8964758,
+          "writeCompletedAt": 1790632358.9043784,
+          "notifiedAt": 1790632358.904389,
+          "cutoff": "2026-09-28T21:49:00Z",
+          "artifactObservedAt": 1790632359.109,
+          "apiObservedAt": 1790632362.985,
+          "browserObservedAt": 1790632363.421,
+          "generation": "2026-09-28T21:49:00+00:00:2f3d3d3c9b0740ff871a2342abbc633f",
+          "writeToBrowserSeconds": 4.5166215896606445
+        },
+        {
+          "event": "stopped",
+          "at": 1790632363.454312
+        },
+        {
+          "event": "resume-write",
+          "commitRequestedAt": 1790632363.4566877,
+          "writeCompletedAt": 1790632363.4655514,
+          "notifiedAt": 1790632363.4655545,
+          "cutoff": "2026-09-28T21:49:00+00:00"
+        },
+        {
+          "event": "restarted",
+          "at": 1790632363.4676147
+        },
+        {
+          "event": "restart-visible",
+          "commitRequestedAt": 1790632363.4566877,
+          "writeCompletedAt": 1790632363.4655514,
+          "notifiedAt": 1790632363.4655545,
+          "cutoff": "2026-09-28T21:49:00Z",
+          "artifactObservedAt": 1790632363.674,
+          "apiObservedAt": 1790632367.985,
+          "browserObservedAt": 1790632367.988,
+          "generation": "2026-09-28T21:49:00+00:00:b7dae3bf0807428ab4e0e40765d24708",
+          "writeToBrowserSeconds": 4.522448539733887
+        },
+        {
+          "event": "corrupt-original-preserved",
+          "bytes": 24
+        },
+        {
+          "event": "timeout",
+          "maximumConnections": 1,
+          "artifactUnchanged": true,
+          "elapsedSeconds": 5.652317265048623
+        },
+        {
+          "event": "stopped",
+          "at": 1790632373.846119
+        },
+        {
+          "event": "stopped-clock-expired",
+          "advancedSeconds": 310
+        }
+      ],
+      "api": [
+        {
+          "at": 1790632348.028,
+          "generation": "2026-09-28T21:49:00+00:00:081e326c119e428ca717e1826540f60c",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": null
+        },
+        {
+          "at": 1790632352.985,
+          "generation": "2026-09-28T21:49:00+00:00:2be36f155f02473a8454ac14507ef2a9",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790632362.985,
+          "generation": "2026-09-28T21:49:00+00:00:2f3d3d3c9b0740ff871a2342abbc633f",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": -5.000000000000004
+        },
+        {
+          "at": 1790632363.427,
+          "generation": "2026-09-28T21:49:00+00:00:2be36f155f02473a8454ac14507ef2a9",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790632367.985,
+          "generation": "2026-09-28T21:49:00+00:00:b7dae3bf0807428ab4e0e40765d24708",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": 19.999999999999996
+        },
+        {
+          "at": 1790632373.744,
+          "generation": "2026-09-28T21:49:00+00:00:b7dae3bf0807428ab4e0e40765d24708",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": 19.999999999999996
+        },
+        {
+          "at": 1790632373.867,
+          "generation": "2026-09-28T21:49:00+00:00:28381a4344a648b18df71508bcca7c11",
+          "cutoff": "2026-09-28T21:49:00Z",
+          "value": 19.999999999999996
+        }
+      ],
+      "project": "desktop-1440",
+      "sourcePath": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/var/tmp/e2e/playwright-results/universe-explorer.e2e.ts-隔-db4f2-t・API・Browserへの後着訂正と停止復帰を測る-desktop-1440/metrics-pipeline.json",
+      "runId": "M5-resume-accepted-gate"
+    },
+    {
+      "timingMeaning": "commitRequestedAt/writeCompletedAt bracket the client commit acknowledgement; observed/source timestamps are not commit timestamps. Poll is 5s, not a total latency guarantee.",
+      "events": [
+        {
+          "event": "ready",
+          "commitRequestedAt": 1790632440.4553463,
+          "writeCompletedAt": 1790632440.4574802,
+          "version": 1
+        },
+        {
+          "event": "late",
+          "commitRequestedAt": 1790632440.964715,
+          "writeCompletedAt": 1790632440.9664533,
+          "notifiedAt": 1790632440.9664662,
+          "cutoff": "2026-09-28T21:51:00+00:00"
+        },
+        {
+          "event": "late-visible",
+          "commitRequestedAt": 1790632440.964715,
+          "writeCompletedAt": 1790632440.9664533,
+          "notifiedAt": 1790632440.9664662,
+          "cutoff": "2026-09-28T21:51:00Z",
+          "artifactObservedAt": 1790632445.628,
+          "apiObservedAt": 1790632445.912,
+          "browserObservedAt": 1790632445.917,
+          "generation": "2026-09-28T21:51:00+00:00:1674419a5ef94b43a5efd29a3e01f074",
+          "writeToBrowserSeconds": 4.950546741485596
+        },
+        {
+          "event": "correct",
+          "commitRequestedAt": 1790632451.7802458,
+          "writeCompletedAt": 1790632451.7839465,
+          "notifiedAt": 1790632451.7839565,
+          "cutoff": "2026-09-28T21:51:00+00:00"
+        },
+        {
+          "event": "correction-visible",
+          "commitRequestedAt": 1790632451.7802458,
+          "writeCompletedAt": 1790632451.7839465,
+          "notifiedAt": 1790632451.7839565,
+          "cutoff": "2026-09-28T21:51:00Z",
+          "artifactObservedAt": 1790632451.988,
+          "apiObservedAt": 1790632455.914,
+          "browserObservedAt": 1790632456.3,
+          "generation": "2026-09-28T21:51:00+00:00:c61a0ff5ac1c44828bf78fcf8878330f",
+          "writeToBrowserSeconds": 4.5160534381866455
+        },
+        {
+          "event": "stopped",
+          "at": 1790632456.3262837
+        },
+        {
+          "event": "resume-write",
+          "commitRequestedAt": 1790632456.3286147,
+          "writeCompletedAt": 1790632456.3363774,
+          "notifiedAt": 1790632456.33638,
+          "cutoff": "2026-09-28T21:51:00+00:00"
+        },
+        {
+          "event": "restarted",
+          "at": 1790632456.337399
+        },
+        {
+          "event": "restart-visible",
+          "commitRequestedAt": 1790632456.3286147,
+          "writeCompletedAt": 1790632456.3363774,
+          "notifiedAt": 1790632456.33638,
+          "cutoff": "2026-09-28T21:51:00Z",
+          "artifactObservedAt": 1790632456.541,
+          "apiObservedAt": 1790632460.912,
+          "browserObservedAt": 1790632461.358,
+          "generation": "2026-09-28T21:51:00+00:00:d0c0c963e404418498d892fc34c0856b",
+          "writeToBrowserSeconds": 5.021622657775879
+        },
+        {
+          "event": "corrupt-original-preserved",
+          "bytes": 24
+        },
+        {
+          "event": "timeout",
+          "maximumConnections": 1,
+          "artifactUnchanged": true,
+          "elapsedSeconds": 5.247708909097128
+        },
+        {
+          "event": "stopped",
+          "at": 1790632466.8305357
+        },
+        {
+          "event": "stopped-clock-expired",
+          "advancedSeconds": 310
+        }
+      ],
+      "api": [
+        {
+          "at": 1790632440.954,
+          "generation": "2026-09-28T21:51:00+00:00:fd63484794bf4eef924ebd6d1f3aa269",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": null
+        },
+        {
+          "at": 1790632445.912,
+          "generation": "2026-09-28T21:51:00+00:00:1674419a5ef94b43a5efd29a3e01f074",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790632455.914,
+          "generation": "2026-09-28T21:51:00+00:00:c61a0ff5ac1c44828bf78fcf8878330f",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": -5.000000000000004
+        },
+        {
+          "at": 1790632456.306,
+          "generation": "2026-09-28T21:51:00+00:00:1674419a5ef94b43a5efd29a3e01f074",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790632460.912,
+          "generation": "2026-09-28T21:51:00+00:00:d0c0c963e404418498d892fc34c0856b",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": 19.999999999999996
+        },
+        {
+          "at": 1790632466.707,
+          "generation": "2026-09-28T21:51:00+00:00:d0c0c963e404418498d892fc34c0856b",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": 19.999999999999996
+        },
+        {
+          "at": 1790632466.847,
+          "generation": "2026-09-28T21:51:00+00:00:96bb2e5ddaf04b14aac7525ea611ebd6",
+          "cutoff": "2026-09-28T21:51:00Z",
+          "value": 19.999999999999996
+        }
+      ],
+      "project": "mobile-390",
+      "sourcePath": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/var/tmp/e2e/playwright-results/universe-explorer.e2e.ts-隔-db4f2-t・API・Browserへの後着訂正と停止復帰を測る-mobile-390/metrics-pipeline.json",
+      "runId": "M5-resume-accepted-gate"
+    }
+  ],
+  "validationTarget": {
+    "baseCommit": "380941c13407ecf11c5cbbab3c94eacebecb211e",
+    "sourceSnapshotSha256": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942",
+    "state": "uncommitted working tree",
+    "algorithm": "SHA256 of sorted repo-relative path + NUL + file SHA256 + LF; tracked apps/schemas/scripts/uv.lock/pyproject.toml plus metrics_browser_probe.py; docs excluded"
+  },
+  "changedSourceHashes": {
+    "apps/market-core/src/prep_watchdeck_market/market_metrics.py": "ca1547015b227a2e5c7ed322c64de965801034525d67ef114d3a26f2e497ce11",
+    "apps/market-core/src/prep_watchdeck_market/service.py": "878b8e0b8dbb639bd1aaed668aa64f43ebfac4e5c51a398dd50ad73fe21cde8e",
+    "apps/market-core/tests/metrics_browser_probe.py": "0152cb4127d70c4a74dde47e698811bbca6fe53f9659402be6d9bc3a6c2b8ea6",
+    "apps/market-core/tests/test_candle_runtime.py": "8a2edadbc3e04b625f03e24ca93adaf4ebd03485f0911cf583bee87b76860dda",
+    "apps/market-core/tests/test_market_metrics.py": "398838e54f8c9311024faf14fd124adc0d10fbe14a29c93b48855ad997590133",
+    "apps/market-core/tests/test_service.py": "92e3e310f3a6e057406da271504cc9e8dbce6cc0ca96fb168926747f7de371a5",
+    "apps/ranking-core/tests/test_service.py": "63ca8eccda69e013696fb9daf1ac5e1991ff02073a4e0a71909a16f137034c10",
+    "apps/web/src/lib/components/markets/NativeMarkets.svelte": "01327cde20a11d52c364d1022ab99beae6972954eb2935594559ad0760ed921c",
+    "apps/web/src/lib/components/markets/ReferenceMarkets.svelte": "4130ef041ef43dd46cfedc6cfc94b207ad9e6facddbcd1eb1dd521c8c94630f6",
+    "apps/web/src/lib/components/universe/MarketPastNotesPanel.svelte": "ec53a314305fdef363ce39abca84071f51fee22218feb5c5fa725dc1e3932c76",
+    "apps/web/src/lib/market-past-note/market-past-note.ts": "52aac0d21214e0c7bd14a36040b6b073fc13f3c705a0ab681a61ef40a2bf8fc1",
+    "apps/web/src/lib/market/ranking.ts": "33fde4a569dd505cd213e39e94e830d4786c95664fc4670903df564383400535",
+    "apps/web/src/lib/server/chart-history.test.ts": "8a69164b36738e65a0fe695b4ed90243dbb1af6a1bcff7b314727346292ec022",
+    "apps/web/src/lib/server/market-artifact-repository.test.ts": "d5bd6d33aaff998d296017b3aa47ec9a0b06860d56de51b8a80d22aa615c3064",
+    "apps/web/src/lib/server/market-past-note-repository.test.ts": "a9a30fa6ebb3ff385eab763fae7dfe70c87188afdf30bba2dc5f12a8267827c3",
+    "apps/web/src/lib/server/selection-command-repository.ts": "97b4612c6b01956c2af111c209f57a54eb49c6b874fc258ec67f9d5db667ebce",
+    "apps/web/src/lib/server/user-workspace-repository.test.ts": "57a5f7339fccbc7aba49e775b06a37ca499ebcea1012a05aa995f2fdc46b1664",
+    "apps/web/tests/e2e/ranking.e2e.ts": "43d9324c8d7eadd699d7ae92175580ffabdfd6dcf71dc9c9b8339fd2ef29a8d4",
+    "apps/web/tests/e2e/universe-explorer.e2e.ts": "786cfab973aa2d3f776036e6352c722d9a0fb247b25e3bfd4e694dc8f1e38646"
+  },
+  "summary": {
+    "pass": 27,
+    "partial": 2,
+    "not_run": 1
+  },
+  "resolvedTestFailures": [
+    {
+      "log": "/tmp/markets-m5-resume-red.log",
+      "cause": "Funding周期と次回時刻のUI表示がない経路を再現し追加。時計によるL1品質更新も追加。"
+    },
+    {
+      "log": "/tmp/markets-m5-resume-races.log",
+      "cause": "5秒artifact更新がheartbeatタイマーを再作成する不具合。primitive version依存へ修正。"
+    },
+    {
+      "log": "/tmp/markets-m5-widget-red.log",
+      "cause": "Widget network失敗時の状態表示を再現しiframe内へ追加。"
+    },
+    {
+      "log": "/tmp/markets-m5-resume-final-gate.log",
+      "cause": "同時障害試験の再遷移時にselected fixtureの15秒期限が切れた。既存4 artifactを独立して更新するfixtureへ修正し最終gate全72件で再確認。",
+      "logSha256": "2b373fb27182b68944ba55a9b7e0b2170cc39052f5ff5c8c052e6467546651dc"
+    }
+  ],
+  "metricsPipelineEvidencePrevious": [
+    {
+      "timingMeaning": "commitRequestedAt/writeCompletedAt bracket the client commit acknowledgement; observed/source timestamps are not commit timestamps. Poll is 5s, not a total latency guarantee.",
+      "events": [
+        {
+          "event": "ready",
+          "commitRequestedAt": 1790602206.1991875,
+          "writeCompletedAt": 1790602206.2004344,
+          "version": 1
+        },
+        {
+          "event": "late",
+          "commitRequestedAt": 1790602206.473589,
+          "writeCompletedAt": 1790602206.4749424,
+          "notifiedAt": 1790602206.4749732,
+          "cutoff": "2026-09-28T13:27:00+00:00"
+        },
+        {
+          "event": "late-visible",
+          "commitRequestedAt": 1790602206.473589,
+          "writeCompletedAt": 1790602206.4749424,
+          "notifiedAt": 1790602206.4749732,
+          "cutoff": "2026-09-28T13:27:00Z",
+          "artifactObservedAt": 1790602211.339,
+          "apiObservedAt": 1790602211.404,
+          "browserObservedAt": 1790602211.418,
+          "generation": "2026-09-28T13:27:00+00:00:987043810e014fe18483bcb30d6191a0",
+          "writeToBrowserSeconds": 4.943057537078857
+        },
+        {
+          "event": "correct",
+          "commitRequestedAt": 1790602217.2804832,
+          "writeCompletedAt": 1790602217.289665,
+          "notifiedAt": 1790602217.2896774,
+          "cutoff": "2026-09-28T13:27:00+00:00"
+        },
+        {
+          "event": "correction-visible",
+          "commitRequestedAt": 1790602217.2804832,
+          "writeCompletedAt": 1790602217.289665,
+          "notifiedAt": 1790602217.2896774,
+          "cutoff": "2026-09-28T13:27:00Z",
+          "artifactObservedAt": 1790602217.393,
+          "apiObservedAt": 1790602221.406,
+          "browserObservedAt": 1790602221.711,
+          "generation": "2026-09-28T13:27:00+00:00:bd4f348d14e9438b94607d9aa5be5c04",
+          "writeToBrowserSeconds": 4.421334981918335
+        },
+        {
+          "event": "stopped",
+          "at": 1790602221.7161
+        },
+        {
+          "event": "resume-write",
+          "commitRequestedAt": 1790602221.7185795,
+          "writeCompletedAt": 1790602221.7264113,
+          "notifiedAt": 1790602221.7264135,
+          "cutoff": "2026-09-28T13:27:00+00:00"
+        },
+        {
+          "event": "restarted",
+          "at": 1790602221.7274394
+        },
+        {
+          "event": "restart-visible",
+          "commitRequestedAt": 1790602221.7185795,
+          "writeCompletedAt": 1790602221.7264113,
+          "notifiedAt": 1790602221.7264135,
+          "cutoff": "2026-09-28T13:27:00Z",
+          "artifactObservedAt": 1790602221.83,
+          "apiObservedAt": 1790602226.404,
+          "browserObservedAt": 1790602226.657,
+          "generation": "2026-09-28T13:27:00+00:00:2d819c337e1f4a9294c429430fb0ff56",
+          "writeToBrowserSeconds": 4.930588722229004
+        },
+        {
+          "event": "corrupt-original-preserved",
+          "bytes": 24
+        },
+        {
+          "event": "stopped",
+          "at": 1790602226.6595478
+        },
+        {
+          "event": "stopped-clock-expired",
+          "advancedSeconds": 310
+        }
+      ],
+      "api": [
+        {
+          "at": 1790602206.437,
+          "generation": "2026-09-28T13:27:00+00:00:2a26be779af246d2967f19d4cd50fd41",
+          "cutoff": "2026-09-28T13:27:00Z",
+          "value": null
+        },
+        {
+          "at": 1790602211.404,
+          "generation": "2026-09-28T13:27:00+00:00:987043810e014fe18483bcb30d6191a0",
+          "cutoff": "2026-09-28T13:27:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790602221.406,
+          "generation": "2026-09-28T13:27:00+00:00:bd4f348d14e9438b94607d9aa5be5c04",
+          "cutoff": "2026-09-28T13:27:00Z",
+          "value": -5.000000000000004
+        },
+        {
+          "at": 1790602221.717,
+          "generation": "2026-09-28T13:27:00+00:00:987043810e014fe18483bcb30d6191a0",
+          "cutoff": "2026-09-28T13:27:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790602226.404,
+          "generation": "2026-09-28T13:27:00+00:00:2d819c337e1f4a9294c429430fb0ff56",
+          "cutoff": "2026-09-28T13:27:00Z",
+          "value": 19.999999999999996
+        },
+        {
+          "at": 1790602226.675,
+          "generation": "2026-09-28T13:27:00+00:00:2d819c337e1f4a9294c429430fb0ff56",
+          "cutoff": "2026-09-28T13:27:00Z",
+          "value": 19.999999999999996
+        }
+      ],
+      "project": "desktop-1440",
+      "sourcePath": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/var/tmp/e2e/playwright-results/universe-explorer.e2e.ts-隔-db4f2-t・API・Browserへの後着訂正と停止復帰を測る-desktop-1440/metrics-pipeline.json"
+    },
+    {
+      "timingMeaning": "commitRequestedAt/writeCompletedAt bracket the client commit acknowledgement; observed/source timestamps are not commit timestamps. Poll is 5s, not a total latency guarantee.",
+      "events": [
+        {
+          "event": "ready",
+          "commitRequestedAt": 1790602260.5119622,
+          "writeCompletedAt": 1790602260.5136344,
+          "version": 1
+        },
+        {
+          "event": "late",
+          "commitRequestedAt": 1790602260.8042421,
+          "writeCompletedAt": 1790602260.805589,
+          "notifiedAt": 1790602260.8055995,
+          "cutoff": "2026-09-28T13:28:00+00:00"
+        },
+        {
+          "event": "late-visible",
+          "commitRequestedAt": 1790602260.8042421,
+          "writeCompletedAt": 1790602260.805589,
+          "notifiedAt": 1790602260.8055995,
+          "cutoff": "2026-09-28T13:28:00Z",
+          "artifactObservedAt": 1790602265.568,
+          "apiObservedAt": 1790602265.719,
+          "browserObservedAt": 1790602265.75,
+          "generation": "2026-09-28T13:28:00+00:00:41dc4a3a1e824467b6840f46389e455b",
+          "writeToBrowserSeconds": 4.944411039352417
+        },
+        {
+          "event": "correct",
+          "commitRequestedAt": 1790602271.61532,
+          "writeCompletedAt": 1790602271.632821,
+          "notifiedAt": 1790602271.6328318,
+          "cutoff": "2026-09-28T13:28:00+00:00"
+        },
+        {
+          "event": "correction-visible",
+          "commitRequestedAt": 1790602271.61532,
+          "writeCompletedAt": 1790602271.632821,
+          "notifiedAt": 1790602271.6328318,
+          "cutoff": "2026-09-28T13:28:00Z",
+          "artifactObservedAt": 1790602271.735,
+          "apiObservedAt": 1790602275.719,
+          "browserObservedAt": 1790602276.048,
+          "generation": "2026-09-28T13:28:00+00:00:4cf2f1e8585d4ad9a22700883be2a845",
+          "writeToBrowserSeconds": 4.415179014205933
+        },
+        {
+          "event": "stopped",
+          "at": 1790602276.053285
+        },
+        {
+          "event": "resume-write",
+          "commitRequestedAt": 1790602276.056199,
+          "writeCompletedAt": 1790602276.0651188,
+          "notifiedAt": 1790602276.065121,
+          "cutoff": "2026-09-28T13:28:00+00:00"
+        },
+        {
+          "event": "restarted",
+          "at": 1790602276.066232
+        },
+        {
+          "event": "restart-visible",
+          "commitRequestedAt": 1790602276.056199,
+          "writeCompletedAt": 1790602276.0651188,
+          "notifiedAt": 1790602276.065121,
+          "cutoff": "2026-09-28T13:28:00Z",
+          "artifactObservedAt": 1790602276.168,
+          "apiObservedAt": 1790602280.718,
+          "browserObservedAt": 1790602280.986,
+          "generation": "2026-09-28T13:28:00+00:00:67e0922b643d49e58ff4462d40bfded1",
+          "writeToBrowserSeconds": 4.920881271362305
+        },
+        {
+          "event": "corrupt-original-preserved",
+          "bytes": 24
+        },
+        {
+          "event": "stopped",
+          "at": 1790602280.9893556
+        },
+        {
+          "event": "stopped-clock-expired",
+          "advancedSeconds": 310
+        }
+      ],
+      "api": [
+        {
+          "at": 1790602260.783,
+          "generation": "2026-09-28T13:28:00+00:00:d7bc872dc4eb4a84a5c0871ec55e177e",
+          "cutoff": "2026-09-28T13:28:00Z",
+          "value": null
+        },
+        {
+          "at": 1790602265.719,
+          "generation": "2026-09-28T13:28:00+00:00:41dc4a3a1e824467b6840f46389e455b",
+          "cutoff": "2026-09-28T13:28:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790602275.719,
+          "generation": "2026-09-28T13:28:00+00:00:4cf2f1e8585d4ad9a22700883be2a845",
+          "cutoff": "2026-09-28T13:28:00Z",
+          "value": -5.000000000000004
+        },
+        {
+          "at": 1790602276.054,
+          "generation": "2026-09-28T13:28:00+00:00:41dc4a3a1e824467b6840f46389e455b",
+          "cutoff": "2026-09-28T13:28:00Z",
+          "value": 10.000000000000009
+        },
+        {
+          "at": 1790602280.718,
+          "generation": "2026-09-28T13:28:00+00:00:67e0922b643d49e58ff4462d40bfded1",
+          "cutoff": "2026-09-28T13:28:00Z",
+          "value": 19.999999999999996
+        },
+        {
+          "at": 1790602281.019,
+          "generation": "2026-09-28T13:28:00+00:00:67e0922b643d49e58ff4462d40bfded1",
+          "cutoff": "2026-09-28T13:28:00Z",
+          "value": 19.999999999999996
+        }
+      ],
+      "project": "mobile-390",
+      "sourcePath": "/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/var/tmp/e2e/playwright-results/universe-explorer.e2e.ts-隔-db4f2-t・API・Browserへの後着訂正と停止復帰を測る-mobile-390/metrics-pipeline.json"
+    }
+  ],
+  "resumedFrom": {
+    "commit": "380941c13407ecf11c5cbbab3c94eacebecb211e",
+    "startingTree": "Existing uncommitted review fixes preserved; source hashes and original gate log matched acceptance ledger before edits.",
+    "newlyPassedAC": [
+      "AC02",
+      "AC05",
+      "AC07",
+      "AC10",
+      "AC11",
+      "AC14",
+      "AC15",
+      "AC17",
+      "AC18a",
+      "AC18c",
+      "AC19",
+      "AC25",
+      "AC27",
+      "AC28"
+    ],
+    "isolation": "Only ephemeral verify container with dynamically assigned loopback port and temporary databases; no live DB/service writes."
+  }
 }

@@ -106,3 +106,42 @@ def test_catalog_failure_recovers_but_changed_contract_stays_invalid(
             assert service.queues["bybit"].empty()
 
     asyncio.run(check())
+
+
+def test_repeated_http_reads_do_not_fetch_providers(store, monkeypatch):
+    from aiohttp.test_utils import TestClient, TestServer
+
+    from prep_watchdeck_ranking.ranking import Generation
+
+    from .conftest import seed
+
+    async def scenario():
+        seed(store, reference())
+        calls = []
+        async with aiohttp.ClientSession() as session:
+            public = PublicClient(session)
+
+            async def unexpected(*args, **kwargs):
+                calls.append(args)
+                raise AssertionError("HTTP reads must not contact a provider")
+
+            monkeypatch.setattr(public, "history", unexpected)
+            monkeypatch.setattr(public, "catalog", unexpected)
+            monkeypatch.setattr(session, "_request", unexpected)
+            service = RankingService(store, mapping("BTC"), public)
+            service.generation = Generation(service.mapping, CUTOFF, CUTOFF + 8000, store)
+            async with TestClient(
+                TestServer(module.application(service), host="127.0.0.1")
+            ) as client:
+                generations = set()
+                for _ in range(5):
+                    for period in ("15m", "1h", "24h", "daily"):
+                        response = await client.get(
+                            "/rankings", params={"period": period, "dailyReferenceJst": "09:00"}
+                        )
+                        assert response.status == 200
+                        generations.add((await response.json())["generationId"])
+                assert len(generations) == 1
+                assert calls == []
+
+    asyncio.run(scenario())

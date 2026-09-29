@@ -27,7 +27,9 @@ from prep_watchdeck_market.candle_store import (
 )
 from prep_watchdeck_market.catalog_store import CatalogStoreError, persist_catalog
 from prep_watchdeck_market.identity import resolve_market_groups
-from prep_watchdeck_market.market_metrics import publish_market_metrics
+from prep_watchdeck_market.market_metrics import (
+    publish_market_metrics_bounded as publish_market_metrics,
+)
 from prep_watchdeck_market.market_state import MarketBatch
 from prep_watchdeck_market.market_store import (
     DATABASE_TIMEOUT_OPTIONS,

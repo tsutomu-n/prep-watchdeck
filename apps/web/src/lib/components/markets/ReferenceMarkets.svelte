@@ -4,6 +4,7 @@
   import ThemeSelector from "$lib/components/ThemeSelector.svelte";
   import FontSelector from "$lib/components/FontSelector.svelte";
   import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
+  import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
   import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
@@ -22,6 +23,7 @@
   let { market, legacyEntry = false }: {
     market: MarketArtifactBundle | null; legacyEntry?: boolean;
   } = $props();
+  let noteTargetId = $state("");
   let period = $state<RankingPeriod>("15m");
   let order = $state<RankingOrder>("gainers");
   let reference = $state(DEFAULT_REFERENCE_TIME);
@@ -58,6 +60,16 @@
   let storageMessage = $state<string | null>(null);
   let now = $state(Date.now());
   let chartSection: HTMLElement;
+  let tableScroll: HTMLDivElement;
+  let listScroll = $state({ top: 0, left: 0 });
+  let restoreList = $state(false);
+  let restoredScroll = { top: 0, left: 0 };
+
+  function boundedNumber(value: string | null, maximum = Number.MAX_SAFE_INTEGER) {
+    if (value === null || value.trim() === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) && number >= 0 && number <= maximum ? number : null;
+  }
   let controller: AbortController | null = null;
   let requestId = 0;
   let refreshTimer: ReturnType<typeof setTimeout> | undefined;
@@ -74,6 +86,7 @@
       instrument.venueInstrumentVersionId === original.versionId
     )
   ) ?? []);
+  let noteTarget = $derived(nativeCandidates.find(item => item.venueInstrumentId === noteTargetId) ?? nativeCandidates[0]);
   const symbol = $derived(selectedRemoved ? null : approvedWidgetSymbol(selected));
   const stale = $derived(Boolean(data && (data.stale || now - data.cutoff > RANKING_MAX_AGE_MS)));
   const comparisonExpired = $derived(stale || Boolean(data?.previousCutoff && now - data.previousCutoff > RANKING_MAX_AGE_MS));
@@ -177,6 +190,16 @@
         sort = requestedSort as RankingSort;
       }
       direction = params.get("direction") === "desc" ? "desc" : "asc";
+      ratioPeriod = params.get("ratioPeriod") === "1h" ? "1h" : "15m";
+      minRatio = boundedNumber(params.get("minRatio"));
+      minDayPosition = boundedNumber(params.get("minDayPosition"), 100);
+      maxDayPosition = boundedNumber(params.get("maxDayPosition"), 100);
+      preset = params.get("preset") === "movement" ? "movement" : "standard";
+      restoredScroll = {
+        top: boundedNumber(params.get("listTop")) ?? 0,
+        left: boundedNumber(params.get("listLeft")) ?? 0
+      };
+      restoreList = params.get("restoreList") === "1";
     } catch { /* Invalid legacy query leaves safe defaults visible. */ }
     try { interval = readChartInterval(window.localStorage); } catch { interval = "15"; }
     mounted = true;
@@ -201,6 +224,25 @@
     if (!mounted) return;
     try { window.localStorage.setItem(CHART_INTERVAL_KEY, interval); storageMessage = null; }
     catch { storageMessage = "チャートの足設定は、この画面だけに適用しています"; }
+  });
+
+  $effect(() => {
+    if (!restoreList || !data || loading || (favoritesOnly && !workspace)) return;
+    const index = visibleRows.findIndex(row => row.id === selectedId);
+    untrack(() => {
+      restoreList = false;
+      if (index >= limit) limit = Math.ceil((index + 1) / 50) * 50;
+      void tick().then(() => {
+        const selectedButton = tableScroll?.querySelector<HTMLButtonElement>(
+          'button.select-row[aria-pressed="true"]'
+        );
+        selectedButton?.focus({ preventScroll: true });
+        if (tableScroll) {
+          tableScroll.scrollTop = restoredScroll.top;
+          tableScroll.scrollLeft = restoredScroll.left;
+        }
+      });
+    });
   });
 
   async function select(row: RankedRow) {
@@ -358,7 +400,12 @@
       returnSelected: selectedId ?? "", returnSearch: search, returnVenue: venue,
       returnIncludeUnranked: includeUnranked ? "1" : "0",
       returnFavoritesOnly: favoritesOnly ? "1" : "0",
-      returnSort: sort, returnDirection: direction
+      returnSort: sort, returnDirection: direction,
+      returnRatioPeriod: ratioPeriod, returnMinRatio: minRatio === null ? "" : String(minRatio),
+      returnMinDayPosition: minDayPosition === null ? "" : String(minDayPosition),
+      returnMaxDayPosition: maxDayPosition === null ? "" : String(maxDayPosition),
+      returnPreset: preset, returnListTop: String(listScroll.top), returnListLeft: String(listScroll.left),
+      returnRestoreList: "1"
     });
     return `/?${query}`;
   }
@@ -447,7 +494,8 @@
       </div>
       {#if addedRows}<p class="search-note">新しい行が {addedRows} 件あります。固定解除で表示します。</p>{/if}
       <p class="search-note">検索は順位を変えません。並び順と売買代金下限は全対応銘柄へ適用されます。</p>
-      <div class="table-scroll" aria-busy={loading}>
+      <div class="table-scroll" aria-busy={loading} bind:this={tableScroll}
+        onscroll={() => listScroll = { top: tableScroll.scrollTop, left: tableScroll.scrollLeft }}>
         <table>
           <thead><tr>
             <th scope="col">保存</th>
@@ -455,8 +503,8 @@
             <th scope="col" aria-sort={sort === "asset" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("asset")}>銘柄 / 取扱い</button></th>
             <th scope="col" aria-sort={sort === "referenceClose" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("referenceClose")}>参照終値</button></th>
             <th scope="col" aria-sort={sort === "returnPct" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("returnPct")}>騰落率</button></th>
-            <th scope="col" aria-sort={sort === "quoteTurnover" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("quoteTurnover")}>売買代金 · USDT</button></th>
             {#if preset === "movement"}<th scope="col">15分 / 1時間 / 24時間</th>{/if}
+            <th scope="col" aria-sort={sort === "quoteTurnover" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("quoteTurnover")}>売買代金 · USDT</button></th>
           </tr></thead>
           <tbody>
             {#each visibleRows.slice(0, limit) as row (row.id)}
@@ -535,6 +583,24 @@
             <p>現在の名簿でIDとversionが一致するnative契約はありません。</p>
           {/each}
         </div>
+        {#if noteTarget && selected.reference && data && !selectedRemoved}
+          <details>
+            <summary>この参照市場の観測メモ</summary>
+            <label>保存先の取扱い契約<select value={noteTarget.venueInstrumentId} onchange={event => noteTargetId = event.currentTarget.value}>
+              {#each nativeCandidates as instrument}<option value={instrument.venueInstrumentId}>{instrument.venueInstrumentId}</option>{/each}
+            </select></label>
+            <MarketPastNotesPanel venueInstrumentId={noteTarget.venueInstrumentId}
+              venueInstrumentVersionId={noteTarget.venueInstrumentVersionId}
+              referenceContext={{ generationId: data.generationId, observation: {
+                source: selected.reference.provider, symbol: selected.reference.symbol,
+                revision: selected.reference.revision, cutoff: new Date(data.cutoff).toISOString(),
+                period: data.period, dailyReferenceJst: data.dailyReferenceJst, stale,
+                returnPct: selected.returnPct, quoteTurnover: selected.quoteTurnover,
+                close: selected.referenceClose.value, turnoverRatio: selected.turnoverRatio.value,
+                dayPosition: selected.dayRangePosition.value
+              } }} />
+          </details>
+        {/if}
         {#if storageMessage}<p class="selection-notice" role="status">{storageMessage}</p>{/if}
         <details class="contracts"><summary>元の取扱い契約と数量単位</summary>
           {#each selected.originals as item}<p><strong>{item.venue}</strong> · {item.symbol} {#if item.multiplier !== null}· 1単位 = {item.multiplier.toLocaleString("en-US")} {selected.asset}{:else}· 数量単位は要確認{/if}</p>{/each}

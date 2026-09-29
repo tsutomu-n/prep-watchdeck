@@ -35,6 +35,24 @@ describe("native chart history", () => {
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
+  test("rejects an in-flight version change and never reuses its page for the new version", async () => {
+    const bundle = fixture("aster");
+    let release!: () => void;
+    const held = new Promise<void>(resolve => { release = resolve; });
+    const fetcher = vi.fn(async () => { await held; return json([]); });
+    const service = setup(bundle, fetcher);
+    const old = service.history(query());
+    const rejected = expect(old).rejects.toMatchObject({ status: 409, code: "chart_instrument_changed" });
+    await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    bundle.universe.items[0].venueInstrumentVersionId = 2;
+    release();
+    await rejected;
+    const next = query(); next.set("expectedVersion", "2");
+    await expect(service.history(next)).resolves.toMatchObject({ venueInstrumentVersionId: 2 });
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    await expect(service.history(query())).rejects.toMatchObject({ status: 409 });
+  });
+
   test("returns UTC daily candles with an explicit open last bar and exclusive ISO pagination", async () => {
     const fetcher = vi.fn(async (_url: URL) => json([
       asterBar(START), asterBar(START - DAY), asterBar(START - DAY)

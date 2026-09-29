@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
-- 検証: `2026-09-14T18:18:00+09:00`
+- 更新: `2026-09-29T06:55:18+09:00`
+- 検証: `2026-09-29T06:55:18+09:00`
 - 状態: `現行`
 
 ---
@@ -35,6 +35,7 @@ Bitget / Hyperliquid Core / Aster public API
 
 - `prep-watchdeck-market-db.service`は現在の専用Compose project/DBを所有する。
 - `prep-watchdeck-market.service`は現在catalog、L1、candle、selected stream、DB write、artifact発行を1 processで行う。
+- 任意のnative metrics投影は同時に1つの子processで実行する。子processがread-only snapshot用の接続と専用lockを所有し、10秒timeout時は回収してから次の投影へ進む。既存4 artifactと収集laneを停止させない。
 - 現行WebはJSON read modelを読み、Postgresへ直接接続しない。
 - maintenance timerはFunding sync、archive/readback/retentionを実行する。
 

@@ -1,7 +1,7 @@
 # Markets workspace 実装
 
 - 作成: `2026-09-28T20:00:00+09:00`
-- 更新: `2026-09-28T21:10:00+09:00`
+- 更新: `2026-09-29T06:55:18+09:00`
 - 状態: `実装計画`
 
 ---
@@ -29,4 +29,4 @@
 
 完了条件は原本の担当AC全pass。作業用台帳は同directoryの `acceptance.json`。未実施は `not_run` のまま。既存状態を破壊せず、開発変更のrollbackはこのbranchを稼働releaseへ反映しないこと。本番M6は別の判断と承認。現役DBのPF01/PF02・実データ確認と実機のPF03は未確認であり、隔離fixtureで進める。
 
-2026-09-28時点の開発受入は`PARTIAL`。隔離gateは通過したが、各ACの未試験境界、worker→Browser遅延測定、PF01〜03の現役データ確認が残る。詳細は同directoryの`RESUME.md`と`acceptance.json`に記録する。
+開発受入は`PARTIAL`。隔離gateとworker→Browser接続試験は通過。AC20のOS実IME・実機focus、およびAC21の全必須AC照合が残る。PF01〜03の実データ確認とM6は別の未確認欄で管理する。詳細は同directoryの`RESUME.md`と`acceptance.json`に記録する。

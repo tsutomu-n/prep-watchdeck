@@ -239,3 +239,63 @@ def _batch(venue: Venue, source_symbol: str) -> CatalogBatch:
         capabilities=(),
         raw_payload=raw_payload,
     )
+
+
+def test_metrics_worker_coalesces_failures_and_waits_for_shutdown(monkeypatch, tmp_path):
+    import threading
+    import time
+
+    async def scenario():
+        service = MarketService("unused", tmp_path)
+        stop = asyncio.Event()
+        loop = asyncio.get_running_loop()
+        starts = []
+        entered = asyncio.Event()
+        release = threading.Event()
+
+        def publish(*args, **kwargs):
+            starts.append(time.monotonic())
+            if len(starts) == 1:
+                for _ in range(20):
+                    loop.call_soon_threadsafe(service._metrics_trigger.set)
+                raise ValueError("isolated projection failure")
+            loop.call_soon_threadsafe(entered.set)
+            assert release.wait(3)
+            return 1
+
+        monkeypatch.setattr("prep_watchdeck_market.service.publish_market_metrics", publish)
+        task = asyncio.create_task(service._metrics_loop(stop))
+        await asyncio.wait_for(entered.wait(), 7)
+        assert len(starts) == 2
+        assert starts[1] - starts[0] >= 4.95
+        task.cancel()
+        await asyncio.sleep(0)
+        assert not task.done()
+        release.set()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert len(starts) == 2
+
+    asyncio.run(scenario())
+
+
+def test_metrics_notification_follows_successful_persistence_only(monkeypatch, tmp_path):
+    async def scenario():
+        service = MarketService("unused", tmp_path)
+        now = datetime.now(UTC)
+
+        def fail(*args):
+            assert not service._metrics_trigger.is_set()
+            raise ValueError("isolated persistence failure")
+
+        monkeypatch.setattr("prep_watchdeck_market.service.persist_market_cycle_url", fail)
+        with pytest.raises(ValueError):
+            await service._persist_l1_cycle(now, now, ())
+        assert not service._metrics_trigger.is_set()
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.persist_market_cycle_url", lambda *args: _store_result()
+        )
+        await service._persist_l1_cycle(now, now, ())
+        assert service._metrics_trigger.is_set()
+
+    asyncio.run(scenario())

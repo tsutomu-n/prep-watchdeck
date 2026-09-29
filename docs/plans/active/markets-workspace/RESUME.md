@@ -1,27 +1,46 @@
 # 再開位置
 
 - 作成: `2026-09-28T20:00:00+09:00`
-- 更新: `2026-09-28T21:11:00+09:00`
+- 更新: `2026-09-29T06:55:18+09:00`
 - 状態: `実装計画`
 
 ---
 
-段階: M5の隔離gate通過後、受入台帳の残件整理。`origin/main=be281d9` 起点の独立worktree。元checkoutと稼働releaseへ変更なし。本番操作は未実施。Gitの反映状態は作業branchとremote refで確認する。
+開発受入は`PARTIAL`。AC全30件はpass 27、partial 2（AC20・AC21）、M6 not_run 1（AC22）。実データ受入は別欄でnot_run。
+各ACの試験名・command・結果・対象版は[/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/docs/plans/active/markets-workspace/acceptance.json](/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/docs/plans/active/markets-workspace/acceptance.json)を正とする。
 
-PF01: 現役名簿とmapの同時copyは未取得。実データの接続率は未確認。参照既定を維持。
+## 対象版と保全
 
-PF02: 現役DBへ未接続。端点・到着遅延は未確認。設計初期値180秒lag/300秒上限を採用して隔離fixtureで検証する。
+- worktree: `/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928`
+- branch: `ai/markets-workspace-20260928-2000`
+- HEAD: `380941c13407ecf11c5cbbab3c94eacebecb211e`。今回は開始時点ですでに未commitのレビュー修正があった。台帳のsource/log hash一致を確認して保全し、続きだけを追加した。
+- 最終source snapshot: `ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942`。算出規則と変更source hashは台帳に記録。追加commit/push/merge/PR/本番unit操作/deploy/現役data書込はしていない。
+- 稼働releaseの前回読取記録はMarket `dc2a8d7`、Web・Ranking `d1c44d5`。今回の開発gateを本番反映の証拠にしない。
 
-PF03: 本番画面操作はselection/メモ書込回避のため未実施。既存負荷は未測定。M2の隔離Browserで確認する。
+## 380941cからの修正
 
-M1: 小額価格、groupなしactiveの単体chart/JST、version必須chart、token付きselection、メモの読取無書込/CAS/下書きを実装。A→B→Aの長時間競合などは台帳に残す。
+参照→native→一覧で、平常比期間/下限・当日位置上下限・表示列を保存し、応答後の選択focusと縦横scrollも復元する。破損metricsは専用lock下で原本byteを保全・fsync/readbackして正常DB snapshotから再生成する。未知schema、権限、保全失敗、並行writerは上書きしない。開始時に存在したこの2修正も最終gateで再確認した。
 
-M2: Ranking v3の4期間、共通Markets workspace、参照→nativeのID/version一致導線を実装。Desktop/Mobileで参照→native→戻る操作を確認。
+今回追加: 投影全体を10秒で止められる子process、参照メモの出所/時刻/5指標context、Browser時計によるL1品質失効、Funding周期・次回時刻の不明/経過表示、Widget取得失敗表示。5秒更新がheartbeatの5分タイマーを作り直す不具合をprimitive version依存へ修正した。future selection token拒否も未commit差分に含む。
 
-M3: raw値sort/filter、行順固定、favorite・名前付きview・最近見た履歴を実装。2タブ遅延応答、focus/IMEの全境界は未実施。
+## 検証結果
 
-M4: 任意のnative metrics lane、read-only集合SQL、単一worker、5秒poll、UI結合、メモv2 contextを実装。隔離PostgresでOI数量差、確定足共通cutoff、同cutoff訂正、1201行の10秒未満読取を確認。writer commitからBrowser表示までの実測、実provider到着遅延、全故障注入は未実施。
+`env -u TEST_DATABASE_URL bash scripts/verify-local.sh` は最終差分で終了0。Market Core 103、Ranking Core 124、Web unit 160、Desktop/Mobile E2E 72件。schema/型・Ruff・Pyrefly・Svelte check・build・repo contract・文書検査も通過。log: `/tmp/markets-m5-accepted-gate.log`。
 
-M5: `bash scripts/verify-local.sh` は隔離PostgresでMarket Core 80件、Ranking Core 123件、Web unit 155件、schema/型、lint、types、build、Desktop/Mobile E2E 44件を通過。最後の鮮度表示修正後にtypecheck、関連unit、build、Desktop/Mobileの該当E2E 4件、docs checker、`git diff --check`を再確認。受入台帳は`acceptance.json`。全ACは満たしていないため開発受入は`PARTIAL`。
+不足ケースだけを追加: A保存応答がB表示中に到着、初期URL無POST/hidden heartbeat、POST応答abort後のserver保存、HTTP500/XSS/非有限context、過去chartページとmetricsの旧応答をversion変更の前後で解放、Funding欠損/経過、L1/OIの120秒境界、Providerへの実HTTP要求を監視したRanking反復20 GET。
 
-次: 残ACの再現試験とworker→Browser遅延測定を追加する。PF01〜03の実データは現役state/DBへ触れる判断を別に行う。M6の本番反映・日常利用受入は別工程。
+隔離DBではversion切替/OI不明単位、実statement timeout、read-only repeatable-read、接続1、足保存失敗の通知抑止、timeout子processの終了・回収・lock解放を確認。worker→artifact→API→Browserで後着・同cutoff訂正・旧応答・停止/復帰・破損復旧、DB timeoutとWidget失敗中の他lane操作継続を両viewportで確認。書込応答完了から表示まで 4.516〜5.022 秒。COMMIT要求前/応答後をclient時刻で囲んだ測定であり、正確なDB commit時刻や一般的な遅延保証ではない。
+
+同時障害試験の最初の失敗はselected fixtureの15秒失効。通常4 artifactの独立更新をfixtureへ加え、最終gateで解消。初回再現・途中失敗も台帳に残した。
+
+旧Webへのrollback試験は前回の隔離v1復元/v2別保全/hash不変の証拠を再利用。現役stateの切戻しは未実施。
+
+## 残る阻害要因と再開条件
+
+- AC20: OSの実日本語IME・実機focusが未確認。この環境にはDISPLAY/WAYLAND_DISPLAY、ibus/fcitx5がない。GUI/IMEがある隔離端末で未保存メモ・銘柄切替・保存応答中のcompositionとfocusを確認する。Browser模擬IME/keyboard/focusは通過。
+- AC21: AC20未達のためPARTIAL。実装不足や、この環境で実行できる隔離試験の調査待ちは残していない。
+- PF01: 現役名簿/mapの同時copyと接続率は未確認。
+- PF02: 専用read-only資格未特定。現役DB/実Providerの到着遅延分布は未確認。180秒lag/300秒上限は設計初期値。
+- PF03/M6/AC22: 本番UI・現役負荷・本人の日常利用受入は未実施。
+
+同じworktree・branchで継続する。追加commit/push、merge、PR、本番操作は別承認。

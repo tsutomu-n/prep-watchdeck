@@ -2,8 +2,13 @@
 
 from __future__ import annotations
 
+import fcntl
 import json
 import math
+import os
+import stat
+import subprocess
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -12,7 +17,7 @@ from uuid import uuid4
 import psycopg
 from psycopg import Connection
 from psycopg.rows import dict_row
-from pydantic import Field, model_validator
+from pydantic import Field, ValidationError, model_validator
 
 from prep_watchdeck_market.artifacts import ArtifactModel, write_artifact_atomic
 
@@ -20,6 +25,7 @@ CANDLE_LAG_SECONDS = 180
 CANDLE_MAX_AGE_SECONDS = 300
 METRIC_VERSION = "native-endpoints-v1"
 READ_OPTIONS = "-c statement_timeout=5000 -c transaction_timeout=8000"
+PROJECTION_TIMEOUT_SECONDS = 10
 Availability = Literal["available", "missing", "unsupported", "invalid"]
 
 
@@ -298,19 +304,124 @@ def read_market_metrics(connection: Connection[Any], *, now: datetime) -> Market
     return artifact
 
 
-def publish_market_metrics(database_url: str, artifact_root: Path, *, now: datetime) -> int:
-    with psycopg.connect(
-        database_url, connect_timeout=2, options=READ_OPTIONS, autocommit=True
-    ) as connection:
-        artifact = read_market_metrics(connection, now=now)
-    path = artifact_root / "market-metrics.json"
+def _metrics_snapshot(path: Path) -> tuple[bytes, tuple[int, ...]] | None:
+    """Read only a stable regular file; permission errors are not corruption."""
     try:
-        previous = json.loads(path.read_text(encoding="utf-8"))
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     except FileNotFoundError:
-        previous = None
-    if previous is not None:
-        old = MarketMetricsArtifact.model_validate(previous)
-        if old.candle_cutoff > artifact.candle_cutoff:
+        return None
+    with os.fdopen(descriptor, "rb") as handle:
+        before = os.fstat(handle.fileno())
+        if not stat.S_ISREG(before.st_mode):
+            raise ValueError("metrics target is not a regular file")
+        content = handle.read()
+        after = os.fstat(handle.fileno())
+
+    def identity(value: os.stat_result) -> tuple[int, ...]:
+        return (value.st_dev, value.st_ino, value.st_size, value.st_mtime_ns, value.st_ctime_ns)
+
+    if identity(before) != identity(after) or identity(after) != identity(path.lstat()):
+        raise ValueError("metrics changed during read")
+    return content, identity(after)
+
+
+def _sync_directory(path: Path) -> None:
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def publish_market_metrics(database_url: str, artifact_root: Path, *, now: datetime) -> int:
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    path = artifact_root / "market-metrics.json"
+    # Keep the lock inode: unlinking it would allow two independent lock owners.
+    descriptor = os.open(
+        artifact_root / ".market-metrics.lock", os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600
+    )
+    with os.fdopen(descriptor, "rb") as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        previous = _metrics_snapshot(path)
+        old = None
+        corrupt = False
+        if previous is not None:
+            try:
+                decoded = json.loads(previous[0])
+            except (json.JSONDecodeError, UnicodeDecodeError):
+                corrupt = True
+            else:
+                if (
+                    not isinstance(decoded, dict)
+                    or type(decoded.get("schemaVersion")) is not int
+                    or decoded["schemaVersion"] != 1
+                    or decoded.get("metricVersion", METRIC_VERSION) != METRIC_VERSION
+                ):
+                    raise ValueError("unknown metrics schema")
+                try:
+                    old = MarketMetricsArtifact.model_validate(decoded)
+                except ValidationError:
+                    corrupt = True
+        with psycopg.connect(
+            database_url, connect_timeout=2, options=READ_OPTIONS, autocommit=True
+        ) as connection:
+            artifact = read_market_metrics(connection, now=now)
+        if old is not None and old.candle_cutoff > artifact.candle_cutoff:
             return len(old.rows)
-    write_artifact_atomic(path, artifact)
-    return len(artifact.rows)
+        staged = artifact_root / f".market-metrics.{uuid4().hex}.pending"
+        try:
+            write_artifact_atomic(staged, artifact)
+            if _metrics_snapshot(path) != previous:
+                raise ValueError("metrics changed during projection")
+            if corrupt and previous is not None:
+                backup = artifact_root / f"market-metrics.json.corrupt-{uuid4().hex}"
+                with backup.open("xb") as handle:
+                    handle.write(previous[0])
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                _sync_directory(artifact_root)
+                if backup.read_bytes() != previous[0]:
+                    raise ValueError("metrics preservation failed")
+            if _metrics_snapshot(path) != previous:
+                raise ValueError("metrics changed before publication")
+            os.replace(staged, path)
+            _sync_directory(artifact_root)
+        finally:
+            staged.unlink(missing_ok=True)
+        return len(artifact.rows)
+
+
+def publish_market_metrics_bounded(database_url: str, artifact_root: Path, *, now: datetime) -> int:
+    """Bound the entire optional projection, including filesystem work.
+
+    A timed-out thread cannot release its connection/lock safely. The short-lived
+    child owns both; subprocess.run kills and reaps it before another run starts.
+    Credentials travel on stdin, never in command-line arguments or error output.
+    """
+    result = subprocess.run(
+        [sys.executable, "-m", "prep_watchdeck_market.market_metrics"],
+        input=json.dumps(
+            {"database_url": database_url, "root": str(artifact_root), "now": now.isoformat()}
+        ),
+        text=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        timeout=PROJECTION_TIMEOUT_SECONDS,
+        check=False,
+    )
+    if result.returncode:
+        raise RuntimeError("metrics projection failed")
+    return int(result.stdout)
+
+
+if __name__ == "__main__":
+    try:
+        request = json.load(sys.stdin)
+        count = publish_market_metrics(
+            request["database_url"],
+            Path(request["root"]),
+            now=datetime.fromisoformat(request["now"]),
+        )
+        print(count)
+    except Exception:
+        sys.exit(1)

@@ -92,7 +92,17 @@
   let priceObserver: IntersectionObserver | null = null;
   const observedPriceRows = new Map<Element, string>();
 
-  let items = $derived(market?.universe.items ?? []);
+  let items = $derived((market?.universe.items ?? []).map(item => {
+    const observed = item.observedAt ? Date.parse(item.observedAt) : NaN;
+    const source = item.sourceAt ? Date.parse(item.sourceAt) : observed;
+    if ((item.quality === "ready" || item.quality === "partial") &&
+        (!Number.isFinite(observed) || !Number.isFinite(source) ||
+          observed > priceNow || source > priceNow ||
+          priceNow - observed > 120_000 || priceNow - source > 120_000)) {
+      return { ...item, quality: "stale" as const };
+    }
+    return item;
+  }));
   let groupCounts = $derived(groupVenueCounts(items));
   let filteredItems = $derived(filterAndSortUniverse(items, { search, venue, coverage, quality })
     .filter((item) => minTrade15m === null ||
@@ -131,6 +141,7 @@
     return current === null ? "—" : `${current > 0 ? "+" : ""}${current.toFixed(2)}%`;
   }
   let selectedGroupId = $derived(selectedInstrument?.groupId ?? null);
+  let selectedVersionId = $derived(selectedInstrument?.venueInstrumentVersionId);
   let selectedPayload = $derived(
     market?.selected.selection?.groupId === selectedGroupId &&
       market.selected.selection.primaryVenueInstrumentId === selectedVenueInstrumentId &&
@@ -217,7 +228,6 @@
       item?.active && wanted.has(item.venueInstrumentId)
     ));
     untrack(() => {
-      priceNow = Date.now();
       client.setReferenceTime(time);
       client.setTargets(targets);
     });
@@ -257,7 +267,7 @@
   $effect(() => {
     const groupId = selectedGroupId;
     const venueInstrumentId = selectedVenueInstrumentId;
-    const versionId = selectedInstrument?.venueInstrumentVersionId;
+    const versionId = selectedVersionId;
     const token = selectionToken;
     if (!groupId || !venueInstrumentId || !versionId || !token) return;
     const heartbeat = window.setInterval(() => {
@@ -445,7 +455,15 @@
       includeUnranked: params.get("returnIncludeUnranked") ?? "0",
       favoritesOnly: params.get("returnFavoritesOnly") ?? "0",
       sort: params.get("returnSort") ?? "server",
-      direction: params.get("returnDirection") ?? "asc"
+      direction: params.get("returnDirection") ?? "asc",
+      ratioPeriod: params.get("returnRatioPeriod") ?? "15m",
+      minRatio: params.get("returnMinRatio") ?? "",
+      minDayPosition: params.get("returnMinDayPosition") ?? "",
+      maxDayPosition: params.get("returnMaxDayPosition") ?? "",
+      preset: params.get("returnPreset") ?? "standard",
+      listTop: params.get("returnListTop") ?? "0",
+      listLeft: params.get("returnListLeft") ?? "0",
+      restoreList: params.get("returnRestoreList") ?? "0"
     });
     return `/rankings?${query}`;
   }
@@ -788,6 +806,8 @@
               <div><dt>Spread</dt><dd>{formatFinite(spreadBps(selectedInstrument.bestBid, selectedInstrument.bestAsk), 2)} bps</dd></div>
               <div><dt>Funding raw</dt><dd>{formatRate(selectedInstrument.fundingRateRaw)}</dd></div>
               <div><dt>Funding / h</dt><dd>{formatRate(selectedInstrument.fundingRatePerHour)}</dd></div>
+              <div><dt>Funding周期</dt><dd>{selectedInstrument.fundingIntervalSeconds == null ? "未確認" : `${selectedInstrument.fundingIntervalSeconds / 3600} 時間`}</dd></div>
+              <div><dt>次回Funding</dt><dd>{selectedInstrument.nextFundingAt === null ? "未確認" : `${formatTimestamp(selectedInstrument.nextFundingAt)}${Date.parse(selectedInstrument.nextFundingAt) <= priceNow ? " · 経過（次回未確認）" : ""}`}</dd></div>
               <div><dt>OI raw</dt><dd>{formatCompact(selectedInstrument.openInterestRaw)} {selectedInstrument.openInterestRawUnit ?? ""}</dd></div>
               <div><dt>OI notional</dt><dd>{formatCompact(selectedInstrument.openInterestNotional)}</dd></div>
               <div><dt>24h volume</dt><dd>{formatCompact(selectedInstrument.volume24hRaw)} {selectedInstrument.volume24hUnit ?? ""}</dd></div>

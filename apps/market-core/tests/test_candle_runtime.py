@@ -325,3 +325,28 @@ def _candle(symbol: str, *, observed_second: int, close_price: str) -> Candle1m:
         source_at=bucket + timedelta(minutes=1),
         observed_at=bucket + timedelta(minutes=1, seconds=observed_second),
     )
+
+
+def test_candle_failure_never_notifies_metrics_and_next_commit_does(monkeypatch):
+    async def scenario():
+        notified = []
+        writer = CandleBatchWriter(
+            cast(Connection[Any], object()), on_persisted=lambda: notified.append(True)
+        )
+        candle = _candle("BTCUSDT", observed_second=5, close_price="101")
+
+        def failed(*args):
+            raise RuntimeError("isolated candle write failed")
+
+        monkeypatch.setattr("prep_watchdeck_market.candle_runtime.upsert_candles", failed)
+        with pytest.raises(RuntimeError, match="isolated candle write failed"):
+            await writer._flush({candle.storage_key: candle}, received=1)
+        assert notified == []
+        monkeypatch.setattr(
+            "prep_watchdeck_market.candle_runtime.upsert_candles",
+            lambda *args: CandleStoreResult(received=1, stored=1, ignored=0),
+        )
+        await writer._flush({candle.storage_key: candle}, received=1)
+        assert notified == [True]
+
+    asyncio.run(scenario())

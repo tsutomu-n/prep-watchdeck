@@ -44,6 +44,9 @@ export class LocalFileSelectionCommandRepository {
       assertEligibleSelection(latest, command);
       const nowMs = this.now().getTime();
       const now = new Date(nowMs).toISOString();
+      if (previous && !validTime(previous.requestedAt, nowMs)) {
+        throw new SelectionError(409, "selection_clock_not_advanced");
+      }
       if (command.action === "heartbeat") {
         if (!previous || previous.groupId !== command.groupId ||
             previous.venueInstrumentId !== command.venueInstrumentId ||

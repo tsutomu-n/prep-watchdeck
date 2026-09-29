@@ -11,20 +11,57 @@ export type MarketPastNoteContext = {
   kind: "ui-observation-v1";
   venueInstrumentId: string;
   venueInstrumentVersionId: number;
-  view: "native";
+  view: "native" | "reference";
   capturedAt: string;
   metricGenerationId: string | null;
   oi15mPct: number | null;
   trade15mPct: number | null;
+  reference?: ReferenceNoteContext;
 };
+
+export type ReferenceNoteContext = {
+  source: "bybit" | "binance";
+  symbol: string;
+  revision: string;
+  cutoff: string;
+  period: "15m" | "1h" | "24h" | "daily";
+  dailyReferenceJst: string;
+  stale: boolean;
+  returnPct: number | null;
+  quoteTurnover: number | null;
+  close: number | null;
+  turnoverRatio: number | null;
+  dayPosition: number | null;
+};
+
+function finiteOrNull(value: unknown): boolean {
+  return value === null || (typeof value === "number" && Number.isFinite(value));
+}
+
+function isReference(value: unknown): value is ReferenceNoteContext {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const ref = value as Record<string, unknown>;
+  return Object.keys(ref).every(key => ["source", "symbol", "revision", "cutoff", "period",
+    "dailyReferenceJst", "stale", "returnPct", "quoteTurnover", "close", "turnoverRatio", "dayPosition"].includes(key)) &&
+    typeof ref.source === "string" && ["bybit", "binance"].includes(ref.source) &&
+    typeof ref.symbol === "string" && /^[A-Za-z0-9_.-]{1,100}$/.test(ref.symbol) &&
+    typeof ref.revision === "string" && ref.revision.length > 0 && ref.revision.length <= 160 &&
+    typeof ref.cutoff === "string" && Number.isFinite(Date.parse(ref.cutoff)) &&
+    typeof ref.period === "string" && ["15m", "1h", "24h", "daily"].includes(ref.period) &&
+    typeof ref.dailyReferenceJst === "string" && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(ref.dailyReferenceJst) &&
+    typeof ref.stale === "boolean" &&
+    ["returnPct", "quoteTurnover", "close", "turnoverRatio", "dayPosition"].every(key => finiteOrNull(ref[key]));
+}
 
 export function isMarketPastNoteContext(value: unknown): value is MarketPastNoteContext {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const context = value as Partial<MarketPastNoteContext>;
   return Object.keys(context).every((key) => [
     "kind", "venueInstrumentId", "venueInstrumentVersionId", "view", "capturedAt",
-    "metricGenerationId", "oi15mPct", "trade15mPct"
-  ].includes(key)) && context.kind === "ui-observation-v1" && context.view === "native" &&
+    "metricGenerationId", "oi15mPct", "trade15mPct", "reference"
+  ].includes(key)) && context.kind === "ui-observation-v1" && (context.view === "native" ? context.reference === undefined :
+      context.view === "reference" && isReference(context.reference) &&
+      context.oi15mPct === null && context.trade15mPct === null) &&
     typeof context.venueInstrumentId === "string" &&
     /^[a-z]+:[A-Za-z0-9_.-]+$/.test(context.venueInstrumentId) &&
     Number.isSafeInteger(context.venueInstrumentVersionId) &&
@@ -50,7 +87,8 @@ export function isMarketPastNote(value: unknown): value is MarketPastNote {
     typeof note.expiresAt === "string" && Number.isFinite(Date.parse(note.expiresAt)) &&
     Date.parse(note.expiresAt) > Date.parse(note.observedAt) &&
     typeof note.note === "string" && note.note.length <= 10_000 &&
-    (note.context === undefined || isMarketPastNoteContext(note.context))
+    (note.context === undefined || (isMarketPastNoteContext(note.context) &&
+      note.context.venueInstrumentId === note.venueInstrumentId))
   );
 }
 

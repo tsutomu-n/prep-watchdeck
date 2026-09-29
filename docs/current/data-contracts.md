@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-28T20:57:00+09:00`
-- 検証: `2026-09-28T20:57:00+09:00`
+- 更新: `2026-09-29T06:55:18+09:00`
+- 検証: `2026-09-29T06:55:18+09:00`
 - 状態: `現行`
 
 ---
@@ -271,3 +271,5 @@ Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間�
 `market-metrics.json`は既存4 artifactから独立した任意の読取laneで、`native-endpoints-v1`、`generationId`、`candleCutoff`、現行ID/version別の`oiChange`と`tradeChange`を保持する。数量OIは同一versionのL1 bucketの15分・1時間差。終値変化は全行共通cutoffの確定1分足の15分・1時間・24時間差であり、JST騰落率とは別の値である。180秒lagと300秒上限は設計初期値で、実データから測定した数値ではない。欠損や古い値を0へ置換しない。
 
 `GET /api/market-metrics`はartifactだけをschema検証して返す。未生成・不正は503、正常な古いartifactは元の時刻のまま返し、Browserで鮮度を判定する。`GET/POST /api/user-workspace`はfavoriteの望む状態と名前付きviewの条件付き更新を扱う。メモは読取bytesのSHA-256 tokenを条件に保存し、`context`を添付する保存ではNoteFile v2へ移る。旧v1項目も読み続ける。
+
+メモcontextは`ui-observation-v1`のnativeまたはreference観測。nativeは数量OI/確定終値15m、referenceはProvider・symbol・revision・cutoff・比較期間・JST設定・期限切れ状態と5個の数値を保存する。参照の保存先は現行UniverseとID/versionが一致する元契約だけ。自由形式metrics/raw/secret key、非有限数、長すぎる文字列を拒否し、最大16指標より小さい固定shapeと64KiBのPOST上限を維持する。過去の市場真実を再認証する署名ではない。
