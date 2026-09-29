@@ -16,7 +16,8 @@ from psycopg.conninfo import conninfo_to_dict, make_conninfo
 from prep_watchdeck_market.database import apply_migrations
 from prep_watchdeck_market.market_metrics import candle_cutoff
 from prep_watchdeck_market.service import MarketService
-from tests.test_market_metrics import seed_metrics_database
+
+from .test_market_metrics import seed_metrics_database
 
 
 def emit(value):
@@ -72,6 +73,8 @@ async def main():
                         break
                     if command == "stop":
                         stop.set()
+                        if worker is None:
+                            raise ValueError("metrics worker is not running")
                         await worker
                         worker = None
                         emit({"event": "stopped", "at": time.time()})
@@ -89,11 +92,13 @@ async def main():
                             writer.execute("LOCK TABLE candle_1m IN ACCESS EXCLUSIVE MODE")
                             service._metrics_trigger.set()
                             while time.monotonic() - started < 12:
-                                count = admin.execute(
+                                activity = admin.execute(
                                     "SELECT count(*) FROM pg_stat_activity WHERE datname=%s "
                                     "AND query LIKE '%%SELECT vi.venue_instrument_version_id%%'",
                                     (database,),
-                                ).fetchone()[0]
+                                ).fetchone()
+                                assert activity is not None
+                                count = activity[0]
                                 maximum = max(maximum, count)
                                 if maximum and count == 0:
                                     break

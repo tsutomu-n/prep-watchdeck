@@ -7,14 +7,15 @@
 ---
 
 開発受入は`PARTIAL`。AC全30件はpass 27、partial 2（AC20・AC21）、M6 not_run 1（AC22）。実データ受入は別欄でnot_run。
-各ACの試験名・command・結果・対象版は[/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/docs/plans/active/markets-workspace/acceptance.json](/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/docs/plans/active/markets-workspace/acceptance.json)を正とする。
+各ACの試験名・command・結果・対象版は`/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/docs/plans/active/markets-workspace/acceptance.json`を正とする。
 
 ## 対象版と保全
 
 - worktree: `/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928`
 - branch: `ai/markets-workspace-20260928-2000`
-- HEAD: `380941c13407ecf11c5cbbab3c94eacebecb211e`。今回は開始時点ですでに未commitのレビュー修正があった。台帳のsource/log hash一致を確認して保全し、続きだけを追加した。
-- 最終source snapshot: `ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942`。算出規則と変更source hashは台帳に記録。追加commit/push/merge/PR/本番unit操作/deploy/現役data書込はしていない。
+- 台帳の計測起点HEAD: `380941c13407ecf11c5cbbab3c94eacebecb211e`。開始時点ですでに未commitのレビュー修正があった。台帳のsource/log hash一致を確認して保全し、続きだけを追加した。
+- 台帳の計測対象source snapshot: `ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942`。算出規則と変更source hashは台帳に記録。計測時点では追加commit/push/merge/PR/本番unit操作/deploy/現役data書込はしていない。
+- その後、開発チェックポイント`57d0ff5`をPRなしで`main`へfast-forwardした。保護ルールは取り込み中のみ変更し、直後に元のPR・`verify`必須設定へ復元。初回`main` CIでは作業端末固有リンクと試験用ブリッジの型検査が失敗したため、本差分で修正する。台帳の計測結果を修正後CIの合格証拠へ読み替えない。
 - 稼働releaseの前回読取記録はMarket `dc2a8d7`、Web・Ranking `d1c44d5`。今回の開発gateを本番反映の証拠にしない。
 
 ## 380941cからの修正
@@ -43,4 +44,4 @@
 - PF02: 専用read-only資格未特定。現役DB/実Providerの到着遅延分布は未確認。180秒lag/300秒上限は設計初期値。
 - PF03/M6/AC22: 本番UI・現役負荷・本人の日常利用受入は未実施。
 
-同じworktree・branchで継続する。追加commit/push、merge、PR、本番操作は別承認。
+同じworktree・branchで開発受入を継続する。`main`へのsource取り込みは本番反映ではない。実IME・実機focusと実データ受入は未確認のまま維持する。

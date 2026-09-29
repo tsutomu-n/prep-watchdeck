@@ -34,6 +34,7 @@ testpaths = ["tests"]
 
 [tool.pyrefly]
 project-includes = ["src/**/*.py", "tests/**/*.py"]
+search-path = ["."]
 
 [dependency-groups]
 dev = [

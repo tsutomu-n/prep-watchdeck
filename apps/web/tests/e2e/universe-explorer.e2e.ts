@@ -155,6 +155,7 @@ test.beforeEach(async ({ page }) => {
 test.afterEach(async ({ page }) => {
   // Stop timers and requests before removing the isolated state. A request already
   // admitted by the preview server can briefly retain its repository lock.
+  await page.unrouteAll({ behavior: "ignoreErrors" });
   await page.close();
   await rm(runtimeRoot, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   expect(pageErrors.get(page) ?? [], "ブラウザの未処理例外").toEqual([]);

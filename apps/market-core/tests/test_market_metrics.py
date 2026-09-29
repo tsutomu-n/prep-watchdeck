@@ -84,6 +84,7 @@ def test_later_endpoint_correction_recomputes_without_cached_values() -> None:
     assert before.trade_change["15m"].value == pytest.approx(10)
     assert after.trade_change["15m"].value == pytest.approx(-5)
     assert after.oi_change["15m"].value is not None
+    assert before.oi_change["15m"].value is not None
     assert after.oi_change["15m"].value < before.oi_change["15m"].value
 
 
