@@ -16,8 +16,11 @@ node_modules/
 .ruff_cache/
 .mypy_cache/
 .coverage
+.coverage.*
 htmlcov/
+coverage/
 coverage.xml
+*.tsbuildinfo
 .uv/
 test-results/
 playwright-report/
@@ -25,7 +28,10 @@ playwright-report/
 # Secrets & local config
 .env
 .env.*
+*.env
+*.env.*
 !.env.example
+!*.env.example
 apis.json
 
 # Generated and legacy rollback runtime data
@@ -54,9 +60,19 @@ var/test-dashboard-view-settings/
 var-market/**
 *.dump
 
+# Ranking runtime database (keep maps, schemas, and test fixtures tracked)
+ranking.sqlite3
+ranking.sqlite3-wal
+ranking.sqlite3-shm
+ranking.sqlite3-journal
+
 # Local-only artifacts
 .plan/
 .ai_memory/
+.ai-work/
+.design
+/handoffs/
+/.playwright-cli/
 /HANDOFF.md
 /.codex/SP_STATE.md
 graphify-out/
@@ -71,9 +87,6 @@ Thumbs.db
 .vscode/
 *.swp
 *~
-
-.ai-work/
-.design
 
 # Hypothesis local state
 .hypothesis/
