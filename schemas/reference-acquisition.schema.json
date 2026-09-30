@@ -1,0 +1,203 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "runId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "evidenceKind": {
+      "enum": [
+        "synthetic",
+        "observed"
+      ]
+    },
+    "provider": {
+      "const": "openmarket"
+    },
+    "execution": {
+      "enum": [
+        "completed",
+        "partial",
+        "failed"
+      ]
+    },
+    "startedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "finishedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "venueInstrumentVersionId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "definitionHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "definitionHash"
+      ]
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ]
+    },
+    "mappingSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "request": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exchange": {
+          "type": "string"
+        },
+        "rawSymbol": {
+          "type": "string"
+        },
+        "interval": {
+          "const": "MINUTE"
+        },
+        "type": {
+          "const": "TRADE_SIDE_AGNOSTIC_AGG"
+        },
+        "gapfill": {
+          "const": false
+        }
+      },
+      "required": [
+        "exchange",
+        "rawSymbol",
+        "interval",
+        "type",
+        "gapfill"
+      ]
+    },
+    "counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "expectedBars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "receivedPoints": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "validBars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "missingBars": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "invalidPoints": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "expectedBars",
+        "receivedPoints",
+        "validBars",
+        "missingBars",
+        "invalidPoints"
+      ]
+    },
+    "files": {
+      "type": "array",
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,200}$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "bytes"
+        ]
+      }
+    },
+    "errorCode": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 100
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "runId",
+    "evidenceKind",
+    "provider",
+    "execution",
+    "startedAt",
+    "finishedAt",
+    "target",
+    "window",
+    "mappingSha256",
+    "request",
+    "counts",
+    "files",
+    "errorCode",
+    "limitations"
+  ]
+}

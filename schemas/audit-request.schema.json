@@ -1,0 +1,197 @@
+{
+  "$defs": {
+    "AuditSourceDeclaration": {
+      "additionalProperties": false,
+      "properties": {
+        "sourceId": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Sourceid",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Label",
+          "type": "string"
+        },
+        "snapshotCreatedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Snapshotcreatedat"
+        }
+      },
+      "required": [
+        "sourceId",
+        "label",
+        "snapshotCreatedAt"
+      ],
+      "title": "AuditSourceDeclaration",
+      "type": "object"
+    },
+    "AuditTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "maxLength": 160,
+          "pattern": "^(bitget|hyperliquid|aster):[^\\x00-\\x20\\x7f]+$",
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "minimum": 1,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId"
+      ],
+      "title": "AuditTarget",
+      "type": "object"
+    },
+    "AuditTolerances": {
+      "additionalProperties": false,
+      "properties": {
+        "priceAbsTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Priceabstol",
+          "type": "string"
+        },
+        "priceRelTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Pricereltol",
+          "type": "string"
+        },
+        "volumeAbsTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Volumeabstol",
+          "type": "string"
+        },
+        "volumeRelTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Volumereltol",
+          "type": "string"
+        },
+        "returnTolBps": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Returntolbps",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priceAbsTol",
+        "priceRelTol",
+        "volumeAbsTol",
+        "volumeRelTol",
+        "returnTolBps"
+      ],
+      "title": "AuditTolerances",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "target": {
+      "$ref": "#/$defs/AuditTarget"
+    },
+    "leftPath": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Leftpath",
+      "type": "string"
+    },
+    "rightPath": {
+      "maxLength": 4096,
+      "minLength": 1,
+      "title": "Rightpath",
+      "type": "string"
+    },
+    "leftSource": {
+      "$ref": "#/$defs/AuditSourceDeclaration"
+    },
+    "rightSource": {
+      "$ref": "#/$defs/AuditSourceDeclaration"
+    },
+    "comparisonKind": {
+      "enum": [
+        "snapshot_revision",
+        "acquisition_routes",
+        "repeatability"
+      ],
+      "title": "Comparisonkind",
+      "type": "string"
+    },
+    "evidenceKind": {
+      "enum": [
+        "observed",
+        "synthetic"
+      ],
+      "title": "Evidencekind",
+      "type": "string"
+    },
+    "windowStart": {
+      "format": "date-time",
+      "title": "Windowstart",
+      "type": "string"
+    },
+    "windowEnd": {
+      "format": "date-time",
+      "title": "Windowend",
+      "type": "string"
+    },
+    "dataAsOf": {
+      "format": "date-time",
+      "title": "Dataasof",
+      "type": "string"
+    },
+    "returnMinutes": {
+      "const": 5,
+      "title": "Returnminutes",
+      "type": "integer"
+    },
+    "compareVolumeBase": {
+      "title": "Comparevolumebase",
+      "type": "boolean"
+    },
+    "tolerances": {
+      "$ref": "#/$defs/AuditTolerances"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "target",
+    "leftPath",
+    "rightPath",
+    "leftSource",
+    "rightSource",
+    "comparisonKind",
+    "evidenceKind",
+    "windowStart",
+    "windowEnd",
+    "dataAsOf",
+    "returnMinutes",
+    "compareVolumeBase",
+    "tolerances"
+  ],
+  "title": "AuditRequest",
+  "type": "object"
+}

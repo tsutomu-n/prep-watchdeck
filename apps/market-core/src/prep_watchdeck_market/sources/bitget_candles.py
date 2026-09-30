@@ -19,6 +19,20 @@ def parse_bitget_finished_candles(
     source_symbol: str,
     observed_at: datetime,
 ) -> tuple[Candle1m, ...]:
+    """Keep the live poll's last-three policy outside the full history parser."""
+    candles, _ = parse_bitget_history_candles(
+        payload, source_symbol=source_symbol, observed_at=observed_at
+    )
+    return candles[-3:]
+
+
+def parse_bitget_history_candles(
+    payload: object,
+    *,
+    source_symbol: str,
+    observed_at: datetime,
+) -> tuple[tuple[Candle1m, ...], tuple[datetime, ...]]:
+    """Parse a complete page; reject conflicting duplicate buckets."""
     root = require_mapping(payload, field_name="Bitget finished candles")
     if root.get("code") != "00000":
         raise CandleParseError("Bitget finished candles returned a non-success code")
@@ -26,7 +40,8 @@ def parse_bitget_finished_candles(
     source_at = optional_timestamp_milliseconds(
         root.get("requestTime"), field_name="Bitget requestTime"
     )
-    by_key: dict[tuple[object, ...], Candle1m] = {}
+    by_key: dict[datetime, Candle1m] = {}
+    rejected: set[datetime] = set()
     for row in rows:
         if not isinstance(row, list) or len(row) < 7:
             raise CandleParseError("Bitget finished candle row must contain seven values")
@@ -45,5 +60,16 @@ def parse_bitget_finished_candles(
             source_at=source_at,
             observed_at=observed_at,
         )
-        by_key[candle.storage_key] = candle
-    return tuple(sorted(by_key.values(), key=lambda item: item.bucket_start)[-3:])
+        key = candle.bucket_start
+        if key in rejected:
+            continue
+        previous = by_key.get(key)
+        if previous is not None and previous != candle:
+            by_key.pop(key)
+            rejected.add(key)
+        else:
+            by_key[key] = candle
+    return (
+        tuple(sorted(by_key.values(), key=lambda item: item.bucket_start)),
+        tuple(sorted(rejected)),
+    )

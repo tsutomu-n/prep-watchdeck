@@ -20,6 +20,8 @@ from prep_watchdeck_market.artifacts import (
     publish_artifacts,
     publish_selected_artifact,
 )
+from prep_watchdeck_market.candle_recovery import CandleRecovery, recovery_window
+from prep_watchdeck_market.candle_recovery_state import RecoveryTrigger
 from prep_watchdeck_market.candle_runtime import CandleRuntime
 from prep_watchdeck_market.candle_store import (
     CandleStoreError,
@@ -37,6 +39,7 @@ from prep_watchdeck_market.market_store import (
     persist_market_cycle_url,
 )
 from prep_watchdeck_market.models import CatalogBatch, CatalogInstrument, Venue
+from prep_watchdeck_market.runtime_lock import RuntimeLockUnavailable
 from prep_watchdeck_market.scheduler import L1Scheduler, VenueFetcher, next_grid_at
 from prep_watchdeck_market.selected_store import SelectedStoreError
 from prep_watchdeck_market.selection_runtime import SelectionRuntime
@@ -68,7 +71,9 @@ class CatalogRefreshResult:
 
 
 class MarketService:
-    def __init__(self, database_url: str, state_dir: Path) -> None:
+    def __init__(
+        self, database_url: str, state_dir: Path, *, recovery_enabled: bool = False
+    ) -> None:
         self._database_url = database_url
         self._state_dir = state_dir
         self._catalogs: dict[Venue, CatalogBatch] = {}
@@ -79,6 +84,7 @@ class MarketService:
         self._artifact_publish_lock = asyncio.Lock()
         self._artifact_files: tuple[ArtifactFileStatus, ...] = ()
         self._session: aiohttp.ClientSession | None = None
+        self._recovery_enabled = recovery_enabled
 
     async def run_forever(self, stop_event: asyncio.Event) -> None:
         async with aiohttp.ClientSession() as session:
@@ -124,38 +130,69 @@ class MarketService:
             metrics_task = asyncio.create_task(
                 self._metrics_loop(stop_event), name="market-metrics-loop"
             )
+            recovery_task = (
+                asyncio.create_task(
+                    self._recovery_loop(stop_event), name="market-candle-recovery-loop"
+                )
+                if self._recovery_enabled
+                else None
+            )
+            tasks = (
+                catalog_task,
+                l1_task,
+                candle_task,
+                selection_task,
+                artifact_task,
+                selected_artifact_task,
+                metrics_task,
+            ) + (() if recovery_task is None else (recovery_task,))
             try:
-                await asyncio.gather(
-                    catalog_task,
-                    l1_task,
-                    candle_task,
-                    selection_task,
-                    artifact_task,
-                    selected_artifact_task,
-                    metrics_task,
-                )
+                await asyncio.gather(*tasks)
             finally:
-                for task in (
-                    catalog_task,
-                    l1_task,
-                    candle_task,
-                    selection_task,
-                    artifact_task,
-                    selected_artifact_task,
-                    metrics_task,
-                ):
+                for task in tasks:
                     task.cancel()
-                await asyncio.gather(
-                    catalog_task,
-                    l1_task,
-                    candle_task,
-                    selection_task,
-                    artifact_task,
-                    selected_artifact_task,
-                    metrics_task,
-                    return_exceptions=True,
-                )
+                await asyncio.gather(*tasks, return_exceptions=True)
                 self._session = None
+
+    async def _recovery_loop(self, stop_event: asyncio.Event) -> None:
+        recovery = CandleRecovery(
+            self._database_url,
+            self._state_dir,
+            on_inserted=self._notify_recovery_inserted,
+        )
+        trigger: RecoveryTrigger = "startup"
+        while not stop_event.is_set():
+            try:
+                state = await recovery.run(
+                    self._require_session(),
+                    recovery_window(datetime.now(UTC)),
+                    apply=True,
+                    trigger=trigger,
+                )
+                logger.info(
+                    "candle recovery status={status} inserted={inserted} remaining={remaining}",
+                    status=state.execution,
+                    inserted=state.summary.inserted,
+                    remaining=state.summary.remaining,
+                )
+            except asyncio.CancelledError:
+                raise
+            except RuntimeLockUnavailable:
+                logger.info("candle recovery skipped because another run holds the lock")
+            except Exception as error:
+                logger.warning(
+                    "candle recovery unavailable errorType={error_type}",
+                    error_type=type(error).__name__,
+                )
+            trigger = "periodic"
+            next_run = next_grid_at(datetime.now(UTC) + timedelta(microseconds=1), 900)
+            delay = max(0.0, (next_run - datetime.now(UTC)).total_seconds())
+            with suppress(TimeoutError):
+                await asyncio.wait_for(stop_event.wait(), timeout=delay)
+
+    def _notify_recovery_inserted(self) -> None:
+        self._artifact_trigger.set()
+        self._metrics_trigger.set()
 
     async def refresh_catalog(self) -> CatalogRefreshResult:
         session = self._require_session()
@@ -481,9 +518,13 @@ async def run_market_service(
     database_url: str,
     state_dir: Path,
     stop_event: asyncio.Event,
+    *,
+    recovery_enabled: bool = False,
 ) -> None:
     """Run catalog, L1, candle, and selected-data loops until stopped."""
-    await MarketService(database_url, state_dir).run_forever(stop_event)
+    await MarketService(database_url, state_dir, recovery_enabled=recovery_enabled).run_forever(
+        stop_event
+    )
 
 
 def _publish_artifacts_url(

@@ -5,19 +5,25 @@ import signal
 from contextlib import suppress
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Never
+from typing import Annotated, Literal, Never, cast
 
+import aiohttp
 import typer
 from loguru import logger
 from pydantic import ValidationError
 from rich.console import Console
 
+from prep_watchdeck_market.bundle_files import BundleError
+from prep_watchdeck_market.candle_recovery import CandleRecovery, recovery_window
+from prep_watchdeck_market.candle_recovery_state import CandleRecoveryState
 from prep_watchdeck_market.config import Settings, require_production_database_target
 from prep_watchdeck_market.database import (
     DatabaseError,
     check_database,
     migrate_database,
 )
+from prep_watchdeck_market.fixture_bundle import export_fixture as create_fixture_bundle
+from prep_watchdeck_market.fixture_bundle import verify_fixture as verify_fixture_bundle
 from prep_watchdeck_market.funding_runtime import run_funding_sync_once
 from prep_watchdeck_market.funding_store import FundingStoreError
 from prep_watchdeck_market.maintenance import MaintenanceError, run_daily_maintenance
@@ -26,6 +32,110 @@ from prep_watchdeck_market.service import MarketServiceError, run_market_service
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
+
+
+@app.command("export-fixture")
+def export_fixture_command(
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    instrument: str = typer.Option(..., "--instrument"),
+    version: int = typer.Option(..., "--version", min=1),
+    since: str = typer.Option(..., "--since"),
+    until: str = typer.Option(..., "--until"),
+    audit_run: str | None = typer.Option(None, "--audit-run"),
+    evidence_kind: str = typer.Option("observed", "--evidence-kind"),
+) -> None:
+    """Export one contract/version from a read-only repeatable-read DB snapshot."""
+    settings = _load_settings()
+    try:
+        if evidence_kind not in {"observed", "synthetic"}:
+            raise BundleError("fixture_evidence_invalid")
+        path, manifest = create_fixture_bundle(
+            settings.database_url,
+            settings.state_dir,
+            output_dir,
+            instrument_id=instrument,
+            version_id=version,
+            since=datetime.fromisoformat(since),
+            until=datetime.fromisoformat(until),
+            audit_run=audit_run,
+            evidence_kind=cast(Literal["synthetic", "observed"], evidence_kind),
+        )
+    except (BundleError, ValueError, OSError) as exc:
+        code = exc.code if isinstance(exc, BundleError) else "fixture_input_invalid"
+        console.print(f"[red]{code}[/red]")
+        raise typer.Exit(code=2) from exc
+    console.print(f"fixture={path} execution={manifest.execution}")
+    if manifest.execution != "completed":
+        raise typer.Exit(code=3)
+
+
+@app.command("verify-fixture")
+def verify_fixture_command(bundle: Annotated[Path, typer.Option("--bundle")]) -> None:
+    """Verify an existing fixture bundle without DB or network access."""
+    try:
+        manifest = verify_fixture_bundle(bundle)
+    except (BundleError, OSError) as exc:
+        code = exc.code if isinstance(exc, BundleError) else "fixture_verify_failed"
+        console.print(f"[red]{code}[/red]")
+        raise typer.Exit(code=2) from exc
+    counts = ",".join(f"{dataset.name}:{dataset.availability}" for dataset in manifest.datasets)
+    console.print(f"fixture={manifest.bundle_id} execution={manifest.execution} datasets={counts}")
+    if manifest.execution != "completed":
+        raise typer.Exit(code=3)
+
+
+@app.command("recover-candles")
+def recover_candles(
+    venue: str | None = typer.Option(None, "--venue"),
+    instrument: str | None = typer.Option(None, "--instrument"),
+    since: str | None = typer.Option(None, "--since"),
+    until: str | None = typer.Option(None, "--until"),
+    apply: bool = typer.Option(False, "--apply"),
+    json_output: bool = typer.Option(False, "--json"),
+) -> None:
+    """Plan or apply bounded missing-row recovery for saved one-minute candles."""
+    settings = _load_settings()
+    _require_database_target(settings)
+    try:
+        if venue not in {None, "bitget", "hyperliquid", "aster"}:
+            raise ValueError("unsupported recovery venue")
+        start = None if since is None else datetime.fromisoformat(since)
+        end = None if until is None else datetime.fromisoformat(until)
+        window = recovery_window(datetime.now(UTC), since=start, until=end)
+        if instrument and venue and not instrument.startswith(f"{venue}:"):
+            raise ValueError("instrument does not match venue")
+
+        async def execute() -> CandleRecoveryState:
+            recovery = CandleRecovery(settings.database_url, settings.state_dir)
+            if apply:
+                async with aiohttp.ClientSession() as session:
+                    return await recovery.run(
+                        session, window, apply=True, venue=venue, instrument_id=instrument
+                    )
+            return await recovery.run(
+                None, window, apply=False, venue=venue, instrument_id=instrument
+            )
+
+        state = asyncio.run(execute())
+    except (ValueError, OSError, RuntimeError) as exc:
+        logger.warning(
+            "candle recovery rejected errorType={error_type}", error_type=type(exc).__name__
+        )
+        console.print("[red]candle recovery unavailable[/red]")
+        raise typer.Exit(code=2) from exc
+    if json_output:
+        console.print(state.model_dump_json(by_alias=True))
+    else:
+        summary = state.summary
+        console.print(
+            f"recovery={state.execution} "
+            f"window={window.start.isoformat()}..{window.end.isoformat()} "
+            f"targets={summary.scanned_target_count}/{summary.target_count} "
+            f"missing={summary.missing_before} inserted={summary.inserted} "
+            f"remaining={summary.remaining} requests={summary.http_requests}"
+        )
+    if state.execution != "succeeded":
+        raise typer.Exit(code=3)
 
 
 @app.command()
@@ -185,7 +295,13 @@ def service() -> None:
     _require_database_target(settings)
     try:
         with exclusive_runtime_lock(settings.state_dir / "market-service.lock"):
-            asyncio.run(_serve(settings.database_url, settings.state_dir))
+            asyncio.run(
+                _serve(
+                    settings.database_url,
+                    settings.state_dir,
+                    recovery_enabled=settings.candle_recovery_enabled,
+                )
+            )
     except KeyboardInterrupt:
         return
     except RuntimeLockUnavailable as exc:
@@ -202,7 +318,7 @@ def service() -> None:
         raise typer.Exit(code=2) from exc
 
 
-async def _serve(database_url: str, state_dir: Path) -> None:
+async def _serve(database_url: str, state_dir: Path, *, recovery_enabled: bool = False) -> None:
     stop_event = asyncio.Event()
     loop = asyncio.get_running_loop()
     installed_signals: list[signal.Signals] = []
@@ -213,7 +329,9 @@ async def _serve(database_url: str, state_dir: Path) -> None:
             continue
         installed_signals.append(signal_number)
     try:
-        await run_market_service(database_url, state_dir, stop_event)
+        await run_market_service(
+            database_url, state_dir, stop_event, recovery_enabled=recovery_enabled
+        )
     finally:
         for signal_number in installed_signals:
             with suppress(NotImplementedError):

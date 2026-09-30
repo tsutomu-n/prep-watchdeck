@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import { page } from "$app/state";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
@@ -9,10 +9,15 @@
   import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import UniverseChart from "$lib/components/universe/UniverseChart.svelte";
+  import SourceQualityInspector from "$lib/components/universe/SourceQualityInspector.svelte";
   import PriceChangeValue from "$lib/components/universe/PriceChangeValue.svelte";
   import { DEFAULT_REFERENCE_TIME } from "$lib/market/price-change";
   import { PriceChangeClient, type PriceChangeState } from "$lib/market/price-change-client";
   import type { Timeframe } from "$lib/market/chart-history";
+  import { auditStatusLabel, auditTargetKey } from "$lib/market/candle-audit";
+  import type { AuditIndex, AuditIndexEntry } from "$lib/generated/candle-audit-index";
+  import type { AuditDetailPage } from "$lib/generated/candle-audit-detail";
+  import type { CandleRecoveryState } from "$lib/generated/candle-recovery-state";
   import type { SelectedInstrumentArtifact } from "$lib/generated/selected-market";
   import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
   import {
@@ -91,6 +96,25 @@
   let priceChangeClient = $state<PriceChangeClient | null>(null);
   let priceObserver: IntersectionObserver | null = null;
   const observedPriceRows = new Map<Element, string>();
+  let auditIndex = $state<AuditIndex | null>(null);
+  let auditIndexStatus = $state<"loading" | "available" | "not_run" | "unavailable">("loading");
+  let recovery = $state<CandleRecoveryState | null>(null);
+  let recoveryStatus = $state<"loading" | "available" | "not_run" | "unavailable">("loading");
+  let qualityFetchedAt = $state<string | null>(null);
+  let qualityRefreshBusy = false;
+  let sourceQualityOpen = $state(false);
+  let pinnedAuditRunId = $state<string | null>(null);
+  let auditDetail = $state<AuditDetailPage | null>(null);
+  let auditDetailError = $state<string | null>(null);
+  let auditDetailLoading = $state(false);
+  let auditOffset = $state(0);
+  let auditMarkersEnabled = $state(false);
+  let auditJump = $state<{ bucketAt: string; sequence: number } | null>(null);
+  let auditJumpMessage = $state<string | null>(null);
+  let auditDetailController: AbortController | null = null;
+  let auditDetailRequestId = 0;
+  let auditSelectionGeneration = 0;
+  let auditLastSelectionKey = "";
 
   let items = $derived((market?.universe.items ?? []).map(item => {
     const observed = item.observedAt ? Date.parse(item.observedAt) : NaN;
@@ -118,6 +142,22 @@
   let selectedInstrument = $derived(
     items.find((item) => item.venueInstrumentId === selectedVenueInstrumentId) ?? null
   );
+  let auditEntryMap = $derived(new Map((auditIndex?.entries ?? []).map((entry) => [
+    auditTargetKey(entry.target.venueInstrumentId, entry.target.venueInstrumentVersionId), entry
+  ])));
+  let selectedAuditEntry = $derived(selectedInstrument ?
+    auditEntryMap.get(auditTargetKey(selectedInstrument.venueInstrumentId,
+      selectedInstrument.venueInstrumentVersionId)) ?? null : null);
+  let selectedAuditKey = $derived(selectedInstrument ?
+    auditTargetKey(selectedInstrument.venueInstrumentId, selectedInstrument.venueInstrumentVersionId) : "");
+  let auditIdentityValid = $derived(Boolean(auditDetail && selectedInstrument &&
+    auditDetail.report.target.venueInstrumentId === selectedInstrument.venueInstrumentId &&
+    auditDetail.report.target.venueInstrumentVersionId === selectedInstrument.venueInstrumentVersionId &&
+    auditDetail.report.series?.venue === selectedInstrument.venue &&
+    auditDetail.report.series?.sourceSymbol === selectedInstrument.sourceSymbol &&
+    auditDetail.report.series?.baseAsset === selectedInstrument.baseAsset &&
+    auditDetail.report.series?.quoteAsset === selectedInstrument.quoteAsset &&
+    auditDetail.report.series?.settleAsset === selectedInstrument.settleAsset));
   let selectedMetrics = $derived(selectedInstrument ? metricFor(selectedInstrument) : null);
 
   function metricFor(item: UniverseInstrumentArtifact): MarketMetricRow | null {
@@ -206,17 +246,149 @@
     }
     document.addEventListener("visibilitychange", syncVisibility);
     syncVisibility();
+    void refreshQuality();
+    const qualityTimer = window.setInterval(() => {
+      if (document.visibilityState !== "hidden") void refreshQuality();
+    }, 60_000);
     return () => {
       window.clearInterval(timer);
       window.clearInterval(priceTimer);
+      window.clearInterval(qualityTimer);
       window.clearTimeout(boundaryTimer);
       document.removeEventListener("visibilitychange", syncVisibility);
       document.removeEventListener("visibilitychange", loadWorkspace);
       priceObserver?.disconnect();
       client.dispose();
       priceChangeClient = null;
+      auditDetailController?.abort();
     };
   });
+
+  $effect(() => {
+    const key = selectedAuditKey;
+    if (key === auditLastSelectionKey) return;
+    auditLastSelectionKey = key;
+    auditSelectionGeneration++;
+    auditDetailRequestId++;
+    auditDetailController?.abort();
+    auditDetailController = null;
+    pinnedAuditRunId = null;
+    auditDetail = null;
+    auditDetailError = null;
+    auditDetailLoading = false;
+    auditOffset = 0;
+    auditMarkersEnabled = false;
+    auditJump = null;
+    auditJumpMessage = null;
+    sourceQualityOpen = false;
+  });
+
+  async function refreshQuality() {
+    if (qualityRefreshBusy || document.visibilityState === "hidden") return;
+    qualityRefreshBusy = true;
+    try {
+      const [indexResult, recoveryResult] = await Promise.allSettled([
+        fetch("/api/candle-audits", { cache: "no-store" }),
+        fetch("/api/candle-recovery", { cache: "no-store" })
+      ]);
+      if (indexResult.status === "fulfilled") {
+        try {
+          const response = indexResult.value;
+          if (!response.ok) throw new Error("audit index unavailable");
+          const value = await response.json() as { state: "available" | "not_run"; index: AuditIndex | null };
+          if (value.state === "available" && value.index) {
+            auditIndex = value.index;
+            auditIndexStatus = "available";
+          } else if (value.state === "not_run") {
+            auditIndex = null;
+            auditIndexStatus = "not_run";
+          } else throw new Error("audit index invalid");
+        } catch { auditIndexStatus = "unavailable"; }
+      } else auditIndexStatus = "unavailable";
+      if (recoveryResult.status === "fulfilled") {
+        try {
+          const response = recoveryResult.value;
+          if (!response.ok) throw new Error("recovery unavailable");
+          const value = await response.json() as { state: "available" | "not_run"; recovery: CandleRecoveryState | null };
+          if (value.state === "available" && value.recovery) {
+            recovery = value.recovery;
+            recoveryStatus = "available";
+          } else if (value.state === "not_run") {
+            recovery = null;
+            recoveryStatus = "not_run";
+          } else throw new Error("recovery state invalid");
+        } catch { recoveryStatus = "unavailable"; }
+      } else recoveryStatus = "unavailable";
+      qualityFetchedAt = new Date().toISOString();
+    } finally { qualityRefreshBusy = false; }
+  }
+
+  async function loadAuditDetail(runId: string, offset = 0) {
+    const generation = auditSelectionGeneration;
+    const key = selectedAuditKey;
+    const requestId = ++auditDetailRequestId;
+    auditDetailController?.abort();
+    const controller = new AbortController();
+    auditDetailController = controller;
+    auditDetailLoading = true;
+    auditDetailError = null;
+    try {
+      const response = await fetch(`/api/candle-audits/${runId}?offset=${offset}&limit=200`, {
+        cache: "no-store", signal: controller.signal
+      });
+      if (!response.ok) throw new Error(response.status === 404 ? "照合記録が見つかりません" : "照合記録を取得できません");
+      const value = await response.json() as AuditDetailPage;
+      if (generation !== auditSelectionGeneration || requestId !== auditDetailRequestId ||
+          key !== selectedAuditKey || pinnedAuditRunId !== runId || value.report.runId !== runId ||
+          value.offset !== offset || value.report.target.venueInstrumentId !== selectedInstrument?.venueInstrumentId ||
+          value.report.target.venueInstrumentVersionId !== selectedInstrument?.venueInstrumentVersionId) return;
+      auditDetail = value;
+      auditOffset = offset;
+      auditDetailError = null;
+    } catch {
+      if (generation === auditSelectionGeneration && requestId === auditDetailRequestId &&
+          key === selectedAuditKey && !controller.signal.aborted) {
+        auditDetailError = "照合記録の更新取得に失敗しました";
+      }
+    } finally {
+      if (generation === auditSelectionGeneration && requestId === auditDetailRequestId) {
+        auditDetailLoading = false;
+      }
+    }
+  }
+
+  function selectAuditRun(runId: string) {
+    pinnedAuditRunId = runId;
+    auditDetail = null;
+    auditMarkersEnabled = false;
+    auditOffset = 0;
+    void loadAuditDetail(runId);
+  }
+
+  function setSourceQualityOpen(open: boolean) {
+    sourceQualityOpen = open;
+    if (open && !pinnedAuditRunId && selectedAuditEntry) selectAuditRun(selectedAuditEntry.runId);
+  }
+
+  async function openAuditFor(instrument: UniverseInstrumentArtifact) {
+    selectInstrument(instrument);
+    await tick();
+    sourceQualityOpen = true;
+    const entry = auditEntryMap.get(auditTargetKey(instrument.venueInstrumentId,
+      instrument.venueInstrumentVersionId));
+    if (entry) selectAuditRun(entry.runId);
+    await tick();
+    document.getElementById("source-quality-heading")?.focus();
+  }
+
+  function showAuditFinding(offset: number) {
+    if (!pinnedAuditRunId) return;
+    sourceQualityOpen = true;
+    void loadAuditDetail(pinnedAuditRunId, Math.floor(offset / 200) * 200).then(async () => {
+      await tick();
+      document.getElementById(`audit-finding-${offset}`)?.focus();
+    });
+  }
 
   $effect(() => {
     const client = priceChangeClient;
@@ -545,7 +717,7 @@
         <strong>{items.length} instruments</strong>
       </div>
       <div>
-        <span>最終検証</span>
+        <span>表示データ生成</span>
         <strong>{formatTimestamp(lastVerifiedAt)}</strong>
         <span>JST</span>
       </div>
@@ -728,6 +900,15 @@
                   <td>
                     <span class:quality-risk={item.quality !== "ready"}>{statusLabel(item.quality)}</span>
                     <small>{formatAgeSeconds(item.ageSeconds)}</small>
+                    <button type="button" class="audit-badge"
+                      aria-label={`${item.baseAsset} ${item.venue}の保存足照合を表示`}
+                      onclick={() => void openAuditFor(item)}>
+                      {auditStatusLabel(auditEntryMap.get(auditTargetKey(item.venueInstrumentId,
+                        item.venueInstrumentVersionId)) ?? null, auditIndexStatus)}
+                    </button>
+                    {#if auditIndexStatus === "unavailable" && auditEntryMap.has(auditTargetKey(item.venueInstrumentId, item.venueInstrumentVersionId))}
+                      <small>前回記録 · 更新停止</small>
+                    {/if}
                   </td>
                 </tr>
               {:else}
@@ -851,6 +1032,13 @@
               venueInstrumentId={selectedVenueInstrumentId!}
               venueInstrumentVersionId={selectedInstrument.venueInstrumentVersionId}
               bind:timeframe={chartTimeframe}
+              auditMarkerBuckets={auditIdentityValid && auditDetail ? auditDetail.markerBuckets : []}
+              {auditMarkersEnabled}
+              onAuditMarkerClick={showAuditFinding}
+              {auditJump}
+              onAuditJumpResult={(found) => {
+                auditJumpMessage = found ? "対応する表示足へ移動しました" : "対応する表示足がありません。過去足を読み込んでください。";
+              }}
             />
           {:else}
             <section class="waiting-panel">
@@ -858,6 +1046,32 @@
               <p>非activeのためチャートを要求しません</p>
             </section>
           {/if}
+
+          <SourceQualityInspector
+            instrument={selectedInstrument}
+            bind:open={sourceQualityOpen}
+            onOpenChange={setSourceQualityOpen}
+            {recovery}
+            {recoveryStatus}
+            {qualityFetchedAt}
+            auditEntry={selectedAuditEntry}
+            auditIndexStatus={auditIndexStatus}
+            {pinnedAuditRunId}
+            {auditDetail}
+            {auditIdentityValid}
+            {auditDetailError}
+            {auditDetailLoading}
+            {auditOffset}
+            {auditMarkersEnabled}
+            {auditJumpMessage}
+            onSelectRun={selectAuditRun}
+            onPage={(offset) => pinnedAuditRunId && void loadAuditDetail(pinnedAuditRunId, offset)}
+            onToggleMarkers={(enabled) => { auditMarkersEnabled = enabled; }}
+            onFindingJump={(bucketAt) => {
+              auditJump = { bucketAt, sequence: (auditJump?.sequence ?? 0) + 1 };
+              auditJumpMessage = null;
+            }}
+          />
 
           <section class="selected-market" aria-labelledby="selected-market-title">
             <div class="subheading selected-heading">
@@ -1017,6 +1231,8 @@
   .instrument-select { display: grid; gap: var(--space-xxs); width: 100%; min-height: var(--control-height-dense); border: 0; background: transparent; color: var(--text); padding: 0; font: inherit; text-align: left; cursor: pointer; }
   .instrument-select strong { font-size: var(--type-data-md-size); }
   .instrument-select span, td small, .coverage-label { display: block; color: var(--muted); font-size: var(--type-label-caps-size); }
+  .audit-badge { display: block; min-height: 44px; border: 0; background: transparent; color: var(--focus); padding: var(--space-xs) 0; text-align: left; font: inherit; font-size: var(--type-label-caps-size); cursor: pointer; overflow-wrap: anywhere; }
+  .audit-badge:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .coverage-label { margin-top: var(--space-xxs); color: var(--subtle); }
   .numeric, dd, code { font-variant-numeric: tabular-nums; }
   .mobile-change { display: none; }

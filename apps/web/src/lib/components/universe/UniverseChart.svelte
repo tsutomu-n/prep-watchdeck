@@ -1,13 +1,16 @@
 <script lang="ts">
   import { onMount, untrack } from "svelte";
-  import type { IChartApi, ISeriesApi, LogicalRange, TickMarkType, Time, UTCTimestamp } from "lightweight-charts";
+  import type { IChartApi, ISeriesApi, ISeriesMarkersPluginApi, LogicalRange, SeriesMarker, TickMarkType, Time, UTCTimestamp } from "lightweight-charts";
   import {
+    CHART_TIMEFRAME_SECONDS,
     CHART_TIMEFRAMES,
     type ChartCandle,
     type ChartHistory,
     type Timeframe
   } from "$lib/market/chart-history";
   import { chartVolumeValue } from "$lib/market/market-state-presentation";
+  import { displayAuditMarkers, type DisplayAuditMarker } from "$lib/market/candle-audit";
+  import type { AuditMarkerBucket } from "$lib/generated/candle-audit-detail";
   import {
     chartRangeAfterUpdate,
     formatChartTick,
@@ -38,11 +41,21 @@
   let {
     venueInstrumentId,
     venueInstrumentVersionId,
-    timeframe = $bindable<Timeframe>("15m")
+    timeframe = $bindable<Timeframe>("15m"),
+    auditMarkerBuckets = [],
+    auditMarkersEnabled = false,
+    onAuditMarkerClick,
+    auditJump,
+    onAuditJumpResult
   }: {
     venueInstrumentId: string;
     venueInstrumentVersionId: number;
     timeframe?: Timeframe;
+    auditMarkerBuckets?: AuditMarkerBucket[];
+    auditMarkersEnabled?: boolean;
+    onAuditMarkerClick?: (firstFindingOffset: number) => void;
+    auditJump?: { bucketAt: string; sequence: number } | null;
+    onAuditJumpResult?: (found: boolean) => void;
   } = $props();
 
   const historyPollMs = 60_000;
@@ -51,6 +64,9 @@
   let chartApi: IChartApi | null = null;
   let candles: ISeriesApi<"Candlestick"> | null = null;
   let volumes: ISeriesApi<"Histogram"> | null = null;
+  let markerPlugin: ISeriesMarkersPluginApi<Time> | null = null;
+  let activeAuditMarkers = new Map<number, DisplayAuditMarker>();
+  let handledJumpSequence = -1;
   let context: HistoryContext | null = null;
   let renderedContext: HistoryContext | null = null;
   let renderedBars: ChartCandle[] = [];
@@ -89,6 +105,8 @@
       mounted = false;
       window.removeEventListener(COLOR_SCHEME_CHANGE_EVENT, updateTheme);
       window.removeEventListener(FONT_SCHEME_CHANGE_EVENT, updateFont);
+      markerPlugin?.detach();
+      markerPlugin = null;
       chartApi?.remove();
       chartApi = null;
       candles = null;
@@ -133,7 +151,17 @@
   $effect(() => {
     chartReady;
     bars;
+    auditMarkerBuckets;
+    auditMarkersEnabled;
     untrack(updateSeries);
+  });
+
+  $effect(() => {
+    const jump = auditJump;
+    bars;
+    if (!jump || jump.sequence === handledJumpSequence) return;
+    handledJumpSequence = jump.sequence;
+    untrack(() => jumpToAuditTime(jump.bucketAt));
   });
 
   async function requestPage(current: HistoryContext, before?: string): Promise<ChartHistory> {
@@ -252,6 +280,12 @@
       wickDownColor: palette.down,
       priceLineVisible: false
     });
+    markerPlugin = module.createSeriesMarkers(candles, [], { autoScale: false });
+    chartApi.subscribeClick((event) => {
+      if (!auditMarkersEnabled || typeof event.time !== "number") return;
+      const marker = activeAuditMarkers.get(event.time * 1000);
+      if (marker) onAuditMarkerClick?.(marker.firstFindingOffset);
+    });
     volumes = chartApi.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" },
       priceScaleId: "volume",
@@ -280,6 +314,18 @@
       chartApi.applyOptions({ timeScale: { timeVisible: timeframe !== "24h" } });
       candles.setData(bars.map((bar) => ({
         time: toTimestamp(bar.bucketAt), open: bar.open, high: bar.high, low: bar.low, close: bar.close
+      })));
+      const markerBuckets = auditMarkersEnabled
+        ? displayAuditMarkers(auditMarkerBuckets, timeframe) : [];
+      const loadedTimes = new Set(bars.map((bar) => Date.parse(bar.bucketAt)));
+      const visibleMarkers = markerBuckets.filter((marker) => loadedTimes.has(Date.parse(marker.bucketAt)));
+      activeAuditMarkers = new Map(visibleMarkers.map((marker) => [Date.parse(marker.bucketAt), marker]));
+      const markerColor = container
+        ? getComputedStyle(container).getPropertyValue("--warning").trim() || "#b96f11"
+        : "#b96f11";
+      markerPlugin?.setMarkers(visibleMarkers.map((marker): SeriesMarker<Time> => ({
+        time: toTimestamp(marker.bucketAt), position: "aboveBar", shape: "circle",
+        color: markerColor, text: `照合${marker.findingCount}`
       })));
       volumes.setData(bars.flatMap((bar) => {
         const value = chartVolumeValue(bar.volumeNotional, bar.volumeBase);
@@ -321,6 +367,18 @@
 
   function toTimestamp(value: string) {
     return Math.floor(Date.parse(value) / 1000) as UTCTimestamp;
+  }
+
+  function jumpToAuditTime(sourceBucketAt: string) {
+    if (!chartApi || !bars.length) { onAuditJumpResult?.(false); return; }
+    const duration = CHART_TIMEFRAME_SECONDS[timeframe] * 1000;
+    const wanted = Math.floor(Date.parse(sourceBucketAt) / duration) * duration;
+    const index = bars.findIndex((bar) => Date.parse(bar.bucketAt) === wanted);
+    if (index < 0) { onAuditJumpResult?.(false); return; }
+    const range = chartApi.timeScale().getVisibleLogicalRange();
+    const width = range ? Math.max(10, range.to - range.from) : 60;
+    chartApi.timeScale().setVisibleLogicalRange({ from: index - width / 2, to: index + width / 2 });
+    onAuditJumpResult?.(true);
   }
 
   const emptyLineTarget = { applyOptions: () => undefined };

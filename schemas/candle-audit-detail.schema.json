@@ -1,0 +1,868 @@
+{
+  "$defs": {
+    "AuditCounts": {
+      "additionalProperties": false,
+      "properties": {
+        "expectedBars": {
+          "minimum": 0,
+          "title": "Expectedbars",
+          "type": "integer"
+        },
+        "commonValidBars": {
+          "minimum": 0,
+          "title": "Commonvalidbars",
+          "type": "integer"
+        },
+        "comparedPriceValues": {
+          "minimum": 0,
+          "title": "Comparedpricevalues",
+          "type": "integer"
+        },
+        "comparedVolumeValues": {
+          "minimum": 0,
+          "title": "Comparedvolumevalues",
+          "type": "integer"
+        },
+        "expectedReturnPairs": {
+          "minimum": 0,
+          "title": "Expectedreturnpairs",
+          "type": "integer"
+        },
+        "returnPairs": {
+          "minimum": 0,
+          "title": "Returnpairs",
+          "type": "integer"
+        },
+        "priceDifferenceValues": {
+          "minimum": 0,
+          "title": "Pricedifferencevalues",
+          "type": "integer"
+        },
+        "priceDifferenceBars": {
+          "minimum": 0,
+          "title": "Pricedifferencebars",
+          "type": "integer"
+        },
+        "volumeDifferenceValues": {
+          "minimum": 0,
+          "title": "Volumedifferencevalues",
+          "type": "integer"
+        },
+        "returnDifferencePairs": {
+          "minimum": 0,
+          "title": "Returndifferencepairs",
+          "type": "integer"
+        },
+        "leftMissingBars": {
+          "minimum": 0,
+          "title": "Leftmissingbars",
+          "type": "integer"
+        },
+        "rightMissingBars": {
+          "minimum": 0,
+          "title": "Rightmissingbars",
+          "type": "integer"
+        },
+        "leftInvalidBars": {
+          "minimum": 0,
+          "title": "Leftinvalidbars",
+          "type": "integer"
+        },
+        "rightInvalidBars": {
+          "minimum": 0,
+          "title": "Rightinvalidbars",
+          "type": "integer"
+        },
+        "missingValueCount": {
+          "minimum": 0,
+          "title": "Missingvaluecount",
+          "type": "integer"
+        },
+        "returnMissingPairs": {
+          "minimum": 0,
+          "title": "Returnmissingpairs",
+          "type": "integer"
+        },
+        "totalFindings": {
+          "minimum": 0,
+          "title": "Totalfindings",
+          "type": "integer"
+        },
+        "completeForRequestedChecks": {
+          "title": "Completeforrequestedchecks",
+          "type": "boolean"
+        },
+        "maxFlaggedPriceDiffBps": {
+          "anyOf": [
+            {
+              "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maxflaggedpricediffbps"
+        },
+        "maxFlaggedReturnDiffBps": {
+          "anyOf": [
+            {
+              "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Maxflaggedreturndiffbps"
+        }
+      },
+      "required": [
+        "expectedBars",
+        "commonValidBars",
+        "comparedPriceValues",
+        "comparedVolumeValues",
+        "expectedReturnPairs",
+        "returnPairs",
+        "priceDifferenceValues",
+        "priceDifferenceBars",
+        "volumeDifferenceValues",
+        "returnDifferencePairs",
+        "leftMissingBars",
+        "rightMissingBars",
+        "leftInvalidBars",
+        "rightInvalidBars",
+        "missingValueCount",
+        "returnMissingPairs",
+        "totalFindings",
+        "completeForRequestedChecks",
+        "maxFlaggedPriceDiffBps",
+        "maxFlaggedReturnDiffBps"
+      ],
+      "title": "AuditCounts",
+      "type": "object"
+    },
+    "AuditFinding": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "pattern": "^f[0-9]{6}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "value_difference",
+            "return_difference",
+            "missing_bar",
+            "invalid_row",
+            "missing_value",
+            "return_unavailable"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "side": {
+          "anyOf": [
+            {
+              "enum": [
+                "left",
+                "right",
+                "pair"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Side"
+        },
+        "field": {
+          "anyOf": [
+            {
+              "enum": [
+                "open_price",
+                "high_price",
+                "low_price",
+                "close_price",
+                "volume_base",
+                "log_return"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Field"
+        },
+        "bucketAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Bucketat"
+        },
+        "startAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Startat"
+        },
+        "endAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Endat"
+        },
+        "left": {
+          "anyOf": [
+            {
+              "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Left"
+        },
+        "right": {
+          "anyOf": [
+            {
+              "pattern": "^-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Right"
+        },
+        "absoluteDifference": {
+          "anyOf": [
+            {
+              "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Absolutedifference"
+        },
+        "differenceBps": {
+          "anyOf": [
+            {
+              "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Differencebps"
+        },
+        "reasonCode": {
+          "enum": [
+            "value_tolerance_exceeded",
+            "return_tolerance_exceeded",
+            "missing_bucket",
+            "duplicate_bucket",
+            "record_version_mismatch",
+            "record_is_not_final",
+            "observed_before_close",
+            "unavailable_at_as_of",
+            "invalid_timestamp",
+            "invalid_numeric",
+            "invalid_ohlc",
+            "invalid_row",
+            "missing_requested_value",
+            "missing_return_endpoint"
+          ],
+          "title": "Reasoncode",
+          "type": "string"
+        },
+        "rowNumber": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Rownumber"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "side",
+        "field",
+        "bucketAt",
+        "startAt",
+        "endAt",
+        "left",
+        "right",
+        "absoluteDifference",
+        "differenceBps",
+        "reasonCode",
+        "rowNumber"
+      ],
+      "title": "AuditFinding",
+      "type": "object"
+    },
+    "AuditInputEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "sourceId": {
+          "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$",
+          "title": "Sourceid",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Label",
+          "type": "string"
+        },
+        "snapshotCreatedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Snapshotcreatedat"
+        },
+        "fileSha256": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Filesha256"
+        },
+        "sourceTimeMissingCount": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourcetimemissingcount"
+        },
+        "derivedFinalCount": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Derivedfinalcount"
+        }
+      },
+      "required": [
+        "sourceId",
+        "label",
+        "snapshotCreatedAt",
+        "fileSha256",
+        "sourceTimeMissingCount",
+        "derivedFinalCount"
+      ],
+      "title": "AuditInputEvidence",
+      "type": "object"
+    },
+    "AuditInputs": {
+      "additionalProperties": false,
+      "properties": {
+        "left": {
+          "$ref": "#/$defs/AuditInputEvidence"
+        },
+        "right": {
+          "$ref": "#/$defs/AuditInputEvidence"
+        }
+      },
+      "required": [
+        "left",
+        "right"
+      ],
+      "title": "AuditInputs",
+      "type": "object"
+    },
+    "AuditMarkerBucket": {
+      "additionalProperties": false,
+      "properties": {
+        "bucketAt": {
+          "format": "date-time",
+          "title": "Bucketat",
+          "type": "string"
+        },
+        "findingCount": {
+          "minimum": 1,
+          "title": "Findingcount",
+          "type": "integer"
+        },
+        "kinds": {
+          "items": {
+            "enum": [
+              "value_difference",
+              "return_difference",
+              "missing_bar",
+              "invalid_row",
+              "missing_value",
+              "return_unavailable"
+            ],
+            "type": "string"
+          },
+          "title": "Kinds",
+          "type": "array"
+        },
+        "firstFindingOffset": {
+          "minimum": 0,
+          "title": "Firstfindingoffset",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "bucketAt",
+        "findingCount",
+        "kinds",
+        "firstFindingOffset"
+      ],
+      "title": "AuditMarkerBucket",
+      "type": "object"
+    },
+    "AuditReportHeader": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "auditVersion": {
+          "const": "native-candle-snapshots-v1",
+          "title": "Auditversion",
+          "type": "string"
+        },
+        "runId": {
+          "pattern": "^[0-9a-f]{32}$",
+          "title": "Runid",
+          "type": "string"
+        },
+        "implementationSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Implementationsha256",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/AuditTarget"
+        },
+        "series": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AuditSeries"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "startedAt": {
+          "format": "date-time",
+          "title": "Startedat",
+          "type": "string"
+        },
+        "checkedAt": {
+          "format": "date-time",
+          "title": "Checkedat",
+          "type": "string"
+        },
+        "window": {
+          "$ref": "#/$defs/AuditWindow"
+        },
+        "execution": {
+          "enum": [
+            "completed",
+            "invalid_input",
+            "failed"
+          ],
+          "title": "Execution",
+          "type": "string"
+        },
+        "outcome": {
+          "anyOf": [
+            {
+              "enum": [
+                "match",
+                "differences",
+                "incomplete",
+                "unverified"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Outcome"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "pattern": "^[a-z][a-z0-9_]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Errorcode"
+        },
+        "comparisonKind": {
+          "enum": [
+            "snapshot_revision",
+            "acquisition_routes",
+            "repeatability"
+          ],
+          "title": "Comparisonkind",
+          "type": "string"
+        },
+        "evidenceKind": {
+          "enum": [
+            "observed",
+            "synthetic"
+          ],
+          "title": "Evidencekind",
+          "type": "string"
+        },
+        "scope": {
+          "const": "saved_candle_snapshots",
+          "title": "Scope",
+          "type": "string"
+        },
+        "independence": {
+          "const": "not_established",
+          "title": "Independence",
+          "type": "string"
+        },
+        "inputs": {
+          "$ref": "#/$defs/AuditInputs"
+        },
+        "summary": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AuditCounts"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "tolerances": {
+          "$ref": "#/$defs/AuditTolerances"
+        },
+        "compareVolumeBase": {
+          "title": "Comparevolumebase",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "auditVersion",
+        "runId",
+        "implementationSha256",
+        "target",
+        "series",
+        "startedAt",
+        "checkedAt",
+        "window",
+        "execution",
+        "outcome",
+        "errorCode",
+        "comparisonKind",
+        "evidenceKind",
+        "scope",
+        "independence",
+        "inputs",
+        "summary",
+        "tolerances",
+        "compareVolumeBase"
+      ],
+      "title": "AuditReportHeader",
+      "type": "object"
+    },
+    "AuditSeries": {
+      "additionalProperties": false,
+      "properties": {
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "sourceSymbol": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "minimum": 1,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "definitionSha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Definitionsha256",
+          "type": "string"
+        },
+        "baseAsset": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Baseasset",
+          "type": "string"
+        },
+        "quoteAsset": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "settleAsset": {
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f]+$",
+          "title": "Settleasset",
+          "type": "string"
+        },
+        "priceKind": {
+          "const": "trade",
+          "title": "Pricekind",
+          "type": "string"
+        },
+        "intervalSeconds": {
+          "const": 60,
+          "title": "Intervalseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "venue",
+        "sourceSymbol",
+        "venueInstrumentVersionId",
+        "definitionSha256",
+        "baseAsset",
+        "quoteAsset",
+        "settleAsset",
+        "priceKind",
+        "intervalSeconds"
+      ],
+      "title": "AuditSeries",
+      "type": "object"
+    },
+    "AuditTarget": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "maxLength": 160,
+          "pattern": "^(bitget|hyperliquid|aster):[^\\x00-\\x20\\x7f]+$",
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "minimum": 1,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId"
+      ],
+      "title": "AuditTarget",
+      "type": "object"
+    },
+    "AuditTolerances": {
+      "additionalProperties": false,
+      "properties": {
+        "priceAbsTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Priceabstol",
+          "type": "string"
+        },
+        "priceRelTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Pricereltol",
+          "type": "string"
+        },
+        "volumeAbsTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Volumeabstol",
+          "type": "string"
+        },
+        "volumeRelTol": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Volumereltol",
+          "type": "string"
+        },
+        "returnTolBps": {
+          "maxLength": 128,
+          "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$",
+          "title": "Returntolbps",
+          "type": "string"
+        }
+      },
+      "required": [
+        "priceAbsTol",
+        "priceRelTol",
+        "volumeAbsTol",
+        "volumeRelTol",
+        "returnTolBps"
+      ],
+      "title": "AuditTolerances",
+      "type": "object"
+    },
+    "AuditWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "dataAsOf": {
+          "format": "date-time",
+          "title": "Dataasof",
+          "type": "string"
+        },
+        "sourceIntervalSeconds": {
+          "const": 60,
+          "title": "Sourceintervalseconds",
+          "type": "integer"
+        },
+        "returnMinutes": {
+          "const": 5,
+          "title": "Returnminutes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "dataAsOf",
+        "sourceIntervalSeconds",
+        "returnMinutes"
+      ],
+      "title": "AuditWindow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "report": {
+      "$ref": "#/$defs/AuditReportHeader"
+    },
+    "totalFindings": {
+      "minimum": 0,
+      "title": "Totalfindings",
+      "type": "integer"
+    },
+    "offset": {
+      "minimum": 0,
+      "title": "Offset",
+      "type": "integer"
+    },
+    "limit": {
+      "maximum": 200,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "findings": {
+      "items": {
+        "$ref": "#/$defs/AuditFinding"
+      },
+      "title": "Findings",
+      "type": "array"
+    },
+    "hasMore": {
+      "title": "Hasmore",
+      "type": "boolean"
+    },
+    "markerBuckets": {
+      "items": {
+        "$ref": "#/$defs/AuditMarkerBucket"
+      },
+      "title": "Markerbuckets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "report",
+    "totalFindings",
+    "offset",
+    "limit",
+    "findings",
+    "hasMore",
+    "markerBuckets"
+  ],
+  "title": "AuditDetailPage",
+  "type": "object"
+}

@@ -1,0 +1,301 @@
+{
+  "$defs": {
+    "RecoverySummary": {
+      "additionalProperties": false,
+      "properties": {
+        "targetCount": {
+          "minimum": 0,
+          "title": "Targetcount",
+          "type": "integer"
+        },
+        "scannedTargetCount": {
+          "minimum": 0,
+          "title": "Scannedtargetcount",
+          "type": "integer"
+        },
+        "httpRequests": {
+          "minimum": 0,
+          "title": "Httprequests",
+          "type": "integer"
+        },
+        "missingBefore": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Missingbefore"
+        },
+        "inserted": {
+          "minimum": 0,
+          "title": "Inserted",
+          "type": "integer"
+        },
+        "newlyPresent": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Newlypresent"
+        },
+        "remaining": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Remaining"
+        },
+        "failedTargets": {
+          "minimum": 0,
+          "title": "Failedtargets",
+          "type": "integer"
+        },
+        "deferredTargets": {
+          "minimum": 0,
+          "title": "Deferredtargets",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "targetCount",
+        "scannedTargetCount",
+        "httpRequests",
+        "missingBefore",
+        "inserted",
+        "newlyPresent",
+        "remaining",
+        "failedTargets",
+        "deferredTargets"
+      ],
+      "title": "RecoverySummary",
+      "type": "object"
+    },
+    "RecoveryTargetDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/RecoveryTargetIdentity"
+        },
+        "missingBefore": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Missingbefore"
+        },
+        "inserted": {
+          "minimum": 0,
+          "title": "Inserted",
+          "type": "integer"
+        },
+        "remaining": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Remaining"
+        },
+        "errorCode": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Errorcode"
+        }
+      },
+      "required": [
+        "target",
+        "missingBefore",
+        "inserted",
+        "remaining"
+      ],
+      "title": "RecoveryTargetDetail",
+      "type": "object"
+    },
+    "RecoveryTargetIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "minimum": 1,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "definitionHash": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Definitionhash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "definitionHash"
+      ],
+      "title": "RecoveryTargetIdentity",
+      "type": "object"
+    },
+    "RecoveryWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        },
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "graceSeconds": {
+          "const": 180,
+          "default": 180,
+          "title": "Graceseconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "RecoveryWindow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "runId": {
+      "pattern": "^[0-9a-f]{32}$",
+      "title": "Runid",
+      "type": "string"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "startedAt": {
+      "format": "date-time",
+      "title": "Startedat",
+      "type": "string"
+    },
+    "finishedAt": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Finishedat"
+    },
+    "execution": {
+      "enum": [
+        "running",
+        "succeeded",
+        "partial",
+        "failed"
+      ],
+      "title": "Execution",
+      "type": "string"
+    },
+    "trigger": {
+      "enum": [
+        "startup",
+        "periodic",
+        "manual"
+      ],
+      "title": "Trigger",
+      "type": "string"
+    },
+    "window": {
+      "$ref": "#/$defs/RecoveryWindow"
+    },
+    "summary": {
+      "$ref": "#/$defs/RecoverySummary"
+    },
+    "details": {
+      "items": {
+        "$ref": "#/$defs/RecoveryTargetDetail"
+      },
+      "maxItems": 128,
+      "title": "Details",
+      "type": "array"
+    },
+    "detailsTruncated": {
+      "title": "Detailstruncated",
+      "type": "boolean"
+    },
+    "errorCode": {
+      "anyOf": [
+        {
+          "maxLength": 100,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Errorcode"
+    }
+  },
+  "required": [
+    "runId",
+    "generatedAt",
+    "startedAt",
+    "finishedAt",
+    "execution",
+    "trigger",
+    "window",
+    "summary",
+    "details",
+    "detailsTruncated"
+  ],
+  "title": "CandleRecoveryState",
+  "type": "object"
+}

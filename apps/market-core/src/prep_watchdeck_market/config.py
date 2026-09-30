@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     state_dir: Path = Field(default_factory=_default_state_dir)
     log_level: str = "INFO"
     allow_nonstandard_database_target: bool = False
+    candle_recovery_enabled: bool = Field(
+        default=False, validation_alias="PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED"
+    )
 
     @field_validator("database_url")
     @classmethod

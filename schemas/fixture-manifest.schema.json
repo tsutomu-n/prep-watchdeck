@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "bundleId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "evidenceKind": {
+      "enum": [
+        "synthetic",
+        "observed"
+      ]
+    },
+    "execution": {
+      "enum": [
+        "completed",
+        "partial"
+      ]
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "venueInstrumentVersionId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "definitionHash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "definitionHash"
+      ]
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "start": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "end": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ]
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "startedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "finishedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "databaseSnapshotAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "method": {
+          "const": "read_only_repeatable_read"
+        },
+        "pointInTimeReplay": {
+          "const": false
+        }
+      },
+      "required": [
+        "startedAt",
+        "finishedAt",
+        "databaseSnapshotAt",
+        "method",
+        "pointInTimeReplay"
+      ]
+    },
+    "datasets": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "enum": [
+              "instrument",
+              "market-state",
+              "candles-1m",
+              "funding",
+              "recovery",
+              "audit"
+            ]
+          },
+          "availability": {
+            "enum": [
+              "included",
+              "empty",
+              "unavailable",
+              "not_requested"
+            ]
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 200
+          },
+          "rows": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "bytes": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "range": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "start": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": [
+                  "start",
+                  "end"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capturedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "name",
+          "availability",
+          "path",
+          "rows",
+          "bytes",
+          "sha256",
+          "range",
+          "capturedAt",
+          "reason"
+        ]
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "bundleId",
+    "evidenceKind",
+    "execution",
+    "target",
+    "window",
+    "capture",
+    "datasets",
+    "limitations"
+  ]
+}

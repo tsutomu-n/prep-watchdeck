@@ -10,6 +10,7 @@
 このindexは、現行production runtimeと、今後のWatchdeck製品境界を分けて案内する。
 
 開発中のMarkets workspaceは[実装計画](plans/active/markets-workspace/GOAL.md)と[再開記録](plans/active/markets-workspace/RESUME.md)を参照する。稼働releaseへの反映は別工程。
+保存足の品質機能は[実装計画](plans/active/prep-quality-completion/GOAL.md)と[再開記録](plans/active/prep-quality-completion/RESUME.md)、[受入台帳](plans/active/prep-quality-completion/acceptance.json)を参照する。
 固定されたmarket件数、PID、artifact時刻、test件数、benchmark値を将来の製品制約にしない。
 
 ## 最初に読む

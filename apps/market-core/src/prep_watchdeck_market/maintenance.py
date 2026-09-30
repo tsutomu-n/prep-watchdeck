@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any, cast
 
@@ -104,10 +104,38 @@ def _archive_dates(
             )
             if missing is not None:
                 candidates.add(missing)
+    candidates.update(_changed_candle_archive_dates(connection, today=today))
     catchup = sorted(candidates)[:MAX_ARCHIVE_CATCHUP_DATES_PER_RUN]
     if preferred_date not in catchup:
         catchup.append(preferred_date)
     return tuple(catchup)
+
+
+def _changed_candle_archive_dates(
+    connection: Connection[Any], *, today: date
+) -> tuple[date, ...]:
+    """Include bounded retained days whose saved candles arrived after confirmation."""
+    changed: set[date] = set()
+    earliest = today - timedelta(days=NORMALIZED_RETENTION.days)
+    for venue in ARCHIVE_VENUES:
+        manifests = connection.execute(
+            """
+                SELECT partition_date, confirmed_at
+                FROM archive_manifests
+                WHERE dataset = 'candle_1m' AND venue = %s
+                  AND status = 'confirmed' AND superseded_at IS NULL
+                  AND partition_date >= %s AND partition_date < %s
+                ORDER BY partition_date
+            """,
+            (venue, earliest, today),
+        ).fetchall()
+        for day, confirmed_at in manifests:
+            if day in changed:
+                continue
+            _, latest = _partition_stats(connection, "candle_1m", venue, day)
+            if latest is not None and latest > confirmed_at:
+                changed.add(day)
+    return tuple(sorted(changed))
 
 
 def _oldest_unarchived_date(

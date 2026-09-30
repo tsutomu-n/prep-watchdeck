@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "mappingId": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    },
+    "evidenceKind": {
+      "enum": [
+        "synthetic",
+        "observed"
+      ]
+    },
+    "checkedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checkedBy": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "native": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "venue": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "source_symbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "venue_instrument_version_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "definition_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "base_asset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "quote_asset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "settle_asset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "price_kind": {
+          "const": "trade"
+        },
+        "interval_seconds": {
+          "const": 60
+        }
+      },
+      "required": [
+        "venue",
+        "source_symbol",
+        "venue_instrument_version_id",
+        "definition_sha256",
+        "base_asset",
+        "quote_asset",
+        "settle_asset",
+        "price_kind",
+        "interval_seconds"
+      ]
+    },
+    "provider": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "exchange": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "rawSymbol": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "coin": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "const": "PERPETUAL"
+        },
+        "interval": {
+          "const": "MINUTE"
+        },
+        "type": {
+          "const": "TRADE_SIDE_AGNOSTIC_AGG"
+        }
+      },
+      "required": [
+        "exchange",
+        "rawSymbol",
+        "coin",
+        "category",
+        "interval",
+        "type"
+      ]
+    },
+    "metadataSha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "rationale": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 2000
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "mappingId",
+    "evidenceKind",
+    "checkedAt",
+    "checkedBy",
+    "native",
+    "provider",
+    "metadataSha256",
+    "rationale"
+  ]
+}
