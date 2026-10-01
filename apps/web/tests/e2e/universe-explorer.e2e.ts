@@ -105,8 +105,8 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   const detailBack = page.getByRole("button", { name: "一覧へ戻る", exact: true });
   if (await detailBack.isVisible()) await expect(detailBack).toBeFocused();
   else await expect(selected).toBeFocused();
-  await expect(page.getByRole("link", { name: "hyperliquid · BTC のnative詳細" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "bitget · ETHUSDT のnative詳細" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Hyperliquid · BTC を確認" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Bitget · ETHUSDT を確認" })).toHaveCount(0);
   const noteSummary = page.getByText("この参照市場の観測メモ", { exact: true });
   await noteSummary.focus();
   await noteSummary.press("Enter");
@@ -155,7 +155,7 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
     await page.goForward();
     await expect(detailBack).toBeVisible();
   }
-  const nativeLink = page.getByRole("link", { name: "bitget · BTCUSDT のnative詳細" });
+  const nativeLink = page.getByRole("link", { name: "Bitget · BTCUSDT を確認" });
   await nativeLink.focus();
   await nativeLink.press("Enter");
   await expect(page.getByRole("region", { name: "価格・出来高" })).toContainText("bitget:BTCUSDT");
@@ -317,7 +317,7 @@ test.afterEach(async ({ page }) => {
   expect(pageErrors.get(page) ?? [], "ブラウザの未処理例外").toEqual([]);
 });
 
-test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
+test("Universe Explorerの主要flowを操作できる", async ({ page }, testInfo) => {
   await page.goto("/?mode=native");
 
   await expect(page.getByRole("heading", { name: "取引所別" })).toBeVisible();
@@ -338,6 +338,11 @@ test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
     await expect(page.getByRole("heading", { name: "銘柄一覧" })).toBeHidden();
     await expect(page.locator("#inspector-title")).toBeFocused();
   }
+  await expect(page.getByLabel("選択契約のデータ元")).toContainText("Hyperliquidの公開データ");
+  await expect(page.getByLabel("選択契約の主要指標")).toContainText("JST 00:00基準");
+  await expect(page.getByLabel("選択契約の主要指標")).toContainText("直近15分の変化");
+  await expect(page.locator(".inspector .l1-block")).not.toHaveAttribute("open");
+  await page.screenshot({ path: testInfo.outputPath("trader-native-detail.png") });
   await openSection(page, "選択データの監視状態");
   await expect(page.getByText("詳細データを要求しました", { exact: true })).toBeVisible();
   await expect
@@ -1680,7 +1685,7 @@ test("参照メモは出所と時刻を保存しXSS文字列を実行せずnativ
   expect(await page.evaluate(() => (window as unknown as { __xss?: number }).__xss)).toBeUndefined();
   const notes = await (await page.request.get("/api/market-past-notes?venueInstrumentId=bitget:BTCUSDT")).json();
   expect(notes.notes[0].context).toMatchObject({ view: "reference", venueInstrumentId: "bitget:BTCUSDT", reference: { source: "bybit", symbol: "BTCUSDT", period: "15m", returnPct: 2.125 } });
-  await page.getByRole("link", { name: "bitget · BTCUSDT のnative詳細" }).click();
+  await page.getByRole("link", { name: "Bitget · BTCUSDT を確認" }).click();
   await expect(page.locator(".note-list")).toContainText("保存時の参照: bybit");
 });
 
@@ -1702,6 +1707,9 @@ test("native L1は120秒境界とhidden復帰でもreadyを残さずFundingを�
   const metricsPanel = page.getByRole("region", { name: "追加の市場変化指標" });
   await page.clock.install({ time: baseline });
   await page.goto(BTC_NATIVE_DETAIL);
+  if (await page.evaluate(() => matchMedia("(max-width: 48rem)").matches)) {
+    await expect(page.getByRole("button", { name: "一覧へ戻る", exact: true })).toBeVisible();
+  }
   const mobile = await showMarketList(page);
   await openSection(page, "絞り込み条件");
   await page.getByRole("button", { name: "行順を固定", exact: true }).click();

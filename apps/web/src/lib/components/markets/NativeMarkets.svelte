@@ -174,6 +174,9 @@
     auditDetail.report.series?.quoteAsset === selectedInstrument.quoteAsset &&
     auditDetail.report.series?.settleAsset === selectedInstrument.settleAsset));
   let selectedMetrics = $derived(selectedInstrument ? metricFor(selectedInstrument) : null);
+  let selectedVenueName = $derived(selectedInstrument?.venue === "bitget" ? "Bitget"
+    : selectedInstrument?.venue === "hyperliquid" ? "Hyperliquid" : "Aster");
+  let selectedOiObservedAt = $derived(selectedMetrics?.oiChange["15m"]?.endObservedAt ?? null);
 
   function metricFor(item: UniverseInstrumentArtifact): MarketMetricRow | null {
     if (!metrics || Math.abs(priceNow - Date.parse(metrics.generatedAt)) > 120_000) return null;
@@ -1036,14 +1039,23 @@
         {#if selectedInstrument}
           <div class="instrument-heading">
             <div>
-              <p>{selectedInstrument.venue}</p>
+              <p>確認する取引所 · {selectedVenueName}</p>
               <h2 id="inspector-title" tabindex="-1">{selectedInstrument.baseAsset} PERP</h2>
-              <span class="primary-price">{formatPrice(selectedInstrument.markPrice)} <small>Mark</small></span>
+              <span class="contract-symbol">{selectedInstrument.sourceSymbol}</span>
+              <span class="primary-price">{formatPrice(selectedInstrument.markPrice)} <small>{selectedInstrument.quoteAsset} · Mark</small></span>
               <span class="coverage-label">{coverageLabel(selectedInstrument, groupCounts)}</span>
             </div>
-            <span class:quality-risk={selectedInstrument.quality !== "ready"}>
+            <span class="instrument-quality" class:quality-risk={selectedInstrument.quality !== "ready"}>
               {statusLabel(selectedInstrument.quality)}
+              <small>{formatAgeSeconds(selectedInstrument.ageSeconds)}</small>
             </span>
+          </div>
+
+          <div class="venue-context" aria-label="選択契約のデータ元">
+            <p><strong>{selectedVenueName}の公開データ</strong> · 価格・Funding・OI・チャート</p>
+            <p>価格表示 {selectedInstrument.quoteAsset} / 決済 {selectedInstrument.settleAsset}
+              <span class:quality-risk={selectedInstrument.quality !== "ready"}>{selectedInstrument.sourceAt ? `配信時刻 ${formatTimestamp(selectedInstrument.sourceAt)} JST` : "配信時刻は未提供"}</span>
+            </p>
           </div>
 
           {#if selectedInstrument.qualityReasons.length > 0 || selectedInstrument.errorCode}
@@ -1057,23 +1069,32 @@
             </div>
           {/if}
 
-          <section class="daily-change-block" aria-labelledby="daily-change-title">
-            <div class="subheading">
-              <h3 id="daily-change-title">約定価格の騰落率</h3>
-              <span>JST {referenceTime}基準</span>
+          <dl class="primary-metrics" aria-label="選択契約の主要指標">
+            <div>
+              <dt>約定騰落率 <small>JST {referenceTime}基準</small></dt>
+              <dd><PriceChangeValue
+                state={priceChanges[selectedInstrument.venueInstrumentId]}
+                {referenceTime}
+                versionId={selectedInstrument.venueInstrumentVersionId}
+                now={priceNow}
+                supported={selectedInstrument.active}
+              /></dd>
             </div>
-            <PriceChangeValue
-              state={priceChanges[selectedInstrument.venueInstrumentId]}
-              {referenceTime}
-              versionId={selectedInstrument.venueInstrumentVersionId}
-              now={priceNow}
-              supported={selectedInstrument.active}
-              detailed
-            />
-            <details><summary>計算基準</summary>
-              <p>指定時刻直前の1分足終値から計算。同じ取引所の約定価格を使用し、約1分ごとに更新します。</p>
-            </details>
-          </section>
+            <div>
+              <dt>Funding <small>1時間あたり</small></dt>
+              <dd>{formatRate(selectedInstrument.fundingRatePerHour)}</dd>
+            </div>
+            <div>
+              <dt>Spread <small>Bid / Askの差</small></dt>
+              <dd>{formatFinite(spreadBps(selectedInstrument.bestBid, selectedInstrument.bestAsk), 2)} <small>bps</small></dd>
+            </div>
+            <div>
+              <dt>数量OI <small>直近15分の変化</small></dt>
+              <dd>{metricLabel(selectedMetrics?.oiChange["15m"], 120)}</dd>
+              <small class="metric-timing">{selectedOiObservedAt ? `OI観測 ${formatTimestamp(selectedOiObservedAt)} JST` : "OI観測時刻なし"}</small>
+            </div>
+          </dl>
+          {#if metricsError}<p class="metrics-warning operational-warning" role="status">{metricsError}。追加指標の取得時刻と鮮度を確認してください。</p>{/if}
 
           {#if selectionError}<p class="selection-warning operational-warning" role="alert">{selectionError}</p>{/if}
           {#if selectedInstrument.active}
@@ -1096,20 +1117,22 @@
             </section>
           {/if}
 
-          <section class="reference-block" aria-labelledby="median-title">
-            <h3 id="median-title">参考mark中央値</h3>
-            <strong>{formatPrice(selectedInstrument.referenceMarkMedian.value)}</strong>
-            <p>Parity仮定・reference only。{selectedInstrument.referenceMarkMedian.venueCount} Venue。</p>
-            <details><summary>参考値の読み方</summary><p>{market.universe.parityAssumption.statement}</p></details>
-            {#if selectedInstrument.referenceMarkMedian.status !== "ready"}
-              <p class="neutral-note">
-                算出不能: {reasonLabel(selectedInstrument.referenceMarkMedian.unavailableReason ?? "insufficient_venues")}
-              </p>
-              <details class="technical-details">
-                <summary>技術情報</summary>
-                <code>{selectedInstrument.referenceMarkMedian.unavailableReason ?? "reason_missing"}</code>
-              </details>
-            {/if}
+          <section class="daily-change-block" aria-labelledby="daily-change-title">
+            <div class="subheading">
+              <h3 id="daily-change-title">約定価格の騰落率</h3>
+              <span>JST {referenceTime}基準</span>
+            </div>
+            <PriceChangeValue
+              state={priceChanges[selectedInstrument.venueInstrumentId]}
+              {referenceTime}
+              versionId={selectedInstrument.venueInstrumentVersionId}
+              now={priceNow}
+              supported={selectedInstrument.active}
+              detailed
+            />
+            <details><summary>計算基準</summary>
+              <p>指定時刻直前の1分足終値から計算。同じ取引所の約定価格を使用し、約1分ごとに更新します。比較の基準時刻とチャートの時間足は別の設定です。</p>
+            </details>
           </section>
 
           <section class="reference-block" aria-label="追加の市場変化指標">
@@ -1118,13 +1141,34 @@
             {#if selectedMetrics}
               <p>数量OI: 15m {metricLabel(selectedMetrics.oiChange["15m"], 120)} · 1h {metricLabel(selectedMetrics.oiChange["1h"], 120)}</p>
               <p>確定終値: 15m {metricLabel(selectedMetrics.tradeChange["15m"])} · 1h {metricLabel(selectedMetrics.tradeChange["1h"])} · 24h {metricLabel(selectedMetrics.tradeChange["24h"])}</p>
-              <p>確定足の共通cutoff: {formatTimestamp(metrics?.candleCutoff ?? null)}。L1と足の鮮度は別々に判定します。</p>
+              <p>確定終値の比較締切: {formatTimestamp(metrics?.candleCutoff ?? null)} JST。数量OIの観測時刻とは別です。</p>
+              <p>— は未取得・比較不能・期限切れなどを示します。価格と各指標の鮮度は別々に判定します。</p>
             {:else}
               <p>{metricsError ?? "追加指標は準備中です"}</p>
             {/if}
           </section>
 
-          <section class="l1-block" aria-labelledby="l1-title">
+          <section class="reference-block" aria-labelledby="median-title">
+            <details class="market-context-details">
+              <summary>取引所をまたぐ参考Mark中央値</summary>
+              <h3 id="median-title">参考mark中央値</h3>
+              <strong>{formatPrice(selectedInstrument.referenceMarkMedian.value)}</strong>
+              <p>Parity仮定・reference only。{selectedInstrument.referenceMarkMedian.venueCount} Venue。</p>
+              <p>{market.universe.parityAssumption.statement}</p>
+            </details>
+            {#if selectedInstrument.referenceMarkMedian.status !== "ready"}
+              <p class="neutral-note">
+                参考Mark中央値は算出不能: {reasonLabel(selectedInstrument.referenceMarkMedian.unavailableReason ?? "insufficient_venues")}
+              </p>
+              <details class="technical-details">
+                <summary>技術情報</summary>
+                <code>{selectedInstrument.referenceMarkMedian.unavailableReason ?? "reason_missing"}</code>
+              </details>
+            {/if}
+          </section>
+
+          <details class="l1-block market-context-details">
+            <summary>取引所の価格・Funding・契約情報</summary>
             <div class="subheading"><h3 id="l1-title">Venue L1</h3><span>{selectedInstrument.sourceSymbol}</span></div>
             <dl class="metric-grid">
               <div><dt>Mark</dt><dd>{formatPrice(selectedInstrument.markPrice)}</dd></div>
@@ -1143,7 +1187,7 @@
               <div><dt>Settle</dt><dd>{selectedInstrument.settleAsset}</dd></div>
               <div><dt>Collateral</dt><dd>{selectedInstrument.collateralAsset ?? "判定不能"}</dd></div>
             </dl>
-          </section>
+          </details>
 
           <details class="selection-state">
             <summary>選択データの監視状態</summary>
@@ -1376,6 +1420,23 @@
   .daily-change-block h3 { margin: 0; font-size: var(--type-heading-md-size); }
   .daily-change-block > :global(.price-change) { display: block; margin-top: var(--space-sm); }
   .daily-change-block p { margin: var(--space-sm) 0 0; color: var(--muted); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-leading); }
+  .venue-context { display: grid; gap: var(--space-xs); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--line); background: var(--surface); }
+  .venue-context p { margin: 0; color: var(--muted); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-leading); overflow-wrap: anywhere; }
+  .venue-context strong { color: var(--text); font-weight: 600; }
+  .venue-context span { display: block; margin-top: var(--space-xs); }
+  .contract-symbol { display: block; margin-top: var(--space-xs); color: var(--subtle); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
+  .instrument-heading > div { min-width: 0; }
+  .instrument-quality { flex-shrink: 0; font-size: var(--type-body-sm-size); text-align: right; }
+  .instrument-quality small { display: block; margin-top: var(--space-xs); color: var(--muted); font-size: var(--type-label-caps-size); }
+  .primary-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0; border-bottom: 1px solid var(--line-strong); background: var(--line); }
+  .primary-metrics > div { min-width: 0; padding: var(--space-sm) var(--space-md); background: var(--panel-solid); }
+  .primary-metrics dt small { display: block; margin-top: var(--space-xxs); color: var(--muted); font-size: var(--type-label-caps-size); }
+  .primary-metrics dd { margin-top: var(--space-xs); font-weight: var(--type-data-md-weight); }
+  .primary-metrics dd > small { color: var(--muted); font-size: var(--type-label-caps-size); font-weight: 500; }
+  .metric-timing { display: block; margin-top: var(--space-xs); color: var(--muted); font-size: var(--type-label-caps-size); overflow-wrap: anywhere; }
+  .metrics-warning { margin: 0; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--warning-border); font-size: var(--type-body-sm-size); }
+  .market-context-details { margin: 0; }
+  .market-context-details > summary { color: var(--subtle); }
   .empty-row { padding: var(--space-xl); color: var(--muted); text-align: center; }
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .instrument-heading { padding: var(--space-md); border-bottom: 1px solid var(--line-strong); background: var(--panel-selected); }

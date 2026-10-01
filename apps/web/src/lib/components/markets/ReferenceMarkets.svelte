@@ -363,6 +363,47 @@
     selectedViewId = ""; viewName = "";
   }
 
+  type Purpose = "market" | "movement" | "activity" | "favorites";
+  const purposes: { id: Purpose; label: string }[] = [
+    { id: "market", label: "市場全体" },
+    { id: "movement", label: "短期の値動き" },
+    { id: "activity", label: "売買代金の増加" },
+    { id: "favorites", label: "お気に入り監視" }
+  ];
+  const activePurpose = $derived.by((): Purpose | null => {
+    if (minimum !== 0 || search.trim() || includeUnranked || minRatio !== null ||
+      minDayPosition !== null || maxDayPosition !== null || lockedIds || ratioPeriod !== "15m") return null;
+    if (period === "24h" && order === "turnover" && sort === "server" &&
+      direction === "asc" && preset === "standard") return favoritesOnly ? "favorites" : "market";
+    if (!favoritesOnly && period === "15m" && preset === "movement") {
+      if (order === "gainers" && sort === "server" && direction === "asc") return "movement";
+      if (order === "turnover" && sort === "ratio15m" && direction === "desc") return "activity";
+    }
+    return null;
+  });
+  const purposeDescription = $derived(activePurpose === "market"
+    ? "直近24時間の売買代金順で、市場全体を確認。"
+    : activePurpose === "movement" ? "直近15分の上昇率順。15分・1時間・24時間の変化を並べて確認。"
+    : activePurpose === "activity" ? "15分の売買代金の平常比順。過去24時間内の中央値と比較し、履歴不足は末尾に表示。順位は売買代金順です。"
+    : activePurpose === "favorites" ? "お気に入りを直近24時間の売買代金順で確認。"
+    : "表示条件を調整中。目的別の表示を選ぶと検索・追加条件・行順固定を解除します。");
+
+  function applyPurpose(purpose: Purpose) {
+    const currentVenue = venue;
+    resetView();
+    venue = currentVenue;
+    ratioPeriod = "15m";
+    period = purpose === "movement" || purpose === "activity" ? "15m" : "24h";
+    order = purpose === "movement" ? "gainers" : "turnover";
+    favoritesOnly = purpose === "favorites";
+    preset = purpose === "movement" || purpose === "activity" ? "movement" : "standard";
+    if (purpose === "activity") { sort = "ratio15m"; direction = "desc"; }
+  }
+
+  function venueLabel(value: string) {
+    return value === "bitget" ? "Bitget" : value === "hyperliquid" ? "Hyperliquid" : "Aster";
+  }
+
   function referenceTarget(row: RankedRow): FavoriteTarget | null {
     if (!row.reference || row.mappingStatus !== "verified") return null;
     return {
@@ -414,7 +455,7 @@
           action: "saveView", id: selectedViewId || crypto.randomUUID(),
           name: viewName.trim(), expectedRevision: workspace.revision,
           view: {
-            mode: "reference", period, order, reference, minimum, search, venue,
+            mode: "reference", period, order, reference, minimum, search, venue, favoritesOnly,
             includeUnranked, ratioPeriod, minRatio, minDayPosition, maxDayPosition,
             sort, direction, preset
           }
@@ -445,6 +486,7 @@
       venue = ["all", "bitget", "hyperliquid", "aster"].includes(String(view.venue))
         ? view.venue as typeof venue : "all";
       includeUnranked = view.includeUnranked === true;
+      favoritesOnly = view.favoritesOnly === true;
       ratioPeriod = view.ratioPeriod === "1h" ? "1h" : "15m";
       minRatio = typeof view.minRatio === "number" ? view.minRatio : null;
       minDayPosition = typeof view.minDayPosition === "number" ? view.minDayPosition : null;
@@ -505,11 +547,26 @@
 <svelte:head><title>デイトレランキング | Prep Watchdeck</title></svelte:head>
 
 <main class="ranking-page">
+  {#if !query}<p class="notice" role="alert">売買代金の下限は0以上の数値を指定してください。</p>{/if}
+  {#if error}<p class="notice" role="status">{error} <button type="button" onclick={() => query && refresh(query)}>再試行</button></p>{/if}
+  {#if stale}<p class="notice" role="status">更新が停止しています。表示値は {data ? rankingTimestamp(data.cutoff) : ""} JST 時点です。</p>{/if}
+  {#if data?.rosterStale}<p class="notice">取扱い名簿の更新が止まっています。現在の上場状況は未確認です。</p>{/if}
+  {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
+
+  <div class="workspace">
+    <section class="ranking-list" class:mobile-hidden={mobileDetail} aria-labelledby="list-title">
   <div class="ranking-overview" class:mobile-hidden={mobileDetail}>
     <header class="topbar">
       <div><h1>ランキング</h1><p>取扱い銘柄を外部の参照契約で比較</p></div>
       <a class="reference-link" href="/settings">日次基準 · JST {reference}</a>
     </header>
+
+    <div class="purpose-switcher" role="group" aria-label="目的別の表示">
+      {#each purposes as purpose}
+        <button type="button" aria-pressed={activePurpose === purpose.id} onclick={() => applyPurpose(purpose.id)}>{purpose.label}</button>
+      {/each}
+    </div>
+    <p class="purpose-description">{purposeDescription}</p>
 
     <section class="controls" aria-label="ランキングの表示">
       <label>比較期間<select aria-label="ランキングの比較期間" bind:value={period}>
@@ -586,14 +643,6 @@
     </div>
   </div>
 
-  {#if !query}<p class="notice" role="alert">売買代金の下限は0以上の数値を指定してください。</p>{/if}
-  {#if error}<p class="notice" role="status">{error} <button type="button" onclick={() => query && refresh(query)}>再試行</button></p>{/if}
-  {#if stale}<p class="notice" role="status">更新が停止しています。表示値は {data ? rankingTimestamp(data.cutoff) : ""} JST 時点です。</p>{/if}
-  {#if data?.rosterStale}<p class="notice">取扱い名簿の更新が止まっています。現在の上場状況は未確認です。</p>{/if}
-  {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
-
-  <div class="workspace">
-    <section class="ranking-list" class:mobile-hidden={mobileDetail} aria-labelledby="list-title">
       <div class="list-heading"><h2 id="list-title">{order === "gainers" ? "上昇率" : order === "losers" ? "下落率" : "売買代金"}ランキング</h2><span>{visibleRows.length} 件</span></div>
       {#if addedRows}<p class="search-note">新しい行が {addedRows} 件あります。固定解除で表示します。</p>{/if}
       <div class="table-scroll" aria-busy={loading} bind:this={tableScroll}
@@ -683,7 +732,22 @@
     <section class="chart-section" class:mobile-hidden={!mobileDetail} aria-labelledby="chart-title">
       <button class="mobile-only detail-back" type="button" bind:this={detailBack} onclick={() => window.history.back()}>一覧へ戻る</button>
       {#if selected}
-        <div class="selected-heading"><span>選択中の参照契約</span><h2 id="chart-title">{selected.asset}</h2><p>{referenceLabel(selected)}</p></div>
+        <div class="selected-heading">
+          <div><span>選択中の参照契約</span><h2 id="chart-title">{selected.asset}</h2></div>
+          <p class="comparison-time">{#if data}比較値 · JST {rankingTimestamp(data.cutoff)}<br />{stale ? "更新停止・過去時点の値" : "確定1分足で比較"}{:else}比較条件を取得中{/if}</p>
+        </div>
+        <section class="source-context" aria-label="参照市場と確認する取引所">
+          <div class="reference-source"><span>ランキング・チャートの参照</span><strong>{referenceLabel(selected)}</strong><small>この参照契約の価格・売買代金です。</small></div>
+          <div class="native-source"><span>確認する取引所</span>
+            <div class="native-candidates" aria-label="現在の取扱い契約">
+              {#if !selectedRemoved}
+                {#each nativeCandidates as instrument (instrument.venueInstrumentId)}
+                  <a href={nativeHref(instrument.venueInstrumentId, instrument.venueInstrumentVersionId)}>{venueLabel(instrument.venue)} · {instrument.sourceSymbol} を確認</a>
+                {:else}<p>現在の取扱い情報で、同一契約として確認できる移動先がありません。</p>{/each}
+              {:else}<p>対応表から削除されたため、取引所別への移動を停止しています。</p>{/if}
+            </div>
+          </div>
+        </section>
         <div class="native-candidates">
           <button type="button" onclick={() => moveSelected(-1)} disabled={visibleRows.findIndex((row) => row.id === selectedId) <= 0}>前の銘柄</button>
           <button type="button" onclick={() => moveSelected(1)} disabled={visibleRows.findIndex((row) => row.id === selectedId) >= visibleRows.length - 1}>次の銘柄</button>
@@ -691,7 +755,7 @@
         {#if data && !selectedRemoved}
           <dl class="selected-metrics primary-metrics" data-testid="selected-primary-metrics">
             <div><dt>参照終値 · USDT</dt><dd>{selected.referenceClose.status === "ready" ? formatPrice(selected.referenceClose.value) : "未取得"}</dd></div>
-            <div><dt>騰落率 · {periodLabel}</dt><dd class:up={(selected.returnPct ?? 0) > 0} class:down={(selected.returnPct ?? 0) < 0}>{selected.returnPct !== null ? formatPriceChange(selected.returnPct) : rankingRowStateLabel(selected)}</dd></div>
+            <div><dt>騰落率 · {periodLabel === "15分" || periodLabel === "1時間" ? `直近${periodLabel}` : periodLabel}</dt><dd class:up={(selected.returnPct ?? 0) > 0} class:down={(selected.returnPct ?? 0) < 0}>{selected.returnPct !== null ? formatPriceChange(selected.returnPct) : rankingRowStateLabel(selected)}</dd></div>
             <div><dt>売買代金 · USDT</dt><dd>{selected.quoteTurnover !== null ? selected.quoteTurnover.toLocaleString("en-US") : "未取得"}</dd></div>
           </dl>
         {/if}
@@ -711,15 +775,6 @@
             {#each ["15m", "1h", "24h"] as window}<div><dt>{window === "15m" ? "15分" : window === "1h" ? "1時間" : "24時間"}騰落率</dt><dd>{selected.windows[window as "15m" | "1h" | "24h"].returnPct === null ? "未取得" : formatPriceChange(selected.windows[window as "15m" | "1h" | "24h"].returnPct!)}</dd></div>{/each}
           </dl>
         {/if}
-        <div class="native-candidates" aria-label="現在の取扱い契約">
-          {#each nativeCandidates as instrument (instrument.venueInstrumentId)}
-            <a href={nativeHref(instrument.venueInstrumentId, instrument.venueInstrumentVersionId)}>
-              {instrument.venue} · {instrument.sourceSymbol} のnative詳細
-            </a>
-          {:else}
-            <p>現在の名簿でIDとversionが一致するnative契約はありません。</p>
-          {/each}
-        </div>
         {#if noteTarget && selected.reference && data && !selectedRemoved}
           <details>
             <summary>この参照市場の観測メモ</summary>
@@ -750,6 +805,21 @@
 
 <style>
   .ranking-page { padding: var(--space-page); color: var(--text); max-width: 1900px; margin: 0 auto; }
+  .purpose-switcher { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-xs); padding-top: var(--space-md); }
+  .purpose-switcher button { min-height: var(--control-height-touch); padding: var(--space-xs); font-weight: 700; }
+  .ranking-page .purpose-switcher button[aria-pressed="true"] { color: var(--focus-on); background: var(--focus); border-color: var(--focus); }
+  .purpose-description { margin: var(--space-xs) 0 var(--space-sm); color: var(--muted); font-size: var(--type-label-caps-size); line-height: 1.5; }
+  .source-context { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--line); }
+  .source-context > div { min-width: 0; }
+  .source-context span, .source-context small { display: block; color: var(--muted); font-size: var(--type-label-caps-size); line-height: 1.5; }
+  .reference-source strong { display: block; margin: var(--space-xs) 0; font-size: var(--type-data-md-size); overflow-wrap: anywhere; }
+  .native-source .native-candidates { padding: var(--space-xs) 0 0; gap: var(--space-xs); }
+  .native-source .native-candidates a { min-height: var(--control-height-dense); box-sizing: border-box; padding: var(--space-xs) var(--space-sm); text-underline-offset: 3px; }
+  .native-source .native-candidates p { margin: 0; line-height: 1.5; }
+  .primary-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-md); padding: var(--space-md) 0; margin: 0; border-bottom: 1px solid var(--line); }
+  .selected-metrics.primary-metrics > div { display: block; min-width: 0; }
+  .primary-metrics dt { color: var(--muted); font-size: var(--type-label-caps-size); }
+  .selected-metrics.primary-metrics dd { font-size: var(--type-data-lg-size); line-height: 1.4; margin-top: var(--space-xs); }
   .ranking-page :where(a, button, input, select, summary):focus-visible { outline: var(--focus-ring-width) solid var(--focus); outline-offset: var(--focus-ring-offset); }
   .topbar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: 0 0 var(--space-sm); border-bottom: 1px solid var(--line-strong); }
   h1 { margin: 0; font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
@@ -812,8 +882,10 @@
   .coverage dl { display: grid; gap: var(--space-xs); }.coverage dl div { display: flex; justify-content: space-between; }.coverage dd { font-variant-numeric: tabular-nums; }
   .chart-section { position: sticky; top: var(--space-sm); }
   .selected-heading { border-bottom: 1px solid var(--line-strong); padding: var(--space-sm) 0; }
-  .selected-heading > span { color: var(--muted); font-size: var(--type-label-caps-size); }
+  .selected-heading { display: flex; justify-content: space-between; gap: var(--space-md); align-items: center; }
+  .selected-heading > div > span { color: var(--muted); font-size: var(--type-label-caps-size); }
   .selected-heading h2 { margin: var(--space-xs) 0; font-size: var(--type-title-lg-size); }
+  .selected-heading .comparison-time { text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .selected-heading p { margin: var(--space-xs) 0; color: var(--subtle); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
   .native-candidates { display: flex; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-sm) 0; }
   .native-candidates a { display: flex; align-items: center; color: var(--focus); border: 1px solid var(--line-strong); padding: var(--space-sm); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
@@ -822,7 +894,18 @@
   .chart-empty { display: flex; flex-direction: column; justify-content: center; min-height: 320px; padding: var(--space-xl); border: 1px solid var(--line); background: var(--panel); }
   .chart-empty > span, .chart-empty p { color: var(--muted); font-size: var(--type-body-sm-size); line-height: 1.7; }.chart-empty h2, .chart-empty h3 { font-size: var(--type-heading-md-size); }
   .mobile-only { display: none; }
+  @media (min-width: 961px) and (max-width: 1300px) {
+    .controls, .advanced-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .purpose-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
   @media (max-width: 960px) {
+    .purpose-switcher { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-top: var(--space-sm); }
+    .source-context { grid-template-columns: minmax(0, 1fr); gap: var(--space-sm); }
+    .native-source .native-candidates a { min-height: var(--control-height-touch); }
+    .primary-metrics { gap: var(--space-sm); }
+    .selected-metrics.primary-metrics dd { font-size: var(--type-data-md-size); }
+    .selected-heading .comparison-time { font-size: var(--type-label-caps-size); }
+
     .workspace { grid-template-columns: minmax(0, 1fr); gap: 0; }.chart-section { position: static; }
     .mobile-hidden, .desktop-only { display: none; }
     .mobile-only { display: block; }
