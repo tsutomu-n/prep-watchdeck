@@ -110,6 +110,17 @@ def test_no_data_is_unverified(tmp_path, empty_right):
     assert report["compared_values"] == 0
 
 
+def test_unverified_retains_a_known_price_difference(tmp_path):
+    left, right = snapshot(), snapshot()
+    left["records"] = left["records"][:1]
+    right["records"] = right["records"][:1]
+    right["records"][0]["close_price"] = "100.5"
+    report = run(tmp_path, left, right)
+    assert report["outcome"] == "unverified"
+    assert report["compared_values"] == 4
+    assert any(item["field"] == "close_price" for item in report["differences"])
+
+
 def test_duplicate_rows_do_not_overwrite_or_double_count(tmp_path):
     left, right = snapshot(), snapshot()
     duplicate = copy.deepcopy(right["records"][2])

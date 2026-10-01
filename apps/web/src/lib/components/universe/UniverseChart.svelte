@@ -66,6 +66,7 @@
   let volumes: ISeriesApi<"Histogram"> | null = null;
   let markerPlugin: ISeriesMarkersPluginApi<Time> | null = null;
   let activeAuditMarkers = new Map<number, DisplayAuditMarker>();
+  let visibleAuditMarkerCount = $state(0);
   let handledJumpSequence = -1;
   let context: HistoryContext | null = null;
   let renderedContext: HistoryContext | null = null;
@@ -320,6 +321,7 @@
       const loadedTimes = new Set(bars.map((bar) => Date.parse(bar.bucketAt)));
       const visibleMarkers = markerBuckets.filter((marker) => loadedTimes.has(Date.parse(marker.bucketAt)));
       activeAuditMarkers = new Map(visibleMarkers.map((marker) => [Date.parse(marker.bucketAt), marker]));
+      visibleAuditMarkerCount = visibleMarkers.length;
       const markerColor = container
         ? getComputedStyle(container).getPropertyValue("--warning").trim() || "#b96f11"
         : "#b96f11";
@@ -426,6 +428,7 @@
       {/if}
     </div>
     <p>時刻 JST · {bars.length}本 · 過去へスクロールして履歴を追加</p>
+    {#if auditMarkersEnabled}<p role="status">保存足照合の印: 読み込んだ足で{visibleAuditMarkerCount}か所</p>{/if}
     {#if timeframe === "24h"}<p>日足の区切り 09:00 JST</p>{/if}
     {#if bars.length >= maxLoadedBars}<p>表示上限10,000本です。時間足を大きくすると長い期間を確認できます。</p>{/if}
     {#if incompleteCount > 0}<p>未確定の足 {incompleteCount}本を含みます。</p>{/if}

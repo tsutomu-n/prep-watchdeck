@@ -87,6 +87,8 @@ echo "== market-core: pyrefly check =="
 uv run pyrefly check
 cd "$ROOT_DIR"
 uv run --package prep-watchdeck-market python scripts/market/generate-metrics-schema.py --check
+uv run --package prep-watchdeck-market python scripts/market/generate-recovery-schema.py --check
+uv run --package prep-watchdeck-market python scripts/market/generate-audit-schemas.py --check
 
 echo "== ranking-core: tests, lint, types and schemas =="
 cd "$ROOT_DIR/apps/ranking-core"

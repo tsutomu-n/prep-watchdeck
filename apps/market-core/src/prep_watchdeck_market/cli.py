@@ -2,10 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import signal
+import sys
 from contextlib import suppress
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
-from typing import Annotated, Literal, Never, cast
+from typing import Annotated, Any, Literal, Never, cast
 
 import aiohttp
 import typer
@@ -27,11 +28,105 @@ from prep_watchdeck_market.fixture_bundle import verify_fixture as verify_fixtur
 from prep_watchdeck_market.funding_runtime import run_funding_sync_once
 from prep_watchdeck_market.funding_store import FundingStoreError
 from prep_watchdeck_market.maintenance import MaintenanceError, run_daily_maintenance
+from prep_watchdeck_market.reference_openmarket import (
+    OpenMarketClient,
+    ReferenceError,
+)
+from prep_watchdeck_market.reference_openmarket import (
+    _key as reference_api_key,
+)
+from prep_watchdeck_market.reference_openmarket import (
+    reference_markets as lookup_reference_markets,
+)
+from prep_watchdeck_market.reference_openmarket import (
+    reference_snapshot as create_reference_snapshot,
+)
 from prep_watchdeck_market.runtime_lock import RuntimeLockUnavailable, exclusive_runtime_lock
 from prep_watchdeck_market.service import MarketServiceError, run_market_service
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 console = Console()
+
+
+@app.command("reference-markets")
+def reference_markets_command(
+    output: Annotated[Path, typer.Option("--output")],
+    venue: str = typer.Option(..., "--venue"),
+    symbol: str = typer.Option(..., "--symbol"),
+) -> None:
+    """Lookup bounded provider metadata for one current native contract."""
+    try:
+        key = reference_api_key()
+        settings = _load_settings()
+
+        async def execute() -> dict[str, Any]:
+            async with aiohttp.ClientSession() as session:
+                client = OpenMarketClient(session, key)
+                return await lookup_reference_markets(
+                    settings.database_url, client, venue=venue, symbol=symbol, output=output
+                )
+
+        result = asyncio.run(execute())
+    except (ReferenceError, OSError, ValueError) as exc:
+        code = exc.code if isinstance(exc, ReferenceError) else "reference_input_invalid"
+        console.print(
+            f"[red]{code}[/red]"
+            + (
+                " set OPENMARKET_API_KEY in the process environment"
+                if code == "reference_auth_missing"
+                else ""
+            )
+        )
+        raise typer.Exit(code=2) from exc
+    console.print(
+        f"metadata={output} candidates={len(result['candidates'])} "
+        f"complete={result['metadataComplete']}"
+    )
+    if not result["metadataComplete"]:
+        raise typer.Exit(code=3)
+
+
+@app.command("reference-snapshot")
+def reference_snapshot_command(
+    mapping: Annotated[Path, typer.Option("--mapping")],
+    output_dir: Annotated[Path, typer.Option("--output-dir")],
+    since: str = typer.Option(..., "--since"),
+    until: str = typer.Option(..., "--until"),
+) -> None:
+    """Fetch and normalize an exact manually mapped OpenMarket one-minute window."""
+    try:
+        key = reference_api_key()
+        settings = _load_settings()
+
+        async def execute() -> tuple[Path, str]:
+            async with aiohttp.ClientSession() as session:
+                client = OpenMarketClient(session, key)
+                path, receipt = await create_reference_snapshot(
+                    settings.database_url,
+                    settings.state_dir,
+                    client,
+                    mapping_path=mapping,
+                    since=datetime.fromisoformat(since),
+                    until=datetime.fromisoformat(until),
+                    output_dir=output_dir,
+                )
+                return path, receipt.execution
+
+        path, execution = asyncio.run(execute())
+    except (ReferenceError, OSError, ValueError) as exc:
+        code = exc.code if isinstance(exc, ReferenceError) else "reference_input_invalid"
+        console.print(
+            f"[red]{code}[/red]"
+            + (
+                " set OPENMARKET_API_KEY in the process environment"
+                if code == "reference_auth_missing"
+                else ""
+            )
+        )
+        raise typer.Exit(code=2) from exc
+    console.print(f"reference={path} execution={execution}")
+    if execution != "completed":
+        raise typer.Exit(code=3)
 
 
 @app.command("export-fixture")
@@ -124,7 +219,7 @@ def recover_candles(
         console.print("[red]candle recovery unavailable[/red]")
         raise typer.Exit(code=2) from exc
     if json_output:
-        console.print(state.model_dump_json(by_alias=True))
+        sys.stdout.write(state.model_dump_json(by_alias=True) + "\n")
     else:
         summary = state.summary
         console.print(
@@ -329,9 +424,10 @@ async def _serve(database_url: str, state_dir: Path, *, recovery_enabled: bool =
             continue
         installed_signals.append(signal_number)
     try:
-        await run_market_service(
-            database_url, state_dir, stop_event, recovery_enabled=recovery_enabled
-        )
+        if recovery_enabled:
+            await run_market_service(database_url, state_dir, stop_event, recovery_enabled=True)
+        else:
+            await run_market_service(database_url, state_dir, stop_event)
     finally:
         for signal_number in installed_signals:
             with suppress(NotImplementedError):

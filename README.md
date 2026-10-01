@@ -1,8 +1,8 @@
 # prep-watchdeck
 
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-09-16T22:14:16+09:00`
-- 検証: `2026-09-16T22:14:16+09:00`
+- 更新: `2026-09-30T21:04:03+09:00`
+- 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
 ---
@@ -27,6 +27,11 @@ Perp Universe Explorerです。価格、Funding、OI、24時間出来高、鮮�
 [Decision 0012](docs/decisions/0012-product-evolution-boundary.md)を正本とします。
 
 初めて現在のPerp runtimeを操作する場合は[ユーザーマニュアル](docs/current/user-manual.md)から読んでください。
+
+このRepositoryの作業branchには、保存1分足の欠損回収、手動照合、取得元・品質表示、
+OpenMarket比較取得、Core用fixture出力の実装があります。稼働releaseへの配置と実Provider受入は
+sourceの実装・隔離検証と別に確認します。操作と状態の読み方は
+[現行運用](docs/current/operations.md)と[現行データ契約](docs/current/data-contracts.md)を参照してください。
 
 ## 必要なもの
 

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-29T06:55:18+09:00`
-- 検証: `2026-09-29T06:55:18+09:00`
+- 更新: `2026-09-30T21:04:03+09:00`
+- 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
 ---
@@ -200,3 +200,18 @@ WebSocketは全体6接続以内、再試行backoffは最大60秒、
 再起動後は現在のDBから新しい世代を発行し、初回の比較元はなしとする。
 平常比とJST当日高安位置は、世代作成時のOHLC・quote turnoverから計算して固定し、
 指標を読むための追加REST、保存期間拡大、別Provider、Widgetデータ取得は加えない。
+
+## 保存1分足の品質補助lane
+
+Market CoreのRecoveryは既存Postgresの現行契約と保存`candle_1m`を読み、UTC1分の完全な時間格子から
+内部穴も検出する。手動CLIは既定でscanのみ。`PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED`の既定はfalseで、
+有効時だけMarket Service内の独立taskが起動時と15分境界で実行する。専用lock、HTTP件数・時間・
+page上限を持ち、同じ版と定義hashを再確認して欠損行だけ挿入する。挿入時には既存artifactとmetricsの
+更新を通知する。完了runは`collector_runs`と任意の`candle-recovery-state.json`へ記録する。
+過去日の遅着足は次のmaintenanceで確認済みParquetを再発行してからretention判定する。
+
+Auditは手動の保存snapshot二つを固定copyして比較し、不変run directoryと最新indexを発行する。
+Webの二つのGET routeは状態ファイルを検証して返すだけで、DB照会・再照合・Provider取得をしない。
+OpenMarketは手動CLIでのみexact mappingを確かめて取得し、nativeの保存足へ書き戻さない。
+Fixture Exportは1契約・1版・1窓をread-only repeatable-read DB transactionで固定し、任意の
+Recovery/Auditファイルをtransaction後に別時刻として添付する。Ranking Coreへ値を書き込まない。

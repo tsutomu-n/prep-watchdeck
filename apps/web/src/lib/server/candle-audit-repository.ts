@@ -66,6 +66,8 @@ export async function readCandleAuditIndex(
   let previous = "";
   for (const entry of index.entries) {
     validateHeader(entry);
+    if (!Number.isSafeInteger(entry.target.venueInstrumentVersionId) ||
+        entry.target.venueInstrumentVersionId < 1) throw new Error("audit target invalid");
     const key = `${entry.target.venueInstrumentId}\u0000${String(entry.target.venueInstrumentVersionId).padStart(20, "0")}`;
     if (key <= previous || seen.has(key)) throw new Error("audit index target order invalid");
     previous = key;
@@ -82,6 +84,8 @@ function findingKey(finding: AuditFinding): string {
 function validateFullReport(report: AuditReport, runId: string): void {
   validateHeader(report);
   if (report.runId !== runId ||
+      !Number.isSafeInteger(report.target.venueInstrumentVersionId) ||
+      report.target.venueInstrumentVersionId < 1 ||
       (report.series !== null && (
         `${report.series.venue}:${report.series.sourceSymbol}` !== report.target.venueInstrumentId ||
         report.series.venueInstrumentVersionId !== report.target.venueInstrumentVersionId
@@ -104,7 +108,7 @@ function validateFullReport(report: AuditReport, runId: string): void {
 }
 
 async function validateRunParents(runsDir: string, runId: string): Promise<void> {
-  for (const path of [dirname(runsDir), runsDir, join(runsDir, runId)]) {
+  for (const path of [runsDir, join(runsDir, runId)]) {
     try {
       const info = await lstat(path);
       if (!info.isDirectory() || info.isSymbolicLink()) throw new StateFileError("unavailable");

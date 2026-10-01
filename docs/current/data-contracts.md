@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-29T06:55:18+09:00`
-- 検証: `2026-09-29T06:55:18+09:00`
+- 更新: `2026-09-30T23:21:28+09:00`
+- 検証: `2026-09-30T23:21:28+09:00`
 - 状態: `現行`
 
 ---
@@ -273,3 +273,32 @@ Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間�
 `GET /api/market-metrics`はartifactだけをschema検証して返す。未生成・不正は503、正常な古いartifactは元の時刻のまま返し、Browserで鮮度を判定する。`GET/POST /api/user-workspace`はfavoriteの望む状態と名前付きviewの条件付き更新を扱う。メモは読取bytesのSHA-256 tokenを条件に保存し、`context`を添付する保存ではNoteFile v2へ移る。旧v1項目も読み続ける。
 
 メモcontextは`ui-observation-v1`のnativeまたはreference観測。nativeは数量OI/確定終値15m、referenceはProvider・symbol・revision・cutoff・比較期間・JST設定・期限切れ状態と5個の数値を保存する。参照の保存先は現行UniverseとID/versionが一致する元契約だけ。自由形式metrics/raw/secret key、非有限数、長すぎる文字列を拒否し、最大16指標より小さい固定shapeと64KiBのPOST上限を維持する。過去の市場真実を再認証する署名ではない。
+
+## 保存足の補助契約
+
+`schemas/candle-recovery-state.schema.json`は最後のRecovery runを表す任意artifact。
+対象の現行ID・version・definitionHash、半開UTC窓、scan/insert/rescan件数、失敗と未処理を分ける。
+`execution=running|succeeded|partial|failed`で、部分成功を全契約成功へ昇格しない。
+手動scanだけではartifactを更新しない。
+時間上限やDB障害でscanが完了しない場合、全体の`missingBefore`・`remaining`・`newlyPresent`や
+対象の未検査件数は`null`とする。挿入後に中断しても、終了を確認したDB処理の挿入件数を保持する。
+
+Auditは`schemas/audit-request.schema.json`の手動requestをCLIだけで受け取り、
+`schemas/candle-audit-report.schema.json`の不変reportと
+`schemas/candle-audit-index.schema.json`の任意最新indexを発行する。入力は保存1分OHLCV、
+同一Venue・symbol・version・definitionHash・base/quote/settle・trade価格・60秒区間を要求する。
+`outcome=match|differences|incomplete|unverified`は計算結果、`execution`は実行成否。
+前回完了runのIDは失敗した最新runと別に保持する。差異の値と欠測・不正件数は共存できる。
+`schemaVersion=1`、未知schemaや破損indexを空の成功記録へ置き換えない。
+
+Webの`GET /api/candle-recovery`と`GET /api/candle-audits`はlocalhost限定・no-store。
+未生成なら`state=not_run`、有効なら`available`、破損・読取不能なら503 `unavailable`を返す。
+`GET /api/candle-audits/<runId>?offset=&limit=`は不変reportから最大200件ずつ返す。
+`schemas/candle-audit-detail.schema.json`が返却形で、0始まりoffset、全集約済みmarker bucketを含む。
+不正引数は400、不在runは404、破損runは503。入力path・DB・secretはHTTPへ出さない。
+
+OpenMarketの手動mappingと取得receiptは`schemas/reference-mapping.schema.json`と
+`schemas/reference-acquisition.schema.json`、Core用出力は`schemas/fixture-manifest.schema.json`。
+Referenceは確認済みnative契約の別取得経路で、独立性は未確立。FixtureのDB datasetは同一
+read-only repeatable-read snapshot、後から読んだartifactは別時刻と記録する。空0行、未取得、
+失敗をmanifestで分ける。SHA256はファイル改変検出であり、市場の真実性署名ではない。

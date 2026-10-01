@@ -38,7 +38,9 @@ export async function readCandleRecoveryState(
   const seen = new Set<string>();
   for (const detail of state.details) {
     const key = `${detail.target.venueInstrumentId}/${detail.target.venueInstrumentVersionId}`;
-    if (seen.has(key) || detail.inserted > (detail.missingBefore ?? Infinity) ||
+    if (!Number.isSafeInteger(detail.target.venueInstrumentVersionId) ||
+        detail.target.venueInstrumentVersionId < 1 || seen.has(key) ||
+        detail.inserted > (detail.missingBefore ?? Infinity) ||
         (detail.remaining !== null && detail.remaining > (detail.missingBefore ?? Infinity))) {
       throw new Error("recovery target detail inconsistent");
     }

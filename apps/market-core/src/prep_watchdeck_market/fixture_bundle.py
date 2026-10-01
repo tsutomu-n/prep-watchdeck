@@ -52,6 +52,18 @@ def _iso(value: datetime) -> str:
     return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
+def _required_time(value: object) -> datetime:
+    if not isinstance(value, str):
+        raise BundleError("fixture_content_invalid")
+    try:
+        stamp = datetime.fromisoformat(value)
+    except ValueError:
+        raise BundleError("fixture_content_invalid") from None
+    if stamp.tzinfo is None or stamp.utcoffset() is None:
+        raise BundleError("fixture_content_invalid")
+    return stamp.astimezone(UTC)
+
+
 def _json_safe(value: Any) -> Any:
     if isinstance(value, datetime):
         return _iso(value)
@@ -96,9 +108,19 @@ def _query_rows(
     return [dict(row) for row in rows]
 
 
+def _optional_query_rows(
+    connection: psycopg.Connection[Any], query: LiteralString, params: tuple[object, ...]
+) -> list[dict[str, Any]] | None:
+    try:
+        with connection.transaction():
+            return _query_rows(connection, query, params)
+    except psycopg.Error:
+        return None
+
+
 def _read_database(
     database_url: str, instrument_id: str, version_id: int, window: FixtureWindow
-) -> tuple[dict[str, Any], dict[str, list[dict[str, Any]]], datetime, datetime]:
+) -> tuple[dict[str, Any], dict[str, list[dict[str, Any]] | None], datetime, datetime]:
     if ":" not in instrument_id or version_id < 1:
         raise BundleError("fixture_target_invalid")
     venue, source_symbol = instrument_id.split(":", 1)
@@ -128,10 +150,12 @@ def _read_database(
                            vi.definition_hash, vi.valid_from, vi.valid_to, vi.active,
                            vi.asset_class, vi.market_type, vi.execution_model,
                            vi.base_asset, vi.quote_asset, vi.settle_asset,
-                           vi.collateral_asset, vi.contract_multiplier,
+                           vi.collateral_asset, vi.quantity_unit, vi.contract_multiplier,
                            vi.price_tick, vi.amount_step, vi.source_status,
                            vi.raw_catalog_payload_id, vi.collector_run_id,
                            raw.endpoint AS catalog_endpoint,
+                           raw.source_kind AS catalog_source_kind,
+                           raw.documentation_url AS catalog_documentation_url,
                            raw.payload_hash AS catalog_payload_hash,
                            raw.observed_at AS catalog_observed_at,
                            raw.source_at AS catalog_source_at
@@ -145,8 +169,8 @@ def _read_database(
             ).fetchone()
             if instrument_row is None:
                 raise BundleError("fixture_target_invalid")
-            rows: dict[str, list[dict[str, Any]]] = {}
-            rows["candles-1m"] = _query_rows(
+            rows: dict[str, list[dict[str, Any]] | None] = {}
+            rows["candles-1m"] = _optional_query_rows(
                 connection,
                 """
                     SELECT venue_instrument_version_id, bucket_at, open_price, high_price,
@@ -157,7 +181,7 @@ def _read_database(
                     """,
                 (version_id, window.start, window.end),
             )
-            rows["market-state"] = _query_rows(
+            rows["market-state"] = _optional_query_rows(
                 connection,
                 """
                     SELECT venue_instrument_version_id, bucket_at, collector_run_id, status,
@@ -171,7 +195,7 @@ def _read_database(
                     """,
                 (version_id, window.start, window.end),
             )
-            rows["funding"] = _query_rows(
+            rows["funding"] = _optional_query_rows(
                 connection,
                 """
                     SELECT venue_instrument_version_id, funding_at, funding_rate_raw,
@@ -298,40 +322,34 @@ def export_fixture(
         "instrument", instrument_record, 1, window, db_finished_at
     )
     datasets.append(dataset)
-    state_rows = [
-        {**row, "qualityReason": None, "reasonAvailability": "not_persisted"}
-        for row in db_rows["market-state"]
-    ]
-    for name, value, count in (
-        (
-            "market-state",
-            {
+    for name in ("market-state", "candles-1m", "funding"):
+        rows = db_rows[name]
+        if rows is None:
+            datasets.append(_unavailable(name, "db_dataset_unavailable"))
+            continue
+        if name == "market-state":
+            rows = [
+                {**row, "qualityReason": None, "reasonAvailability": "not_persisted"}
+                for row in rows
+            ]
+            value = {
                 "schemaVersion": 1,
                 "target": target.model_dump(mode="json", by_alias=True),
                 "window": window.model_dump(mode="json", by_alias=True),
-                "records": state_rows,
-            },
-            len(state_rows),
-        ),
-        (
-            "candles-1m",
-            _native_candle_snapshot(instrument, db_rows["candles-1m"]),
-            len(db_rows["candles-1m"]),
-        ),
-        (
-            "funding",
-            {
+                "records": rows,
+            }
+        elif name == "candles-1m":
+            value = _native_candle_snapshot(instrument, rows)
+        else:
+            value = {
                 "schemaVersion": 1,
                 "target": target.model_dump(mode="json", by_alias=True),
                 "window": window.model_dump(mode="json", by_alias=True),
                 "recordKind": "settled_funding_event",
-                "records": db_rows["funding"],
-            },
-            len(db_rows["funding"]),
-        ),
-    ):
+                "records": rows,
+            }
         dataset, files[DATASET_FILES[name]] = _dataset_file(
-            name, value, count, window, db_finished_at
+            name, value, len(rows), window, db_finished_at
         )
         datasets.append(dataset)
 
@@ -346,8 +364,10 @@ def export_fixture(
             and detail.target.venue_instrument_version_id == version_id
             and detail.target.definition_hash == target.definition_hash
         ]
-        if not details:
-            datasets.append(_unavailable("recovery", "target_not_in_run"))
+        if not details or not (
+            recovery_state.window.start < window.end and window.start < recovery_state.window.end
+        ):
+            datasets.append(_unavailable("recovery", "target_or_window_not_in_run"))
         else:
             captured = datetime.now(UTC)
             value = {
@@ -378,6 +398,8 @@ def export_fixture(
                 )
             ):
                 raise BundleError("fixture_audit_target_invalid")
+            if audit.evidence_kind == "synthetic" and evidence_kind != "synthetic":
+                raise BundleError("fixture_evidence_invalid")
             if len(audit_raw) > MAX_DATASET_BYTES:
                 raise BundleError("fixture_dataset_exceeded")
             captured = datetime.now(UTC)
@@ -395,7 +417,11 @@ def export_fixture(
                     reason=None,
                 )
             )
-        except (BundleError, ValidationError):
+        except BundleError as exc:
+            if exc.code in {"fixture_audit_target_invalid", "fixture_dataset_exceeded"}:
+                raise
+            datasets.append(_unavailable("audit", "audit_unavailable"))
+        except ValidationError:
             datasets.append(_unavailable("audit", "audit_unavailable"))
 
     finished_at = datetime.now(UTC)
@@ -403,9 +429,7 @@ def export_fixture(
         schema_version=1,
         bundle_id=uuid4().hex,
         evidence_kind=evidence_kind,
-        execution="completed"
-        if all(item.availability in {"included", "empty", "not_requested"} for item in datasets)
-        else "partial",
+        execution=_execution(datasets),
         target=target,
         window=window,
         capture=FixtureCapture(
@@ -432,6 +456,9 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
     """Offline verification of exact files, hashes, counts, identity and time window."""
     if bundle.is_symlink() or not bundle.is_dir():
         raise BundleError("fixture_bundle_invalid")
+    for path in bundle.rglob("*"):
+        if path.is_symlink() or not (path.is_file() or path.is_dir()):
+            raise BundleError("fixture_path_invalid")
     try:
         manifest_raw = read_regular(bundle / "manifest.json", MAX_DATASET_BYTES)
         manifest = FixtureManifest.model_validate(strict_json(manifest_raw))
@@ -442,6 +469,15 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
     if (
         manifest.window.start >= manifest.window.end
         or manifest.capture.started_at > manifest.capture.finished_at
+        or manifest.window.start.second
+        or manifest.window.start.microsecond
+        or manifest.window.end.second
+        or manifest.window.end.microsecond
+        or not timedelta(0) < manifest.window.end - manifest.window.start <= timedelta(hours=24)
+        or manifest.window.end > manifest.capture.started_at
+        or not manifest.capture.started_at
+        <= manifest.capture.database_snapshot_at
+        <= manifest.capture.finished_at
     ):
         raise BundleError("fixture_manifest_invalid")
     names = [item.name for item in manifest.datasets]
@@ -462,6 +498,7 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
                 or dataset.captured_at is None
                 or dataset.reason is not None
                 or (dataset.availability == "empty") != (dataset.rows == 0)
+                or (dataset.name != "audit" and dataset.range != manifest.window)
             ):
                 raise BundleError("fixture_manifest_invalid")
             relative = dataset.path
@@ -476,12 +513,23 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
             total += len(raw)
             payload = strict_json(raw)
             if dataset.name == "instrument":
+                if not isinstance(payload, dict):
+                    raise BundleError("fixture_content_invalid")
+                valid_from = _required_time(payload.get("valid_from"))
+                valid_to = (
+                    None
+                    if payload.get("valid_to") is None
+                    else _required_time(payload.get("valid_to"))
+                )
                 if (
-                    not isinstance(payload, dict)
-                    or payload.get("venueInstrumentId") != manifest.target.venue_instrument_id
+                    payload.get("venueInstrumentId") != manifest.target.venue_instrument_id
                     or payload.get("venue_instrument_version_id")
                     != manifest.target.venue_instrument_version_id
                     or payload.get("definitionHash") != manifest.target.definition_hash
+                    or payload.get("market_type") != "linear_perpetual"
+                    or payload.get("priceKind") != "trade"
+                    or valid_from > manifest.window.start
+                    or (valid_to is not None and valid_to < manifest.window.end)
                     or dataset.rows != 1
                 ):
                     raise BundleError("fixture_content_invalid")
@@ -519,13 +567,23 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
                     != manifest.target.venue_instrument_id
                     or payload["selectedTarget"].get("target", {}).get("venueInstrumentVersionId")
                     != manifest.target.venue_instrument_version_id
+                    or payload["selectedTarget"].get("target", {}).get("definitionHash")
+                    != manifest.target.definition_hash
                     or dataset.rows != 1
                 ):
                     raise BundleError("fixture_content_invalid")
                 try:
-                    CandleRecoveryState.model_validate(payload.get("run"))
+                    recovery = CandleRecoveryState.model_validate(payload.get("run"))
                 except ValidationError:
                     raise BundleError("fixture_content_invalid") from None
+                selected_details = [
+                    item.model_dump(mode="json", by_alias=True) for item in recovery.details
+                ]
+                if payload["selectedTarget"] not in selected_details or not (
+                    recovery.window.start < manifest.window.end
+                    and manifest.window.start < recovery.window.end
+                ):
+                    raise BundleError("fixture_content_invalid")
             else:
                 try:
                     report = AuditReport.model_validate(payload)
@@ -535,6 +593,14 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
                     report.target.venue_instrument_id != manifest.target.venue_instrument_id
                     or report.target.venue_instrument_version_id
                     != manifest.target.venue_instrument_version_id
+                    or (
+                        report.series is not None
+                        and report.series.definition_sha256 != manifest.target.definition_hash
+                    )
+                    or (
+                        report.evidence_kind == "synthetic"
+                        and manifest.evidence_kind != "synthetic"
+                    )
                     or dataset.rows != 1
                 ):
                     raise BundleError("fixture_content_invalid")
@@ -567,16 +633,23 @@ def verify_fixture(bundle: Path) -> FixtureManifest:
     total += len(checksums)
     if total > MAX_BUNDLE_BYTES or checksums != sums_bytes(data_files):
         raise BundleError("fixture_hash_mismatch")
-    if manifest.execution != (
-        "completed"
-        if all(
-            item.availability in {"included", "empty", "not_requested"}
-            for item in manifest.datasets
-        )
-        else "partial"
-    ):
+    if manifest.execution != _execution(list(manifest.datasets)):
         raise BundleError("fixture_manifest_invalid")
     return manifest
+
+
+def _execution(datasets: list[FixtureDataset]) -> Literal["completed", "partial"]:
+    for item in datasets:
+        if item.name in {
+            "instrument",
+            "market-state",
+            "candles-1m",
+            "funding",
+        } and item.availability not in {"included", "empty"}:
+            return "partial"
+        if item.name == "audit" and item.availability == "unavailable":
+            return "partial"
+    return "completed"
 
 
 def _verify_records(

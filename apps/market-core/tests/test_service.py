@@ -6,6 +6,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 from uuid import uuid4
 
@@ -296,6 +297,42 @@ def test_metrics_notification_follows_successful_persistence_only(monkeypatch, t
             "prep_watchdeck_market.service.persist_market_cycle_url", lambda *args: _store_result()
         )
         await service._persist_l1_cycle(now, now, ())
+        assert service._metrics_trigger.is_set()
+
+    asyncio.run(scenario())
+
+
+def test_recovery_startup_failure_is_isolated_and_periodic_run_follows(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    async def scenario() -> None:
+        service = MarketService("unused", tmp_path, recovery_enabled=True)
+        service._session = cast(aiohttp.ClientSession, object())
+        stop = asyncio.Event()
+        triggers: list[str] = []
+
+        class FakeRecovery:
+            def __init__(self, _database_url: str, _state_dir: Path, *, on_inserted) -> None:
+                self.on_inserted = on_inserted
+
+            async def run(self, _session, _window, *, apply: bool, trigger: str):
+                assert apply
+                triggers.append(trigger)
+                if trigger == "startup":
+                    raise RuntimeError("isolated recovery failure")
+                self.on_inserted()
+                stop.set()
+                return SimpleNamespace(
+                    execution="succeeded", summary=SimpleNamespace(inserted=1, remaining=0)
+                )
+
+        monkeypatch.setattr("prep_watchdeck_market.service.CandleRecovery", FakeRecovery)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.next_grid_at", lambda _now, _seconds: datetime.now(UTC)
+        )
+        await asyncio.wait_for(service._recovery_loop(stop), timeout=1)
+        assert triggers == ["startup", "periodic"]
+        assert service._artifact_trigger.is_set()
         assert service._metrics_trigger.is_set()
 
     asyncio.run(scenario())

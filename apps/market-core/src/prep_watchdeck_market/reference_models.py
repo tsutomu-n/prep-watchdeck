@@ -89,3 +89,10 @@ class ReferenceAcquisition(ArtifactModel):
     files: tuple[ReferenceFile, ...] = Field(max_length=10)
     error_code: str | None = Field(default=None, max_length=100)
     limitations: tuple[str, ...] = Field(max_length=20)
+
+    @field_validator("started_at", "finished_at")
+    @classmethod
+    def require_offset(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("offset required")
+        return value.astimezone(UTC)

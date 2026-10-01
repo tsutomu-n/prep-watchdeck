@@ -18,8 +18,17 @@
       "expected": "旧CLIの入力・exit・JSONの互換と、同梱seedテストの意味のある期待結果を維持する",
       "specification": "reference/README.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_cli_exit_codes_and_input_hashes",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-002",
@@ -30,8 +39,17 @@
       "expected": "比較を拒否し異なる市場の数値を比較しない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_different_markets_versions_and_units_cannot_be_compared",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-003",
@@ -42,8 +60,17 @@
       "expected": "同じ瞬間を一致、naiveは拒否",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_timezone_offsets_are_converted_not_removed + test_naive_timestamp_is_not_assumed_utc",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-004",
@@ -54,8 +81,17 @@
       "expected": "該当行は利用不能、reasonあり、補修しない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_invalid_records_remain_diagnostics_not_market_data",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-005",
@@ -66,8 +102,17 @@
       "expected": "全候補利用不能。最後の行で正常化しない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_duplicate_rows_do_not_overwrite_or_double_count",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-006",
@@ -78,8 +123,17 @@
       "expected": "nullは0としない。0対0は比較成立。OFF時は価格のみ",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_missing_volume_is_not_zero_and_does_not_discard_valid_price",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-007",
@@ -90,8 +144,17 @@
       "expected": "ANDと厳密>の期待結果。bp/ratioの取り違えなし",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_price_tolerance_requires_both_thresholds",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-008",
@@ -102,8 +165,17 @@
       "expected": "共通欠測を検出。全0はunverified/exit3",
       "specification": "fixtures/report.unverified.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_both_sources_missing_same_minute_are_not_a_match + test_no_data_is_unverified",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-009",
@@ -114,8 +186,17 @@
       "expected": "時間差300秒だけ計算。途中欠測はcoverageに残る",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_return_difference_uses_real_endpoint_times",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-010",
@@ -126,8 +207,17 @@
       "expected": "日付変更でreturnを落とさない",
       "specification": "fixtures/request.synthetic.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_match_crosses_utc_midnight_and_keeps_zero_volume",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-011",
@@ -138,8 +228,17 @@
       "expected": "不適合を拒否、derived_finalの意味を昇格しない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_invalid_records_remain_diagnostics_not_market_data",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-012",
@@ -150,8 +249,17 @@
       "expected": "definition_hash/timezone/Decimal/nullを保存。0行SQLを正常扱いしない",
       "specification": "08_RUNBOOK.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-013",
@@ -162,8 +270,17 @@
       "expected": "差異値4/価格差異足1/return1と数える",
       "specification": "04_READ_MODEL_AND_API.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_audit_summary_counts_values_bars_and_returns_separately",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-014",
@@ -174,8 +291,17 @@
       "expected": "入力hash一致を表示し独立検証と呼ばない",
       "specification": "fixtures/report.repeatability.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_cli_exit_codes_and_input_hashes",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-015",
@@ -186,8 +312,17 @@
       "expected": "copyしたbytesだけを評価。保存hashと比較入力が一致",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_request_rejects_duplicate_keys_and_input_symlink",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-016",
@@ -198,8 +333,17 @@
       "expected": "startedAt/checkedAtが今日。評価基準で代用しない",
       "specification": "fixtures/report.differences.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_audit_summary_counts_values_bars_and_returns_separately",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-017",
@@ -210,8 +354,17 @@
       "expected": "不完全なrunをindexが参照しない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_publication_is_immutable_and_failure_keeps_previous_completed",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-018",
@@ -222,8 +375,17 @@
       "expected": "latest失敗+lastCompleted。以前の一致を最新成功としない",
       "specification": "fixtures/index.failed.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_publication_is_immutable_and_failure_keeps_previous_completed",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-019",
@@ -234,8 +396,17 @@
       "expected": "履歴は保存しlatestは巻き戻さない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_parallel_publications_keep_both_runs_and_one_valid_index",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-020",
@@ -246,8 +417,17 @@
       "expected": "exit4。履歴/indexを捨てて再初期化しない",
       "specification": "03_BACKEND_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_capacity_and_held_lock_preserve_completed_index + test_corrupt_index_stops_publication_without_replacing_it",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-021",
@@ -258,8 +438,17 @@
       "expected": "matchでもmaxFlaggedはnull。最大差0とは表さない",
       "specification": "04_READ_MODEL_AND_API.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_audit_summary_counts_values_bars_and_returns_separately",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-022",
@@ -270,8 +459,17 @@
       "expected": "outcome unverifiedでも価格差異を保持/表示",
       "specification": "04_READ_MODEL_AND_API.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_unverified_retains_a_known_price_difference",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-023",
@@ -282,8 +480,17 @@
       "expected": "200 not_run、200 available、503 unavailableを区別",
       "specification": "04_READ_MODEL_AND_API.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-024",
@@ -294,8 +501,17 @@
       "expected": "ページ漏れ/重複なし。各pageに全51marker bucket要約",
       "specification": "fixtures/detail.large-first.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査詳細の全ページで51時刻のmarker要約を保つ",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-025",
@@ -306,8 +522,17 @@
       "expected": "GETでdirectory/DB/ファイル生成・照合実行をしない",
       "specification": "04_READ_MODEL_AND_API.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "candle-audit-repository.ts GET-only source inspection + verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-026",
@@ -318,8 +543,17 @@
       "expected": "固定root外を読まない。403/400/503、secret漏れなし",
       "specification": "04_READ_MODEL_AND_API.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-027",
@@ -330,8 +564,17 @@
       "expected": "既存市場データ・Chart・Depthを監査失敗で停止しない",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::Universe Explorerの主要flowを操作できる + audit failure response",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-028",
@@ -342,8 +585,17 @@
       "expected": "未実施/失敗/不足/差異/許容値内/同一入力を区別",
       "specification": "fixtures/ui-cases.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "candle-audit.test.ts::保存足の未実施・失敗・不足・差異・同一入力を別の表示にする",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-029",
@@ -354,8 +606,17 @@
       "expected": "badge/markerを流用しない",
       "specification": "fixtures/ui-cases.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "NativeMarkets.svelte auditTargetKey exact version guard + verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-030",
@@ -366,8 +627,17 @@
       "expected": "履歴は読める。現在の価格の検証済みとは表示しない",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査の新run到着後も閲覧中のrunを保ち、明示切替する",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-031",
@@ -378,8 +648,17 @@
       "expected": "元OHLC/出来高/completeを不変、参照注記と凡例だけ",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "UniverseChart.svelte marker plugin source inspection + verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-032",
@@ -390,8 +669,17 @@
       "expected": "returnはend-60秒、日足はUTC、存在しない足へ付けない",
       "specification": "fixtures/marker-cases.json",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "candle-audit.test.ts::1分bucketを表示時間足へまとめ、件数と先頭詳細位置を保つ",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-033",
@@ -402,8 +690,17 @@
       "expected": "古いgenerationの結果・markerを破棄",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査詳細の遅い旧応答はA→B→A後の表示を変えない",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-034",
@@ -414,8 +711,17 @@
       "expected": "pin維持、新記録button。勝手に本文/ズームを変更しない",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査の新run到着後も閲覧中のrunを保ち、明示切替する",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-035",
@@ -426,8 +732,17 @@
       "expected": "明示移動以外zoom/scroll不変、plugin detach/clear漏れなし",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-036",
@@ -438,8 +753,17 @@
       "expected": "全finding到達可、focus可視、page横overflow/hover必須なし",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める [mobile-390]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-037",
@@ -450,8 +774,17 @@
       "expected": "index1回/60秒single-flight、rowごとのリクエストなし",
       "specification": "05_UI_SPEC.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査の新run到着後も閲覧中のrunを保ち、明示切替する + NativeMarkets.svelte poll guard",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-038",
@@ -462,8 +795,17 @@
       "expected": "HTTP mockだけでなくproducer/reader/UIが同じreportを読む",
       "specification": "08_RUNBOOK.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-039",
@@ -474,8 +816,17 @@
       "expected": "監査でQuality/Mark/OI/Funding/既存sort/Referenceを変更しない",
       "specification": "06_IMPLEMENTATION_PLAN.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh [80 Playwright tests]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-040",
@@ -486,8 +837,17 @@
       "expected": "契約と文書が一致し、未実行をPASSにしない",
       "specification": "06_IMPLEMENTATION_PLAN.md",
       "requiredFor": "development",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh [schema/docs/build]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "AC-041",
@@ -498,8 +858,18 @@
       "expected": "実run/hash/対象/期間/UI証拠あり。syntheticと分離",
       "specification": "08_RUNBOOK.md",
       "requiredFor": "real_data",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "pg_dump/pg_restore public native capture; python -m prep_watchdeck_market.candle_audit_publication; real GET and Inspector",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/observed-acceptance.json",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-09-30T23:24:51+09:00",
+          "note": "実公開API取得データの隔離DB/復元コピー。production DBへは接続していない。Auditは同じnative REST再取得で独立性未確立。"
+        }
+      ]
     },
     {
       "id": "AC-042",
@@ -510,8 +880,18 @@
       "expected": "他project/正本不変。監査履歴を残してUIを戻せる",
       "specification": "08_RUNBOOK.md",
       "requiredFor": "production",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "production acceptance; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "本番配置・rollbackは未承認"
+        }
+      ]
     }
   ]
 }

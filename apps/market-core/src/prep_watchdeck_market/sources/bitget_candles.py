@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
 from prep_watchdeck_market.candles import (
     Candle1m,
@@ -21,7 +22,10 @@ def parse_bitget_finished_candles(
 ) -> tuple[Candle1m, ...]:
     """Keep the live poll's last-three policy outside the full history parser."""
     candles, _ = parse_bitget_history_candles(
-        payload, source_symbol=source_symbol, observed_at=observed_at
+        payload,
+        source_symbol=source_symbol,
+        observed_at=observed_at,
+        duplicate_policy="last",
     )
     return candles[-3:]
 
@@ -31,6 +35,7 @@ def parse_bitget_history_candles(
     *,
     source_symbol: str,
     observed_at: datetime,
+    duplicate_policy: Literal["reject", "last"] = "reject",
 ) -> tuple[tuple[Candle1m, ...], tuple[datetime, ...]]:
     """Parse a complete page; reject conflicting duplicate buckets."""
     root = require_mapping(payload, field_name="Bitget finished candles")
@@ -65,8 +70,11 @@ def parse_bitget_history_candles(
             continue
         previous = by_key.get(key)
         if previous is not None and previous != candle:
-            by_key.pop(key)
-            rejected.add(key)
+            if duplicate_policy == "reject":
+                by_key.pop(key)
+                rejected.add(key)
+            else:
+                by_key[key] = candle
         else:
             by_key[key] = candle
     return (

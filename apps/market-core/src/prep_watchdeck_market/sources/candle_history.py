@@ -45,6 +45,10 @@ class HistoryRateLimited(HistoryFetchError):
 class HistoryBudgetExceeded(HistoryFetchError):
     error_code = "history_budget_exceeded"
 
+    def __init__(self, message: str, *, scope: str = "run") -> None:
+        self.scope = scope
+        super().__init__(message)
+
 
 class HistoryPayloadInvalid(HistoryFetchError):
     error_code = "history_payload_invalid"
@@ -55,6 +59,7 @@ class HistoryFetchResult:
     candles: tuple[Candle1m, ...]
     rejected_buckets: int
     pages: int
+    budget_scope: str | None = None
 
 
 def _reject_duplicate_json_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -137,11 +142,20 @@ class NativeCandleHistoryClient:
                     url,
                     params=params,
                     json=body,
-                    timeout=aiohttp.ClientTimeout(total=20),
+                    timeout=aiohttp.ClientTimeout(
+                        total=min(20.0, max(0.001, self._deadline - self._last_started))
+                    ),
                 ) as response:
                     if response.status in {418, 429}:
                         raw_retry = response.headers.get("Retry-After")
-                        retry = int(raw_retry) if raw_retry and raw_retry.isdecimal() else None
+                        retry = (
+                            int(raw_retry)
+                            if raw_retry
+                            and len(raw_retry) <= 5
+                            and raw_retry.isdecimal()
+                            and 0 < int(raw_retry) <= 86_400
+                            else None
+                        )
                         raise HistoryRateLimited(retry)
                     if response.status in {401, 403}:
                         raise HistoryFetchError("history authorization failed")
@@ -168,6 +182,8 @@ class NativeCandleHistoryClient:
             except HistoryRateLimited:
                 raise
             except (aiohttp.ClientError, TimeoutError):
+                if asyncio.get_running_loop().time() >= self._deadline:
+                    raise HistoryBudgetExceeded("recovery deadline reached") from None
                 if attempt == 2:
                     raise HistoryFetchError("history transport unavailable") from None
         raise HistoryFetchError("history request exhausted")
@@ -183,85 +199,101 @@ class NativeCandleHistoryClient:
         accepted: dict[datetime, Candle1m] = {}
         rejected: set[datetime] = set()
         pages = 0
-        for range_start, range_end in _ranges(missing):
-            if target.venue == "bitget":
-                if target.quote_asset != target.settle_asset or target.quote_asset not in {
-                    "USDT",
-                    "USDC",
-                }:
-                    raise HistoryPayloadInvalid("unsupported Bitget product type")
-                cursor = range_end
-                while cursor > range_start:
-                    if pages >= max_pages:
-                        raise HistoryBudgetExceeded("target page budget exceeded")
-                    payload, observed = await self._request_json(
-                        "GET",
-                        BITGET_HISTORY_URL,
-                        params={
-                            "symbol": target.source_symbol,
-                            "productType": f"{target.quote_asset}-FUTURES",
-                            "granularity": "1m",
-                            "startTime": str(_millis(range_start)),
-                            "endTime": str(_millis(cursor) - 1),
-                            "limit": "200",
-                        },
-                    )
-                    pages += 1
-                    candles, conflicts = parse_bitget_history_candles(
-                        payload, source_symbol=target.source_symbol, observed_at=observed
-                    )
-                    rejected.update(bucket for bucket in conflicts if bucket in expected)
-                    if not candles:
-                        break
-                    for candle in candles:
-                        _accept(candle, target, expected, accepted, rejected)
-                    earliest = min(c.bucket_start for c in candles)
-                    if earliest >= cursor:
-                        raise HistoryPayloadInvalid("Bitget page did not move backward")
-                    cursor = earliest
-            else:
-                max_minutes = 360 if target.venue == "hyperliquid" else 500
-                chunk_start = range_start
-                while chunk_start < range_end:
-                    if pages >= max_pages:
-                        raise HistoryBudgetExceeded("target page budget exceeded")
-                    chunk_end = min(range_end, chunk_start + timedelta(minutes=max_minutes))
-                    if target.venue == "hyperliquid":
-                        payload, observed = await self._request_json(
-                            "POST",
-                            HYPERLIQUID_INFO_URL,
-                            body={
-                                "type": "candleSnapshot",
-                                "req": {
-                                    "coin": target.source_symbol,
-                                    "interval": "1m",
-                                    "startTime": _millis(chunk_start),
-                                    "endTime": _millis(chunk_end),
-                                },
-                            },
-                        )
-                        candles = _parse_hyperliquid_page(payload, target, observed_at=observed)
-                    else:
+
+        async def fetch_pages() -> None:
+            nonlocal pages
+            for range_start, range_end in _ranges(missing):
+                if target.venue == "bitget":
+                    if target.quote_asset != target.settle_asset or target.quote_asset not in {
+                        "USDT",
+                        "USDC",
+                    }:
+                        raise HistoryPayloadInvalid("unsupported Bitget product type")
+                    cursor = range_end
+                    while cursor > range_start:
+                        if pages >= max_pages:
+                            raise HistoryBudgetExceeded(
+                                "target page budget exceeded", scope="target"
+                            )
                         payload, observed = await self._request_json(
                             "GET",
-                            ASTER_HISTORY_URL,
+                            BITGET_HISTORY_URL,
                             params={
                                 "symbol": target.source_symbol,
-                                "interval": "1m",
-                                "startTime": str(_millis(chunk_start)),
-                                "endTime": str(_millis(chunk_end) - 1),
-                                "limit": "500",
+                                "productType": f"{target.quote_asset}-FUTURES",
+                                "granularity": "1m",
+                                "startTime": str(_millis(range_start)),
+                                # Bitget floors endTime to the interval before selecting
+                                # earlier candles. Subtracting 1ms loses the final minute.
+                                "endTime": str(_millis(cursor)),
+                                "limit": "200",
                             },
                         )
-                        candles = _parse_aster_page(payload, target, observed_at=observed)
-                    pages += 1
-                    for candle in candles:
-                        _accept(candle, target, expected, accepted, rejected)
-                    chunk_start = chunk_end
+                        pages += 1
+                        candles, conflicts = parse_bitget_history_candles(
+                            payload, source_symbol=target.source_symbol, observed_at=observed
+                        )
+                        rejected.update(bucket for bucket in conflicts if bucket in expected)
+                        if not candles:
+                            break
+                        for candle in candles:
+                            _accept(candle, target, expected, accepted, rejected)
+                        earliest = min(c.bucket_start for c in candles)
+                        if earliest >= cursor:
+                            raise HistoryPayloadInvalid("Bitget page did not move backward")
+                        cursor = earliest
+                else:
+                    max_minutes = 360 if target.venue == "hyperliquid" else 500
+                    chunk_start = range_start
+                    while chunk_start < range_end:
+                        if pages >= max_pages:
+                            raise HistoryBudgetExceeded(
+                                "target page budget exceeded", scope="target"
+                            )
+                        chunk_end = min(range_end, chunk_start + timedelta(minutes=max_minutes))
+                        if target.venue == "hyperliquid":
+                            payload, observed = await self._request_json(
+                                "POST",
+                                HYPERLIQUID_INFO_URL,
+                                body={
+                                    "type": "candleSnapshot",
+                                    "req": {
+                                        "coin": target.source_symbol,
+                                        "interval": "1m",
+                                        "startTime": _millis(chunk_start),
+                                        "endTime": _millis(chunk_end),
+                                    },
+                                },
+                            )
+                            candles = _parse_hyperliquid_page(payload, target, observed_at=observed)
+                        else:
+                            payload, observed = await self._request_json(
+                                "GET",
+                                ASTER_HISTORY_URL,
+                                params={
+                                    "symbol": target.source_symbol,
+                                    "interval": "1m",
+                                    "startTime": str(_millis(chunk_start)),
+                                    "endTime": str(_millis(chunk_end) - 1),
+                                    "limit": "500",
+                                },
+                            )
+                            candles = _parse_aster_page(payload, target, observed_at=observed)
+                        pages += 1
+                        for candle in candles:
+                            _accept(candle, target, expected, accepted, rejected)
+                        chunk_start = chunk_end
+
+        budget_scope: str | None = None
+        try:
+            await fetch_pages()
+        except HistoryBudgetExceeded as exc:
+            budget_scope = exc.scope
         return HistoryFetchResult(
             candles=tuple(accepted[b] for b in sorted(accepted)),
             rejected_buckets=len(rejected),
             pages=pages,
+            budget_scope=budget_scope,
         )
 
 
@@ -313,7 +345,7 @@ def _parse_hyperliquid_page(
             raise HistoryPayloadInvalid("Hyperliquid series mismatch")
         bucket = timestamp_milliseconds(item.get("t"), field_name="Hyperliquid start")
         end = timestamp_milliseconds(item.get("T"), field_name="Hyperliquid end")
-        if end != bucket + timedelta(minutes=1):
+        if end != bucket + timedelta(minutes=1) - timedelta(milliseconds=1):
             raise HistoryPayloadInvalid("Hyperliquid interval mismatch")
         result.append(
             Candle1m(

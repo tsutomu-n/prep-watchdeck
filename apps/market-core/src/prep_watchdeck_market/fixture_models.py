@@ -35,6 +35,13 @@ class FixtureCapture(ArtifactModel):
     method: Literal["read_only_repeatable_read"]
     point_in_time_replay: Literal[False]
 
+    @field_validator("started_at", "finished_at", "database_snapshot_at")
+    @classmethod
+    def offset_required(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("UTC offset required")
+        return value
+
 
 class FixtureDataset(ArtifactModel):
     name: DatasetName
@@ -46,6 +53,13 @@ class FixtureDataset(ArtifactModel):
     range: FixtureWindow | None = None
     captured_at: datetime | None = None
     reason: str | None = Field(default=None, max_length=100)
+
+    @field_validator("captured_at")
+    @classmethod
+    def offset_required(cls, value: datetime | None) -> datetime | None:
+        if value is not None and (value.tzinfo is None or value.utcoffset() is None):
+            raise ValueError("UTC offset required")
+        return value
 
 
 class FixtureManifest(ArtifactModel):

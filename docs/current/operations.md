@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-29T06:55:18+09:00`
-- 検証: `2026-09-29T06:55:18+09:00`
+- 更新: `2026-09-30T23:21:28+09:00`
+- 検証: `2026-09-30T23:21:28+09:00`
 - 状態: `現行`
 
 ---
@@ -360,3 +360,42 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 自動追随したことや、全Widgetの個別描画を確認したことを、この配置結果から主張しない。
 詳細な検証結果は
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/validation.md](validation.md)を参照する。
+
+## 保存足の回収・照合・比較・出力
+
+このRepositoryの作業branchにある操作手順。稼働releaseへの配置、設定変更、本番DBへの適用、
+実Provider keyの使用は別の承認・受入で扱う。初回は隔離DBと専用state rootで実行する。
+
+`apps/market-core/`で`uv run watchdeck-market recover-candles --instrument <ID> --since <ISO> --until <ISO> --json`
+を実行するとscanのみを返す。期間を省略すると確定済みの直近6時間を調べる。
+許可済み対象への`--apply`はnative履歴を取得し、欠損だけ挿入する。現行契約の版・定義hashが変わったら
+対象を停止する。自動実行は`PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED=true`を明示したserviceだけで有効。
+falseに戻しても追加済みの正当な保存足を自動削除しない。
+
+自動600秒・手動4時間の上限は事前scanと取得後rescanにも適用する。上限後は新しい検査を開始せず、
+未検査の欠損件数は`null`と記録する。進行中のDB処理はstatement timeoutの範囲で終了を待つ。
+HTTP timeoutは残りrun時間以下とする。429の妥当な`Retry-After`（1〜86,400秒）は同じprocessの
+次runにも保持し、値がない場合は900秒のVenue別cooldownを使う。
+
+保存snapshotの比較は`apps/market-core/`で
+`uv run python -m prep_watchdeck_market.candle_audit_publication --request <request.json> --state-dir <state-dir>`。
+requestは`schemas/audit-request.schema.json`を満たす2入力のローカルpathを含む。
+差異/不足でexit 1、比較不能でexit 3でもreportが発行される。入力不正は2、入出力・lock・容量障害は4。
+過去runは上書きせず、index破損時は発行を停止する。
+
+OpenMarket照合は事前に現在のnative契約を確認し、`OPENMARKET_API_KEY`をprocess環境から渡す。
+`watchdeck-market reference-markets --venue <VENUE> --symbol <SYMBOL> --output <metadata.json>`で
+候補を得る。対応を自動確定せず、`schemas/reference-mapping.schema.json`に従ってexact契約と
+metadata hashを記録する。その後`watchdeck-market reference-snapshot --mapping <mapping.json> --since <ISO> --until <ISO> --output-dir <DIR>`で
+1分の半開窓を取得する。結果の`reference.snapshot.json`はAuditの右入力へ渡せる。
+key不在・不対応契約を他のVenueで代用しない。
+
+Core用の固定証拠は`watchdeck-market export-fixture --instrument <ID> --version <整数> --since <ISO> --until <ISO> --output-dir <DIR>`。
+`watchdeck-market verify-fixture --bundle <DIR/runId>`はDB/networkなしで整合性を再検査する。
+`--audit-run <runId>`指定時だけ監査reportを添付する。fixtureとReferenceの出力はローカルに保持し、
+公開・自動送信しない。出力失敗や部分完了を空datasetの成功と扱わない。
+
+切戻し時はRecoveryの有効化を止め、進行中taskの終了を確認して旧release・設定を復元する。
+監査run、Reference bundle、Fixture bundleを自動削除しない。Recoveryで追加した行の削除は
+run_idを特定した別の修復判断とする。本番でのbackup、exact sourceの配置、実ProviderとUIの確認は
+[作業計画](../plans/active/prep-quality-completion/GOAL.md)の受入台帳を通して行う。

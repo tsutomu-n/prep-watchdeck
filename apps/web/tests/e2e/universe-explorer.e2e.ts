@@ -201,6 +201,163 @@ test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
   expect(horizontalOverflow).toBeLessThanOrEqual(1);
 });
 
+test("監査CLIの不変ファイルをAPIと取得元・品質画面で読める", async ({ page, request }) => {
+  const absent = await request.get("/api/candle-audits");
+  expect(absent.status()).toBe(200);
+  expect((await absent.json()).state).toBe("not_run");
+  const nonlocal = await request.get("/api/candle-audits", {
+    headers: { host: "outside.invalid" }
+  });
+  expect(nonlocal.status()).toBe(403);
+  const runId = await publishSyntheticAuditForBitget();
+  const indexResponse = await request.get("/api/candle-audits");
+  expect(indexResponse.status()).toBe(200);
+  expect(indexResponse.headers()["cache-control"]).toBe("no-store");
+  const index = await indexResponse.json();
+  expect(index.state).toBe("available");
+  expect(index.index.entries[0].runId).toBe(runId);
+  const detailResponse = await request.get(`/api/candle-audits/${runId}?offset=0&limit=2`);
+  expect(detailResponse.status()).toBe(200);
+  const detail = await detailResponse.json();
+  expect(detail.report.outcome).toBe("differences");
+  expect(detail.totalFindings).toBeGreaterThan(0);
+  expect(detail.findings).toHaveLength(2);
+  expect(detail.markerBuckets.length).toBeGreaterThan(0);
+  expect((await request.get(`/api/candle-audits/${runId}?offset=-1`)).status()).toBe(400);
+  expect((await request.get("/api/candle-audits/invalid-run")).status()).toBe(400);
+  expect((await request.get(`/api/candle-audits/${"0".repeat(32)}`)).status()).toBe(404);
+
+  await page.goto("/?mode=native");
+  await expect(page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }))
+    .toContainText("差異あり");
+  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await expect(page.getByRole("heading", { name: "保存足照合" })).toBeVisible();
+  await expect(page.getByText("価格差異", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("テストデータ", { exact: false }).first()).toBeVisible();
+  const toggle = page.getByRole("checkbox", { name: "保存データの照合箇所を表示" });
+  await expect(toggle).not.toBeChecked();
+  const chart = page.getByRole("region", { name: "価格・出来高" });
+  await expect(chart).toHaveAccessibleDescription(/15m 120本/);
+  const visibleBefore = await chart.getByLabel("チャート表示期間").textContent();
+  await toggle.check();
+  await expect(toggle).toBeChecked();
+  await expect(chart.getByRole("status").filter({ hasText: "保存足照合の印" }))
+    .toContainText(/読み込んだ足で[1-9]\d*か所/);
+  await expect(chart.getByLabel("チャート表示期間")).toHaveText(visibleBefore ?? "");
+  await page.getByRole("button", { name: "同時刻を見る" }).first().click();
+  await expect(page.getByRole("status").filter({ hasText: /対応する表示足/ })).toBeVisible();
+  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await expect(page.getByRole("checkbox", { name: "保存データの照合箇所を表示" })).toHaveCount(0);
+  const overflow = await page.evaluate(() => {
+    const root = document.scrollingElement ?? document.documentElement;
+    return root.scrollWidth - root.clientWidth;
+  });
+  expect(overflow).toBeLessThanOrEqual(1);
+  await writeFile(resolve(artifactRoot, "candle-audit-index.json"), '{"schemaVersion":99}');
+  const broken = await request.get("/api/candle-audits");
+  expect(broken.status()).toBe(503);
+  expect(await broken.text()).not.toMatch(/\/home\/|password|stack/i);
+  await writeFile(resolve(artifactRoot, "candle-recovery-state.json"), "x".repeat(1024 * 1024 + 1));
+  const oversized = await request.get("/api/candle-recovery");
+  expect(oversized.status()).toBe(503);
+  expect(await oversized.text()).not.toMatch(/\/home\/|password|stack/i);
+});
+
+test("監査詳細の全ページで51時刻のmarker要約を保つ", async ({ request }) => {
+  const runId = await publishSyntheticAuditForBitget(51, true);
+  const ids: string[] = [];
+  let offset = 0;
+  let total = 0;
+  for (let pageNumber = 0; pageNumber < 20; pageNumber++) {
+    const response = await request.get(`/api/candle-audits/${runId}?offset=${offset}&limit=20`);
+    expect(response.status()).toBe(200);
+    const detail = await response.json();
+    total = detail.totalFindings;
+    expect(detail.markerBuckets).toHaveLength(51);
+    expect(detail.markerBuckets[0].bucketAt).toBeDefined();
+    ids.push(...detail.findings.map((finding: { id: string }) => finding.id));
+    offset += detail.findings.length;
+    if (!detail.hasMore) break;
+  }
+  expect(ids.length).toBe(total);
+  expect(new Set(ids).size).toBe(total);
+});
+
+test("監査の新run到着後も閲覧中のrunを保ち、明示切替する", async ({ page }) => {
+  await page.clock.install();
+  const first = await publishSyntheticAuditForBitget();
+  await page.goto("/?mode=native");
+  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await expect(page.getByRole("heading", { name: "保存足照合" })).toBeVisible();
+  await page.locator(".source-quality .technical > summary").click();
+  await expect(page.locator(".source-quality .technical")).toContainText(first);
+  const second = await publishSyntheticAuditForBitget();
+  expect(second).not.toBe(first);
+  await page.clock.fastForward(60_001);
+  const switchRun = page.getByRole("button", { name: "新しい照合記録を見る" });
+  await expect(switchRun).toBeVisible();
+  await expect(page.locator(".source-quality .technical")).toContainText(first);
+  await switchRun.click();
+  await expect(page.locator(".source-quality .technical")).toContainText(second);
+});
+
+test("監査詳細の遅い旧応答はA→B→A後の表示を変えない", async ({ page }) => {
+  const runId = await publishSyntheticAuditForBitget();
+  let release!: (route: Route) => void;
+  const firstRoute = new Promise<Route>((resolveRoute) => { release = resolveRoute; });
+  let captured = false;
+  await page.route(`**/api/candle-audits/${runId}?*`, async (route) => {
+    if (!captured) {
+      captured = true;
+      release(route);
+      return;
+    }
+    await route.fallback();
+  });
+  await page.goto("/?mode=native");
+  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  const held = await firstRoute;
+  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await expect(page.getByText("価格差異", { exact: false }).first()).toBeVisible();
+  const current = await (await page.request.get(`/api/candle-audits/${runId}`)).json();
+  await held.fulfill({ json: { ...current, totalFindings: 0, findings: [], markerBuckets: [] } })
+    .catch(() => undefined);
+  await settleChartPaint(page);
+  await expect(page.getByText("価格差異", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText(/照合箇所 [1-9]\d*件/)).toBeVisible();
+});
+
+test("Recoveryの実HTTP・隔離DB・状態ファイルをAPIから画面まで通す", async ({ page, request }) => {
+  test.skip(!process.env.TEST_DATABASE_URL, "隔離TEST_DATABASE_URLが必要");
+  const result = await new Promise<{ code: number | null; stdout: string; stderr: string }>((resolveResult, reject) => {
+    const child = spawn("uv", ["run", "--no-sync", "python", "-m",
+      "tests.recovery_browser_probe", runtimeRoot], {
+      cwd: resolve(process.cwd(), "../market-core"), stdio: ["ignore", "pipe", "pipe"]
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (part: Buffer) => { stdout += part.toString(); });
+    child.stderr.on("data", (part: Buffer) => { stderr += part.toString(); });
+    child.on("error", reject);
+    child.on("close", (code) => resolveResult({ code, stdout, stderr }));
+  });
+  expect(result.code, result.stderr).toBe(0);
+  const produced = JSON.parse(result.stdout) as { runId: string; missingBefore: number;
+    inserted: number; remaining: number };
+  expect(produced).toMatchObject({ missingBefore: 1, inserted: 1, remaining: 0 });
+  const response = await request.get("/api/candle-recovery");
+  expect(response.status()).toBe(200);
+  const published = await response.json();
+  expect(published.state).toBe("available");
+  expect(published.recovery.runId).toBe(produced.runId);
+  await page.goto("/?mode=native");
+  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await expect(page.getByRole("heading", { name: "保存足の回収" })).toBeVisible();
+  await expect(page.getByText(/この契約: 欠損 1 → 0、挿入 1/)).toBeVisible();
+  await expect(page.getByText(/全市場: 対象 1\/1、欠損 1 → 0、挿入 1/)).toBeVisible();
+});
+
 test("約定騰落率の基準を分単位で変更して再読み込み後も保持する", async ({ page }, testInfo) => {
   await page.goto("/?mode=native");
   const setting = page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true });
@@ -896,6 +1053,60 @@ async function atomicWrite(path: string, value: unknown) {
   const temporary = `${path}.${process.pid}.${randomUUID()}.tmp`;
   await writeFile(temporary, `${JSON.stringify(value)}\n`, "utf-8");
   await rename(temporary, path);
+}
+
+async function publishSyntheticAuditForBitget(rowCount = 10, allDifferent = false): Promise<string> {
+  const inputDir = resolve(runtimeRoot, "audit-input");
+  await mkdir(inputDir, { recursive: true });
+  const now = new Date();
+  const startMs = Math.floor(now.getTime() / 60_000) * 60_000 - (rowCount + 30) * 60_000;
+  const stamp = (minute: number) => new Date(startMs + minute * 60_000).toISOString();
+  const series = {
+    venue: "bitget", source_symbol: "BTCUSDT", venue_instrument_version_id: 1,
+    definition_sha256: "f".repeat(64), base_asset: "BTC", quote_asset: "USDT",
+    settle_asset: "USDT", price_kind: "trade", interval_seconds: 60
+  };
+  const records = Array.from({ length: rowCount }, (_, index) => ({
+    venue_instrument_version_id: 1, bucket_at: stamp(index),
+    open_price: String(100 + index), high_price: String(102 + index),
+    low_price: String(99 + index), close_price: String(100 + index),
+    volume_base: "1", volume_notional: null, trade_count: 1,
+    finality: "derived_final", source_at: stamp(index), observed_at: stamp(index + 1)
+  }));
+  const left = { schema_version: 1, source_label: "e2e-left", series, records };
+  const right = { schema_version: 1, source_label: "e2e-right", series, records: records.map((row, index) =>
+    allDifferent || index === 5 ? { ...row, close_price: String(100 + index + 0.5) } : row) };
+  await atomicWrite(resolve(inputDir, "left.json"), left);
+  await atomicWrite(resolve(inputDir, "right.json"), right);
+  await atomicWrite(resolve(inputDir, "request.json"), {
+    schemaVersion: 1,
+    target: { venueInstrumentId: "bitget:BTCUSDT", venueInstrumentVersionId: 1 },
+    leftPath: "left.json", rightPath: "right.json",
+    leftSource: { sourceId: "e2e-left", label: "合成保存足 A", snapshotCreatedAt: now.toISOString() },
+    rightSource: { sourceId: "e2e-right", label: "合成保存足 B", snapshotCreatedAt: now.toISOString() },
+    comparisonKind: "snapshot_revision", evidenceKind: "synthetic",
+    windowStart: stamp(0), windowEnd: stamp(rowCount), dataAsOf: stamp(rowCount + 3),
+    returnMinutes: 5, compareVolumeBase: true,
+    tolerances: { priceAbsTol: "0", priceRelTol: "0", volumeAbsTol: "0",
+      volumeRelTol: "0", returnTolBps: "0" }
+  });
+  const result = await new Promise<{ code: number | null; stdout: string; stderr: string }>((resolveResult, reject) => {
+    const child = spawn("uv", ["run", "--no-sync", "python", "-m",
+      "prep_watchdeck_market.candle_audit_publication", "--request",
+      resolve(inputDir, "request.json"), "--state-dir", runtimeRoot], {
+      cwd: resolve(process.cwd(), "../market-core"), stdio: ["ignore", "pipe", "pipe"]
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (part: Buffer) => { stdout += part.toString(); });
+    child.stderr.on("data", (part: Buffer) => { stderr += part.toString(); });
+    child.on("error", reject);
+    child.on("close", (code) => resolveResult({ code, stdout, stderr }));
+  });
+  expect(result.code, result.stderr).toBe(1);
+  const resultJson = JSON.parse(result.stdout) as { runId: string; outcome: string };
+  expect(resultJson.outcome).toBe("differences");
+  return resultJson.runId;
 }
 
 async function readSelectionCommand(): Promise<Record<string, unknown> | null> {

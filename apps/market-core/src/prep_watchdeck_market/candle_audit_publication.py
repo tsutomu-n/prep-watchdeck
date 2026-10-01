@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -11,6 +12,7 @@ import sys
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -55,7 +57,17 @@ def _reject_nonfinite(_value: str) -> object:
 
 
 def _read_regular(path: Path, limit: int) -> bytes:
-    descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+    current = Path(path.anchor)
+    for part in path.absolute().parts[1:-1]:
+        current /= part
+        if current.is_symlink():
+            raise ValueError("input path contains a symlink")
+    try:
+        descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+    except OSError as error:
+        if error.errno == errno.ELOOP:
+            raise ValueError("input path contains a symlink") from None
+        raise
     try:
         info = os.fstat(descriptor)
         if not stat.S_ISREG(info.st_mode) or info.st_size > limit:
@@ -280,13 +292,13 @@ def _execute_locked(
                 start=request.window_start,
                 end=request.window_end,
                 as_of=request.data_as_of,
-                price_abs_tol=__import__("decimal").Decimal(request.tolerances.price_abs_tol),
-                price_rel_tol=__import__("decimal").Decimal(request.tolerances.price_rel_tol),
+                price_abs_tol=Decimal(request.tolerances.price_abs_tol),
+                price_rel_tol=Decimal(request.tolerances.price_rel_tol),
                 compare_volume_base=request.compare_volume_base,
-                volume_abs_tol=__import__("decimal").Decimal(request.tolerances.volume_abs_tol),
-                volume_rel_tol=__import__("decimal").Decimal(request.tolerances.volume_rel_tol),
+                volume_abs_tol=Decimal(request.tolerances.volume_abs_tol),
+                volume_rel_tol=Decimal(request.tolerances.volume_rel_tol),
                 return_minutes=5,
-                return_tol_bps=__import__("decimal").Decimal(request.tolerances.return_tol_bps),
+                return_tol_bps=Decimal(request.tolerances.return_tol_bps),
             )
             report = build_audit_report(
                 request,

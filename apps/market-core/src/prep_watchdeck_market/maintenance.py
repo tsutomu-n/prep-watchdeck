@@ -111,9 +111,7 @@ def _archive_dates(
     return tuple(catchup)
 
 
-def _changed_candle_archive_dates(
-    connection: Connection[Any], *, today: date
-) -> tuple[date, ...]:
+def _changed_candle_archive_dates(connection: Connection[Any], *, today: date) -> tuple[date, ...]:
     """Include bounded retained days whose saved candles arrived after confirmation."""
     changed: set[date] = set()
     earliest = today - timedelta(days=NORMALIZED_RETENTION.days)

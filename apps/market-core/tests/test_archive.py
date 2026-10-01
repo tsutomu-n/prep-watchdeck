@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import os
 import uuid
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
@@ -16,7 +16,7 @@ from psycopg.types.json import Jsonb
 
 from prep_watchdeck_market.archive import archive_partition
 from prep_watchdeck_market.database import apply_migrations
-from prep_watchdeck_market.maintenance import _archive_dates
+from prep_watchdeck_market.maintenance import _archive_dates, _archive_present_partitions
 from prep_watchdeck_market.retention import (
     prune_archived_partition,
     prune_raw_market_history,
@@ -200,6 +200,90 @@ def test_archive_generation_readback_and_retention_are_fail_closed(tmp_path: Pat
                 "SELECT count(*) FROM raw_market_observations"
             ).fetchone()
             assert raw_count == (0,)
+        finally:
+            connection.execute("RESET search_path")
+            connection.execute(
+                sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema_name))
+            )
+
+
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated TEST_DATABASE_URL")
+def test_late_recovery_insert_refreshes_confirmed_candle_archive(tmp_path: Path) -> None:
+    assert TEST_DATABASE_URL is not None
+    schema_name = f"late_candle_archive_{uuid.uuid4().hex}"
+    today = datetime.now(UTC).date()
+    partition_date = today - timedelta(days=2)
+    bucket = datetime.combine(partition_date, datetime.min.time(), tzinfo=UTC)
+    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema_name)))
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema_name)))
+        try:
+            apply_migrations(connection)
+            payload = connection.execute(
+                """
+                INSERT INTO raw_catalog_payloads (
+                    venue, endpoint, source_kind, documentation_url, payload_hash,
+                    observed_at, last_observed_at, payload
+                ) VALUES ('bitget', '/catalog', 'native_rest', 'https://example.invalid',
+                          %s, %s, %s, %s) RETURNING raw_catalog_payload_id
+                """,
+                ("a" * 64, bucket, bucket, Jsonb({"symbol": "BTCUSDT"})),
+            ).fetchone()
+            assert payload is not None
+            version = connection.execute(
+                """
+                INSERT INTO venue_instrument_versions (
+                    venue, source_symbol, definition_hash, valid_from, active, asset_class,
+                    market_type, base_asset, quote_asset, settle_asset, quantity_unit,
+                    contract_multiplier, raw_definition, raw_catalog_payload_id
+                ) VALUES ('bitget', 'BTCUSDT', %s, %s, true, 'crypto', 'linear_perpetual',
+                          'BTC', 'USDT', 'USDT', 'base', 1, '{}'::jsonb, %s)
+                RETURNING venue_instrument_version_id
+                """,
+                ("b" * 64, bucket - timedelta(minutes=1), payload[0]),
+            ).fetchone()
+            assert version is not None
+            for offset, observed in ((0, bucket + timedelta(minutes=2)),):
+                connection.execute(
+                    """
+                    INSERT INTO candle_1m (
+                        venue_instrument_version_id, bucket_at, open_price, high_price,
+                        low_price, close_price, finality, observed_at
+                    ) VALUES (%s, %s, 100, 102, 99, 101, 'derived_final', %s)
+                    """,
+                    (version[0], bucket + timedelta(minutes=offset), observed),
+                )
+            first = archive_partition(
+                connection,
+                tmp_path / "archive",
+                dataset="candle_1m",
+                venue="bitget",
+                partition_date=partition_date,
+            )
+            assert first.row_count == 1
+            connection.execute(
+                """
+                INSERT INTO candle_1m (
+                    venue_instrument_version_id, bucket_at, open_price, high_price,
+                    low_price, close_price, finality, observed_at
+                ) VALUES (%s, %s, 100, 102, 99, 101, 'derived_final', %s)
+                """,
+                (version[0], bucket + timedelta(minutes=1), datetime.now(UTC)),
+            )
+            assert partition_date in _archive_dates(
+                connection, preferred_date=today - timedelta(days=1), today=today
+            )
+            refreshed = _archive_present_partitions(
+                connection, tmp_path / "archive", partition_date
+            )
+            candle = next(item for item in refreshed if item.dataset == "candle_1m")
+            assert candle.generation == 2 and candle.row_count == 2
+            assert connection.execute(
+                """
+                SELECT generation, row_count FROM archive_manifests
+                WHERE dataset='candle_1m' AND venue='bitget' AND status='confirmed'
+                """
+            ).fetchall() == [(2, 2)]
         finally:
             connection.execute("RESET search_path")
             connection.execute(

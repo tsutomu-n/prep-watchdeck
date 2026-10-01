@@ -1,0 +1,244 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "observed",
+  "scope": "public native API data captured into isolated DB and restored copy; no production cutover",
+  "catalog": {
+    "capturedAt": "2026-09-30T13:45:08.558455+00:00",
+    "targets": [
+      {
+        "venue": "bitget",
+        "symbol": "BTCUSDT",
+        "state": "catalog_imported",
+        "versionId": 1,
+        "validFrom": "2026-09-30T13:45:08.155773+00:00",
+        "definitionHash": "174b8444ed40d2e443b42ce8040c5fe9102298c134f3846bf0c0d680bb4e129b",
+        "catalogHash": "e84d528f592e5f9a00b383e4a560d76d54ffa9c13da558a2685bb7648f987fb6",
+        "catalogObservedAt": "2026-09-30T13:45:08.155773+00:00"
+      },
+      {
+        "venue": "hyperliquid",
+        "symbol": "BTC",
+        "state": "catalog_imported",
+        "versionId": 2,
+        "validFrom": "2026-09-30T13:45:08.333348+00:00",
+        "definitionHash": "d9979d85d4e74346e11a29674088c0fcb29c67b984b3e3d3b0ca802004dc1a96",
+        "catalogHash": "3b22b3909e436c93b1bd1e2cc24f480082dfa5b8915b409a8c8fb37617abb711",
+        "catalogObservedAt": "2026-09-30T13:45:08.333348+00:00"
+      },
+      {
+        "venue": "aster",
+        "symbol": "BTCUSDT",
+        "state": "catalog_imported",
+        "versionId": 3,
+        "validFrom": "2026-09-30T13:45:08.497904+00:00",
+        "definitionHash": "9e55918406e1f8e4e0385c7d13739ea6d0c62808006979b98bae2d2690db2649",
+        "catalogHash": "918a3a18c507d2a0f81bcd053fdf274f18d00b3a938ce7960fb7b578829c97d1",
+        "catalogObservedAt": "2026-09-30T13:45:08.497904+00:00"
+      }
+    ]
+  },
+  "recovery": {
+    "evidenceKind": "observed",
+    "capturedAt": "2026-09-30T13:57:30.496961+00:00",
+    "targets": [
+      {
+        "instrumentId": "aster:BTCUSDT",
+        "versionId": 3,
+        "definitionHash": "9e55918406e1f8e4e0385c7d13739ea6d0c62808006979b98bae2d2690db2649",
+        "windowStart": "2026-09-30T13:46:00+00:00",
+        "windowEnd": "2026-09-30T13:52:00+00:00",
+        "omittedBucket": "2026-09-30T13:49:00+00:00",
+        "runId": "657fbcd5694a498eac25561af85f474b",
+        "httpRequests": 1,
+        "missingBefore": 1,
+        "inserted": 1,
+        "remaining": 0,
+        "seedRowsPreserved": 5,
+        "finality": "derived_final",
+        "recoveryObservedAt": "2026-09-30T13:57:19.818261+00:00",
+        "execution": "succeeded",
+        "cliExitCode": 0,
+        "stateSha256": "45dcbfaffb5a607a861d883ba07b5d78882a3108073efbec421e8848530d67d9"
+      },
+      {
+        "instrumentId": "hyperliquid:BTC",
+        "versionId": 2,
+        "definitionHash": "d9979d85d4e74346e11a29674088c0fcb29c67b984b3e3d3b0ca802004dc1a96",
+        "windowStart": "2026-09-30T13:46:00+00:00",
+        "windowEnd": "2026-09-30T13:52:00+00:00",
+        "omittedBucket": "2026-09-30T13:49:00+00:00",
+        "runId": "acb480c59fbb47e6b00769ca2ab2cefe",
+        "httpRequests": 1,
+        "missingBefore": 1,
+        "inserted": 1,
+        "remaining": 0,
+        "seedRowsPreserved": 5,
+        "finality": "derived_final",
+        "recoveryObservedAt": "2026-09-30T13:57:30.426004+00:00",
+        "execution": "succeeded",
+        "cliExitCode": 0,
+        "stateSha256": "135b4a978afc6d6fdc7efb24877af5c8ae1ea5ad7fe1cff89af06f5181bfc9d0"
+      },
+      {
+        "instrumentId": "bitget:BTCUSDT",
+        "versionId": 1,
+        "definitionHash": "174b8444ed40d2e443b42ce8040c5fe9102298c134f3846bf0c0d680bb4e129b",
+        "windowStart": "2026-09-30T13:46:00+00:00",
+        "windowEnd": "2026-09-30T13:52:00+00:00",
+        "omittedBucket": "2026-09-30T13:49:00+00:00",
+        "runId": "83de95919f1a4e09b687e20b94936193",
+        "httpRequests": 1,
+        "missingBefore": 1,
+        "inserted": 1,
+        "remaining": 0,
+        "seedRowsPreserved": 5,
+        "finality": "confirmed",
+        "recoveryObservedAt": "2026-09-30T14:00:00.560034+00:00",
+        "execution": "succeeded",
+        "cliExitCode": 0,
+        "stateSha256": "70ac744bce885bba0b282486a6f5319856391fccea735fc103b300bb69c9c518"
+      }
+    ]
+  },
+  "auditExport": {
+    "evidenceKind": "observed",
+    "databaseSource": "public native REST captured in isolated DB; pg_dump/pg_restore copy",
+    "productionCopy": false,
+    "dumpSha256": "00c24294c06b304be76e002e3e44a4e62b14ed337cd497eca54e1c399f8f13d1",
+    "restoredCandleCount": 18,
+    "audit": {
+      "runId": "156d95a196cb408db4f73cbe51a3d3f3",
+      "execution": "completed",
+      "outcome": "match",
+      "errorCode": null
+    },
+    "reportSha256": "1d11b1aca5c119ba3677fbe99c40207c4c49f89688e4af9496748dc926b9b4f6",
+    "leftSha256": "11c041d21eb4fc880b36d50dd486743d9349d1aeac603e063d6c5b6485366bb2",
+    "rightSha256": "88e48aa2cc3123e19a085ff9fa3fafb7bcb3ecc75df4cdbf7176fb2e40b39e7a",
+    "independence": "not_established",
+    "bundleId": "b7b847efbe5744f7b95d5d2c2f0d3810",
+    "bundlePath": "/tmp/prep-watchdeck-observed-20260930/fixtures/b7b847efbe5744f7b95d5d2c2f0d3810",
+    "manifestSha256": "03e316573aad1427a762639039e463202e7bde705329aa9941eb9220168f6713",
+    "datasets": [
+      {
+        "name": "instrument",
+        "availability": "included",
+        "rows": 1
+      },
+      {
+        "name": "market-state",
+        "availability": "empty",
+        "rows": 0
+      },
+      {
+        "name": "candles-1m",
+        "availability": "included",
+        "rows": 6
+      },
+      {
+        "name": "funding",
+        "availability": "empty",
+        "rows": 0
+      },
+      {
+        "name": "recovery",
+        "availability": "included",
+        "rows": 1
+      },
+      {
+        "name": "audit",
+        "availability": "included",
+        "rows": 1
+      }
+    ],
+    "exportExitCode": 0,
+    "verifyExitCode": 0,
+    "marketRowsUnchanged": true
+  },
+  "browser": {
+    "evidenceKind": "observed",
+    "records": [
+      {
+        "viewport": "desktop",
+        "venue": "aster",
+        "runId": "657fbcd5694a498eac25561af85f474b",
+        "recoveryApiStatus": 200,
+        "inspectorVerified": true,
+        "screenshotPath": "/tmp/prep-watchdeck-observed-20260930/inspector-desktop-aster.png",
+        "screenshotSha256": "b2307449d399650668fd1d362e54be092c620fbde8710d074c856a57f834b966"
+      },
+      {
+        "viewport": "desktop",
+        "venue": "hyperliquid",
+        "runId": "acb480c59fbb47e6b00769ca2ab2cefe",
+        "recoveryApiStatus": 200,
+        "inspectorVerified": true,
+        "screenshotPath": "/tmp/prep-watchdeck-observed-20260930/inspector-desktop-hyperliquid.png",
+        "screenshotSha256": "20f28b43f6f35ec579925ad8d19e6e1670ca12f2b4b4139e7c5c38f008c735b4"
+      },
+      {
+        "viewport": "desktop",
+        "venue": "bitget",
+        "runId": "83de95919f1a4e09b687e20b94936193",
+        "recoveryApiStatus": 200,
+        "inspectorVerified": true,
+        "screenshotPath": "/tmp/prep-watchdeck-observed-20260930/inspector-desktop-bitget.png",
+        "screenshotSha256": "70a72740b786516ed7ff79b67ef8992a8344b0c89c99bc6b75b0a008fbe90b53"
+      },
+      {
+        "viewport": "mobile",
+        "venue": "aster",
+        "runId": "657fbcd5694a498eac25561af85f474b",
+        "recoveryApiStatus": 200,
+        "inspectorVerified": true,
+        "screenshotPath": "/tmp/prep-watchdeck-observed-20260930/inspector-mobile-aster.png",
+        "screenshotSha256": "d19b8c0863c9f814a629f0c8c5e94761f4e4f0067760cccc9aad74192b36947f"
+      },
+      {
+        "viewport": "mobile",
+        "venue": "hyperliquid",
+        "runId": "acb480c59fbb47e6b00769ca2ab2cefe",
+        "recoveryApiStatus": 200,
+        "inspectorVerified": true,
+        "screenshotPath": "/tmp/prep-watchdeck-observed-20260930/inspector-mobile-hyperliquid.png",
+        "screenshotSha256": "7baa0797bb9481793d9f41c2b93be4a8f3672bced51ec74d8ff5b7f3a417df9c"
+      },
+      {
+        "viewport": "mobile",
+        "venue": "bitget",
+        "runId": "83de95919f1a4e09b687e20b94936193",
+        "recoveryApiStatus": 200,
+        "inspectorVerified": true,
+        "screenshotPath": "/tmp/prep-watchdeck-observed-20260930/inspector-mobile-bitget.png",
+        "screenshotSha256": "8a501e750e629d502ce842ce0ac9efcdf326d2fd51dfdb6af3a1143740780f98"
+      }
+    ]
+  },
+  "limitations": [
+    "Audit repeatability uses the same Bitget native REST; independence is not established.",
+    "Market-state and funding are empty in this capture; they are not synthetic zeros.",
+    "Browser rendering is not physical device or Japanese IME acceptance.",
+    "Initial Bitget capture failed due to endTime rounding; corrected aligned end was retested successfully."
+  ],
+  "temporaryEvidenceRoot": "/tmp/prep-watchdeck-observed-20260930",
+  "probeScripts": [
+    {
+      "path": "/tmp/prep-watchdeck-observed-20260930/init.py",
+      "sha256": "3dcc331618677fb243f8009ee42fd6c8f428687f43ca8993b686ef7b5a6bd4a8"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-observed-20260930/recover.py",
+      "sha256": "afe59e49a5a10ffdae9aa6e3838a79aba06e5764f13a921421cf523a229e74a1"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-observed-20260930/recover-bitget.py",
+      "sha256": "3d28c2ef80875c22ad9ef75dd49465c809e7aa699266f6fd1061634574aabeb7"
+    }
+  ],
+  "finalVerification": {
+    "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+    "coreTests": 165,
+    "verificationLog": "/tmp/prep-watchdeck-core-final-20260930.log",
+    "note": "The observed capture precedes final cancellation cleanup changes; final full Market Core regression verifies those changes."
+  }
+}

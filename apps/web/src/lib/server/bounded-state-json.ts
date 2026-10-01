@@ -1,6 +1,6 @@
 import { constants } from "node:fs";
 import { lstat, open } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 
 export class StateFileError extends Error {
   constructor(public readonly kind: "missing" | "unavailable") {
@@ -11,8 +11,14 @@ export class StateFileError extends Error {
 /** Read a fixed local state file without following a final symlink or unbounded growth. */
 export async function readBoundedStateJson(path: string, maximum: number): Promise<unknown> {
   try {
-    const parent = await lstat(dirname(path));
-    if (!parent.isDirectory() || parent.isSymbolicLink()) throw new StateFileError("unavailable");
+    let parentPath = dirname(resolve(path));
+    while (true) {
+      const parent = await lstat(parentPath);
+      if (!parent.isDirectory() || parent.isSymbolicLink()) throw new StateFileError("unavailable");
+      const next = dirname(parentPath);
+      if (next === parentPath) break;
+      parentPath = next;
+    }
     const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
     try {
       const info = await handle.stat();

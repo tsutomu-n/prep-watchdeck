@@ -6,7 +6,7 @@ export function auditTargetKey(id: string, version: number): string {
   return `${id}\u0000${version}`;
 }
 
-export function auditStatusLabel(entry: AuditIndexEntry | null, state: "loading" | "available" | "not_run" | "unavailable"): string {
+export function auditStatusLabel(entry: Pick<AuditIndexEntry, "execution" | "outcome" | "inputs" | "evidenceKind"> | null, state: "loading" | "available" | "not_run" | "unavailable"): string {
   if (state === "loading") return "保存足 読込中";
   if (state === "unavailable") return "保存足 取得不能";
   if (!entry) return "保存足 未照合";

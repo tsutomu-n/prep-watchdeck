@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T22:14:16+09:00`
-- 検証: `2026-09-16T22:14:16+09:00`
+- 更新: `2026-09-30T21:04:03+09:00`
+- 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
 ---
@@ -266,3 +266,16 @@ source・公開・稼働の証拠を分け、全体の入口を
 試験用artifactの更新間隔による503は試験側で修正した。製品の判定・鮮度条件は緩めていない。
 全534契約の数値を独立再計算したこと、全531 Widgetを実描画したこと、名簿の現時点の完全性は
 本受入の確認範囲に含めない。元数量換算3件・追加3 Widgetは引き続き利用制限を維持する。
+
+## 保存足品質機能の検証境界
+
+Recoveryはparser・時間窓・内部穴とmissing-only SQLに加え、隔離Postgresとloopback HTTPで
+取得→挿入→再scan→状態ファイルを検査する。遅着足の確認済みParquet再発行も隔離DBで確認する。
+Auditは旧計算器の入力/exit互換、時刻・数値・欠測、固定入力copy、失敗後のindex、HTTP読取、
+Desktop/Mobileのbadge・詳細・印を確認する。OpenMarketは認証/制限/単位/系列identityの
+offline transportとAudit接続、Fixtureはread-only DB→CLI→再読→改変検出を確認する。
+
+変更後の全体gateは`bash scripts/verify-local.sh`。source/test成功を実Providerの対応銘柄、
+日本語IME実機、稼働releaseの切替、実市場dataの受入と同一視しない。
+項目別の実行statusと証拠は[受入台帳](../plans/active/prep-quality-completion/acceptance.json)と
+[Audit台帳](../plans/active/prep-quality-completion/audit-acceptance.json)に保持する。

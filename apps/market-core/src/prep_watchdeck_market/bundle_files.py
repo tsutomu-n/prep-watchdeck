@@ -50,6 +50,7 @@ def safe_relative_path(value: str) -> PurePosixPath:
 
 
 def read_regular(path: Path, limit: int) -> bytes:
+    _check_directory_path(path.absolute().parent)
     try:
         descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
         try:

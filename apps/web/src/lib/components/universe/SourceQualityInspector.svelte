@@ -147,7 +147,7 @@
       {#if auditDetail && !auditIdentityValid}
         <p role="alert">対象情報が一致しません。チャート注記は使えません。</p>
       {:else if report}
-        <p class="audit-outcome">{auditStatusLabel(auditEntry, "available")}{report.evidenceKind === "synthetic" ? " · テストデータ" : ""}</p>
+        <p class="audit-outcome">{auditStatusLabel(report, "available")}{report.evidenceKind === "synthetic" ? " · テストデータ" : ""}</p>
         <p>{comparisonLabel(report.comparisonKind)}。独立性は確認していません。保存足だけの照合です。</p>
         <dl class="facts">
           <div><dt>入力足 / 対象期間</dt><dd>1分 · {formatTimestamp(report.window.start)} 〜 {formatTimestamp(report.window.end)}（終了時刻を含まない）</dd></div>

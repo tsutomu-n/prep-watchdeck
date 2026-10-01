@@ -12,8 +12,17 @@
       "specification": "02_BASELINE.md",
       "testTarget": "preflight/status evidence",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "git status --short --branch; git rev-parse HEAD; git ls-remote origin refs/heads/main",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "MKT-002",
@@ -24,8 +33,17 @@
       "specification": "03_IMPLEMENTATION_MAP.md",
       "testTarget": "apps/web/tests/e2e/*markets* / existing flow tests",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh [Markets browser regression]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "MKT-003",
@@ -36,8 +54,18 @@
       "specification": "02_BASELINE.md",
       "testTarget": "existing AC20/AC21 + real input evidence",
       "requiredFor": "LOCAL_HARDWARE",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "本人の実日本語IMEと端末操作は未実施"
+        }
+      ]
     },
     {
       "id": "MKT-004",
@@ -48,8 +76,18 @@
       "specification": "10_RELEASE_RUNBOOK.md",
       "testTarget": "existing markets-workspace acceptance AC22",
       "requiredFor": "REAL_DATA",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "現役M6実データへの接続・受入は未承認"
+        }
+      ]
     },
     {
       "id": "REC-001",
@@ -60,8 +98,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_windows",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_window_and_full_bitget_history_parser",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-002",
@@ -72,8 +119,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_interior_gaps_after_live_resume",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_internal_gap_insert_only_and_version_lock",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-003",
@@ -84,8 +140,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_history_pagination_and_live_limit",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_window_and_full_bitget_history_parser",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-004",
@@ -96,8 +161,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_history_finality_and_times",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_window_and_full_bitget_history_parser + test_hyperliquid_close_timestamp_and_partial_page_budget",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-005",
@@ -108,8 +182,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_version_change_between_fetch_and_insert",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_internal_gap_insert_only_and_version_lock",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-006",
@@ -120,8 +203,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_insert_missing_only",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_internal_gap_insert_only_and_version_lock",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-007",
@@ -132,8 +224,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_live_recovery_races",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_internal_gap_insert_only_and_version_lock [parallel live/recovery]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-008",
@@ -144,8 +245,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_history_rejections",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_window_and_full_bitget_history_parser + test_recovery_http_to_database_to_state",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-009",
@@ -156,8 +266,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_http_budget_and_cooldown",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_http_to_database_to_state + test_history_timeout_retries_have_a_bounded_error",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-010",
@@ -168,8 +287,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_budget_fairness",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_hyperliquid_close_timestamp_and_partial_page_budget",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-011",
@@ -180,8 +308,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_failure_isolation",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_service.py::test_recovery_startup_failure_is_isolated_and_periodic_run_follows",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-012",
@@ -192,8 +329,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_shutdown_and_singleflight",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_cancel_finishes_run_and_releases_lock",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-013",
@@ -204,8 +350,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_counts_and_readback",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_http_to_database_to_state",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-014",
@@ -216,8 +371,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_archive_retention",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_archive.py::test_late_recovery_insert_refreshes_confirmed_candle_archive",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-015",
@@ -228,8 +392,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recovery_service_integration",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_service.py::test_recovery_startup_failure_is_isolated_and_periodic_run_follows",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-016",
@@ -240,8 +413,17 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "test_recover_candles_cli",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_recovery.py::test_recovery_http_to_database_to_state [recover-candles CLI dry-run]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REC-017",
@@ -252,8 +434,18 @@
       "specification": "04_RECOVERY.md",
       "testTarget": "live_recovery_acceptance",
       "requiredFor": "REAL_DATA",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "watchdeck-market recover-candles --apply --json; real Bitget/Hyperliquid/Aster REST -> isolated DB -> GET -> Inspector",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/observed-acceptance.json",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-09-30T23:24:51+09:00",
+          "note": "実公開API取得データの隔離DB/復元コピー。production DBへは接続していない。Auditは同じnative REST再取得で独立性未確立。"
+        }
+      ]
     },
     {
       "id": "AUD-001",
@@ -264,8 +456,17 @@
       "specification": "audit/reference/README.md",
       "testTarget": "audit/AC-001",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_cli_exit_codes_and_input_hashes",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-001"
     },
     {
@@ -277,8 +478,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-002",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_different_markets_versions_and_units_cannot_be_compared",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-002"
     },
     {
@@ -290,8 +500,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-003",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_timezone_offsets_are_converted_not_removed + test_naive_timestamp_is_not_assumed_utc",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-003"
     },
     {
@@ -303,8 +522,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-004",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_invalid_records_remain_diagnostics_not_market_data",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-004"
     },
     {
@@ -316,8 +544,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-005",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_duplicate_rows_do_not_overwrite_or_double_count",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-005"
     },
     {
@@ -329,8 +566,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-006",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_missing_volume_is_not_zero_and_does_not_discard_valid_price",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-006"
     },
     {
@@ -342,8 +588,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-007",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_price_tolerance_requires_both_thresholds",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-007"
     },
     {
@@ -355,8 +610,17 @@
       "specification": "audit/fixtures/report.unverified.json",
       "testTarget": "audit/AC-008",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_both_sources_missing_same_minute_are_not_a_match + test_no_data_is_unverified",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-008"
     },
     {
@@ -368,8 +632,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-009",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_return_difference_uses_real_endpoint_times",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-009"
     },
     {
@@ -381,8 +654,17 @@
       "specification": "audit/fixtures/request.synthetic.json",
       "testTarget": "audit/AC-010",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_match_crosses_utc_midnight_and_keeps_zero_volume",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-010"
     },
     {
@@ -394,8 +676,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-011",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_invalid_records_remain_diagnostics_not_market_data",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-011"
     },
     {
@@ -407,8 +698,17 @@
       "specification": "audit/08_RUNBOOK.md",
       "testTarget": "audit/AC-012",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-012"
     },
     {
@@ -420,8 +720,17 @@
       "specification": "audit/04_READ_MODEL_AND_API.md",
       "testTarget": "audit/AC-013",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_audit_summary_counts_values_bars_and_returns_separately",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-013"
     },
     {
@@ -433,8 +742,17 @@
       "specification": "audit/fixtures/report.repeatability.json",
       "testTarget": "audit/AC-014",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_cli_exit_codes_and_input_hashes",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-014"
     },
     {
@@ -446,8 +764,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-015",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_request_rejects_duplicate_keys_and_input_symlink",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-015"
     },
     {
@@ -459,8 +786,17 @@
       "specification": "audit/fixtures/report.differences.json",
       "testTarget": "audit/AC-016",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_audit_summary_counts_values_bars_and_returns_separately",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-016"
     },
     {
@@ -472,8 +808,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-017",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_publication_is_immutable_and_failure_keeps_previous_completed",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-017"
     },
     {
@@ -485,8 +830,17 @@
       "specification": "audit/fixtures/index.failed.json",
       "testTarget": "audit/AC-018",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_publication_is_immutable_and_failure_keeps_previous_completed",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-018"
     },
     {
@@ -498,8 +852,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-019",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_parallel_publications_keep_both_runs_and_one_valid_index",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-019"
     },
     {
@@ -511,8 +874,17 @@
       "specification": "audit/03_BACKEND_SPEC.md",
       "testTarget": "audit/AC-020",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_capacity_and_held_lock_preserve_completed_index + test_corrupt_index_stops_publication_without_replacing_it",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-020"
     },
     {
@@ -524,8 +896,17 @@
       "specification": "audit/04_READ_MODEL_AND_API.md",
       "testTarget": "audit/AC-021",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit_publication.py::test_audit_summary_counts_values_bars_and_returns_separately",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-021"
     },
     {
@@ -537,8 +918,17 @@
       "specification": "audit/04_READ_MODEL_AND_API.md",
       "testTarget": "audit/AC-022",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_candle_audit.py::test_unverified_retains_a_known_price_difference",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-022"
     },
     {
@@ -550,8 +940,17 @@
       "specification": "audit/04_READ_MODEL_AND_API.md",
       "testTarget": "audit/AC-023",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-023"
     },
     {
@@ -563,8 +962,17 @@
       "specification": "audit/fixtures/detail.large-first.json",
       "testTarget": "audit/AC-024",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査詳細の全ページで51時刻のmarker要約を保つ",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-024"
     },
     {
@@ -576,8 +984,17 @@
       "specification": "audit/04_READ_MODEL_AND_API.md",
       "testTarget": "audit/AC-025",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "candle-audit-repository.ts GET-only source inspection + verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-025"
     },
     {
@@ -589,8 +1006,17 @@
       "specification": "audit/04_READ_MODEL_AND_API.md",
       "testTarget": "audit/AC-026",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-026"
     },
     {
@@ -602,8 +1028,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-027",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::Universe Explorerの主要flowを操作できる + audit failure response",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-027"
     },
     {
@@ -615,8 +1050,17 @@
       "specification": "audit/fixtures/ui-cases.json",
       "testTarget": "audit/AC-028",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "candle-audit.test.ts::保存足の未実施・失敗・不足・差異・同一入力を別の表示にする",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-028"
     },
     {
@@ -628,8 +1072,17 @@
       "specification": "audit/fixtures/ui-cases.json",
       "testTarget": "audit/AC-029",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "NativeMarkets.svelte auditTargetKey exact version guard + verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-029"
     },
     {
@@ -641,8 +1094,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-030",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査の新run到着後も閲覧中のrunを保ち、明示切替する",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-030"
     },
     {
@@ -654,8 +1116,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-031",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "UniverseChart.svelte marker plugin source inspection + verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-031"
     },
     {
@@ -667,8 +1138,17 @@
       "specification": "audit/fixtures/marker-cases.json",
       "testTarget": "audit/AC-032",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "candle-audit.test.ts::1分bucketを表示時間足へまとめ、件数と先頭詳細位置を保つ",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-032"
     },
     {
@@ -680,8 +1160,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-033",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査詳細の遅い旧応答はA→B→A後の表示を変えない",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-033"
     },
     {
@@ -693,8 +1182,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-034",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査の新run到着後も閲覧中のrunを保ち、明示切替する",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-034"
     },
     {
@@ -706,8 +1204,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-035",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-035"
     },
     {
@@ -719,8 +1226,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-036",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める [mobile-390]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-036"
     },
     {
@@ -732,8 +1248,17 @@
       "specification": "audit/05_UI_SPEC.md",
       "testTarget": "audit/AC-037",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査の新run到着後も閲覧中のrunを保ち、明示切替する + NativeMarkets.svelte poll guard",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-037"
     },
     {
@@ -745,8 +1270,17 @@
       "specification": "audit/08_RUNBOOK.md",
       "testTarget": "audit/AC-038",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-038"
     },
     {
@@ -758,8 +1292,17 @@
       "specification": "audit/06_IMPLEMENTATION_PLAN.md",
       "testTarget": "audit/AC-039",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh [80 Playwright tests]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-039"
     },
     {
@@ -771,8 +1314,17 @@
       "specification": "audit/06_IMPLEMENTATION_PLAN.md",
       "testTarget": "audit/AC-040",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh [schema/docs/build]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ],
       "sourceCriterion": "AC-040"
     },
     {
@@ -784,8 +1336,18 @@
       "specification": "audit/08_RUNBOOK.md",
       "testTarget": "audit/AC-041",
       "requiredFor": "REAL_DATA",
-      "status": "not_run",
-      "evidence": [],
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "pg_dump/pg_restore public native capture; python -m prep_watchdeck_market.candle_audit_publication; real GET and Inspector",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/observed-acceptance.json",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-09-30T23:24:51+09:00",
+          "note": "実公開API取得データの隔離DB/復元コピー。production DBへは接続していない。Auditは同じnative REST再取得で独立性未確立。"
+        }
+      ],
       "sourceCriterion": "AC-041"
     },
     {
@@ -797,8 +1359,18 @@
       "specification": "audit/08_RUNBOOK.md",
       "testTarget": "audit/AC-042",
       "requiredFor": "RELEASE",
-      "status": "not_run",
-      "evidence": [],
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "本番配置・rollbackは未承認"
+        }
+      ],
       "sourceCriterion": "AC-042"
     },
     {
@@ -810,8 +1382,17 @@
       "specification": "06_INSPECTOR.md",
       "testTarget": "test_inspector_api_states",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める + Recoveryの実HTTP・隔離DB・状態ファイルをAPIから画面まで通す",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "INS-002",
@@ -822,8 +1403,17 @@
       "specification": "06_INSPECTOR.md",
       "testTarget": "test_inspector_semantics",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::Universe Explorerの主要flowを操作できる + SourceQualityInspector.svelte",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "INS-003",
@@ -834,8 +1424,17 @@
       "specification": "06_INSPECTOR.md",
       "testTarget": "test_inspector_request_generation",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査詳細の遅い旧応答はA→B→A後の表示を変えない",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "INS-004",
@@ -846,8 +1445,17 @@
       "specification": "06_INSPECTOR.md",
       "testTarget": "source-quality-inspector.e2e.ts",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::監査CLIの不変ファイルをAPIと取得元・品質画面で読める [desktop/mobile]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-001",
@@ -858,8 +1466,17 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "test_openmarket_requests",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_openmarket_transport_auth_rate_and_secret_boundary",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-002",
@@ -870,8 +1487,17 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "test_reference_mapping",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_reference_lookup_snapshot_audit_input_and_partial",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-003",
@@ -882,8 +1508,17 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "test_reference_normalization",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_reference_lookup_snapshot_audit_input_and_partial",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-004",
@@ -894,8 +1529,17 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "test_reference_partial_failures",
       "requiredFor": "DEV",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_openmarket_transport_auth_rate_and_secret_boundary + test_reference_lookup_snapshot_audit_input_and_partial [partial/empty]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-005",
@@ -906,8 +1550,17 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "test_reference_publication",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_reference_lookup_snapshot_audit_input_and_partial [verify_reference_bundle]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-006",
@@ -918,8 +1571,17 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "test_reference_audit_integration",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_reference_lookup_snapshot_audit_input_and_partial [Audit publication]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REF-007",
@@ -930,8 +1592,18 @@
       "specification": "07_OPENMARKET_REFERENCE.md",
       "testTarget": "live_openmarket_acceptance",
       "requiredFor": "REAL_DATA",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T23:24:51+09:00",
+          "note": "利用者がOpenMarket key未提供と回答済み。実認証成功データは作成していない。"
+        }
+      ]
     },
     {
       "id": "EXP-001",
@@ -942,8 +1614,17 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "test_fixture_export_inputs",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "EXP-002",
@@ -954,8 +1635,17 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "test_export_repeatable_read",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection [concurrent writer snapshot]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "EXP-003",
@@ -966,8 +1656,17 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "test_fixture_values",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection [Decimal/null/empty]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "EXP-004",
@@ -978,8 +1677,17 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "test_fixture_atomic_output",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection [atomic bundle]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "EXP-005",
@@ -990,8 +1698,17 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "test_fixture_verification",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_fixture_bundle.py::test_fixture_export_round_trip_and_tamper_detection [CLI verify/tamper]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "EXP-006",
@@ -1002,8 +1719,17 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "test_fixture_optional_evidence",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_reference_openmarket.py::test_reference_lookup_snapshot_audit_input_and_partial [recovery/audit attachment]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "EXP-007",
@@ -1014,8 +1740,18 @@
       "specification": "08_FIXTURE_EXPORT.md",
       "testTarget": "live_fixture_export_acceptance",
       "requiredFor": "REAL_DATA",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "watchdeck-market export-fixture --evidence-kind observed --audit-run <observedRunId>; watchdeck-market verify-fixture",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/observed-acceptance.json",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-09-30T23:24:51+09:00",
+          "note": "実公開API取得データの隔離DB/復元コピー。production DBへは接続していない。Auditは同じnative REST再取得で独立性未確立。"
+        }
+      ]
     },
     {
       "id": "INT-001",
@@ -1026,8 +1762,17 @@
       "specification": "09_VALIDATION.md",
       "testTarget": "integrated-quality-workflow.e2e.ts",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "universe-explorer.e2e.ts::Recoveryの実HTTP・隔離DB・状態ファイルをAPIから画面まで通す + test_reference_openmarket.py::test_reference_lookup_snapshot_audit_input_and_partial",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "INT-002",
@@ -1038,8 +1783,17 @@
       "specification": "09_VALIDATION.md",
       "testTarget": "quality-lane-isolation.e2e.ts",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "test_recovery_internal_gap_insert_only_and_version_lock + test_reference_lookup_snapshot_audit_input_and_partial + TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "INT-003",
@@ -1050,8 +1804,17 @@
       "specification": "09_VALIDATION.md",
       "testTarget": "scripts/verify-local.sh + verify.yml routing",
       "requiredFor": "INTEGRATION",
-      "status": "not_run",
-      "evidence": []
+      "status": "pass",
+      "evidence": [
+        {
+          "command": "TEST_DATABASE_URL=<isolated> bash scripts/verify-local.sh [schema/types/CI/docs]",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "synthetic",
+          "checkedAt": "2026-09-30T21:52:28+09:00"
+        }
+      ]
     },
     {
       "id": "REL-001",
@@ -1062,8 +1825,18 @@
       "specification": "10_RELEASE_RUNBOOK.md",
       "testTarget": "release smoke + compatibility evidence",
       "requiredFor": "RELEASE",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "本番配置・設定変更・unit操作は未承認"
+        }
+      ]
     },
     {
       "id": "REL-002",
@@ -1074,8 +1847,18 @@
       "specification": "10_RELEASE_RUNBOOK.md",
       "testTarget": "rollback receipt",
       "requiredFor": "RELEASE",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "本番backup・切戻し実行は未承認"
+        }
+      ]
     },
     {
       "id": "REL-003",
@@ -1086,8 +1869,18 @@
       "specification": "01_SCOPE_AND_DONE.md",
       "testTarget": "user acceptance receipt",
       "requiredFor": "RELEASE",
-      "status": "not_run",
-      "evidence": []
+      "status": "blocked",
+      "evidence": [
+        {
+          "command": "approval/input dependent; no command run",
+          "sourceFingerprint": "sha256:eb27bfbb43400d8db786eee83ac6de2364428d54a1f359340360dbbbd63d6784",
+          "exitCode": null,
+          "logPath": "docs/plans/active/prep-quality-completion/validation-summary.md",
+          "evidenceKind": "static",
+          "checkedAt": "2026-09-30T21:52:28+09:00",
+          "note": "本人の実運用受入は未実施"
+        }
+      ]
     }
   ]
 }

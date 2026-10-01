@@ -8,7 +8,9 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
+import stat
 import sys
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
@@ -80,8 +82,22 @@ class Snapshot:
 
 
 def load_snapshot(path: Path, *, start: datetime, end: datetime, as_of: datetime) -> Snapshot:
-    with path.open("rb") as stream:
-        raw = stream.read(MAX_INPUT_BYTES + 1)
+    try:
+        current = Path(path.absolute().anchor)
+        for part in path.absolute().parts[1:-1]:
+            current /= part
+            if current.is_symlink():
+                raise ValueError("snapshot path contains a symlink")
+        descriptor = os.open(path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+        try:
+            if not stat.S_ISREG(os.fstat(descriptor).st_mode):
+                raise ValueError("snapshot must be a regular file")
+            with os.fdopen(os.dup(descriptor), "rb") as stream:
+                raw = stream.read(MAX_INPUT_BYTES + 1)
+        finally:
+            os.close(descriptor)
+    except OSError:
+        raise ValueError("snapshot unavailable") from None
     if len(raw) > MAX_INPUT_BYTES:
         raise ValueError("snapshot exceeds the 16 MiB input limit")
     payload = require_mapping(

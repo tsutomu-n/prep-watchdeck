@@ -75,6 +75,8 @@ jobs:
                 docs=true; core=true; ranking=true; web=true; e2e=true; ops=true ;;
               apps/market-core/*)
                 core=true ;;
+              scripts/market/*)
+                core=true ;;
               apps/ranking-core/*|scripts/ranking/*)
                 ranking=true ;;
               pyproject.toml|uv.lock|.python-version)
@@ -168,6 +170,9 @@ jobs:
           uv run ruff check src tests
           uv run ruff format --check --diff src tests
           uv run pyrefly check
+          cd ../..
+          uv run --package prep-watchdeck-market python scripts/market/generate-recovery-schema.py --check
+          uv run --package prep-watchdeck-market python scripts/market/generate-audit-schemas.py --check
 
   ranking:
     needs: changes
