@@ -11,20 +11,33 @@
   } from "$lib/theme/font-scheme";
 
   let selected = $state<FontSchemeId>(defaultFontSchemeId);
+  let storageMessage = $state<string | null>(null);
 
   onMount(() => {
-    selected = readDocumentFontScheme(document.documentElement);
+    const refresh = () => {
+      selected = readDocumentFontScheme(document.documentElement);
+      storageMessage = null;
+    };
+    refresh();
+    window.addEventListener(FONT_SCHEME_CHANGE_EVENT, refresh);
+    return () => window.removeEventListener(FONT_SCHEME_CHANGE_EVENT, refresh);
   });
 
   function selectFontScheme(event: Event) {
     const select = event.currentTarget as HTMLSelectElement;
     selected = applyDocumentFontScheme(document.documentElement, select.value);
-    writeStoredFontScheme(window.localStorage, selected);
+    let saved = false;
+    try {
+      saved = writeStoredFontScheme(window.localStorage, selected);
+    } catch {
+      // Storage itself can be unavailable while display changes remain usable.
+    }
     window.dispatchEvent(
       new CustomEvent(FONT_SCHEME_CHANGE_EVENT, {
         detail: { id: selected }
       })
     );
+    storageMessage = saved ? null : "保存できないため、再読込するまでこのタブ内だけに適用しています";
   }
 </script>
 
@@ -36,6 +49,7 @@
     {/each}
   </select>
 </label>
+{#if storageMessage}<small role="status">{storageMessage}</small>{/if}
 
 <style>
   .font-selector {
@@ -62,6 +76,8 @@
     font-size: var(--type-body-sm-size);
     cursor: pointer;
   }
+
+  small { display: block; margin-top: var(--space-sm); color: var(--warning); font-size: var(--type-body-sm-size); line-height: 1.5; }
 
   @media (max-width: 48rem), (any-pointer: coarse) {
     select {

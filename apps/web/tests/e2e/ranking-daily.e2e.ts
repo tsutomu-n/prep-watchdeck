@@ -80,6 +80,11 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
   await page.screenshot({ path: testInfo.outputPath("daily-ranking.png"), fullPage: true });
   await writeFile(testInfo.outputPath("displayed-response.json"), JSON.stringify(latest, null, 2));
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const back = page.getByRole("button", { name: "一覧へ戻る", exact: true });
+  if (await back.isVisible()) {
+    await back.click();
+    await expect(btc.locator("button.select-row")).toBeFocused();
+  }
   await page.getByLabel("ランキングの比較期間").selectOption("daily");
   await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 15分・1時間のみ");
   await expect(selected).toContainText("15分・1時間のみ");

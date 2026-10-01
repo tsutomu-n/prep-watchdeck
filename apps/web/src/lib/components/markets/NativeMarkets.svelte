@@ -1,12 +1,11 @@
 <script lang="ts">
   import { onMount, tick, untrack } from "svelte";
+  import { pushState } from "$app/navigation";
   import { page } from "$app/state";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
   import type { UserWorkspace } from "$lib/server/user-workspace-repository";
-  import FontSelector from "$lib/components/FontSelector.svelte";
-  import ThemeSelector from "$lib/components/ThemeSelector.svelte";
-  import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
+  import { subscribeReferenceTime } from "$lib/theme/display-preferences";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import UniverseChart from "$lib/components/universe/UniverseChart.svelte";
   import SourceQualityInspector from "$lib/components/universe/SourceQualityInspector.svelte";
@@ -81,6 +80,13 @@
   let viewName = $state("");
   let selectedViewId = $state("");
   let viewBusy = $state(false);
+  let mobileViewport = $state(false);
+  let mounted = $state(false);
+  const detailHistory = $derived(Boolean(page.state.nativeDetail));
+  const mobileDetailOpen = $derived(mobileViewport && detailHistory);
+  let wasDetail = false;
+  let tableScroll = $state<HTMLDivElement>();
+  let listPosition = { pageTop: 0, tableTop: 0, tableLeft: 0, instrumentId: "" };
   let selectedVenueInstrumentId = $state<string | null>(initialSelection(initialMarket));
   let selectionMessage = $state<string | null>(null);
   let selectionError = $state<string | null>(null);
@@ -139,6 +145,15 @@
     const item = sortedItems.find((row) => row.venueInstrumentId === id);
     return item ? [item] : [];
   }) : sortedItems);
+  let activeConditions = $derived([
+    ...(search.trim() ? [`検索: ${search.trim()}`] : []),
+    ...(venue !== "all" ? [venue] : []),
+    ...(favoritesOnly ? ["お気に入りのみ"] : []),
+    ...(coverage !== "all" ? [coverage === "multi" ? "2取引所以上" : "単独 / 未group"] : []),
+    ...(quality !== "all" ? [`品質: ${statusLabel(quality)}`] : []),
+    ...(minTrade15m !== null ? [`確定終値15分 ≥ ${minTrade15m}%`] : []),
+    ...(lockedIds ? ["行順固定中"] : [])
+  ]);
   let selectedInstrument = $derived(
     items.find((item) => item.venueInstrumentId === selectedVenueInstrumentId) ?? null
   );
@@ -204,6 +219,14 @@
   ]);
 
   onMount(() => {
+    const stopReferenceTime = subscribeReferenceTime((value) => {
+      referenceTime = value;
+      referenceReady = true;
+    });
+    const viewport = window.matchMedia("(max-width: 48rem)");
+    const syncViewport = () => { mobileViewport = viewport.matches; };
+    syncViewport();
+    viewport.addEventListener("change", syncViewport);
     const loadWorkspace = () => {
       if (document.visibilityState !== "hidden") {
         void readUserWorkspace().then((value) => { workspace = value; workspaceError = null; })
@@ -214,10 +237,23 @@
     document.addEventListener("visibilitychange", loadWorkspace);
     const requestedId = page.url.searchParams.get("instrument");
     const requestedVersion = Number(page.url.searchParams.get("version"));
+    const initialUrl = page.url.href;
+    let initialDetailTimer: number | undefined;
     const target = market?.universe.items.find((item) => item.active &&
       item.venueInstrumentId === requestedId &&
       item.venueInstrumentVersionId === requestedVersion);
-    if (target) selectedVenueInstrumentId = target.venueInstrumentId;
+    if (target) {
+      selectedVenueInstrumentId = target.venueInstrumentId;
+      if (mobileViewport && !detailHistory) {
+        // Hydration mounts this component before SvelteKit finishes initializing its router.
+        initialDetailTimer = window.setTimeout(() => {
+          if (!mounted || page.url.href !== initialUrl || !mobileViewport || detailHistory ||
+              selectedVenueInstrumentId !== target.venueInstrumentId) return;
+          pushState("", { ...page.state, nativeDetail: true });
+        }, 0);
+      }
+    }
+    mounted = true;
     const timer = window.setInterval(() => {
       void refreshArtifacts();
       void refreshMetrics();
@@ -251,6 +287,10 @@
       if (document.visibilityState !== "hidden") void refreshQuality();
     }, 60_000);
     return () => {
+      mounted = false;
+      window.clearTimeout(initialDetailTimer);
+      stopReferenceTime();
+      viewport.removeEventListener("change", syncViewport);
       window.clearInterval(timer);
       window.clearInterval(priceTimer);
       window.clearInterval(qualityTimer);
@@ -262,6 +302,15 @@
       priceChangeClient = null;
       auditDetailController?.abort();
     };
+  });
+
+  $effect(() => {
+    const showingDetail = detailHistory;
+    if (!mounted) return;
+    if (wasDetail && !showingDetail && untrack(() => mobileViewport)) {
+      untrack(() => void restoreListPosition());
+    }
+    wasDetail = showingDetail;
   });
 
   $effect(() => {
@@ -522,6 +571,21 @@
   }
 
   function selectInstrument(instrument: UniverseInstrumentArtifact) {
+    if (mobileViewport) {
+      if (!mobileDetailOpen) {
+        listPosition = {
+          pageTop: window.scrollY,
+          tableTop: tableScroll?.scrollTop ?? 0,
+          tableLeft: tableScroll?.scrollLeft ?? 0,
+          instrumentId: instrument.venueInstrumentId
+        };
+      }
+      if (!detailHistory) pushState("", { ...page.state, nativeDetail: true });
+      void tick().then(() => {
+        document.getElementById("inspector-title")?.focus({ preventScroll: true });
+        document.getElementById("native-detail")?.scrollIntoView({ block: "start" });
+      });
+    }
     selectedVenueInstrumentId = instrument.venueInstrumentId;
     try {
       recordRecentMarket(window.localStorage, {
@@ -539,6 +603,46 @@
       selectionQueue = selectionQueue.catch(() => undefined).then(() =>
         postSelection("select", groupId, venueInstrumentId, venueInstrumentVersionId)
       );
+    }
+  }
+
+  function returnToList() {
+    if (detailHistory) window.history.back();
+  }
+
+  async function restoreListPosition() {
+    await tick();
+    const buttons = tableScroll?.querySelectorAll<HTMLButtonElement>(".instrument-select") ?? [];
+    const target = Array.from(buttons).find((button) =>
+      button.dataset.instrumentId === (listPosition.instrumentId || selectedVenueInstrumentId));
+    (target ?? document.getElementById("universe-title"))?.focus({ preventScroll: true });
+    if (tableScroll) {
+      tableScroll.scrollTop = listPosition.tableTop;
+      tableScroll.scrollLeft = listPosition.tableLeft;
+    }
+    window.scrollTo({ top: listPosition.pageTop, behavior: "instant" });
+  }
+
+  function resetFilters() {
+    search = "";
+    venue = "all";
+    coverage = "all";
+    quality = "all";
+    favoritesOnly = false;
+    minTrade15m = null;
+    lockedIds = null;
+  }
+
+  function mobileSortValue(item: UniverseInstrumentArtifact) {
+    switch (nativeSort) {
+      case "funding": return `Funding/h ${formatRate(item.fundingRatePerHour)}`;
+      case "spread": return `Spread ${formatFinite(spreadBps(item.bestBid, item.bestAsk), 2)} bps`;
+      case "oi15m": return `数量OI 15分 ${metricLabel(metricFor(item)?.oiChange["15m"], 120)}`;
+      case "oi1h": return `数量OI 1時間 ${metricLabel(metricFor(item)?.oiChange["1h"], 120)}`;
+      case "trade15m": return `確定終値 15分 ${metricLabel(metricFor(item)?.tradeChange["15m"])}`;
+      case "trade1h": return `確定終値 1時間 ${metricLabel(metricFor(item)?.tradeChange["1h"])}`;
+      case "trade24h": return `確定終値 24時間 ${metricLabel(metricFor(item)?.tradeChange["24h"])}`;
+      default: return "";
     }
   }
 
@@ -664,7 +768,7 @@
 </script>
 
 <svelte:head>
-  <title>Perp Universe Explorer | Prep Watchdeck</title>
+  <title>取引所別 | Prep Watchdeck</title>
   <meta
     name="description"
     content="Bitget、Hyperliquid、Asterの暗号資産Perpを会場別に確認するローカル監視画面"
@@ -675,14 +779,11 @@
   <header class="topbar">
     <div class="identity">
       <p>PREP WATCHDECK</p>
-      <h1>Perp Universe Explorer</h1>
-      <span>Bitget / Hyperliquid / Aster の公開データ監視。売買推奨ではありません。</span>
+      <h1>取引所別</h1>
+      <span>Bitget / Hyperliquid / Aster</span>
     </div>
-    <div class="preferences" aria-label="表示設定">
-      <a class="ranking-link" href={returnHref()}>参照市場へ戻る</a>
-      <ThemeSelector />
-      <FontSelector />
-      <DailyReferenceSetting bind:value={referenceTime} bind:ready={referenceReady} />
+    <div class="preferences" aria-label="市場画面の移動">
+      <a class="ranking-link" href={returnHref()}>ランキングへ戻る</a>
     </div>
   </header>
 
@@ -714,7 +815,7 @@
       </div>
       <div>
         <span>Universe</span>
-        <strong>{items.length} instruments</strong>
+        <strong>{items.length} 銘柄</strong>
       </div>
       <div>
         <span>表示データ生成</span>
@@ -754,47 +855,28 @@
       </section>
     {/if}
 
-    <div class="workspace">
+    <div class="workspace" class:mobile-detail-open={mobileDetailOpen}>
       <section class="universe" aria-labelledby="universe-title">
         <div class="section-title">
           <div>
-            <h2 id="universe-title">Instrument Universe</h2>
-            <p>既定順: base asset → Venue。約定騰落率はJST {referenceTime}基準。</p>
+            <h2 id="universe-title" tabindex="-1">銘柄一覧</h2>
+            <p>約定騰落率 · JST {referenceTime}基準</p>
           </div>
           <strong>{visibleItems.length} / {items.length}</strong>
         </div>
 
         <div class="filters" aria-label="Universe絞り込み">
-          <label><span>保存</span><span><input type="checkbox" bind:checked={favoritesOnly} />お気に入りのみ</span></label>
           <label class="search-control">
             <span>検索</span>
             <input bind:value={search} type="search" placeholder="BTC / BTCUSDT / venue id" />
           </label>
           <label>
-            <span>Venue</span>
+            <span>取引所</span>
             <select bind:value={venue}>
               <option value="all">すべて</option>
               <option value="aster">Aster</option>
               <option value="bitget">Bitget</option>
               <option value="hyperliquid">Hyperliquid</option>
-            </select>
-          </label>
-          <label>
-            <span>Coverage</span>
-            <select bind:value={coverage}>
-              <option value="all">すべて</option>
-              <option value="multi">2 Venue以上</option>
-              <option value="single">単独 / 未group</option>
-            </select>
-          </label>
-          <label>
-            <span>品質</span>
-            <select bind:value={quality}>
-              <option value="all">すべて</option>
-              <option value="ready">正常</option>
-              <option value="partial">一部取得</option>
-              <option value="stale">期限切れ</option>
-              <option value="unavailable">取得不能</option>
             </select>
           </label>
           <label><span>並べ替え</span><select aria-label="取引所別の並べ替え" bind:value={nativeSort}>
@@ -806,14 +888,34 @@
           <label><span>方向</span><select aria-label="並べ替え方向" bind:value={nativeDirection}>
             <option value="desc">大きい順</option><option value="asc">小さい順</option>
           </select></label>
-          <label><span>確定終値15分の下限</span><input type="number" step="any" value={minTrade15m ?? ""}
-            oninput={(event) => minTrade15m = event.currentTarget.value === "" ? null : Number(event.currentTarget.value)} /></label>
+          <label class="favorite-filter"><input type="checkbox" bind:checked={favoritesOnly} />お気に入りのみ</label>
         </div>
-        <button type="button" onclick={() => lockedIds = lockedIds ? null : visibleItems.map((item) => item.venueInstrumentId)}>
-          {lockedIds ? "行順固定を解除" : "行順を固定"}
-        </button>
+        <details class="condition-details">
+          <summary>絞り込み条件 <span>{activeConditions.length ? activeConditions.join(" · ") : "すべての銘柄"}</span></summary>
+          <div class="filters" aria-label="詳細の絞り込み">
+            <label><span>Coverage</span><select bind:value={coverage}>
+              <option value="all">すべて</option><option value="multi">2 Venue以上</option>
+              <option value="single">単独 / 未group</option>
+            </select></label>
+            <label><span>品質</span><select bind:value={quality}>
+              <option value="all">すべて</option><option value="ready">正常</option>
+              <option value="partial">一部取得</option><option value="stale">期限切れ</option>
+              <option value="unavailable">取得不能</option>
+            </select></label>
+            <label><span>確定終値15分の下限</span><input type="number" step="any" value={minTrade15m ?? ""}
+              oninput={(event) => minTrade15m = event.currentTarget.value === "" ? null : Number(event.currentTarget.value)} /></label>
+            <button type="button" onclick={() => lockedIds = lockedIds ? null : visibleItems.map((item) => item.venueInstrumentId)}>
+              {lockedIds ? "行順固定を解除" : "行順を固定"}
+            </button>
+          </div>
+        </details>
+        {#if activeConditions.length > 0}
+          <div class="active-conditions"><span>{visibleItems.length} 件に絞り込み中</span>
+            <button type="button" onclick={resetFilters}>絞り込みをリセット</button>
+          </div>
+        {/if}
         {#if workspaceError}<p class="quality-banner" role="alert">{workspaceError}</p>{/if}
-        <div class="filters" aria-label="表示条件の保存">
+        <div class="saved-view" aria-label="保存した表示の選択">
           <label><span>保存した表示</span><select aria-label="取引所別の保存した表示" value={selectedViewId}
             onchange={(event) => applySavedView(event.currentTarget.value)}>
             <option value="">選択してください</option>
@@ -821,27 +923,32 @@
               <option value={saved.id}>{saved.name}</option>
             {/each}
           </select></label>
-          <label><span>表示名</span><input aria-label="取引所別の表示名" maxlength="80" bind:value={viewName} /></label>
-          <button type="button" disabled={viewBusy || !workspace || !viewName.trim()} onclick={() => mutateView("saveView")}>表示条件を保存</button>
-          <button type="button" disabled={viewBusy || !selectedViewId} onclick={() => mutateView("removeView")}>保存した表示を削除</button>
+          <details class="view-management">
+            <summary>表示条件を保存／管理</summary>
+            <div class="view-actions">
+              <label><span>表示名</span><input aria-label="取引所別の表示名" maxlength="80" bind:value={viewName} /></label>
+              <button type="button" disabled={viewBusy || !workspace || !viewName.trim()} onclick={() => mutateView("saveView")}>表示条件を保存</button>
+              <button type="button" disabled={viewBusy || !selectedViewId} onclick={() => mutateView("removeView")}>保存した表示を削除</button>
+            </div>
+          </details>
         </div>
 
-        <div class="table-scroll">
+        <div class="table-scroll" bind:this={tableScroll}>
           <table>
             <caption class="sr-only">Perp instrument一覧</caption>
             <thead>
               <tr>
                 <th scope="col">保存</th>
-                <th scope="col">Instrument</th>
+                <th scope="col">銘柄 / 取引所</th>
                 <th scope="col">Mark</th>
                 <th scope="col" class="change-column">約定騰落率<small>JST {referenceTime}基準</small></th>
-                <th scope="col">Bid / Ask</th>
-                <th scope="col">Funding / h</th>
+                <th scope="col" class="detail-column">Bid / Ask</th>
+                <th scope="col" class="detail-column">Funding / h</th>
                 <th scope="col" class="optional-column">OI notional</th>
                 <th scope="col" class="optional-column">数量OI 15m / 1h</th>
                 <th scope="col" class="optional-column">確定終値 15m / 1h / 24h</th>
                 <th scope="col" class="optional-column">24h volume</th>
-                <th scope="col">品質 / age</th>
+                <th scope="col" class="detail-column">品質 / age</th>
               </tr>
             </thead>
             <tbody>
@@ -858,6 +965,7 @@
                     <button
                       type="button"
                       class="instrument-select"
+                      data-instrument-id={item.venueInstrumentId}
                       aria-current={item.venueInstrumentId === selectedVenueInstrumentId ? "true" : undefined}
                       aria-label={`${item.baseAsset} ${item.venue}を詳細表示`}
                       onclick={() => selectInstrument(item)}
@@ -866,6 +974,9 @@
                       <span>{item.venue} · {item.sourceSymbol}</span>
                       <small class="coverage-label">{coverageLabel(item, groupCounts)}</small>
                     </button>
+                    <small class="mobile-quality" class:quality-risk={item.quality !== "ready"}>
+                      {statusLabel(item.quality)} · {formatAgeSeconds(item.ageSeconds)}
+                    </small>
                   </td>
                   <td class="numeric">
                     {formatPrice(item.markPrice)}
@@ -879,6 +990,7 @@
                         supported={item.active}
                       />
                     </div>
+                    {#if nativeSort !== "base"}<small class="mobile-sort-value">{mobileSortValue(item)}</small>{/if}
                   </td>
                   <td class="numeric change-column">
                     <PriceChangeValue
@@ -889,15 +1001,15 @@
                       supported={item.active}
                     />
                   </td>
-                  <td class="numeric">{formatBidAsk(item.bestBid, item.bestAsk)[0]}<br />{formatBidAsk(item.bestBid, item.bestAsk)[1]}</td>
-                  <td class="numeric">{formatRate(item.fundingRatePerHour)}</td>
+                  <td class="numeric detail-column">{formatBidAsk(item.bestBid, item.bestAsk)[0]}<br />{formatBidAsk(item.bestBid, item.bestAsk)[1]}</td>
+                  <td class="numeric detail-column">{formatRate(item.fundingRatePerHour)}</td>
                   <td class="numeric optional-column">{formatCompact(item.openInterestNotional)}</td>
                   <td class="numeric optional-column">{metricLabel(metricFor(item)?.oiChange["15m"], 120)} / {metricLabel(metricFor(item)?.oiChange["1h"], 120)}</td>
                   <td class="numeric optional-column">{metricLabel(metricFor(item)?.tradeChange["15m"])} / {metricLabel(metricFor(item)?.tradeChange["1h"])} / {metricLabel(metricFor(item)?.tradeChange["24h"])}</td>
                   <td class="numeric optional-column">
                     {formatCompact(item.volume24hRaw)} {item.volume24hUnit ?? ""}
                   </td>
-                  <td>
+                  <td class="detail-column">
                     <span class:quality-risk={item.quality !== "ready"}>{statusLabel(item.quality)}</span>
                     <small>{formatAgeSeconds(item.ageSeconds)}</small>
                     <button type="button" class="audit-badge"
@@ -919,19 +1031,31 @@
         </div>
       </section>
 
-      <aside class="inspector" aria-labelledby="inspector-title">
+      <aside class="inspector" id="native-detail" aria-labelledby="inspector-title">
+        <div class="mobile-back"><button type="button" aria-label="一覧へ戻る" onclick={returnToList}>← 一覧へ戻る</button></div>
         {#if selectedInstrument}
           <div class="instrument-heading">
             <div>
               <p>{selectedInstrument.venue}</p>
-              <h2 id="inspector-title">{selectedInstrument.baseAsset} PERP</h2>
-              <code>{selectedInstrument.venueInstrumentId}</code>
+              <h2 id="inspector-title" tabindex="-1">{selectedInstrument.baseAsset} PERP</h2>
+              <span class="primary-price">{formatPrice(selectedInstrument.markPrice)} <small>Mark</small></span>
               <span class="coverage-label">{coverageLabel(selectedInstrument, groupCounts)}</span>
             </div>
             <span class:quality-risk={selectedInstrument.quality !== "ready"}>
               {statusLabel(selectedInstrument.quality)}
             </span>
           </div>
+
+          {#if selectedInstrument.qualityReasons.length > 0 || selectedInstrument.errorCode}
+            <div class="quality-reasons">
+              <strong>品質理由</strong>
+              <span>{reasonSummary(selectedInstrument.qualityReasons, selectedInstrument.errorCode)}</span>
+              <details class="technical-details">
+                <summary>技術情報</summary>
+                <code>{technicalReasonCodes(selectedInstrument.qualityReasons, selectedInstrument.errorCode).join(" / ")}</code>
+              </details>
+            </div>
+          {/if}
 
           <section class="daily-change-block" aria-labelledby="daily-change-title">
             <div class="subheading">
@@ -946,14 +1070,37 @@
               supported={selectedInstrument.active}
               detailed
             />
-            <p>指定時刻直前の1分足終値から計算。同じ取引所の約定価格を使用し、約1分ごとに更新します。</p>
+            <details><summary>計算基準</summary>
+              <p>指定時刻直前の1分足終値から計算。同じ取引所の約定価格を使用し、約1分ごとに更新します。</p>
+            </details>
           </section>
+
+          {#if selectionError}<p class="selection-warning operational-warning" role="alert">{selectionError}</p>{/if}
+          {#if selectedInstrument.active}
+            <UniverseChart
+              venueInstrumentId={selectedVenueInstrumentId!}
+              venueInstrumentVersionId={selectedInstrument.venueInstrumentVersionId}
+              bind:timeframe={chartTimeframe}
+              auditMarkerBuckets={auditIdentityValid && auditDetail ? auditDetail.markerBuckets : []}
+              {auditMarkersEnabled}
+              onAuditMarkerClick={showAuditFinding}
+              {auditJump}
+              onAuditJumpResult={(found) => {
+                auditJumpMessage = found ? "対応する表示足へ移動しました" : "対応する表示足がありません。過去足を読み込んでください。";
+              }}
+            />
+          {:else}
+            <section class="waiting-panel">
+              <h3>価格・出来高</h3>
+              <p>非activeのためチャートを要求しません</p>
+            </section>
+          {/if}
 
           <section class="reference-block" aria-labelledby="median-title">
             <h3 id="median-title">参考mark中央値</h3>
             <strong>{formatPrice(selectedInstrument.referenceMarkMedian.value)}</strong>
             <p>Parity仮定・reference only。{selectedInstrument.referenceMarkMedian.venueCount} Venue。</p>
-            <p>{market.universe.parityAssumption.statement}</p>
+            <details><summary>参考値の読み方</summary><p>{market.universe.parityAssumption.statement}</p></details>
             {#if selectedInstrument.referenceMarkMedian.status !== "ready"}
               <p class="neutral-note">
                 算出不能: {reasonLabel(selectedInstrument.referenceMarkMedian.unavailableReason ?? "insufficient_venues")}
@@ -996,82 +1143,18 @@
               <div><dt>Settle</dt><dd>{selectedInstrument.settleAsset}</dd></div>
               <div><dt>Collateral</dt><dd>{selectedInstrument.collateralAsset ?? "判定不能"}</dd></div>
             </dl>
-            <dl class="provenance">
-              <div><dt>observedAt</dt><dd>{formatTimestamp(selectedInstrument.observedAt)}</dd></div>
-              <div><dt>sourceAt</dt><dd>{formatTimestamp(selectedInstrument.sourceAt)}</dd></div>
-              <div><dt>catalog source</dt><dd>{selectedInstrument.catalog.sourceKind}</dd></div>
-              <div><dt>endpoint</dt><dd><code>{selectedInstrument.catalog.endpoint}</code></dd></div>
-              <div><dt>payload hash</dt><dd><code>{selectedInstrument.sourcePayloadHash ?? "—"}</code></dd></div>
-            </dl>
-            {#if selectedInstrument.qualityReasons.length > 0 || selectedInstrument.errorCode}
-              <div class="quality-reasons">
-                <strong>品質理由</strong>
-                <span>{reasonSummary(selectedInstrument.qualityReasons, selectedInstrument.errorCode)}</span>
-                <details class="technical-details">
-                  <summary>技術情報</summary>
-                  <code>{technicalReasonCodes(selectedInstrument.qualityReasons, selectedInstrument.errorCode).join(" / ")}</code>
-                </details>
-              </div>
-            {/if}
           </section>
 
-          <section class="selection-state" aria-live="polite">
-            <h3>選択group</h3>
+          <details class="selection-state">
+            <summary>選択データの監視状態</summary>
             {#if selectedGroupId}
               <p>{selectedGroupId} / {groupVenueCount} Venue</p>
               <p>行選択は500ms後に反映し、5分ごとに監視leaseを更新します。</p>
               {#if selectionMessage}<p class="quality-good">{selectionMessage}</p>{/if}
-              {#if selectionError}<p class="operational-warning" role="alert">{selectionError}</p>{/if}
             {:else}
               <p class="neutral-note">安全に同一groupへ対応できないinstrumentです。板・約定購読は行いません。</p>
             {/if}
-          </section>
-
-          {#if selectedInstrument.active}
-            <UniverseChart
-              venueInstrumentId={selectedVenueInstrumentId!}
-              venueInstrumentVersionId={selectedInstrument.venueInstrumentVersionId}
-              bind:timeframe={chartTimeframe}
-              auditMarkerBuckets={auditIdentityValid && auditDetail ? auditDetail.markerBuckets : []}
-              {auditMarkersEnabled}
-              onAuditMarkerClick={showAuditFinding}
-              {auditJump}
-              onAuditJumpResult={(found) => {
-                auditJumpMessage = found ? "対応する表示足へ移動しました" : "対応する表示足がありません。過去足を読み込んでください。";
-              }}
-            />
-          {:else}
-            <section class="waiting-panel">
-              <h3>価格・出来高</h3>
-              <p>非activeのためチャートを要求しません</p>
-            </section>
-          {/if}
-
-          <SourceQualityInspector
-            instrument={selectedInstrument}
-            bind:open={sourceQualityOpen}
-            onOpenChange={setSourceQualityOpen}
-            {recovery}
-            {recoveryStatus}
-            {qualityFetchedAt}
-            auditEntry={selectedAuditEntry}
-            auditIndexStatus={auditIndexStatus}
-            {pinnedAuditRunId}
-            {auditDetail}
-            {auditIdentityValid}
-            {auditDetailError}
-            {auditDetailLoading}
-            {auditOffset}
-            {auditMarkersEnabled}
-            {auditJumpMessage}
-            onSelectRun={selectAuditRun}
-            onPage={(offset) => pinnedAuditRunId && void loadAuditDetail(pinnedAuditRunId, offset)}
-            onToggleMarkers={(enabled) => { auditMarkersEnabled = enabled; }}
-            onFindingJump={(bucketAt) => {
-              auditJump = { bucketAt, sequence: (auditJump?.sequence ?? 0) + 1 };
-              auditJumpMessage = null;
-            }}
-          />
+          </details>
 
           <section class="selected-market" aria-labelledby="selected-market-title">
             <div class="subheading selected-heading">
@@ -1188,6 +1271,44 @@
               oi15mPct: metricCurrent(selectedMetrics?.oiChange["15m"], 120),
               trade15mPct: metricCurrent(selectedMetrics?.tradeChange["15m"], 300)
             }} />
+
+          <SourceQualityInspector
+            instrument={selectedInstrument}
+            bind:open={sourceQualityOpen}
+            onOpenChange={setSourceQualityOpen}
+            {recovery}
+            {recoveryStatus}
+            {qualityFetchedAt}
+            auditEntry={selectedAuditEntry}
+            auditIndexStatus={auditIndexStatus}
+            {pinnedAuditRunId}
+            {auditDetail}
+            {auditIdentityValid}
+            {auditDetailError}
+            {auditDetailLoading}
+            {auditOffset}
+            {auditMarkersEnabled}
+            {auditJumpMessage}
+            onSelectRun={selectAuditRun}
+            onPage={(offset) => pinnedAuditRunId && void loadAuditDetail(pinnedAuditRunId, offset)}
+            onToggleMarkers={(enabled) => { auditMarkersEnabled = enabled; }}
+            onFindingJump={(bucketAt) => {
+              auditJump = { bucketAt, sequence: (auditJump?.sequence ?? 0) + 1 };
+              auditJumpMessage = null;
+            }}
+          />
+
+          <details class="source-details">
+            <summary>出典・更新時刻</summary>
+            <code>{selectedInstrument.venueInstrumentId}</code>
+            <dl class="provenance">
+              <div><dt>observedAt</dt><dd>{formatTimestamp(selectedInstrument.observedAt)}</dd></div>
+              <div><dt>sourceAt</dt><dd>{formatTimestamp(selectedInstrument.sourceAt)}</dd></div>
+              <div><dt>catalog source</dt><dd>{selectedInstrument.catalog.sourceKind}</dd></div>
+              <div><dt>endpoint</dt><dd><code>{selectedInstrument.catalog.endpoint}</code></dd></div>
+              <div><dt>payload hash</dt><dd><code>{selectedInstrument.sourcePayloadHash ?? "—"}</code></dd></div>
+            </dl>
+          </details>
         {:else}
           <div class="waiting-panel"><h2 id="inspector-title">Instrument未選択</h2><p>Universeから1行選択してください。</p></div>
         {/if}
@@ -1201,16 +1322,15 @@
   .universe-page { min-height: 100vh; padding: var(--space-page); background: var(--bg); color: var(--text); }
   .topbar { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--space-lg); padding: var(--space-sm) 0 var(--space-md); border-bottom: 1px solid var(--line-strong); }
   .ranking-link { align-self: center; color: var(--focus); font-size: var(--type-body-sm-size); text-decoration: none; padding: var(--space-sm) 0; }
-  .identity p, .identity h1, .identity span, .section-title h2, .section-title p, .instrument-heading p, .instrument-heading h2, .reference-block h3, .reference-block p, .selection-state h3, .selection-state p, .waiting-panel h2, .waiting-panel h3, .waiting-panel p, .subheading h3, .subheading p, .venue-depth h4, .disclaimer, .waiting-copy { margin: 0; }
+  .identity p, .identity h1, .identity span, .section-title h2, .section-title p, .instrument-heading p, .instrument-heading h2, .reference-block h3, .reference-block p, .selection-state p, .waiting-panel h2, .waiting-panel h3, .waiting-panel p, .subheading h3, .subheading p, .venue-depth h4, .disclaimer, .waiting-copy { margin: 0; }
   .identity p { color: var(--focus); font-size: var(--type-label-caps-size); font-weight: 800; }
   .identity h1 { margin-top: var(--space-xs); font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
   .identity span, .section-title p, .subheading p { display: block; margin-top: var(--space-xs); color: var(--muted); font-size: var(--type-body-sm-size); }
   .preferences { display: flex; flex-wrap: wrap; align-items: end; gap: var(--space-md); }
-  .status-strip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-bottom: 1px solid var(--line-strong); background: var(--surface); }
-  .status-strip div { min-width: 0; padding: var(--space-sm) var(--space-md); border-right: 1px solid var(--line); }
-  .status-strip span, .status-strip strong { display: block; }
+  .status-strip { display: flex; flex-wrap: wrap; gap: var(--space-xs) var(--space-lg); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--line-strong); background: var(--surface); }
+  .status-strip div { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-xs); min-width: 0; }
   .status-strip span { color: var(--muted); font-size: var(--type-label-caps-size); }
-  .status-strip strong { margin-top: var(--space-xxs); overflow-wrap: anywhere; font-size: var(--type-data-md-size); }
+  .status-strip strong { overflow-wrap: anywhere; font-size: var(--type-body-sm-size); }
   .operational-banner, .quality-banner { display: grid; gap: var(--space-xxs); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--warning-border); background: var(--surface); color: var(--warning); font-size: var(--type-body-sm-size); }
   .operational-banner code, .quality-banner code, .technical-details code { display: block; margin-top: var(--space-xs); overflow-wrap: anywhere; color: var(--subtle); }
   .workspace { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(28rem, 1fr); gap: var(--space-grid); margin-top: var(--space-grid); align-items: start; }
@@ -1220,9 +1340,24 @@
   .section-title { padding: var(--space-md); border-bottom: 1px solid var(--line); }
   .section-title h2, .instrument-heading h2 { font-size: var(--type-heading-md-size); }
   .section-title > strong { color: var(--subtle); font-size: var(--type-data-md-size); }
-  .filters { display: grid; grid-template-columns: minmax(12rem, 1fr) repeat(3, minmax(8rem, auto)); gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--line); background: var(--surface); }
-  .filters label { display: grid; gap: var(--space-xs); color: var(--muted); font-size: var(--type-label-caps-size); }
-  input, select, .fatal-state button { min-height: var(--control-height-dense); border: 1px solid var(--line-strong); border-radius: var(--radius-none); background: var(--panel-strong); color: var(--text); padding: 0 var(--space-sm); font: inherit; }
+  .filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-sm); padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--line); background: var(--surface); }
+  .filters label, .saved-view label, .view-actions label { display: grid; gap: var(--space-xs); min-width: 0; color: var(--muted); font-size: var(--type-label-caps-size); }
+  input, select, button { min-width: 0; min-height: var(--control-height-dense); border: 1px solid var(--line-strong); border-radius: var(--radius-none); background: var(--panel-strong); color: var(--text); padding: 0 var(--space-sm); font: inherit; }
+  button { cursor: pointer; }
+  button:disabled { cursor: default; opacity: .55; }
+  button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .search-control { grid-column: span 2; }
+  .filters .favorite-filter { display: flex; align-items: center; align-self: end; min-height: var(--control-height-dense); }
+  .favorite-filter input { min-height: 0; width: 1rem; height: 1rem; margin: 0; accent-color: var(--focus); }
+  .condition-details { margin: 0; border-bottom: 1px solid var(--line); }
+  .condition-details > summary { padding: var(--space-sm) var(--space-md); color: var(--text); }
+  .condition-details > summary span { margin-left: var(--space-sm); color: var(--muted); overflow-wrap: anywhere; }
+  .active-conditions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-xs) var(--space-md); border-bottom: 1px solid var(--line); color: var(--muted); font-size: var(--type-body-sm-size); }
+  .saved-view { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-sm); align-items: end; padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--line); }
+  .view-management { margin: 0; }
+  .view-management summary { color: var(--focus); }
+  .view-management[open] { grid-column: 1 / -1; }
+  .view-actions { display: grid; gap: var(--space-sm); }
   .table-scroll, .book-walk-scroll, .depth-scroll, .trade-scroll { overflow: auto; }
   table { width: 100%; border-collapse: collapse; font-size: var(--type-body-sm-size); }
   th, td { padding: var(--space-sm); border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
@@ -1235,7 +1370,7 @@
   .audit-badge:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .coverage-label { margin-top: var(--space-xxs); color: var(--subtle); }
   .numeric, dd, code { font-variant-numeric: tabular-nums; }
-  .mobile-change { display: none; }
+  .mobile-change, .mobile-sort-value, .mobile-quality, .mobile-back { display: none; }
   .change-column small { display: block; margin-top: var(--space-xxs); font: inherit; white-space: nowrap; }
   .daily-change-block { padding: var(--space-md); border-bottom: 1px solid var(--line); }
   .daily-change-block h3 { margin: 0; font-size: var(--type-heading-md-size); }
@@ -1246,7 +1381,8 @@
   .instrument-heading { padding: var(--space-md); border-bottom: 1px solid var(--line-strong); background: var(--panel-selected); }
   .instrument-heading p { color: var(--focus); font-size: var(--type-label-caps-size); font-weight: 800; }
   .instrument-heading h2 { margin-top: var(--space-xs); font-size: var(--type-title-lg-size); }
-  .instrument-heading code { display: block; margin-top: var(--space-xs); color: var(--subtle); font: inherit; font-size: var(--type-body-sm-size); }
+  .primary-price { display: block; margin-top: var(--space-sm); font-size: var(--type-data-lg-size); font-weight: 800; font-variant-numeric: tabular-nums; }
+  .primary-price small { color: var(--muted); font-size: var(--type-body-sm-size); font-weight: 500; }
   .reference-block, .l1-block, .selection-state, .waiting-panel { padding: var(--space-md); border-bottom: 1px solid var(--line); }
   .reference-block strong { display: block; margin-top: var(--space-sm); font-size: var(--type-data-lg-size); }
   .reference-block p, .selection-state p, .waiting-panel p, .disclaimer, .waiting-copy { margin-top: var(--space-xs); color: var(--muted); font-size: var(--type-body-sm-size); line-height: var(--type-body-sm-leading); }
@@ -1260,8 +1396,11 @@
   .quality-risk { color: var(--quality-risk) !important; }
   .quality-good { color: var(--quality-good) !important; }
   .operational-warning { color: var(--warning); }
+  .selection-warning { margin: 0; padding: var(--space-md); border-bottom: 1px solid var(--warning-border); font-size: var(--type-body-sm-size); }
   .neutral-note { color: var(--muted); }
   .technical-details { margin-top: var(--space-xs); color: var(--subtle); }
+  .source-details { margin: 0; padding: var(--space-sm) var(--space-md); border-top: 1px solid var(--line); }
+  .source-details > code { display: block; overflow-wrap: anywhere; color: var(--muted); font-size: var(--type-body-sm-size); }
   .selected-market { border-bottom: 1px solid var(--line); }
   .selected-heading, .selected-market > .disclaimer, .selected-market > .selected-reasons, .selected-market > .waiting-copy { padding-right: var(--space-md); padding-left: var(--space-md); }
   .selected-heading { padding-top: var(--space-md); }
@@ -1282,24 +1421,37 @@
     .inspector { position: static; max-height: none; overflow: visible; }
   }
   @media (max-width: 60rem) {
-    .filters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .search-control { grid-column: 1 / -1; }
     .table-scroll { max-height: 55vh; }
   }
   @media (max-width: 48rem) {
     .universe-page { padding: var(--space-sm); }
-    .topbar, .preferences { align-items: stretch; flex-direction: column; }
-    .preferences { display: grid; grid-template-columns: 1fr; }
-    .status-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .status-strip div:nth-child(5) { grid-column: 1 / -1; }
-    .filters { grid-template-columns: 1fr; }
-    .search-control { grid-column: auto; }
-    input, select, .instrument-select, summary, .fatal-state button { min-height: var(--control-height-touch); }
-    .optional-column { display: none; }
-    .change-column { display: none; }
+    .topbar { align-items: center; gap: var(--space-sm); }
+    .identity p { display: none; }
+    .identity h1 { margin: 0; font-size: 22px; }
+    .identity span { font-size: var(--type-label-caps-size); }
+    .status-strip { gap: var(--space-xs) var(--space-md); padding: var(--space-sm); }
+    .filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .search-control { grid-column: 1 / -1; }
+    input, select, button, .instrument-select, summary { min-height: var(--control-height-touch); }
+    .filters .favorite-filter { min-height: var(--control-height-touch); }
+    .favorite-filter input { min-height: 0; }
+    .optional-column, .detail-column, .change-column { display: none; }
     .mobile-change { display: block; margin-top: var(--space-xs); }
+    td .mobile-sort-value, td .mobile-quality { display: block; margin-top: var(--space-xs); }
+    .mobile-sort-value { overflow-wrap: anywhere; }
+    .workspace:not(.mobile-detail-open) .inspector { display: none; }
+    .workspace.mobile-detail-open .universe { display: none; }
+    .mobile-back { display: block; position: sticky; top: 0; z-index: 3; padding: var(--space-sm); border-bottom: 1px solid var(--line); background: var(--panel-solid); }
+    .mobile-back button { width: 100%; text-align: left; color: var(--focus); }
+    .table-scroll > table { table-layout: fixed; }
+    .table-scroll th:first-child { width: 48px; }
+    .table-scroll th:nth-child(3) { width: 42%; }
+    .table-scroll td { overflow-wrap: anywhere; }
+    .table-scroll td:first-child button { width: 44px; padding: 0; }
     th, td { padding: var(--space-sm) var(--space-xs); }
-    .instrument-select span { max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .instrument-select span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .instrument-select .coverage-label { display: none; }
     .metric-grid, .provenance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .section-title, .instrument-heading, .subheading, .venue-depth-title { align-items: flex-start; }
   }

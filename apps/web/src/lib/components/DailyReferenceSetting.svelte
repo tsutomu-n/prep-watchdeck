@@ -2,11 +2,9 @@
   import { onMount } from "svelte";
   import {
     DEFAULT_REFERENCE_TIME,
-    REFERENCE_TIME_STORAGE_KEY,
-    isReferenceTime,
-    readStoredReferenceTime,
-    writeStoredReferenceTime
+    isReferenceTime
   } from "$lib/market/price-change";
+  import { setReferenceTime, subscribeReferenceTime } from "$lib/theme/display-preferences";
 
   let { value = $bindable(DEFAULT_REFERENCE_TIME), ready = $bindable(false) } = $props<{
     value?: string;
@@ -15,19 +13,11 @@
   let storageMessage = $state<string | null>(null);
 
   onMount(() => {
-    try {
-      value = readStoredReferenceTime(window.localStorage);
-    } catch {
-      value = DEFAULT_REFERENCE_TIME;
-    }
-    ready = true;
-    function sync(event: StorageEvent) {
-      if (event.key !== REFERENCE_TIME_STORAGE_KEY && event.key !== null) return;
-      value = isReferenceTime(event.newValue) ? event.newValue : DEFAULT_REFERENCE_TIME;
+    return subscribeReferenceTime((referenceTime) => {
+      value = referenceTime;
+      ready = true;
       storageMessage = null;
-    }
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
+    });
   });
 
   function changeReference(event: Event) {
@@ -37,19 +27,14 @@
       return;
     }
     value = input.value;
-    let saved = false;
-    try {
-      saved = writeStoredReferenceTime(window.localStorage, value);
-    } catch {
-      // Storage itself can be inaccessible in a restricted browser context.
-    }
-    storageMessage = saved ? null : "保存できないため、この画面だけに適用しています";
+    const saved = setReferenceTime(value);
+    storageMessage = saved ? null : "保存できないため、再読込するまでこのタブ内だけに適用しています";
   }
 </script>
 
 <div class="daily-reference-setting">
   <label>
-    <span>騰落率の基準 <strong>JST</strong></span>
+    <span>騰落率の基準時刻 <strong>JST</strong></span>
     <input
       type="time"
       step="60"

@@ -20,6 +20,59 @@ import {
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 import { browserIme, type BrowserImeEvent } from "./helpers/browser-ime";
 
+const BTC_NATIVE_DETAIL = "/?mode=native&instrument=bitget%3ABTCUSDT&version=1";
+
+async function showMarketList(page: Page) {
+  const back = page.getByRole("button", { name: "一覧へ戻る", exact: true });
+  if (!await back.isVisible()) return false;
+  await back.click();
+  await expect(back).toBeHidden();
+  return true;
+}
+
+async function clickNativeListButton(page: Page, name: string) {
+  await showMarketList(page);
+  const button = page.getByRole("button", { name, exact: true });
+  if (name.endsWith("の保存足照合を表示")
+    && await page.evaluate(() => matchMedia("(max-width: 48rem)").matches)) {
+    await page.getByRole("button", { name: name.replace("の保存足照合を表示", "を詳細表示"), exact: true }).click();
+    await openSection(page, "取得元・品質");
+  } else {
+    await button.click();
+  }
+}
+
+async function openSection(page: Page, name: string) {
+  const summary = page.locator("summary").filter({ hasText: name });
+  if (!await summary.evaluate(node => (node.parentElement as HTMLDetailsElement).open)) {
+    await summary.click();
+  }
+}
+
+async function openSettings(page: Page) {
+  await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "設定", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "設定", exact: true })).toBeVisible();
+}
+
+async function returnToNative(page: Page) {
+  await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "取引所別", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "取引所別", exact: true })).toBeVisible();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
+}
+
+async function changeReferenceInOtherPage(page: Page, value: string) {
+  const settings = await page.context().newPage();
+  try {
+    await settings.goto("/settings");
+    const input = settings.getByLabel("騰落率の基準時刻（日本時間）", { exact: true });
+    await input.fill(value);
+    await input.blur();
+    await expect(input).toHaveValue(value);
+  } finally {
+    await settings.close();
+  }
+}
+
 test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard focusをnative往復後に復元する", async ({ page }, testInfo) => {
   const imeEvidence: { field: string; events: BrowserImeEvent[] }[] = [];
   let holdReturn = false;
@@ -40,6 +93,7 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   });
   await page.goto("/");
   await page.getByLabel("ランキングの比較期間").selectOption("1h");
+  await openSection(page, "ランキング条件");
   await page.getByLabel("平常比期間").selectOption("1h");
   await page.getByLabel("平常比下限").fill("0.5");
   await page.getByLabel("当日位置の下限", { exact: true }).fill("20");
@@ -48,7 +102,9 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   const selected = page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator("button.select-row");
   await selected.focus();
   await selected.press("Enter");
-  await expect(selected).toBeFocused();
+  const detailBack = page.getByRole("button", { name: "一覧へ戻る", exact: true });
+  if (await detailBack.isVisible()) await expect(detailBack).toBeFocused();
+  else await expect(selected).toBeFocused();
   await expect(page.getByRole("link", { name: "hyperliquid · BTC のnative詳細" })).toBeVisible();
   await expect(page.getByRole("link", { name: "bitget · ETHUSDT のnative詳細" })).toHaveCount(0);
   const noteSummary = page.getByText("この参照市場の観測メモ", { exact: true });
@@ -90,10 +146,15 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
     imeEvidence.push({ field: "reference note", events });
   } finally { await noteIme.close(); }
   await expect(page.getByLabel("保存先の取扱い契約")).toHaveValue("bitget:BTCUSDT");
+  const mobile = await showMarketList(page);
   const scroller = page.locator(".ranking-list .table-scroll");
   await scroller.evaluate(el => { el.scrollTop = 180; el.scrollLeft = 40; });
   const scroll = await scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }));
   expect(scroll.top).toBeGreaterThan(0);
+  if (mobile) {
+    await page.goForward();
+    await expect(detailBack).toBeVisible();
+  }
   const nativeLink = page.getByRole("link", { name: "bitget · BTCUSDT のnative詳細" });
   await nativeLink.focus();
   await nativeLink.press("Enter");
@@ -105,10 +166,11 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   await page.keyboard.insertText("・取扱い確認");
   await expect(note).toHaveValue("参照元と時刻を再確認・取扱い確認");
   holdReturn = true;
-  const returnLink = page.getByRole("link", { name: "参照市場へ戻る" });
+  const returnLink = page.getByRole("link", { name: "ランキングへ戻る" });
   await returnLink.focus();
   await returnLink.press("Enter");
   try {
+    await openSection(page, "ランキング条件");
     await expect(page.getByLabel("平常比期間")).toHaveValue("1h");
     await expect(page.getByLabel("平常比下限")).toHaveValue("0.5");
     await expect(page.getByLabel("当日位置の下限", { exact: true })).toHaveValue("20");
@@ -118,6 +180,10 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   await expect(selected).toHaveAttribute("aria-pressed", "true");
   await expect(selected).toBeFocused();
   await expect.poll(() => scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }))).toEqual(scroll);
+  if (mobile) {
+    await selected.press("Enter");
+    await expect(detailBack).toBeFocused();
+  }
   const next = page.getByRole("button", { name: "次の銘柄", exact: true });
   await next.focus();
   await next.press("Enter");
@@ -164,6 +230,7 @@ test("取引所別のお気に入りと名前付き表示を再読込後に使�
   await favorite.click();
   await expect(page.getByRole("button", { name: "BTC bitgetをお気に入り解除" }))
     .toHaveAttribute("aria-pressed", "true");
+  await openSection(page, "表示条件を保存／管理");
   await page.getByLabel("取引所別の表示名").fill("BTC確認");
   await page.getByRole("button", { name: "表示条件を保存" }).click();
   await expect(page.getByLabel("取引所別の保存した表示").locator("option"))
@@ -172,6 +239,7 @@ test("取引所別のお気に入りと名前付き表示を再読込後に使�
   await expect(page.getByRole("button", { name: "BTC bitgetをお気に入り解除" }))
     .toHaveAttribute("aria-pressed", "true");
   await page.getByLabel("取引所別の保存した表示").selectOption({ label: "BTC確認" });
+  await openSection(page, "表示条件を保存／管理");
   await expect(page.getByLabel("取引所別の表示名")).toHaveValue("BTC確認");
 });
 
@@ -199,7 +267,7 @@ test("追加指標は現行IDとversionが一致する時だけ表示する", as
     }]
   } }));
   await page.goto("/?mode=native");
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   await expect(page.getByRole("region", { name: "追加の市場変化指標" })).toContainText("追加指標は準備中です");
   version = instrument.venueInstrumentVersionId;
   await expect(page.getByRole("region", { name: "追加の市場変化指標" })).toContainText("数量OI: 15m +10.00%", { timeout: 10_000 });
@@ -213,6 +281,7 @@ test("groupのないactive契約も単体チャートとJST変化を表示する
   await writeFile(path, JSON.stringify(universe));
   await page.goto(`/?mode=native&instrument=${encodeURIComponent(item.venueInstrumentId)}&version=${item.venueInstrumentVersionId}`);
   await expect(page.getByRole("region", { name: "価格・出来高" })).toBeVisible();
+  await openSection(page, "選択データの監視状態");
   await expect(page.getByText("板・約定購読は行いません。")).toBeVisible();
   await expect(page.getByRole("heading", { name: "約定価格の騰落率" })).toBeVisible();
   await expect(page.locator(".daily-change-block")).not.toContainText("group未確定");
@@ -251,8 +320,8 @@ test.afterEach(async ({ page }) => {
 test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
   await page.goto("/?mode=native");
 
-  await expect(page.getByRole("heading", { name: "Perp Universe Explorer" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "取引所別" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "銘柄一覧" })).toBeVisible();
   await expect(page.getByLabel("運用上の注意")).toBeVisible();
   await expect(page.getByLabel("データ品質理由")).toBeVisible();
 
@@ -262,7 +331,14 @@ test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
   await expect(page.getByRole("button", { name: "BTC bitgetを詳細表示" })).toHaveCount(0);
   await search.clear();
 
-  await page.getByRole("button", { name: "BTC hyperliquidを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC hyperliquidを詳細表示");
+  const back = page.getByRole("button", { name: "一覧へ戻る", exact: true });
+  const mobile = await back.isVisible();
+  if (mobile) {
+    await expect(page.getByRole("heading", { name: "銘柄一覧" })).toBeHidden();
+    await expect(page.locator("#inspector-title")).toBeFocused();
+  }
+  await openSection(page, "選択データの監視状態");
   await expect(page.getByText("詳細データを要求しました", { exact: true })).toBeVisible();
   await expect
     .poll(async () => (await readSelectionCommand())?.venueInstrumentId ?? null)
@@ -279,7 +355,9 @@ test("Universe Explorerの主要flowを操作できる", async ({ page }) => {
 
   await rm(resolve(artifactRoot, "service-state.json"), { force: true });
   await expect(page.getByText("更新停止", { exact: true })).toBeVisible({ timeout: 8_000 });
-  await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
+  await showMarketList(page);
+  if (mobile) await expect(page.getByRole("button", { name: "BTC hyperliquidを詳細表示", exact: true })).toBeFocused();
+  await expect(page.getByRole("heading", { name: "銘柄一覧" })).toBeVisible();
 
   const horizontalOverflow = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
@@ -315,9 +393,9 @@ test("監査CLIの不変ファイルをAPIと取得元・品質画面で読め�
   expect((await request.get(`/api/candle-audits/${"0".repeat(32)}`)).status()).toBe(404);
 
   await page.goto("/?mode=native");
-  await expect(page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }))
+  await expect(page.getByRole("button", { name: "BTC bitgetの保存足照合を表示", includeHidden: true }))
     .toContainText("差異あり");
-  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetの保存足照合を表示");
   await expect(page.getByRole("heading", { name: "保存足照合" })).toBeVisible();
   await expect(page.getByText("価格差異", { exact: false }).first()).toBeVisible();
   await expect(page.getByText("テストデータ", { exact: false }).first()).toBeVisible();
@@ -333,7 +411,7 @@ test("監査CLIの不変ファイルをAPIと取得元・品質画面で読め�
   await expect(chart.getByLabel("チャート表示期間")).toHaveText(visibleBefore ?? "");
   await page.getByRole("button", { name: "同時刻を見る" }).first().click();
   await expect(page.getByRole("status").filter({ hasText: /対応する表示足/ })).toBeVisible();
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await expect(page.getByRole("checkbox", { name: "保存データの照合箇所を表示" })).toHaveCount(0);
   const overflow = await page.evaluate(() => {
     const root = document.scrollingElement ?? document.documentElement;
@@ -374,7 +452,7 @@ test("監査の新run到着後も閲覧中のrunを保ち、明示切替する",
   await page.clock.install();
   const first = await publishSyntheticAuditForBitget();
   await page.goto("/?mode=native");
-  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetの保存足照合を表示");
   await expect(page.getByRole("heading", { name: "保存足照合" })).toBeVisible();
   await page.locator(".source-quality .technical > summary").click();
   await expect(page.locator(".source-quality .technical")).toContainText(first);
@@ -402,10 +480,10 @@ test("監査詳細の遅い旧応答はA→B→A後の表示を変えない", as
     await route.fallback();
   });
   await page.goto("/?mode=native");
-  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetの保存足照合を表示");
   const held = await firstRoute;
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
-  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
+  await clickNativeListButton(page, "BTC bitgetの保存足照合を表示");
   await expect(page.getByText("価格差異", { exact: false }).first()).toBeVisible();
   const current = await (await page.request.get(`/api/candle-audits/${runId}`)).json();
   await held.fulfill({ json: { ...current, totalFindings: 0, findings: [], markerBuckets: [] } })
@@ -439,26 +517,29 @@ test("Recoveryの実HTTP・隔離DB・状態ファイルをAPIから画面まで
   expect(published.state).toBe("available");
   expect(published.recovery.runId).toBe(produced.runId);
   await page.goto("/?mode=native");
-  await page.getByRole("button", { name: "BTC bitgetの保存足照合を表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetの保存足照合を表示");
   await expect(page.getByRole("heading", { name: "保存足の回収" })).toBeVisible();
   await expect(page.getByText(/この契約: 欠損 1 → 0、挿入 1/)).toBeVisible();
   await expect(page.getByText(/全市場: 対象 1\/1、欠損 1 → 0、挿入 1/)).toBeVisible();
 });
 
 test("約定騰落率の基準を分単位で変更して再読み込み後も保持する", async ({ page }, testInfo) => {
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const setting = page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true });
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   const row = page.getByRole("row").filter({
     has: page.getByRole("button", { name: "BTC bitgetを詳細表示", exact: true })
   });
-  await expect(setting).toHaveValue("00:00");
   await expect(change).toContainText("JST 00:00基準");
   await expect(change.getByText("+3.00%", { exact: true })).toBeVisible();
   await expect(change.getByText("103", { exact: true })).toBeVisible();
   await expect(change.getByText("100", { exact: true })).toBeVisible();
+  await showMarketList(page);
   await expect(row.getByRole("cell", { name: /\+3\.00%/ })).toBeVisible();
   await expect(row.getByRole("cell", { name: /65,000/ })).toBeVisible();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
+  await openSettings(page);
+  await expect(setting).toHaveValue("00:00");
 
   const changed = page.waitForResponse((response) => {
     const url = new URL(response.url());
@@ -467,15 +548,21 @@ test("約定騰落率の基準を分単位で変更して再読み込み後も�
       && url.searchParams.get("referenceTime") === "09:07";
   });
   await setting.fill("09:07");
+  await setting.blur();
+  await returnToNative(page);
   await (await changed).finished();
   await expect(change).toContainText("JST 09:07基準");
   await expect(change.getByText("-6.36%", { exact: true })).toBeVisible();
+  await showMarketList(page);
   await expect(row.getByRole("cell", { name: /-6\.36%/ })).toBeVisible();
   expect(await page.evaluate((key) => localStorage.getItem(key), REFERENCE_TIME_STORAGE_KEY))
     .toBe("09:07");
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
 
   await page.reload();
+  await openSettings(page);
   await expect(setting).toHaveValue("09:07");
+  await returnToNative(page);
   await expect(change).toContainText("JST 09:07基準");
   await expect(change.getByText("-6.36%", { exact: true })).toBeVisible();
   const horizontalOverflow = await page.evaluate(() => {
@@ -503,11 +590,11 @@ test("約定騰落率の古い基準の遅延応答で変更後の値を上書�
     }
     await route.fallback();
   });
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const pending = await delayedRoute;
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   await expect(change).toContainText("取得中");
-  await page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true }).fill("09:07");
+  await changeReferenceInOtherPage(page, "09:07");
   await expect(change.getByText("-6.36%", { exact: true })).toBeVisible();
 
   await pending.fulfill({
@@ -538,7 +625,7 @@ test.describe("約定騰落率のJST日付切替", () => {
       }
       await route.fulfill({ json: priceChangeFixture(url, now) });
     });
-    await page.goto("/?mode=native");
+    await page.goto(BTC_NATIVE_DETAIL);
     const change = page.getByRole("region", { name: "約定価格の騰落率" });
     await expect(change.getByText("+3.00%", { exact: true })).toBeVisible();
     expect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone))
@@ -574,34 +661,37 @@ test("約定騰落率の基準足欠損と取得失敗を0%に置き換えない
       changePercent: null
     } satisfies DailyPriceChange });
   });
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
   await expect(change).toContainText("基準足なし");
   await expect(change.getByText(/^[+-]?\d[\d,.]*%$/)).toHaveCount(0);
 
-  await page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true }).fill("09:07");
+  await changeReferenceInOtherPage(page, "09:07");
   await expect(change).toContainText("値動きの取得に失敗しました (503)");
   await expect(change.getByText(/^[+-]?\d[\d,.]*%$/)).toHaveCount(0);
   await expect(change).not.toContainText("基準足なし");
 });
 
-test("約定騰落率の設定はstorageが使えなくても画面内で変更できる", async ({ page }) => {
+test("約定騰落率の設定はstorageが使えなくても再読込までタブ内で変更できる", async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "localStorage", {
       configurable: true,
       get() { throw new DOMException("Storage is disabled", "SecurityError"); }
     });
   });
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const setting = page.getByLabel("騰落率の基準時刻（日本時間）", { exact: true });
   const change = page.getByRole("region", { name: "約定価格の騰落率" });
-  await expect(setting).toHaveValue("00:00");
   await expect(change.getByText("+3.00%", { exact: true })).toBeVisible();
+  await openSettings(page);
+  await expect(setting).toHaveValue("00:00");
   await setting.fill("09:07");
+  await setting.blur();
   await expect(setting).toHaveValue("09:07");
   await expect(page.getByRole("status").filter({
-    hasText: "保存できないため、この画面だけに適用しています"
+    hasText: "保存できないため、再読込するまでこのタブ内だけに適用しています"
   })).toBeVisible();
+  await returnToNative(page);
   await expect(change.getByText("-6.36%", { exact: true })).toBeVisible();
 });
 
@@ -636,7 +726,7 @@ async function browserNow(page: Page): Promise<Date> {
 }
 
 test("チャートの時間足をVenue切り替えと履歴到着後も保持する", async ({ page }) => {
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await chart.getByRole("button", { name: "1h", exact: true }).click();
   await expect(chart.getByRole("button", { name: "1h", exact: true })).toHaveAttribute(
@@ -649,7 +739,7 @@ test("チャートの時間足をVenue切り替えと履歴到着後も保持す
       && url.searchParams.get("instrument") === "hyperliquid:BTC"
       && url.searchParams.get("timeframe") === "1h";
   });
-  await page.getByRole("button", { name: "BTC hyperliquidを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC hyperliquidを詳細表示");
   await (await historyResponse).finished();
   await expect.poll(async () => (await readSelectionCommand())?.venueInstrumentId)
     .toBe("hyperliquid:BTC");
@@ -663,7 +753,7 @@ test("チャートの時間足をVenue切り替えと履歴到着後も保持す
 
 test("チャートのズームを市場データと履歴の定期更新で戻さない", async ({ page }) => {
   await page.clock.install();
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await expect(chart).toHaveAccessibleDescription(/15m 120本/);
   const candles = chart.locator("canvas").first();
@@ -716,7 +806,7 @@ test("チャートの古い履歴応答で新しく選んだ時間足を上書�
     }
     await route.fallback();
   });
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await expect(chart).toHaveAccessibleDescription(/15m 120本/);
   await chart.getByRole("button", { name: "1h", exact: true }).click();
@@ -747,7 +837,7 @@ test("チャートを過去へスクロールすると履歴を追加し表示�
     firstBucket = fixture.bars[0].bucketAt;
     await route.fulfill({ json: { ...fixture, hasMore: true, nextBefore: firstBucket } });
   });
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   const chart = page.getByRole("region", { name: "価格・出来高" });
   await expect(chart).toHaveAccessibleDescription(/15m 180本/);
   const candles = chart.locator("canvas").first();
@@ -783,7 +873,7 @@ test.describe("チャートのJST表示", () => {
   test.use({ timezoneId: "America/Los_Angeles" });
 
   test("1Dは120日分の日足を表示し日足の区切りをJSTで明示する", async ({ page }, testInfo) => {
-    await page.goto("/?mode=native");
+    await page.goto(BTC_NATIVE_DETAIL);
     const chart = page.getByRole("region", { name: "価格・出来高" });
     const timeframes = chart.getByLabel("チャート時間足", { exact: true });
     await expect(timeframes.getByRole("button", { name: "24h", exact: true })).toHaveCount(0);
@@ -795,7 +885,7 @@ test.describe("チャートのJST表示", () => {
     await chart.screenshot({ path: testInfo.outputPath("chart-1d.png") });
     await page.screenshot({ path: testInfo.outputPath("page-1d.png"), fullPage: true });
 
-    await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+    await clickNativeListButton(page, "ETH bitgetを詳細表示");
     await expect(chart).toHaveAccessibleDescription(/bitget:ETHUSDT 1D 120本/);
     await expect(timeframes.getByRole("button", { name: "1D", exact: true })).toHaveAttribute(
       "aria-pressed", "true"
@@ -1206,7 +1296,7 @@ async function readSelectionCommand(): Promise<Record<string, unknown> | null> {
 
 test("P01 日本語で記録する比較担当は保存応答中のChromium IME候補・focus・別銘柄下書きを保持する", async ({ page }, testInfo) => {
   await page.goto("/?mode=native");
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   await page.getByLabel("理由", { exact: true }).fill("Aの記録");
   await page.getByLabel("短い観測メモ").fill("保存する本文");
   let release!: () => void;
@@ -1219,9 +1309,9 @@ test("P01 日本語で記録する比較担当は保存応答中のChromium IME�
   });
   await page.getByRole("button", { name: "注記を保存", exact: true }).click();
   await expect.poll(() => committed).toBe(true);
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await page.getByLabel("短い観測メモ").fill("Bの下書き");
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   const note = page.getByLabel("短い観測メモ");
   await expect(note).toHaveValue("保存する本文");
   await note.focus();
@@ -1269,9 +1359,9 @@ test("P01 日本語で記録する比較担当は保存応答中のChromium IME�
     await ime.close();
   }
   await expect(page.locator(".note-list")).toContainText("保存する本文");
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await expect(note).toHaveValue("Bの下書き");
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   await expect(note).toHaveValue("保存する本文・追加入力日本語");
   await page.getByRole("button", { name: "注記を保存", exact: true }).click();
   await expect(page.locator(".note-list")).toContainText("保存する本文・追加入力日本語");
@@ -1283,10 +1373,10 @@ test("P01 日本語で記録する比較担当は保存応答中のChromium IME�
   const draft = await page.evaluate(() => sessionStorage.getItem("market-note-draft:bitget:ETHUSDT/3"));
   expect(JSON.parse(draft!)).toMatchObject({ note: "Bの下書き" });
   await page.reload();
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   await expect(page.locator(".note-list")).toContainText("保存する本文・追加入力日本語");
   await expect(note).toHaveValue("");
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await expect(note).toHaveValue("Bの下書き");
 });
 
@@ -1298,7 +1388,7 @@ test("2タブのメモCASと別favorite・savedView競合・旧selection heartbe
     await other.route("**/api/price-change?*", route => route.fulfill({ json: priceChangeFixture(new URL(route.request().url()), new Date()) }));
     await other.goto("/?mode=native");
     for (const tab of [page, other]) {
-      await tab.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+      await clickNativeListButton(tab, "BTC bitgetを詳細表示");
       await tab.getByLabel("理由", { exact: true }).fill("CAS");
       await tab.getByLabel("短い観測メモ").fill(tab === page ? "先の記録" : "後の下書き");
       await expect(tab.getByRole("button", { name: "注記を保存", exact: true })).toBeEnabled();
@@ -1308,12 +1398,16 @@ test("2タブのメモCASと別favorite・savedView競合・旧selection heartbe
     await other.getByRole("button", { name: "注記を保存", exact: true }).click();
     await expect(other.locator(".notes [role=alert]")).toContainText("past_note_conflict");
     await expect(other.getByLabel("短い観測メモ")).toHaveValue("後の下書き");
-    await page.getByRole("button", { name: "BTC bitgetをお気に入り登録" }).click();
-    await other.getByRole("button", { name: "ETH bitgetをお気に入り登録" }).click();
+    await clickNativeListButton(page, "BTC bitgetをお気に入り登録");
+    await clickNativeListButton(other, "ETH bitgetをお気に入り登録");
     await expect.poll(async () => (await (await page.request.get("/api/user-workspace")).json()).favorites.length).toBe(2);
     const stored = await (await page.request.get("/api/user-workspace")).json();
     expect(stored.favorites.map((item: { id: string }) => item.id).sort()).toEqual(["bitget:BTCUSDT", "bitget:ETHUSDT"]);
     await page.reload(); await other.reload();
+    for (const tab of [page, other]) {
+      await showMarketList(tab);
+      await openSection(tab, "表示条件を保存／管理");
+    }
     await page.getByLabel("取引所別の表示名").fill("先の表示");
     await other.getByLabel("取引所別の表示名").fill("競合表示");
     await page.getByRole("button", { name: "表示条件を保存" }).click();
@@ -1321,7 +1415,7 @@ test("2タブのメモCASと別favorite・savedView競合・旧selection heartbe
     await other.getByRole("button", { name: "表示条件を保存" }).click();
     await expect(other.getByRole("alert")).toContainText("別の画面");
     const previous = JSON.parse(await readFile(selectionPath, "utf-8"));
-    await other.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+    await clickNativeListButton(other, "ETH bitgetを詳細表示");
     await expect.poll(async () => JSON.parse(await readFile(selectionPath, "utf-8")).venueInstrumentId).toBe("bitget:ETHUSDT");
     const heartbeat = await page.request.post("/api/selection", { headers: { origin: "http://127.0.0.1:4174" }, data: {
       action: "heartbeat", groupId: previous.groupId, venueInstrumentId: previous.venueInstrumentId,
@@ -1342,9 +1436,9 @@ test("お気に入り登録と解除の連打は遅延応答後も最後の意�
     const response = await route.fetch(); captured = true;
     await held; await route.fulfill({ response });
   });
-  await page.getByRole("button", { name: "BTC bitgetをお気に入り登録" }).click();
+  await clickNativeListButton(page, "BTC bitgetをお気に入り登録");
   await expect.poll(() => captured).toBe(true);
-  await page.getByRole("button", { name: "BTC bitgetをお気に入り解除" }).click();
+  await clickNativeListButton(page, "BTC bitgetをお気に入り解除");
   release();
   await expect.poll(async () => (await (await page.request.get("/api/user-workspace")).json()).favorites).toEqual([]);
   await page.reload();
@@ -1480,14 +1574,15 @@ test("隔離DB書込完了からworker・artifact・API・Browserへの後着訂
     await page.goto("/rankings");
     await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator("button.select-row").click();
     await expect(page.frameLocator("iframe").getByRole("status")).toContainText("参照チャートを取得できません");
+    await showMarketList(page);
     await page.getByLabel("ランキングの銘柄検索").fill("ETH");
     await expect(page.getByTestId("ranking-row")).toHaveCount(1);
     const timeoutResult = await timedOut;
     expect(timeoutResult).toMatchObject({ event: "timeout", maximumConnections: 1, artifactUnchanged: true });
     await publishArtifacts(new Date());
     await page.goto("/?mode=native");
-    await expect(page.getByRole("heading", { name: "Instrument Universe" })).toBeVisible();
-    await page.getByRole("button", { name: "BTC bitgetをお気に入り登録" }).click();
+    await expect(page.getByRole("heading", { name: "銘柄一覧" })).toBeVisible();
+    await clickNativeListButton(page, "BTC bitgetをお気に入り登録");
     await expect(page.getByRole("button", { name: "BTC bitgetをお気に入り解除" })).toHaveAttribute("aria-pressed", "true");
     await receive("stop");
     await page.clock.fastForward(310_000);
@@ -1505,7 +1600,7 @@ test("隔離DB書込完了からworker・artifact・API・Browserへの後着訂
 });
 
 test("Aの保存応答がB表示中に到着してもBの下書きと保存状態を守る", async ({ page }) => {
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
   await page.getByLabel("理由", { exact: true }).fill("A保存");
   await page.getByLabel("短い観測メモ").fill("A本文");
   let release!: () => void;
@@ -1518,14 +1613,14 @@ test("Aの保存応答がB表示中に到着してもBの下書きと保存状�
   });
   await page.getByRole("button", { name: "注記を保存", exact: true }).click();
   await expect.poll(() => committed).toBe(true);
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await page.getByLabel("短い観測メモ").fill("B本文");
   const returned = page.waitForResponse(r => r.url().endsWith("/api/market-past-notes") && r.request().method() === "POST");
   release(); await (await returned).finished();
   await expect(page.getByLabel("短い観測メモ")).toHaveValue("B本文");
   await expect(page.getByRole("button", { name: "注記を保存", exact: true })).toBeEnabled();
   await expect(page.locator(".note-list")).toHaveCount(0);
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   await expect(page.locator(".note-list")).toContainText("A本文");
   await expect(page.getByRole("button", { name: "注記を保存", exact: true })).toBeEnabled();
 });
@@ -1540,7 +1635,8 @@ test("URL初期復元はselectionを送らずhidden中heartbeatを停止する",
   await expect(page.getByRole("region", { name: "価格・出来高" })).toContainText("bitget:ETHUSDT");
   await page.clock.fastForward(300_000);
   expect(actions).toEqual([]);
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
+  await openSection(page, "選択データの監視状態");
   await expect(page.getByText("詳細データを要求しました", { exact: true })).toBeVisible();
   await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" }); document.dispatchEvent(new Event("visibilitychange")); });
   await page.clock.fastForward(600_000);
@@ -1558,11 +1654,12 @@ test("selectionの応答abort後もserver保存を認識して次の選択を維
     aborted = true; await route.abort("failed");
   });
   await page.goto("/?mode=native");
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await expect.poll(async () => (await readSelectionCommand())?.venueInstrumentId).toBe("bitget:ETHUSDT");
   await expect(page.getByRole("region", { name: "価格・出来高" })).toContainText("bitget:ETHUSDT");
-  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
   await expect.poll(async () => (await readSelectionCommand())?.venueInstrumentId).toBe("bitget:BTCUSDT");
+  await openSection(page, "選択データの監視状態");
   await expect(page.getByText("詳細データを要求しました", { exact: true })).toBeVisible();
 });
 
@@ -1604,15 +1701,21 @@ test("native L1は120秒境界とhidden復帰でもreadyを残さずFundingを�
   } }));
   const metricsPanel = page.getByRole("region", { name: "追加の市場変化指標" });
   await page.clock.install({ time: baseline });
-  await page.goto("/?mode=native");
+  await page.goto(BTC_NATIVE_DETAIL);
+  const mobile = await showMarketList(page);
+  await openSection(page, "絞り込み条件");
   await page.getByRole("button", { name: "行順を固定", exact: true }).click();
+  if (mobile) {
+    await page.goForward();
+    await expect(page.getByRole("button", { name: "一覧へ戻る", exact: true })).toBeVisible();
+  }
   const l1 = page.locator(".l1-block");
   await expect(l1).toContainText("Funding周期");
   await expect(l1.locator("div").filter({ has: page.locator("dt", { hasText: /^Funding周期$/ }) })).toContainText("未確認");
   await expect(l1.locator("div").filter({ has: page.locator("dt", { hasText: /^次回Funding$/ }) })).toContainText("未確認");
   await page.clock.setFixedTime(baseline + 120_000);
   await page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
-  const row = page.getByRole("row").filter({ has: page.getByRole("button", { name: "BTC bitgetを詳細表示" }) });
+  const row = page.locator(".universe tbody tr").filter({ has: page.locator('.instrument-select[aria-label="BTC bitgetを詳細表示"]') });
   await expect(row).not.toContainText("期限切れ");
   await expect(metricsPanel).toContainText("数量OI: 15m +17.00%");
   await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" }); document.dispatchEvent(new Event("visibilitychange")); });
@@ -1620,7 +1723,7 @@ test("native L1は120秒境界とhidden復帰でもreadyを残さずFundingを�
   await page.evaluate(() => { Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" }); document.dispatchEvent(new Event("visibilitychange")); });
   await expect(row).toContainText("期限切れ");
   await expect(metricsPanel).not.toContainText("+17.00%");
-  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
   await expect(l1).toContainText("経過（次回未確認）");
 });
 
@@ -1648,7 +1751,7 @@ for (const releaseOrder of ["before", "after"] as const) {
       if (hold && !oldMetrics) { oldMetrics = route; return; }
       await route.fulfill({ json: metrics(responseVersion) });
     });
-    await page.goto("/?mode=native");
+    await page.goto(BTC_NATIVE_DETAIL);
     const chart = page.getByRole("region", { name: "価格・出来高" });
     const panel = page.getByRole("region", { name: "追加の市場変化指標" });
     await expect(chart).toHaveAccessibleDescription(/15m 180本/);

@@ -1,9 +1,8 @@
 <script lang="ts">
   import { onMount, tick, untrack } from "svelte";
   import { page } from "$app/state";
-  import ThemeSelector from "$lib/components/ThemeSelector.svelte";
-  import FontSelector from "$lib/components/FontSelector.svelte";
-  import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
+  import { pushState } from "$app/navigation";
+  import { subscribeReferenceTime } from "$lib/theme/display-preferences";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
   import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
@@ -59,11 +58,18 @@
   let error = $state<string | null>(null);
   let storageMessage = $state<string | null>(null);
   let now = $state(Date.now());
-  let chartSection: HTMLElement;
   let tableScroll: HTMLDivElement;
   let listScroll = $state({ top: 0, left: 0 });
   let restoreList = $state(false);
   let restoredScroll = { top: 0, left: 0 };
+  let mobile = $state(false);
+  const detailHistory = $derived(Boolean((page.state as { referenceDetail?: boolean }).referenceDetail));
+  const mobileDetail = $derived(mobile && detailHistory);
+  let wasDetail = false;
+  let listPageTop = 0;
+  let mobileListScroll = { top: 0, left: 0 };
+  let mobileListOrigin = false;
+  let detailBack: HTMLButtonElement;
 
   function boundedNumber(value: string | null, maximum = Number.MAX_SAFE_INTEGER) {
     if (value === null || value.trim() === "") return null;
@@ -113,6 +119,40 @@
   const quantityUnverified = $derived((data?.rows ?? []).reduce((count, row) =>
     count + row.originals.filter((item) => item.multiplier === null).length, 0));
   const widgetReview = $derived((data?.rows ?? []).filter((row) => row.widget.status === "review").length);
+  const orderLabel = $derived(order === "gainers" ? "上昇率順" : order === "losers" ? "下落率順" : "売買代金順");
+  const periodLabel = $derived(period === "15m" ? "15分" : period === "1h" ? "1時間"
+    : period === "24h" ? "直近24時間" : `JST ${reference}基準`);
+  const viewSortLabels: Record<RankingSort, string> = {
+    server: "全体順位", asset: "銘柄名", referenceClose: "参照終値", returnPct: "騰落率",
+    quoteTurnover: "売買代金", return15m: "15分騰落率", return1h: "1時間騰落率",
+    return24h: "24時間騰落率", ratio15m: "15分平常比", ratio1h: "1時間平常比",
+    dayPosition: "当日位置"
+  };
+  const activeConditions = $derived([
+    minimum > 0 ? `売買代金 ${minimum.toLocaleString("en-US")} USDT以上` : "",
+    search.trim() ? `検索: ${search.trim()}` : "", favoritesOnly ? "お気に入りのみ" : "",
+    venue !== "all" ? `取扱い: ${venue === "hyperliquid" ? "Hyperliquid" : venue === "bitget" ? "Bitget" : "Aster"}` : "",
+    includeUnranked ? "順位外・未対応を含む" : "",
+    minRatio !== null ? `${ratioPeriod === "15m" ? "15分" : "1時間"}平常比 ${minRatio}倍以上` : "",
+    minDayPosition !== null ? `当日位置 ${minDayPosition}%以上` : "",
+    maxDayPosition !== null ? `当日位置 ${maxDayPosition}%以下` : "",
+    sort !== "server" || direction !== "asc" ? `一覧: ${viewSortLabels[sort]}${direction === "desc" ? "降順" : "昇順"}` : "",
+    lockedIds ? "行順固定中" : "", preset === "movement" ? "値動き列" : ""
+  ].filter(Boolean));
+
+  function mobileSortBasis(row: RankedRow) {
+    if (sort === "referenceClose") return `参照終値 ${row.referenceClose.status === "ready" ? formatPrice(row.referenceClose.value) : "未取得"}`;
+    if (sort === "return15m" || sort === "return1h" || sort === "return24h") {
+      const window = sort === "return15m" ? "15m" : sort === "return1h" ? "1h" : "24h";
+      const value = row.windows[window].returnPct;
+      return `${viewSortLabels[sort]} ${value === null ? "未取得" : formatPriceChange(value)}`;
+    }
+    if (sort === "ratio15m" || sort === "ratio1h") {
+      return `${viewSortLabels[sort]} ${indicatorLabel(row.turnoverRatios[sort === "ratio15m" ? "15m" : "1h"], "倍")}`;
+    }
+    if (sort === "dayPosition") return `当日位置 ${indicatorLabel(row.dayRangePosition, "%")}`;
+    return "";
+  }
 
   async function refresh(parameters: string, clear = false) {
     controller?.abort(); controller = new AbortController();
@@ -148,6 +188,10 @@
   }
 
   onMount(() => {
+    const stopReference = subscribeReferenceTime((value) => { reference = value; referenceReady = true; });
+    const width = window.matchMedia("(max-width: 960px)");
+    const updateWidth = () => mobile = width.matches;
+    updateWidth(); width.addEventListener("change", updateWidth);
     const selectedFromUrl = page.url.searchParams.get("selected");
     if (selectedFromUrl && /^[A-Za-z0-9:._-]{1,160}$/.test(selectedFromUrl)) {
       selectedId = selectedFromUrl;
@@ -202,16 +246,52 @@
       restoreList = params.get("restoreList") === "1";
     } catch { /* Invalid legacy query leaves safe defaults visible. */ }
     try { interval = readChartInterval(window.localStorage); } catch { interval = "15"; }
+    let detailTimer: ReturnType<typeof setTimeout> | undefined;
+    if (mobile && selectedId && !restoreList && !detailHistory) {
+      const initialUrl = page.url.href;
+      const initialSelected = selectedId;
+      detailTimer = setTimeout(() => {
+        if (mounted && mobile && !restoreList && selectedId === initialSelected &&
+          page.url.href === initialUrl && !detailHistory) {
+          pushState("", { ...page.state, referenceDetail: true });
+        }
+      }, 0);
+    }
     mounted = true;
     const clock = setInterval(() => now = Date.now(), 10_000);
     const visible = () => { if (!document.hidden && query) void refresh(query); };
     document.addEventListener("visibilitychange", visible);
     schedule();
     return () => {
+      mounted = false; clearTimeout(detailTimer);
+      stopReference(); width.removeEventListener("change", updateWidth);
       controller?.abort(); clearTimeout(refreshTimer); clearInterval(clock);
       document.removeEventListener("visibilitychange", visible);
       document.removeEventListener("visibilitychange", loadWorkspace);
     };
+  });
+
+  async function restoreMobileList() {
+    const index = visibleRows.findIndex((row) => row.id === selectedId);
+    if (index >= limit) limit = Math.ceil((index + 1) / 50) * 50;
+    await tick();
+    if (tableScroll) {
+      tableScroll.scrollTop = mobileListScroll.top;
+      tableScroll.scrollLeft = mobileListScroll.left;
+      tableScroll.querySelector<HTMLButtonElement>('button.select-row[aria-pressed="true"]')
+        ?.focus({ preventScroll: mobileListOrigin });
+    }
+    if (mobileListOrigin) window.scrollTo({ top: listPageTop, behavior: "instant" });
+  }
+
+  $effect(() => {
+    const showingDetail = detailHistory;
+    if (!mounted) return;
+    if (!wasDetail && showingDetail && untrack(() => mobile)) {
+      untrack(() => void tick().then(() => detailBack?.focus({ preventScroll: true })));
+    }
+    if (wasDetail && !showingDetail && untrack(() => mobile)) untrack(() => void restoreMobileList());
+    wasDetail = showingDetail;
   });
 
   $effect(() => {
@@ -246,6 +326,12 @@
   });
 
   async function select(row: RankedRow) {
+    if (mobile && !mobileDetail) {
+      mobileListOrigin = true;
+      listPageTop = window.scrollY;
+      mobileListScroll = { top: tableScroll?.scrollTop ?? 0, left: tableScroll?.scrollLeft ?? 0 };
+      pushState("", { ...page.state, referenceDetail: true });
+    }
     selectedId = row.id; lastSelected = row; selectedRemoved = false;
     try {
       recordRecentMarket(window.localStorage, {
@@ -254,7 +340,10 @@
       });
     } catch { /* The current selection remains usable without browser storage. */ }
     await tick();
-    if (window.matchMedia("(max-width: 960px)").matches) chartSection?.scrollIntoView({ block: "start" });
+    if (mobile) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+      detailBack?.focus({ preventScroll: true });
+    }
   }
 
   function chooseSort(column: RankingSort) {
@@ -267,9 +356,11 @@
   }
 
   function resetView() {
+    minimum = 0;
     search = ""; venue = "all"; includeUnranked = false; favoritesOnly = false; minRatio = null;
     minDayPosition = null; maxDayPosition = null; sort = "server"; direction = "asc";
     preset = "standard"; lockedIds = null;
+    selectedViewId = ""; viewName = "";
   }
 
   function referenceTarget(row: RankedRow): FavoriteTarget | null {
@@ -414,63 +505,33 @@
 <svelte:head><title>デイトレランキング | Prep Watchdeck</title></svelte:head>
 
 <main class="ranking-page">
-  <header class="topbar">
-    <div><a class="back" href="/?mode=native">← 取引所別</a><h1>デイトレランキング</h1>
-      <p>Bitget / Hyperliquid / Aster の取扱い銘柄を、外部参照でまとめて比較。</p></div>
-    <div class="preferences"><ThemeSelector /><FontSelector /></div>
-  </header>
+  <div class="ranking-overview" class:mobile-hidden={mobileDetail}>
+    <header class="topbar">
+      <div><h1>ランキング</h1><p>取扱い銘柄を外部の参照契約で比較</p></div>
+      <a class="reference-link" href="/settings">日次基準 · JST {reference}</a>
+    </header>
 
-  <section class="controls" aria-label="ランキング条件">
-    <label>比較期間<select aria-label="ランキングの比較期間" bind:value={period}>
-      <option value="15m">15分</option><option value="1h">1時間</option>
-      <option value="24h">直近24時間</option><option value="daily">JST基準時刻から</option>
-    </select></label>
-    <label>並び順<select aria-label="ランキングの並び順" bind:value={order}>
-      <option value="gainers">上昇率</option><option value="losers">下落率</option><option value="turnover">売買代金</option>
-    </select></label>
-    <label>売買代金の下限 · USDT<input aria-label="売買代金の下限" type="number" min="0" max="1000000000000000000" step="any" bind:value={minimum} /></label>
-    <DailyReferenceSetting bind:value={reference} bind:ready={referenceReady} />
-  </section>
+    <section class="controls" aria-label="ランキングの表示">
+      <label>比較期間<select aria-label="ランキングの比較期間" bind:value={period}>
+        <option value="15m">15分</option><option value="1h">1時間</option>
+        <option value="24h">直近24時間</option><option value="daily">JST基準時刻から</option>
+      </select></label>
+      <label>並び順<select aria-label="ランキングの並び順" bind:value={order}>
+        <option value="gainers">上昇率</option><option value="losers">下落率</option><option value="turnover">売買代金</option>
+      </select></label>
+      <label class="search">銘柄検索<input aria-label="ランキングの銘柄検索" type="search" bind:value={search} placeholder="BTC、ETH、契約名" /></label>
+      <label class="check"><input type="checkbox" bind:checked={favoritesOnly} />お気に入りのみ</label>
+    </section>
 
-  {#if !query}<p class="notice" role="alert">売買代金の下限は0以上の数値を指定してください。</p>{/if}
-  {#if error}<p class="notice" role="status">{error} <button type="button" onclick={() => query && refresh(query)}>再試行</button></p>{/if}
-  {#if stale}<p class="notice" role="status">更新が停止しています。表示値は {data ? rankingTimestamp(data.cutoff) : ""} JST 時点です。</p>{/if}
-  {#if data?.rosterStale}<p class="notice">取扱い名簿の更新が止まっています。現在の上場状況は未確認です。</p>{/if}
+    <div class="condition-summary" aria-label="適用中のランキング条件" aria-live="polite">
+      <p><strong>{periodLabel} · {orderLabel}</strong>{#if activeConditions.length}<span> · {activeConditions.join(" · ")}</span>{/if}</p>
+      {#if activeConditions.length}<button type="button" onclick={resetView}>条件をリセット</button>{/if}
+    </div>
 
-  <div class="comparison-status" aria-live="polite">
-    {#if data}
-      <div><span>比較時刻 · JST</span><strong>{rankingTimestamp(data.anchor)} → {rankingTimestamp(data.cutoff)}</strong></div>
-      <div><span>対象 / 参照対応 / 比較可能</span><strong>{data.coverage.cryptoRows} / {data.coverage.supported} / {data.coverage.valid} 銘柄</strong></div>
-      <div><span>現在の条件での順位</span><strong>{data.coverage.ranked} 銘柄 {#if minimum > 0}· 下限で絞込み{/if}</strong></div>
-      <span class="refresh-state">{loading ? "更新中" : stale ? "更新停止" : "毎分更新"}</span>
-    {:else}<p>{loading ? "全対象のランキングを読み込んでいます" : "ランキングはまだ利用できません"}</p>{/if}
-  </div>
-  <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。3取引所や市場全体の合計ではありません。</p>
-  <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。</p>
-  <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
-
-  <div class="workspace">
-    <section class="ranking-list" aria-labelledby="list-title">
-      <div class="list-heading"><h2 id="list-title">{order === "gainers" ? "上昇率" : order === "losers" ? "下落率" : "売買代金"}ランキング</h2><span>{visibleRows.length} 件</span></div>
-      <div class="list-controls">
-        <label class="search">銘柄検索<input aria-label="ランキングの銘柄検索" type="search" bind:value={search} placeholder="BTC、ETH、契約名" /></label>
-        <label class="check"><input type="checkbox" bind:checked={includeUnranked} />順位外・未対応も表示</label>
-        <label class="check"><input type="checkbox" bind:checked={favoritesOnly} />お気に入りのみ</label>
-      </div>
-      {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
-      <div class="list-controls">
-        <label>保存した表示<select aria-label="保存した表示" value={selectedViewId}
-          onchange={(event) => applySavedView(event.currentTarget.value)}>
-          <option value="">選択してください</option>
-          {#each workspace?.savedViews.filter((item) => item.view.mode === "reference") ?? [] as saved}
-            <option value={saved.id}>{saved.name}</option>
-          {/each}
-        </select></label>
-        <label>表示名<input aria-label="表示名" maxlength="80" bind:value={viewName} /></label>
-        <button type="button" disabled={viewBusy || !viewName.trim() || !workspace} onclick={saveCurrentView}>表示条件を保存</button>
-        <button type="button" disabled={viewBusy || !selectedViewId} onclick={removeSavedView}>保存した表示を削除</button>
-      </div>
-      <div class="list-controls">
+    <details class="ranking-conditions">
+      <summary>ランキング条件{#if activeConditions.length}<span>{activeConditions.length} 項目適用中</span>{/if}</summary>
+      <div class="advanced-controls">
+        <label>売買代金の下限 · USDT<input aria-label="売買代金の下限" type="number" min="0" max="1000000000000000000" step="any" bind:value={minimum} /></label>
         <label>取扱い取引所<select aria-label="取扱い取引所" bind:value={venue}>
           <option value="all">すべて</option><option value="bitget">Bitget</option>
           <option value="hyperliquid">Hyperliquid</option><option value="aster">Aster</option>
@@ -487,51 +548,104 @@
           value={minDayPosition ?? ""} oninput={(event) => minDayPosition = event.currentTarget.value === "" ? null : Number(event.currentTarget.value)} /></label>
         <label>当日位置の上限 %<input aria-label="当日位置の上限" type="number" min="0" max="100" step="any"
           value={maxDayPosition ?? ""} oninput={(event) => maxDayPosition = event.currentTarget.value === "" ? null : Number(event.currentTarget.value)} /></label>
+        <label class="check"><input type="checkbox" bind:checked={includeUnranked} />順位外・未対応も表示</label>
         <button type="button" onclick={() => lockedIds = lockedIds ? null : visibleRows.map((row) => row.id)}>
           {lockedIds ? "行順固定を解除" : "行順を固定"}
         </button>
         <button type="button" onclick={resetView}>条件をクリア</button>
       </div>
+      <p class="search-note">検索と一覧の並べ替えは全体順位を変えません。比較期間・ランキングの並び順・売買代金下限は全対応銘柄に適用されます。</p>
+    </details>
+
+    <div class="saved-view-bar">
+      <label>保存した表示<select aria-label="保存した表示" value={selectedViewId}
+        onchange={(event) => applySavedView(event.currentTarget.value)}>
+        <option value="">選択してください</option>
+        {#each workspace?.savedViews.filter((item) => item.view.mode === "reference") ?? [] as saved}
+          <option value={saved.id}>{saved.name}</option>
+        {/each}
+      </select></label>
+      <details class="saved-view-management">
+        <summary>表示条件を保存／管理</summary>
+        <div class="view-actions">
+          <label>表示名<input aria-label="表示名" maxlength="80" bind:value={viewName} /></label>
+          <button type="button" disabled={viewBusy || !viewName.trim() || !workspace} onclick={saveCurrentView}>表示条件を保存</button>
+          <button type="button" disabled={viewBusy || !selectedViewId} onclick={removeSavedView}>保存した表示を削除</button>
+        </div>
+      </details>
+    </div>
+    <div class="comparison-status" aria-live="polite">
+      {#if data}
+        <span>比較 · JST {rankingTimestamp(data.anchor)} → {rankingTimestamp(data.cutoff)}</span>
+        <span>対象 {data.coverage.cryptoRows} · 参照対応 {data.coverage.supported} · 比較可能 {data.coverage.valid}</span>
+        <span>
+          {visibleRows.length} 件表示 / {data.coverage.ranked} 件の全体順位
+        </span>
+        <span class="refresh-state">{loading ? "更新中" : stale ? "更新停止" : "毎分更新"}</span>
+      {:else}<p>{loading ? "全対象のランキングを読み込んでいます" : "ランキングはまだ利用できません"}</p>{/if}
+    </div>
+  </div>
+
+  {#if !query}<p class="notice" role="alert">売買代金の下限は0以上の数値を指定してください。</p>{/if}
+  {#if error}<p class="notice" role="status">{error} <button type="button" onclick={() => query && refresh(query)}>再試行</button></p>{/if}
+  {#if stale}<p class="notice" role="status">更新が停止しています。表示値は {data ? rankingTimestamp(data.cutoff) : ""} JST 時点です。</p>{/if}
+  {#if data?.rosterStale}<p class="notice">取扱い名簿の更新が止まっています。現在の上場状況は未確認です。</p>{/if}
+  {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
+
+  <div class="workspace">
+    <section class="ranking-list" class:mobile-hidden={mobileDetail} aria-labelledby="list-title">
+      <div class="list-heading"><h2 id="list-title">{order === "gainers" ? "上昇率" : order === "losers" ? "下落率" : "売買代金"}ランキング</h2><span>{visibleRows.length} 件</span></div>
       {#if addedRows}<p class="search-note">新しい行が {addedRows} 件あります。固定解除で表示します。</p>{/if}
-      <p class="search-note">検索は順位を変えません。並び順と売買代金下限は全対応銘柄へ適用されます。</p>
       <div class="table-scroll" aria-busy={loading} bind:this={tableScroll}
-        onscroll={() => listScroll = { top: tableScroll.scrollTop, left: tableScroll.scrollLeft }}>
+        onscroll={() => { if (!mobileDetail) listScroll = { top: tableScroll.scrollTop, left: tableScroll.scrollLeft }; }}>
         <table>
           <thead><tr>
-            <th scope="col">保存</th>
-            <th scope="col">全体順位</th>
-            <th scope="col" aria-sort={sort === "asset" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("asset")}>銘柄 / 取扱い</button></th>
-            <th scope="col" aria-sort={sort === "referenceClose" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("referenceClose")}>参照終値</button></th>
-            <th scope="col" aria-sort={sort === "returnPct" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("returnPct")}>騰落率</button></th>
-            {#if preset === "movement"}<th scope="col">15分 / 1時間 / 24時間</th>{/if}
-            <th scope="col" aria-sort={sort === "quoteTurnover" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("quoteTurnover")}>売買代金 · USDT</button></th>
+            <th scope="col" class="desktop-only">保存</th>
+            <th scope="col"><span class="desktop-only">全体</span>順位</th>
+            <th scope="col" aria-sort={sort === "asset" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("asset")}>銘柄<span class="desktop-only"> / 取扱い</span></button></th>
+            <th scope="col" class="desktop-only" aria-sort={sort === "referenceClose" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("referenceClose")}>参照終値</button></th>
+            <th scope="col" class:ranking-basis={order !== "turnover"} aria-sort={sort === "returnPct" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("returnPct")}>騰落率</button></th>
+            {#if preset === "movement"}<th scope="col" class="desktop-only">15分 / 1時間 / 24時間</th>{/if}
+            <th scope="col" class:ranking-basis={order === "turnover"} aria-sort={sort === "quoteTurnover" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("quoteTurnover")}>売買代金<span class="turnover-unit"> · USDT</span></button></th>
           </tr></thead>
           <tbody>
             {#each visibleRows.slice(0, limit) as row (row.id)}
               <tr class:selected={selectedId === row.id} data-testid="ranking-row" data-asset={row.asset}>
-                <td><button type="button" disabled={!referenceTarget(row)}
+                <td class="desktop-only"><button type="button" disabled={!referenceTarget(row)}
                   title={workspace?.favorites.some((entry) => entry.kind === "reference" && entry.id === row.id) && !referenceFavoriteCurrent(row)
                     ? "参照対応が変わりました。確認してから再登録してください" : undefined}
                   aria-label={`${row.asset}をお気に入り${(favoriteIntent[`reference:${row.id}`] ?? referenceFavoriteCurrent(row)) ? "解除" : "登録"}`}
                   aria-pressed={favoriteIntent[`reference:${row.id}`] ?? referenceFavoriteCurrent(row)}
                   onclick={() => toggleFavorite(row)}>★</button></td>
                 <td class="rank">{row.rank ?? "—"}{#if sort === "server"}<small class="rank-change" data-testid="rank-change">{rankChangeLabel(row, comparisonExpired)}</small>{/if}</td>
-                <th scope="row"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
+                <th scope="row" class="asset-cell"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
                   <strong>{row.asset}</strong><span>{row.venues.map((v) => v === "hyperliquid" ? "Hyperliquid" : v === "bitget" ? "Bitget" : "Aster").join(" · ")}</span>
-                  <small>{referenceLabel(row)}</small>
-                </button></th>
-                <td class="numeric">{row.referenceClose.status === "ready" ? formatPrice(row.referenceClose.value) : "未取得"}</td>
-                <td class="numeric change" class:up={(row.returnPct ?? 0) > 0} class:down={(row.returnPct ?? 0) < 0}>
+                  <small class="desktop-only">{referenceLabel(row)}</small>
+                  <small class="mobile-only">{row.reference ? `参照 ${row.reference.provider === "bybit" ? "Bybit" : "Binance"}` : "参照未対応"}</small>
+                </button>
+                  <button class="mobile-only mobile-favorite" type="button" disabled={!referenceTarget(row)}
+                    title={workspace?.favorites.some((entry) => entry.kind === "reference" && entry.id === row.id) && !referenceFavoriteCurrent(row)
+                      ? "参照対応が変わりました。確認してから再登録してください" : undefined}
+                    aria-label={`${row.asset}をお気に入り${(favoriteIntent[`reference:${row.id}`] ?? referenceFavoriteCurrent(row)) ? "解除" : "登録"}`}
+                    aria-pressed={favoriteIntent[`reference:${row.id}`] ?? referenceFavoriteCurrent(row)}
+                    onclick={() => toggleFavorite(row)}>★</button>
+                  {#if mobileSortBasis(row)}<small class="mobile-only mobile-sort-basis">{mobileSortBasis(row)}</small>{/if}
+                  {#if preset === "movement"}<small class="mobile-only mobile-movement">{#each ["15m", "1h", "24h"] as window}
+                    <span>{window}: {row.windows[window as "15m" | "1h" | "24h"].returnPct === null ? "未取得" : formatPriceChange(row.windows[window as "15m" | "1h" | "24h"].returnPct!)}</span>
+                  {/each}</small>{/if}
+                </th>
+                <td class="numeric desktop-only">{row.referenceClose.status === "ready" ? formatPrice(row.referenceClose.value) : "未取得"}</td>
+                <td class="numeric change" class:ranking-basis={order !== "turnover"} class:up={(row.returnPct ?? 0) > 0} class:down={(row.returnPct ?? 0) < 0}>
                   {#if row.returnPct !== null}{formatPriceChange(row.returnPct)}{:else}<span class="missing">{rankingRowStateLabel(row)}</span>{/if}
                   <small class="indicator" data-testid="day-position">当日位置 <span class:missing={row.dayRangePosition.status !== "ready"}>{indicatorLabel(row.dayRangePosition, "%")}</span></small>
                 </td>
                 {#if preset === "movement"}
-                  <td class="numeric">{#each ["15m", "1h", "24h"] as window}
+                  <td class="numeric desktop-only">{#each ["15m", "1h", "24h"] as window}
                     <span>{window}: {row.windows[window as "15m" | "1h" | "24h"].returnPct === null
                       ? "未取得" : formatPriceChange(row.windows[window as "15m" | "1h" | "24h"].returnPct!)}</span>
                   {/each}</td>
                 {/if}
-                <td class="numeric turnover">{#if row.quoteTurnover !== null}<span title={`${row.quoteTurnover.toLocaleString("en-US")} USDT`}>{turnoverLabel(row.quoteTurnover)}</span>{:else}<span class="missing">未取得</span>{/if}
+                <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${row.quoteTurnover.toLocaleString("en-US")} USDT`}>{turnoverLabel(row.quoteTurnover)}</span>{:else}<span class="missing">未取得</span>{/if}
                   <small class="indicator" data-testid="turnover-ratio">平常比 <span class:missing={row.turnoverRatio.status !== "ready"}>{indicatorLabel(row.turnoverRatio, "倍")}</span></small>
                   {#if row.rank === null && row.returnPct !== null}<small>{rankingStateLabel(row.state)}</small>{/if}
                 </td>
@@ -542,9 +656,18 @@
         {#if !loading && visibleRows.length === 0}<p class="empty">この条件の銘柄はありません。順位外・未対応の表示でも状態を確認できます。</p>{/if}
       </div>
       {#if visibleRows.length > limit}<button class="more" type="button" onclick={() => limit += 50}>さらに50件を表示（{limit} / {visibleRows.length}）</button>{/if}
+      <details class="metric-help"><summary>指標の読み方</summary>
+        <p class="metric-note">取扱いはBitget / Hyperliquid / Asterの元契約です。参照取引所の契約で騰落率・売買代金を比較し、取扱い取引所の合計にはしません。</p>
+        <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。3取引所や市場全体の合計ではありません。</p>
+        <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
+        <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。</p>
+        <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
+        <p class="metric-note">スマホでは参照終値・追加指標・出典を銘柄詳細で確認できます。騰落率の計算基準は設定の「騰落率の基準時刻（JST）」で変更します。</p>
+      </details>
       {#if data}
         <details class="coverage"><summary>対応範囲と除外理由</summary>
           <p>元の {data.coverage.sourceInstruments} 契約を {data.coverage.rows} 行に整理。Widget対応 {data.coverage.widgetSupported} 銘柄。</p>
+          <p>対象 {data.coverage.cryptoRows} / 参照対応 {data.coverage.supported} / 比較可能 {data.coverage.valid} 銘柄。</p>
           <p>元契約の数量換算が未確認: {quantityUnverified} 契約。Chart対応が未確認: {widgetReview} 銘柄。各確認状態はランキングの参照対応と別に管理します。</p>
           <dl>{#each Object.entries(data.coverage.reasons) as [state, count]}<div><dt>{rankingStateLabel(state as RankedRow["state"]) ?? state}</dt><dd>{count}</dd></div>{/each}</dl>
           <p>名簿確認: {rankingTimestamp(data.rosterGeneratedAt)} JST</p>
@@ -552,7 +675,8 @@
       {/if}
     </section>
 
-    <section class="chart-section" aria-labelledby="chart-title" bind:this={chartSection}>
+    <section class="chart-section" class:mobile-hidden={!mobileDetail} aria-labelledby="chart-title">
+      <button class="mobile-only detail-back" type="button" bind:this={detailBack} onclick={() => window.history.back()}>一覧へ戻る</button>
       {#if selected}
         <div class="selected-heading"><span>選択中の参照契約</span><h2 id="chart-title">{selected.asset}</h2><p>{referenceLabel(selected)}</p></div>
         <div class="native-candidates">
@@ -560,10 +684,10 @@
           <button type="button" onclick={() => moveSelected(1)} disabled={visibleRows.findIndex((row) => row.id === selectedId) >= visibleRows.length - 1}>次の銘柄</button>
         </div>
         {#if data && !selectedRemoved}
-          <dl class="selected-metrics" data-testid="selected-metrics">
-            <div><dt>1分前からの順位変化</dt><dd>{rankChangeLabel(selected, comparisonExpired)}</dd></div>
-            <div><dt>売買代金の平常比</dt><dd>{indicatorLabel(selected.turnoverRatio, "倍")}</dd></div>
-            <div><dt>JST当日の高安位置 · 00:00から</dt><dd>{indicatorLabel(selected.dayRangePosition, "%")}</dd></div>
+          <dl class="selected-metrics primary-metrics" data-testid="selected-primary-metrics">
+            <div><dt>参照終値 · USDT</dt><dd>{selected.referenceClose.status === "ready" ? formatPrice(selected.referenceClose.value) : "未取得"}</dd></div>
+            <div><dt>騰落率 · {periodLabel}</dt><dd class:up={(selected.returnPct ?? 0) > 0} class:down={(selected.returnPct ?? 0) < 0}>{selected.returnPct !== null ? formatPriceChange(selected.returnPct) : rankingRowStateLabel(selected)}</dd></div>
+            <div><dt>売買代金 · USDT</dt><dd>{selected.quoteTurnover !== null ? selected.quoteTurnover.toLocaleString("en-US") : "未取得"}</dd></div>
           </dl>
         {/if}
         {#if selected.state === "mapping_review"}<p class="selection-notice">{rankingRowStateLabel(selected)}。確認できるまで順位とチャートに含めません。</p>
@@ -574,6 +698,14 @@
         {#if selectedRemoved}<p class="selection-notice">選択銘柄は更新後の対応表にありません。選択名を維持し、チャートを停止しています。</p>
         {:else if selectedFiltered}<p class="selection-notice">選択銘柄は現在の一覧条件の対象外です。選択は維持しています。</p>{/if}
         {#if symbol}<ReferenceChart {symbol} bind:interval />{:else}<div class="chart-empty"><h3>この参照契約のWidgetは利用できません</h3><p>{selected.widget.status === "review" ? "チャートの対応確認が必要です。" : "対応するチャートが確認できません。"}</p>{#if selected.mappingStatus === "verified"}<p>Chartの対応状況は、ランキングの数値計算には影響しません。</p>{/if}</div>{/if}
+        {#if data && !selectedRemoved}
+          <dl class="selected-metrics" data-testid="selected-metrics">
+            <div><dt>1分前からの順位変化</dt><dd>{rankChangeLabel(selected, comparisonExpired)}</dd></div>
+            <div><dt>売買代金の平常比</dt><dd>{indicatorLabel(selected.turnoverRatio, "倍")}</dd></div>
+            <div><dt>JST当日の高安位置 · 00:00から</dt><dd>{indicatorLabel(selected.dayRangePosition, "%")}</dd></div>
+            {#each ["15m", "1h", "24h"] as window}<div><dt>{window === "15m" ? "15分" : window === "1h" ? "1時間" : "24時間"}騰落率</dt><dd>{selected.windows[window as "15m" | "1h" | "24h"].returnPct === null ? "未取得" : formatPriceChange(selected.windows[window as "15m" | "1h" | "24h"].returnPct!)}</dd></div>{/each}
+          </dl>
+        {/if}
         <div class="native-candidates" aria-label="現在の取扱い契約">
           {#each nativeCandidates as instrument (instrument.venueInstrumentId)}
             <a href={nativeHref(instrument.venueInstrumentId, instrument.venueInstrumentVersionId)}>
@@ -612,80 +744,109 @@
 </main>
 
 <style>
-  .native-candidates { display: flex; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-md) 0; }
-  .native-candidates a { color: var(--focus); border: 1px solid var(--line-strong); padding: var(--space-sm); }
   .ranking-page { padding: var(--space-page); color: var(--text); max-width: 1900px; margin: 0 auto; }
-  .topbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-lg); align-items: end; padding: var(--space-sm) 0 var(--space-lg); border-bottom: 1px solid var(--line-strong); }
-  h1 { margin: var(--space-sm) 0; font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
+  .ranking-page :where(a, button, input, select, summary):focus-visible { outline: var(--focus-ring-width) solid var(--focus); outline-offset: var(--focus-ring-offset); }
+  .topbar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: 0 0 var(--space-sm); border-bottom: 1px solid var(--line-strong); }
+  h1 { margin: 0; font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
   .topbar p, .metric-note, .search-note { margin: var(--space-xs) 0; color: var(--muted); font-size: var(--type-body-sm-size); line-height: 1.5; }
-  .back { color: var(--focus); font-size: var(--type-body-sm-size); text-decoration: none; }
-  .preferences { display: flex; flex-wrap: wrap; gap: var(--space-md); }
-  .controls { display: grid; grid-template-columns: 140px 140px minmax(170px, 1fr) minmax(220px, 1fr); align-items: end; gap: var(--space-md); padding: var(--space-md) 0; }
+  .reference-link { color: var(--muted); font-size: var(--type-label-caps-size); text-underline-offset: 3px; white-space: nowrap; }
+  .controls { display: grid; grid-template-columns: 140px 140px minmax(180px, 1fr) auto; align-items: end; gap: var(--space-md); padding: var(--space-sm) 0; }
   label { display: grid; gap: var(--space-xs); color: var(--muted); font-size: var(--type-label-caps-size); min-width: 0; }
-  input, select, .notice button { min-width: 0; min-height: var(--control-height-dense); border: 1px solid var(--line-strong); border-radius: 0; background: var(--surface); color: var(--text); padding: 0 var(--space-sm); font: inherit; font-size: var(--type-body-sm-size); }
-  .notice { padding: var(--space-sm) var(--space-md); border-left: 3px solid var(--warning-border); background: var(--surface); color: var(--warning); font-size: var(--type-body-sm-size); }
-  .comparison-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-lg); background: var(--panel-strong); padding: var(--space-md); border-block: 1px solid var(--line); min-height: 62px; }
-  .comparison-status > div { display: grid; gap: var(--space-xs); }
-  .comparison-status span { color: var(--muted); font-size: var(--type-label-caps-size); }
-  .comparison-status strong { font-size: var(--type-data-md-size); font-variant-numeric: tabular-nums; }
-  .refresh-state { margin-left: auto; }
-  .metric-note { margin: var(--space-sm) 0 var(--space-lg); font-size: var(--type-label-caps-size); }
+  input, select, button { box-sizing: border-box; min-width: 0; min-height: var(--control-height-dense); border: 1px solid var(--line-strong); border-radius: 0; background: var(--surface); color: var(--text); padding: 0 var(--space-sm); font: inherit; font-size: var(--type-body-sm-size); }
+  button { cursor: pointer; }button:disabled { cursor: default; opacity: .55; }
+  .check { display: flex; align-items: center; min-height: var(--control-height-dense); white-space: nowrap; cursor: pointer; }
+  .check input { min-height: 0; accent-color: var(--focus); }
+  .condition-summary { display: flex; gap: var(--space-sm); justify-content: space-between; align-items: center; min-height: 28px; font-size: var(--type-body-sm-size); }
+  .condition-summary p { margin: var(--space-xs) 0; min-width: 0; overflow-wrap: anywhere; line-height: 1.5; }
+  .condition-summary span { color: var(--muted); }.condition-summary button { flex-shrink: 0; }
+  .ranking-conditions { border-block: 1px solid var(--line); }
+  summary { cursor: pointer; min-height: var(--control-height-dense); display: list-item; align-content: center; font-size: var(--type-body-sm-size); color: var(--subtle); }
+  .ranking-conditions summary > span { margin-left: var(--space-md); color: var(--muted); font-size: var(--type-label-caps-size); }
+  .advanced-controls { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); align-items: end; gap: var(--space-md); padding: var(--space-sm) 0; }
+  .saved-view-bar { display: grid; grid-template-columns: minmax(180px, 280px) minmax(180px, 1fr); gap: var(--space-md); align-items: end; padding: var(--space-sm) 0; }
+  .saved-view-management[open] { grid-column: 1 / -1; }
+  .view-actions { display: flex; flex-wrap: wrap; gap: var(--space-sm); align-items: end; padding: var(--space-sm) 0; }.view-actions label { flex: 1; min-width: 160px; }
+  .notice { margin: var(--space-sm) 0; padding: var(--space-sm) var(--space-md); border-left: 3px solid var(--warning-border); background: var(--surface); color: var(--warning); font-size: var(--type-body-sm-size); line-height: 1.5; }
+  .comparison-status { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-md); background: var(--panel-strong); padding: var(--space-sm); border-block: 1px solid var(--line); color: var(--muted); font-size: var(--type-label-caps-size); font-variant-numeric: tabular-nums; line-height: 1.5; }
+  .comparison-status p { margin: 0; }.refresh-state { margin-left: auto; }
+  .metric-note { margin: var(--space-sm) 0; font-size: var(--type-label-caps-size); }
   .workspace { display: grid; grid-template-columns: minmax(470px, .95fr) minmax(0, 1.05fr); gap: var(--space-lg); align-items: start; }
   .ranking-list, .chart-section { min-width: 0; }
   .list-heading { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; }
   .list-heading h2 { margin: 0; font-size: var(--type-heading-md-size); }
   .list-heading > span { font-size: var(--type-body-sm-size); color: var(--muted); }
-  .list-controls { display: flex; gap: var(--space-md); align-items: end; padding: var(--space-sm) 0; }
-  .search { flex: 1; }
-  .check { display: flex; align-items: center; min-height: var(--control-height-dense); white-space: nowrap; }
-  .check input { min-height: 0; accent-color: var(--focus); }
   .search-note { font-size: var(--type-label-caps-size); }
   .table-scroll { max-height: 640px; overflow: auto; border-block: 1px solid var(--line-strong); }
   table { border-collapse: collapse; width: 100%; font-size: var(--type-body-sm-size); }
   th, td { padding: var(--space-sm); border-bottom: 1px solid var(--line); vertical-align: middle; }
   thead th { position: sticky; top: 0; z-index: 1; background: var(--panel-strong); color: var(--muted); font-size: var(--type-label-caps-size); font-weight: 500; text-align: right; white-space: nowrap; }
-  thead th:nth-child(2) { text-align: left; }
+  thead th:nth-child(2), thead th:nth-child(3) { text-align: left; }
+  thead button { font-size: inherit; color: inherit; padding: 0; background: transparent; border: 0; }
   tbody th { font-weight: 500; text-align: left; }
   tr { background: var(--panel); }
   tr.selected { background: var(--panel-selected); box-shadow: inset 3px 0 var(--focus); }
+  button[aria-pressed="true"]:not(.select-row) { color: var(--focus); }
   .rank { color: var(--muted); font-variant-numeric: tabular-nums; width: 38px; text-align: right; }
-  .rank-change { display: block; font-size: var(--type-label-caps-size); white-space: normal; overflow-wrap: anywhere; min-width: 50px; }
+  .rank-change { display: block; font-size: var(--type-label-caps-size); white-space: normal; overflow-wrap: anywhere; min-width: 40px; }
+  .ranking-basis { font-weight: 750; }.ranking-basis > button { color: var(--text); }
   .selected-metrics { color: var(--subtle); font-size: var(--type-body-sm-size); line-height: 1.6; }
   .selected-metrics div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); }
-  .selected-metrics dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .selected-metrics dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .primary-metrics dd { font-weight: 750; }
   .indicator { display: block; color: var(--muted); font-size: var(--type-label-caps-size); white-space: normal; }
-  .select-row { display: grid; width: 100%; gap: var(--space-xxs); border: 0; border-radius: 0; padding: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; font: inherit; min-height: 42px; }
-  .select-row strong { font-size: var(--type-data-md-size); }
+  .select-row { display: grid; width: 100%; gap: var(--space-xxs); border: 0; padding: 0; background: transparent; color: var(--text); text-align: left; min-height: 42px; }
+  .select-row strong { font-size: var(--type-data-md-size); overflow-wrap: anywhere; }
   .select-row span, .select-row small { color: var(--muted); font-size: var(--type-label-caps-size); overflow-wrap: anywhere; }
   .numeric { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
   .up { color: var(--up); }.down { color: var(--down); }
   .missing { color: var(--quality-risk); font-size: var(--type-label-caps-size); white-space: normal; }
   .turnover small { display: block; color: var(--muted); font-size: var(--type-label-caps-size); white-space: normal; }
-  .more { width: 100%; min-height: 44px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); font: inherit; font-size: var(--type-body-sm-size); cursor: pointer; }
+  .more { width: 100%; min-height: 44px; }
   .empty { padding: var(--space-lg); color: var(--muted); line-height: 1.6; font-size: var(--type-body-sm-size); }
-  .coverage, .contracts { border-bottom: 1px solid var(--line); padding: var(--space-sm) 0; font-size: var(--type-body-sm-size); color: var(--muted); }
-  summary { cursor: pointer; min-height: 34px; display: list-item; align-content: center; }
+  .coverage, .contracts, .metric-help { border-bottom: 1px solid var(--line); padding: var(--space-xs) 0; font-size: var(--type-body-sm-size); color: var(--muted); }
   .coverage dl { display: grid; gap: var(--space-xs); }.coverage dl div { display: flex; justify-content: space-between; }.coverage dd { font-variant-numeric: tabular-nums; }
-  .chart-section { position: sticky; top: var(--space-sm); scroll-margin-top: var(--space-md); }
-  .selected-heading { border-bottom: 1px solid var(--line-strong); padding: var(--space-sm) 0 var(--space-md); }
+  .chart-section { position: sticky; top: var(--space-sm); }
+  .selected-heading { border-bottom: 1px solid var(--line-strong); padding: var(--space-sm) 0; }
   .selected-heading > span { color: var(--muted); font-size: var(--type-label-caps-size); }
   .selected-heading h2 { margin: var(--space-xs) 0; font-size: var(--type-title-lg-size); }
-  .selected-heading p { color: var(--subtle); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
-  .selection-notice { border-left: 2px solid var(--warning-border); padding: var(--space-sm); color: var(--warning); font-size: var(--type-body-sm-size); }
+  .selected-heading p { margin: var(--space-xs) 0; color: var(--subtle); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
+  .native-candidates { display: flex; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-sm) 0; }
+  .native-candidates a { display: flex; align-items: center; color: var(--focus); border: 1px solid var(--line-strong); padding: var(--space-sm); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
+  .native-candidates p { font-size: var(--type-body-sm-size); color: var(--muted); }
+  .selection-notice { border-left: 2px solid var(--warning-border); padding: var(--space-sm); color: var(--warning); font-size: var(--type-body-sm-size); line-height: 1.5; }
   .chart-empty { display: flex; flex-direction: column; justify-content: center; min-height: 320px; padding: var(--space-xl); border: 1px solid var(--line); background: var(--panel); }
   .chart-empty > span, .chart-empty p { color: var(--muted); font-size: var(--type-body-sm-size); line-height: 1.7; }.chart-empty h2, .chart-empty h3 { font-size: var(--type-heading-md-size); }
+  .mobile-only { display: none; }
   @media (max-width: 960px) {
-    .workspace { grid-template-columns: minmax(0, 1fr); }.chart-section { position: static; }
-    .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }.table-scroll { max-height: 500px; }
-    input, select { min-height: var(--control-height-touch); }.check { min-height: 44px; }
-    .topbar { align-items: stretch; }.preferences { width: 100%; }.comparison-status { gap: var(--space-md); }
+    .workspace { grid-template-columns: minmax(0, 1fr); gap: 0; }.chart-section { position: static; }
+    .mobile-hidden, .desktop-only { display: none; }
+    .mobile-only { display: block; }
+    .controls { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-sm); }.table-scroll { max-height: 60vh; }
+    input, select, button, summary { min-height: var(--control-height-touch); }.check { min-height: 44px; }
+    .check input { min-height: 0; }
+    .advanced-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .topbar p { display: none; }.topbar { min-height: 44px; padding-bottom: var(--space-xs); }h1 { font-size: 22px; }
+    .reference-link { display: flex; align-items: center; min-height: 44px; }
+    .comparison-status { gap: var(--space-xs) var(--space-sm); }.comparison-status > span:first-child { flex-basis: 100%; }
+    .condition-summary { font-size: var(--type-label-caps-size); }
+    .saved-view-bar { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-sm); }
+    .view-actions { display: grid; grid-template-columns: minmax(0, 1fr); }.view-actions label { min-width: 0; }
+    table { table-layout: fixed; }
+    th, td { padding: var(--space-sm) var(--space-xs); }
+    thead th { font-size: 10px; white-space: normal; }thead button { font-size: inherit; width: 100%; }
+    thead th:nth-child(2) { width: 32px; }thead th:nth-child(3) { width: 33%; }
+    .rank { width: 32px; }.rank-change { min-width: 0; font-size: 10px; }
+    .asset-cell { position: relative; }.select-row { min-height: 44px; padding-right: 44px; }.select-row span { display: none; }
+    .mobile-favorite { position: absolute; top: 4px; right: 0; width: 44px; min-width: 44px; padding: 0; background: transparent; border: 0; }
+    .mobile-sort-basis, .mobile-movement { display: block; font-size: 10px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.5; }
+    .mobile-movement span { display: block; }
+    .indicator { font-size: 10px; }.numeric { white-space: normal; overflow-wrap: anywhere; }
+    .turnover-unit { display: block; }
+    .detail-back { width: 100%; text-align: left; color: var(--focus); margin-bottom: var(--space-xs); }
+    .chart-empty { padding: var(--space-lg); }
   }
-  @media (max-width: 560px) {
-    .controls :global(.daily-reference-setting) { grid-column: 1 / -1; }
-    .preferences { display: grid; grid-template-columns: minmax(0, 1fr); }.list-controls { flex-direction: column; align-items: stretch; gap: 0; }
-    .controls { gap: var(--space-sm); }.comparison-status { display: grid; grid-template-columns: minmax(0, 1fr); }.refresh-state { margin-left: 0; }
-    thead th { padding: var(--space-sm) var(--space-xs); font-size: 10px; }th, td { padding: var(--space-sm) var(--space-xs); }
-    .rank { width: 24px; }.select-row { min-height: 62px; }.select-row span { max-width: 130px; }.numeric { font-size: var(--type-body-sm-size); }
-    .turnover { width: 76px; }.change { width: 76px; }.chart-empty { padding: var(--space-lg); }
+  @media (max-width: 380px) {
+    .check { font-size: 10px; }.numeric { font-size: 11px; }.select-row strong { font-size: 12px; }
+    .ranking-conditions summary > span { font-size: 10px; }.saved-view-management summary { font-size: 11px; }
   }
 </style>

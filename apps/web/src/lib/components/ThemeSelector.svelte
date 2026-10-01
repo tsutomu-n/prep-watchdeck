@@ -12,24 +12,37 @@
   } from "$lib/theme/color-scheme";
 
   let selected = $state<ColorSchemeId>(defaultColorSchemeId);
+  let storageMessage = $state<string | null>(null);
   let selectedScheme = $derived(
     colorSchemes.find((scheme) => scheme.id === selected) ?? colorSchemes[0]
   );
   let selectedModeLabel = $derived(selectedScheme.mode === "dark" ? "ダーク" : "ライト");
 
   onMount(() => {
-    selected = readDocumentColorScheme(document.documentElement);
+    const refresh = () => {
+      selected = readDocumentColorScheme(document.documentElement);
+      storageMessage = null;
+    };
+    refresh();
+    window.addEventListener(COLOR_SCHEME_CHANGE_EVENT, refresh);
+    return () => window.removeEventListener(COLOR_SCHEME_CHANGE_EVENT, refresh);
   });
 
   function selectColorScheme(event: Event) {
     const select = event.currentTarget as HTMLSelectElement;
     selected = applyDocumentColorScheme(document.documentElement, select.value);
-    writeStoredColorScheme(window.localStorage, selected);
+    let saved = false;
+    try {
+      saved = writeStoredColorScheme(window.localStorage, selected);
+    } catch {
+      // Storage itself can be unavailable while display changes remain usable.
+    }
     window.dispatchEvent(
       new CustomEvent(COLOR_SCHEME_CHANGE_EVENT, {
         detail: { id: selected }
       })
     );
+    storageMessage = saved ? null : "保存できないため、再読込するまでこのタブ内だけに適用しています";
   }
 </script>
 
@@ -50,6 +63,7 @@
     {/each}
   </select>
 </label>
+{#if storageMessage}<small role="status">{storageMessage}</small>{/if}
 
 <style>
   .theme-selector {
@@ -95,6 +109,8 @@
     font-size: var(--type-body-sm-size);
     cursor: pointer;
   }
+
+  small { display: block; margin-top: var(--space-sm); color: var(--warning); font-size: var(--type-body-sm-size); line-height: 1.5; }
 
   @media (max-width: 48rem), (any-pointer: coarse) {
     select {
