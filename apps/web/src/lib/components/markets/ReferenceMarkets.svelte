@@ -617,7 +617,12 @@
                   aria-label={`${row.asset}をお気に入り${(favoriteIntent[`reference:${row.id}`] ?? referenceFavoriteCurrent(row)) ? "解除" : "登録"}`}
                   aria-pressed={favoriteIntent[`reference:${row.id}`] ?? referenceFavoriteCurrent(row)}
                   onclick={() => toggleFavorite(row)}>★</button></td>
-                <td class="rank">{row.rank ?? "—"}{#if sort === "server"}<small class="rank-change" data-testid="rank-change">{rankChangeLabel(row, comparisonExpired)}</small>{/if}</td>
+                <td class="rank">{row.rank ?? "—"}{#if sort === "server"}
+                  {@const changeLabel = rankChangeLabel(row, comparisonExpired)}
+                  <small class="rank-change" data-testid="rank-change" aria-label={changeLabel} title={changeLabel}>
+                    {mobile && (changeLabel.startsWith("比較不可") || row.rank === null) ? "—" : changeLabel}
+                  </small>
+                {/if}</td>
                 <th scope="row" class="asset-cell"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
                   <strong>{row.asset}</strong><span>{row.venues.map((v) => v === "hyperliquid" ? "Hyperliquid" : v === "bitget" ? "Bitget" : "Aster").join(" · ")}</span>
                   <small class="desktop-only">{referenceLabel(row)}</small>
@@ -660,7 +665,7 @@
         <p class="metric-note">取扱いはBitget / Hyperliquid / Asterの元契約です。参照取引所の契約で騰落率・売買代金を比較し、取扱い取引所の合計にはしません。</p>
         <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。3取引所や市場全体の合計ではありません。</p>
         <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
-        <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。</p>
+        <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。スマホの順位変化の「—」は比較できない状態で、理由は銘柄詳細で確認できます。</p>
         <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
         <p class="metric-note">スマホでは参照終値・追加指標・出典を銘柄詳細で確認できます。騰落率の計算基準は設定の「騰落率の基準時刻（JST）」で変更します。</p>
       </details>

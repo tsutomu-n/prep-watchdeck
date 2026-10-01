@@ -64,7 +64,8 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
   });
   await page.goto("/rankings");
   const btc = page.getByTestId("ranking-row").filter({ hasText: "BTC" });
-  await expect(btc.getByTestId("rank-change")).toHaveText("比較不可（初回・再起動後）");
+  await expect(btc.getByTestId("rank-change")).toHaveAttribute("aria-label", "比較不可（初回・再起動後）");
+  await expect(btc.getByTestId("rank-change")).toHaveText((page.viewportSize()?.width ?? 1440) <= 960 ? "—" : "比較不可（初回・再起動後）");
   await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 2.0倍");
   await expect(btc.getByTestId("day-position")).toHaveText("当日位置 50.0%");
   await btc.locator("button.select-row").click();
@@ -92,6 +93,7 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
   // Browser clock must invalidate the comparison even when the collector stops responding.
   await page.route("**/api/rankings?**", route => route.fulfill({ status: 503, body: "stopped" }));
   await page.clock.fastForward(160_000);
-  await expect(btc.getByTestId("rank-change")).toHaveText("比較不可（古い結果）");
+  await expect(btc.getByTestId("rank-change")).toHaveAttribute("aria-label", "比較不可（古い結果）");
+  await expect(btc.getByTestId("rank-change")).toHaveText((page.viewportSize()?.width ?? 1440) <= 960 ? "—" : "比較不可（古い結果）");
   await expect(page.getByText(/更新が停止しています。表示値は/)).toBeVisible();
 });
