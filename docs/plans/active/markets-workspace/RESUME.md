@@ -1,12 +1,18 @@
 # 再開位置
 
+timestamp="2026-10-01(木)_20:31 JST"
+
 - 作成: `2026-09-28T20:00:00+09:00`
-- 更新: `2026-09-29T06:55:18+09:00`
+- 更新: `2026-10-01T20:31:46+09:00`
 - 状態: `実装計画`
 
 ---
 
-開発受入は`PARTIAL`。AC全30件はpass 27、partial 2（AC20・AC21）、M6 not_run 1（AC22）。実データ受入は別欄でnot_run。
+現在の代理操作は12件PASS。実データ読取は観測済み、M6の本番全条件はPARTIAL。詳細は[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md](/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md)と同directoryのacceptance.jsonを参照。
+
+以下のM5記録は2026-09-29時点の証拠。今回の代理操作・現役read-only観測は追加checkpointであり、当時のnot_runは現在値ではない。
+
+当時の開発受入は`PARTIAL`。AC全30件はpass 27、partial 2（AC20・AC21）、M6 not_run 1（AC22）。実データ受入は別欄でnot_run。
 各ACの試験名・command・結果・対象版は`/home/tn/projects/.ai-worktrees/prep-watchdeck-markets-20260928/docs/plans/active/markets-workspace/acceptance.json`を正とする。
 
 ## 対象版と保全
@@ -36,7 +42,7 @@
 
 旧Webへのrollback試験は前回の隔離v1復元/v2別保全/hash不変の証拠を再利用。現役stateの切戻しは未実施。
 
-## 残る阻害要因と再開条件
+## M5時点の阻害要因と再開条件（現在値は追加checkpoint）
 
 - AC20: OSの実日本語IME・実機focusが未確認。この環境にはDISPLAY/WAYLAND_DISPLAY、ibus/fcitx5がない。GUI/IMEがある隔離端末で未保存メモ・銘柄切替・保存応答中のcompositionとfocusを確認する。Browser模擬IME/keyboard/focusは通過。
 - AC21: AC20未達のためPARTIAL。実装不足や、この環境で実行できる隔離試験の調査待ちは残していない。

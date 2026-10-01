@@ -18,8 +18,10 @@ import {
   type DailyPriceChange
 } from "../../src/lib/market/price-change";
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
+import { browserIme, type BrowserImeEvent } from "./helpers/browser-ime";
 
-test("参照条件と選択・scroll・focusをnative往復後に復元し次前を操作できる", async ({ page }) => {
+test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard focusをnative往復後に復元する", async ({ page }, testInfo) => {
+  const imeEvidence: { field: string; events: BrowserImeEvent[] }[] = [];
   let holdReturn = false;
   let release!: () => void;
   const held = new Promise<void>((resolve) => { release = resolve; });
@@ -44,17 +46,68 @@ test("参照条件と選択・scroll・focusをnative往復後に復元し次前
   await page.getByLabel("当日位置の上限", { exact: true }).fill("80");
   await page.getByLabel("表示列プリセット").selectOption("movement");
   const selected = page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator("button.select-row");
-  await selected.click();
+  await selected.focus();
+  await selected.press("Enter");
+  await expect(selected).toBeFocused();
   await expect(page.getByRole("link", { name: "hyperliquid · BTC のnative詳細" })).toBeVisible();
   await expect(page.getByRole("link", { name: "bitget · ETHUSDT のnative詳細" })).toHaveCount(0);
+  const noteSummary = page.getByText("この参照市場の観測メモ", { exact: true });
+  await noteSummary.focus();
+  await noteSummary.press("Enter");
+  const reason = page.getByLabel("理由", { exact: true });
+  const note = page.getByLabel("短い観測メモ");
+  await reason.focus();
+  const reasonIme = await browserIme(page, reason);
+  try {
+    await reasonIme.compose("りゅうどうせいかくにん");
+    await reasonIme.compose("流動性確認");
+    await reasonIme.commit("流動性確認");
+    await expect(reason).toHaveValue("流動性確認");
+    const events = await reasonIme.events();
+    const eventPath = testInfo.outputPath("p02-reason-browser-ime.json");
+    await writeFile(eventPath, JSON.stringify(events, null, 2));
+    await testInfo.attach("p02-reason-browser-ime.json", { path: eventPath, contentType: "application/json" });
+    expect(events.some(event => event.type === "compositionstart" && event.isTrusted)).toBe(true);
+    expect(events.some(event => event.type === "input" && event.isTrusted && event.isComposing)).toBe(true);
+    expect(events.some(event => event.type === "compositionend" && event.data === "流動性確認")).toBe(true);
+    expect(events.filter(event => event.type !== "compositionend").every(event => event.isTrusted)).toBe(true);
+    imeEvidence.push({ field: "reference reason", events });
+  } finally { await reasonIme.close(); }
+  await reason.press("Tab");
+  await expect(note).toBeFocused();
+  const noteIme = await browserIme(page, note);
+  try {
+    await noteIme.compose("さんしょうもととじこくをさいかくにん");
+    await noteIme.compose("参照元と時刻を再確認");
+    await noteIme.commit("参照元と時刻を再確認");
+    await expect(note).toHaveValue("参照元と時刻を再確認");
+    const events = await noteIme.events();
+    const eventPath = testInfo.outputPath("p02-note-browser-ime.json");
+    await writeFile(eventPath, JSON.stringify(events, null, 2));
+    await testInfo.attach("p02-note-browser-ime.json", { path: eventPath, contentType: "application/json" });
+    expect(events.some(event => event.type === "compositionend" && event.data === "参照元と時刻を再確認")).toBe(true);
+    expect(events.filter(event => event.type !== "compositionend").every(event => event.isTrusted)).toBe(true);
+    imeEvidence.push({ field: "reference note", events });
+  } finally { await noteIme.close(); }
+  await expect(page.getByLabel("保存先の取扱い契約")).toHaveValue("bitget:BTCUSDT");
   const scroller = page.locator(".ranking-list .table-scroll");
   await scroller.evaluate(el => { el.scrollTop = 180; el.scrollLeft = 40; });
   const scroll = await scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }));
   expect(scroll.top).toBeGreaterThan(0);
-  await page.getByRole("link", { name: "bitget · BTCUSDT のnative詳細" }).click();
+  const nativeLink = page.getByRole("link", { name: "bitget · BTCUSDT のnative詳細" });
+  await nativeLink.focus();
+  await nativeLink.press("Enter");
   await expect(page.getByRole("region", { name: "価格・出来高" })).toContainText("bitget:BTCUSDT");
+  await expect(reason).toHaveValue("流動性確認");
+  await expect(note).toHaveValue("参照元と時刻を再確認");
+  await note.focus();
+  await note.press("End");
+  await page.keyboard.insertText("・取扱い確認");
+  await expect(note).toHaveValue("参照元と時刻を再確認・取扱い確認");
   holdReturn = true;
-  await page.getByRole("link", { name: "参照市場へ戻る" }).click();
+  const returnLink = page.getByRole("link", { name: "参照市場へ戻る" });
+  await returnLink.focus();
+  await returnLink.press("Enter");
   try {
     await expect(page.getByLabel("平常比期間")).toHaveValue("1h");
     await expect(page.getByLabel("平常比下限")).toHaveValue("0.5");
@@ -65,10 +118,44 @@ test("参照条件と選択・scroll・focusをnative往復後に復元し次前
   await expect(selected).toHaveAttribute("aria-pressed", "true");
   await expect(selected).toBeFocused();
   await expect.poll(() => scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }))).toEqual(scroll);
-  await page.getByRole("button", { name: "次の銘柄", exact: true }).click();
+  const next = page.getByRole("button", { name: "次の銘柄", exact: true });
+  await next.focus();
+  await next.press("Enter");
   await expect(page.getByRole("heading", { name: "NOCHART", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "前の銘柄", exact: true }).click();
+  const previous = page.getByRole("button", { name: "前の銘柄", exact: true });
+  await previous.focus();
+  await previous.press("Enter");
   await expect(page.getByRole("heading", { name: "BTC", exact: true })).toBeVisible();
+  await noteSummary.focus();
+  await noteSummary.press("Enter");
+  await expect(reason).toHaveValue("流動性確認");
+  await expect(note).toHaveValue("参照元と時刻を再確認・取扱い確認");
+  await expect(page.getByLabel("保存先の取扱い契約")).toHaveValue("bitget:BTCUSDT");
+  await note.focus();
+  await note.press("Tab");
+  const attachContext = page.getByLabel("保存時の指標を添付する");
+  await expect(attachContext).toBeFocused();
+  await attachContext.press("Space");
+  await expect(attachContext).toBeChecked();
+  await attachContext.press("Tab");
+  const save = page.getByRole("button", { name: "注記を保存", exact: true });
+  await expect(save).toBeFocused();
+  await expect(save).toBeEnabled();
+  await save.press("Enter");
+  await expect(page.locator(".note-list")).toContainText("参照元と時刻を再確認・取扱い確認");
+  const saved = await (await page.request.get("/api/market-past-notes?venueInstrumentId=bitget:BTCUSDT")).json();
+  expect(saved.notes[0]).toMatchObject({
+    venueInstrumentId: "bitget:BTCUSDT", reason: "流動性確認",
+    note: "参照元と時刻を再確認・取扱い確認",
+    context: { view: "reference", venueInstrumentVersionId: 1, reference: { source: "bybit", symbol: "BTCUSDT", period: "1h" } }
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  const evidencePath = testInfo.outputPath("p02-browser-ime.json");
+  await writeFile(evidencePath, JSON.stringify({ persona: "P02 慎重な確認担当", boundary: "Chromium CDP composition; OS IME and physical device unverified", viewport: page.viewportSize(), imeEvidence, saved: saved.notes[0] }, null, 2));
+  await testInfo.attach("p02-browser-ime.json", { path: evidencePath, contentType: "application/json" });
+  const screenshotPath = testInfo.outputPath("p02-reference-note.png");
+  await page.screenshot({ path: screenshotPath });
+  await testInfo.attach("p02-reference-note.png", { path: screenshotPath, contentType: "image/png" });
 });
 
 test("取引所別のお気に入りと名前付き表示を再読込後に使える", async ({ page }) => {
@@ -1117,7 +1204,7 @@ async function readSelectionCommand(): Promise<Record<string, unknown> | null> {
   }
 }
 
-test("メモ保存中のA→B→Aと追加入力・IMEイベントで下書きを消さない", async ({ page }) => {
+test("P01 日本語で記録する比較担当は保存応答中のChromium IME候補・focus・別銘柄下書きを保持する", async ({ page }, testInfo) => {
   await page.goto("/?mode=native");
   await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
   await page.getByLabel("理由", { exact: true }).fill("Aの記録");
@@ -1138,14 +1225,67 @@ test("メモ保存中のA→B→Aと追加入力・IMEイベントで下書き�
   const note = page.getByLabel("短い観測メモ");
   await expect(note).toHaveValue("保存する本文");
   await note.focus();
-  await note.dispatchEvent("compositionstart", { data: "" });
-  await note.fill("保存する本文・追加入力日本語");
-  await note.dispatchEvent("compositionend", { data: "日本語" });
-  release();
-  await expect(page.getByText("bitget:BTCUSDT に保存しました", { exact: true })).toBeVisible();
-  await expect(note).toHaveValue("保存する本文・追加入力日本語");
-  await expect(note).toBeFocused();
+  await note.press("End");
+  const ime = await browserIme(page, note);
+  let events: BrowserImeEvent[] = [];
+  try {
+    await ime.compose("・ついかにゅうりょくにほんご");
+    await expect(note).toHaveValue("保存する本文・ついかにゅうりょくにほんご");
+    await ime.compose("・追加入力日本語");
+    await expect(note).toHaveValue("保存する本文・追加入力日本語");
+    const beforeResponse = await ime.events();
+    expect(beforeResponse.some(event => event.type === "compositionstart" && event.isTrusted)).toBe(true);
+    expect(beforeResponse.some(event => event.type === "input" && event.isTrusted && event.isComposing)).toBe(true);
+    expect(beforeResponse.filter(event => event.type === "compositionend")).toHaveLength(0);
+    const returned = page.waitForResponse(response => response.url().endsWith("/api/market-past-notes") && response.request().method() === "POST");
+    release();
+    await (await returned).finished();
+    await expect(page.getByText("bitget:BTCUSDT に保存しました", { exact: true })).toBeVisible();
+    await expect(note).toHaveValue("保存する本文・追加入力日本語");
+    await expect(note).toBeFocused();
+    expect((await ime.events()).filter(event => event.type === "compositionend")).toHaveLength(0);
+    const screenshotPath = testInfo.outputPath("p01-active-composition.png");
+    await page.screenshot({ path: screenshotPath });
+    await testInfo.attach("p01-active-composition.png", { path: screenshotPath, contentType: "image/png" });
+    await ime.commit("・追加入力日本語");
+    await expect(note).toHaveValue("保存する本文・追加入力日本語");
+    await expect(note).toBeFocused();
+    await ime.compose("・とりけし");
+    await expect(note).toHaveValue("保存する本文・追加入力日本語・とりけし");
+    await ime.cancel();
+    await expect(note).toHaveValue("保存する本文・追加入力日本語");
+    await expect(note).toBeFocused();
+    events = await ime.events();
+    const eventPath = testInfo.outputPath("p01-browser-ime.json");
+    await writeFile(eventPath, JSON.stringify({ persona: "P01 日本語で記録する比較担当", boundary: "Chromium CDP composition; OS IME and physical device unverified", viewport: page.viewportSize(), saveResponseDeliveredDuringComposition: true, events }, null, 2));
+    await testInfo.attach("p01-browser-ime.json", { path: eventPath, contentType: "application/json" });
+    expect(events.some(event => event.type === "compositionend" && event.data === "・追加入力日本語")).toBe(true);
+    expect(events.filter(event => event.type === "compositionend")).toHaveLength(2);
+    // Chrome CDP commit/cancel produce an untrusted compositionend even on an
+    // empty HTML input. All preedit/candidate editing events must be trusted.
+    expect(events.filter(event => event.type !== "compositionend").every(event => event.isTrusted)).toBe(true);
+  } finally {
+    release();
+    await ime.close();
+  }
   await expect(page.locator(".note-list")).toContainText("保存する本文");
+  await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
+  await expect(note).toHaveValue("Bの下書き");
+  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await expect(note).toHaveValue("保存する本文・追加入力日本語");
+  await page.getByRole("button", { name: "注記を保存", exact: true }).click();
+  await expect(page.locator(".note-list")).toContainText("保存する本文・追加入力日本語");
+  await expect(note).toHaveValue("");
+  const saved = await (await page.request.get("/api/market-past-notes?venueInstrumentId=bitget:BTCUSDT")).json();
+  expect(saved.notes[0]).toMatchObject({
+    venueInstrumentId: "bitget:BTCUSDT", reason: "Aの記録", note: "保存する本文・追加入力日本語"
+  });
+  const draft = await page.evaluate(() => sessionStorage.getItem("market-note-draft:bitget:ETHUSDT/3"));
+  expect(JSON.parse(draft!)).toMatchObject({ note: "Bの下書き" });
+  await page.reload();
+  await page.getByRole("button", { name: "BTC bitgetを詳細表示" }).click();
+  await expect(page.locator(".note-list")).toContainText("保存する本文・追加入力日本語");
+  await expect(note).toHaveValue("");
   await page.getByRole("button", { name: "ETH bitgetを詳細表示" }).click();
   await expect(note).toHaveValue("Bの下書き");
 });

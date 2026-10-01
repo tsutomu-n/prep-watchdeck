@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-10-01T20:31:46+09:00",
+  "status": "partial",
+  "scope": "user delegated personas and actual-data read acceptance; no production deployment",
+  "automatedAcceptance": "pass",
+  "sourceBaseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+  "branch": "ai/markets-persona-acceptance-20261001-2002",
+  "personas": [
+    {
+      "id": "P01",
+      "profile": "日本語で観測を記録する比較担当",
+      "flow": "composition中の保存応答・下書き分離・参照値照合・native往復・保存・再訪"
+    },
+    {
+      "id": "P02",
+      "profile": "狭い画面とキーボードで確認する慎重な担当",
+      "flow": "条件・scroll・focus復元・3Venue指標/出所・次銘柄"
+    },
+    {
+      "id": "P03",
+      "profile": "中断後に確認を再開する担当",
+      "flow": "候補Web新規processで保存したメモとworkspaceを照合"
+    }
+  ],
+  "browserAcceptance": {
+    "imeEngine": {
+      "status": "pass",
+      "tests": 4,
+      "viewports": [
+        1440,
+        390
+      ],
+      "osIme": "not_run",
+      "compositionEndTrusted": false
+    },
+    "actualDataOperations": {
+      "status": "pass",
+      "tests": 4,
+      "viewports": [
+        1440,
+        390
+      ],
+      "numericalApiMocks": false,
+      "clockOverrides": false
+    },
+    "candidateWebRestart": {
+      "status": "pass",
+      "tests": 2,
+      "freshProcess": true,
+      "persistedNotesAndWorkspaceExactMatch": true
+    },
+    "writeBoundary": {
+      "status": "pass",
+      "tests": 2,
+      "ownEphemeralHttpProbe": true,
+      "nonGetOutsidePreviewAbortedBeforeSend": true,
+      "telemetryAttemptsRecordedAsBlocked": true
+    },
+    "totalTests": 12
+  },
+  "pf01": {
+    "status": "observed_with_gaps",
+    "coherentCapture": true,
+    "mappingSha256": "bc0c98de549b6d505b180dee38b77953685f9b0e777762db29de8a17a0b3c48c",
+    "all": {
+      "assetRows": 691,
+      "byVenue": {
+        "aster": {
+          "matched": 414,
+          "missing": 4,
+          "version_mismatch": 141
+        },
+        "bitget": {
+          "matched": 197,
+          "missing": 2,
+          "version_mismatch": 267
+        },
+        "hyperliquid": {
+          "matched": 178
+        }
+      },
+      "connections": {
+        "matched": 789,
+        "missing": 6,
+        "version_mismatch": 408
+      },
+      "originalLinks": 1203,
+      "sameVenueMultipleCurrentCandidateRows": 0
+    },
+    "cryptoRowClassification": "map status other than out_of_scope; no symbol inference",
+    "currentActiveContracts": 1216,
+    "currentAdditionalNotInMap": 19,
+    "currentByVenue": {
+      "aster": 572,
+      "bitget": 466,
+      "hyperliquid": 178
+    },
+    "mapCryptoRows": 570,
+    "mapRows": 691,
+    "mapVersion": "07bfd5c76b6fc8cbc882aeba",
+    "mappingStatuses": {
+      "out_of_scope": 121,
+      "unsupported": 36,
+      "verified": 534
+    },
+    "referenceSupportedRows": 534,
+    "referenceUnsupportedRows": 157,
+    "top20": {
+      "assetIds": [
+        "crypto:BTC",
+        "crypto:ETH",
+        "crypto:龙虾",
+        "crypto:SOL",
+        "crypto:PUMP",
+        "crypto:XRP",
+        "crypto:QNT",
+        "crypto:ZEC",
+        "crypto:NEAR",
+        "crypto:MOVR",
+        "crypto:HYPE",
+        "crypto:TRX",
+        "crypto:DOGE",
+        "crypto:PEPE",
+        "crypto:FET",
+        "crypto:SUI",
+        "crypto:ADA",
+        "crypto:WLD",
+        "crypto:ONDO",
+        "crypto:ENA"
+      ],
+      "assetRows": 20,
+      "byVenue": {
+        "aster": {
+          "matched": 18,
+          "version_mismatch": 1
+        },
+        "bitget": {
+          "matched": 13,
+          "version_mismatch": 7
+        },
+        "hyperliquid": {
+          "matched": 17
+        }
+      },
+      "conditions": {
+        "cutoff": 1790853060000,
+        "dailyReferenceJst": "00:00",
+        "generationId": "07bfd5c76b6fc8cbc882aeba:1790853060000:1790853068000",
+        "mapVersion": "07bfd5c76b6fc8cbc882aeba",
+        "minTurnover": 0.0,
+        "order": "turnover",
+        "period": "15m"
+      },
+      "connections": {
+        "matched": 48,
+        "missing": 0,
+        "version_mismatch": 8
+      },
+      "originalLinks": 56,
+      "sameVenueMultipleCurrentCandidateRows": 0
+    }
+  },
+  "pf02": {
+    "status": "observed_with_gaps",
+    "samples": 73,
+    "uniqueContracts": 9,
+    "availableArithmeticMatches": 2796,
+    "missingNullChecks": 489,
+    "queryReadSeconds": {
+      "count": 73,
+      "maximum": 0.005871,
+      "minimum": 0.001479,
+      "p50": 0.00225,
+      "p95": 0.004973
+    },
+    "lastCountsPerVenueMetric": [
+      {
+        "availableNumerator": 0,
+        "denominator": 3,
+        "endpoint_missing": 3,
+        "family": "oi",
+        "venue": "aster",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 0,
+        "denominator": 3,
+        "endpoint_missing": 3,
+        "family": "oi",
+        "venue": "aster",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "aster",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "aster",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "aster",
+        "window": "24h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "oi",
+        "venue": "bitget",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "oi",
+        "venue": "bitget",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "bitget",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "bitget",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "bitget",
+        "window": "24h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "oi",
+        "venue": "hyperliquid",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "oi",
+        "venue": "hyperliquid",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "hyperliquid",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "hyperliquid",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 3,
+        "denominator": 3,
+        "family": "trade",
+        "venue": "hyperliquid",
+        "window": "24h"
+      }
+    ],
+    "sampleCountsPerVenueMetric": [
+      {
+        "availableNumerator": 0,
+        "denominator": 219,
+        "endpoint_missing": 219,
+        "family": "oi",
+        "venue": "aster",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 0,
+        "denominator": 219,
+        "endpoint_missing": 219,
+        "family": "oi",
+        "venue": "aster",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "trade",
+        "venue": "aster",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "trade",
+        "venue": "aster",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "trade",
+        "venue": "aster",
+        "window": "24h"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "oi",
+        "venue": "bitget",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "oi",
+        "venue": "bitget",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 202,
+        "denominator": 219,
+        "endpoint_missing": 17,
+        "family": "trade",
+        "venue": "bitget",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 202,
+        "denominator": 219,
+        "endpoint_missing": 17,
+        "family": "trade",
+        "venue": "bitget",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 202,
+        "denominator": 219,
+        "endpoint_missing": 17,
+        "family": "trade",
+        "venue": "bitget",
+        "window": "24h"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "oi",
+        "venue": "hyperliquid",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "oi",
+        "venue": "hyperliquid",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "trade",
+        "venue": "hyperliquid",
+        "window": "15m"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "trade",
+        "venue": "hyperliquid",
+        "window": "1h"
+      },
+      {
+        "availableNumerator": 219,
+        "denominator": 219,
+        "family": "trade",
+        "venue": "hyperliquid",
+        "window": "24h"
+      }
+    ],
+    "arrivals": {
+      "initiallyPresentCensoredCount": 32,
+      "initiallyPresentCensoredLowerSeconds": null,
+      "initiallyPresentCensoredUpperSeconds": {
+        "count": 32,
+        "maximum": 114.601749,
+        "minimum": 4.599594,
+        "p50": 4.605449,
+        "p95": 114.601749
+      },
+      "observations": 56,
+      "percentileMethod": "p50 median; p95 nearest rank; commit time itself is unknown",
+      "scope": "up to 3 current contracts per venue; last 2 completed minutes per sample",
+      "withPriorAbsenceCount": 24,
+      "withPriorAbsenceLowerSeconds": {
+        "count": 24,
+        "maximum": 99.601464,
+        "minimum": 4.596988,
+        "p50": 9.596127,
+        "p95": 94.597465
+      },
+      "withPriorAbsenceUpperSeconds": {
+        "count": 24,
+        "maximum": 104.603636,
+        "minimum": 9.598683,
+        "p50": 14.600808,
+        "p95": 99.599149
+      }
+    },
+    "credentialScope": "existing application credential constrained READ ONLY; dedicated read-only SQL role not established",
+    "lagSeconds": 180,
+    "maxAgeSeconds": 300,
+    "productionWrites": false
+  },
+  "artifactDelivery": {
+    "samples": 72,
+    "validSamples": 71,
+    "failures": {
+      "http_error": 1
+    },
+    "timestampsRewritten": false,
+    "dbFirstSeen": false
+  },
+  "referenceNumbers": {
+    "productionV2": {
+      "samples": 4,
+      "comparisons": 12,
+      "status": "pass"
+    },
+    "candidateV3": {
+      "samples": 4,
+      "comparisons": 12,
+      "status": "pass"
+    },
+    "assets": [
+      "BTC",
+      "ETH",
+      "PEPE",
+      "BTCDOM"
+    ],
+    "sampleMapVersion": "persona-sample-25d0d3ab655ce746f84e",
+    "sampleOriginals": 10
+  },
+  "production": {
+    "marketRelease": "dc2a8d7",
+    "webAndRankingRelease": "d1c44d5",
+    "rankingSchema": "ranking-v2",
+    "nativeMetricsHttpStatus": 404,
+    "serviceOperations": false,
+    "deployment": false,
+    "notesOrSelectionWrite": false,
+    "endServiceState": "all three services remain active/running on the recorded releases"
+  },
+  "remaining": [
+    "OS日本語IME候補窓・物理端末・本人の主観的使用感",
+    "承認済み本番へのM6配置・本番起動復帰・本番の日常利用受入",
+    "全体mapのversion不一致408/消失6と現在追加19（自動修復は未実施）",
+    "Aster数量OI端点の欠測とBitget SOL足の一時欠測。180/300秒の長期有用性保証は未確認"
+  ],
+  "evidenceFiles": [
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/native/summary.json",
+      "sha256": "5eb7b8fcc75385a07ef1047abc5600be5baba415e1b7a46fdad28d2c672b1d39"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/native/manifest.json",
+      "sha256": "1ffcca124da7c258fc2643a9e7c1a7bd19d9e0c44487dd8453fc9ed1b7919fc5"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/native/samples.jsonl",
+      "sha256": "45075545b9e3b7f627b56a58fc548b52e2651911451b7510526b1a9767fd40ed"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/native/arrivals.json",
+      "sha256": "cfd280cad4c8e22335da44d2238ef0a507ef6c642df0fe8bbd651bcef0b096c8"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/live/summary.json",
+      "sha256": "fb30cf20d501fc29aef92a1ef91ef42db9a95fc5c5ea55b2d2d874e3392c8b5e"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/live/observations.jsonl",
+      "sha256": "00b164d1013ce44246998a110c48acff30860348c5eab7bc4a24990aa38f3890"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/live/mapping.snapshot.json",
+      "sha256": "feb2ac3aa1bbb7c11e9a34903e67b99f325a0a40b66f57a279c807ed52f51375"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/live/initial-bundle.json",
+      "sha256": "2ccfb3772e68fe847992b7a1d46b315d942974083a020aa3368334483f08f90f"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/live/initial-ranking.json",
+      "sha256": "e73eece40fbc88778e382431e947042d26ac22f84305f02c81ae84f166c3eb87"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/evidence/reference-value-check.json",
+      "sha256": "a2c7c42385261409fcdbad2f48bbc22f3b15943c17f2f94524f101233c74f650"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/evidence/production-reference-value-check.json",
+      "sha256": "a920c3b641f8a008ab17d2eb63c9620c7d7127765b564ef6bf3bea236f687711"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/operation-guard-results.json",
+      "sha256": "94020b85422a14888f4e1c811d0791b38de323d5a2f4aa324e39a79f36451efb"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/ime-playwright-final-evidence.log",
+      "sha256": "ccb1ef98980bbbfcdb954b8ff7898e03043482695f69e5c30e690852470146ff"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/persona-guard-accepted.log",
+      "sha256": "c04699649f43e94aa88b052bc39dbb75976082ac80f1bbecb568d4ac852703b0"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/persona-guard-restart.log",
+      "sha256": "9052fda167d8431b7e8091f63b30e8d2bc298d9af31be92fb3ddc96e71f18c5d"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/persistence-before-restart.json",
+      "sha256": "5e507cd7aa00c08a899daf7a041432faaf75c67d0853e985b9c48ccc708c533f"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/web-check-final-guard.log",
+      "sha256": "a9d5acfccdb2bf67438135e3e52a57a614013eaf5ffb5bc170e6ca9f624346d7"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/web-build.log",
+      "sha256": "d52fcaa1ec1a53c7d35dd00814c3e44d87a6b7c3dc4bb09a1ab584a6a4f79f1e"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/source-manifest.json",
+      "sha256": "872de3bbda4c14761f1c68b07b83e3372b5c0be6815e0c06133b1552b47e5582"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/browser-results.json",
+      "sha256": "909c0f26e3ff125757572848b19cb8aa7a4706a986d8ed122a9b7ea451ad464c"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/guard-final-native/summary.json",
+      "sha256": "6960291a36cc8db0710218a27e32329331ab90fceb70c2e2acc087c79c4f7522"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/guard-final-native/manifest.json",
+      "sha256": "8f90ee73880c8b62b5188ee1b1e663d22fb77915b9d312d85d53af0429f06f40"
+    },
+    {
+      "path": "/tmp/prep-watchdeck-persona-20261001/guard-final-live/summary.json",
+      "sha256": "c8bc5303279d103070ef500af7edb9e822cea4eed2197358b57d5a3c1a51c600"
+    }
+  ],
+  "sourceManifest": {
+    "baseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+    "fingerprint": "sha256:18dea91c3876de6ad9354b95d230855a2fb5f478d44a1097f605459593d6c39e",
+    "meaning": "Final acceptance harness snapshot; capture scripts and reports retain their own execution lineage",
+    "fileSha256": {
+      "apps/web/playwright.persona.config.ts": "d0dcdd9bee0fe1baf0396faf57e10031a12a9c401acf16feee67704744711737",
+      "apps/web/tests/acceptance/markets-persona.e2e.ts": "d0ce9392a9f80ba46537f97f297ac5a232ea2a57843ed50954e903e8e13aec61",
+      "apps/web/tests/e2e/helpers/browser-ime.ts": "1aaafc755f2b57047cd595537c46da9f1a56d1fa40771eca0ba5af22f7822f39",
+      "apps/web/tests/e2e/universe-explorer.e2e.ts": "0ff5976749c1dbb65bb0100272b7ab470f4c24357f21cfab4b6740610baf0f69",
+      "scripts/market/observe-live-markets.py": "b4c09f5bf5e143a9bc457199d2b5e76bf1a4a6e980180e2c625d474470822e05",
+      "scripts/market/probe-live-endpoints.py": "aa8c1babf20a3d77601d70df00b07b3b853296ce3595b42cdcfdaf68da9a586b",
+      "scripts/market/run-persona-acceptance.sh": "827e6eed36f953415e32c1049c585dd69fd6a8a8ac41130d4a157cd89a4df911",
+      "scripts/ranking/prepare-persona-map.py": "65691e49a4ce88379842881d4c2fb0a3d181c8562584d86562ec4a5285865a2f"
+    }
+  },
+  "followupObservation": {
+    "purpose": "verify the final write guard and nonempty restart snapshot without repeating the six-minute dataset",
+    "native": {
+      "status": "pass",
+      "samples": 24,
+      "durationSeconds": 120,
+      "evidence": "/tmp/prep-watchdeck-persona-20261001/guard-final-native/summary.json"
+    },
+    "artifact": {
+      "samples": 36,
+      "validSamples": 35,
+      "http503": 1,
+      "durationSeconds": 180,
+      "evidence": "/tmp/prep-watchdeck-persona-20261001/guard-final-live/summary.json"
+    },
+    "mergedIntoPrimaryDataset": false
+  },
+  "launcherVerification": {
+    "syntax": "pass",
+    "missingAndInvalidArguments": "rejected_exit_2",
+    "ownedProcessGroupLifecycle": "pass",
+    "processGroupEvidenceRoot": "/tmp/prep-watchdeck-persona-group-smoke-adkrkzrv",
+    "integratedPipeline": "not_run",
+    "componentExecutions": "pass"
+  },
+  "verification": {
+    "browserTests": "12 pass across 1440 and 390",
+    "webCheck": "0 errors and 0 warnings",
+    "webBuild": "pass; product source unchanged after fresh build",
+    "pythonRuffCheckAndFormat": "pass",
+    "documentMetadataAndLinks": "pass",
+    "ci": "not_run",
+    "fullSuite": "not_run",
+    "launcherIntegratedPipeline": "not_run"
+  }
+}

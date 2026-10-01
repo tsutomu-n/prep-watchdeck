@@ -3,7 +3,7 @@
   "purpose": "Markets workspace開発受入の作業用台帳。source実装・隔離検証・実データ受入を分けて記録する。",
   "baselineGitSha": "be281d936a44ff912e8b44d56c06a70cf28963ec",
   "implementationStatus": "partial",
-  "runtimeAcceptance": "not_run",
+  "runtimeAcceptance": "partial",
   "milestoneOrder": [
     "M0",
     "M1",
@@ -15,8 +15,10 @@
   ],
   "developmentGate": "M0〜M5に割り当てた全ACが実行証拠付きでpass。M6を含めない。既存未達・未実行はPARTIAL。",
   "realDataValidation": {
-    "status": "not_run",
-    "note": "PF01 live roster/map、PF02 live DB/Provider到着遅延、PF03本番UI負荷はunknown。専用read-only資格を特定できていないため現役DBに未接続。180秒lag/300秒上限の実データ受入は未確認。AC26の安全な未確認記録と区別する。"
+    "status": "partial",
+    "checkedAt": "2026-10-01T20:20:49+09:00",
+    "note": "PF01名簿/map前後hash一致の全体/Top20照合済み。PF02既存app資格をREAD ONLY session/transactionで1接続、9契約、6分73回読取。PF03実データ隔離候補の操作4件/再起動2件PASS。map不一致・Aster OI欠測・Bitget SOL一時欠測・正式6分5031回/guard追加3分5031回を記録。180/300の長期有用性、本番配置/起動復帰/日常利用は未確認。専用SQL read-only roleとは区別。",
+    "evidenceFile": "docs/plans/active/markets-workspace/persona-acceptance.json"
   },
   "cases": [
     {
@@ -1239,12 +1241,25 @@
           "result": "pass",
           "runId": "M5-resume-accepted-gate",
           "targetVersion": "ec68a76c87488a7d962bc1959168d4876a033ae08a71ff71a1be36035a673942"
+        },
+        {
+          "cwd": "/home/tn/projects/prep-watchdeck/apps/web",
+          "command": "delegated Chromium IME / actual-data persona acceptance",
+          "file": "/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.json",
+          "result": "pass",
+          "runId": "markets-persona-20261001",
+          "sourceBaseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+          "targetVersion": "sha256:18dea91c3876de6ad9354b95d230855a2fb5f478d44a1097f605459593d6c39e",
+          "viewports": [
+            1440,
+            390
+          ]
         }
       ],
       "remaining": [
         {
           "category": "environment_gap",
-          "detail": "OSの実日本語IMEと実機focusは未実施。DISPLAY/WAYLAND_DISPLAYなし、ibus/fcitx5コマンドなし。compositionイベント・日本語入力・Browser keyboard/focusは1440/390で通過。GUI/IMEがある隔離端末での確認が必要。"
+          "detail": "Chromium CDPの変換中応答・候補置換/取消・focus・下書き保持は1440/390で4PASS。OS候補窓・物理キーボード・本人端末は未確認。"
         }
       ],
       "initialGapClassification": [
@@ -1290,14 +1305,28 @@
         "R19"
       ],
       "expected_behavior": "承認済み本番で参照/native実数値照合、保存→browser再訪、起動復帰、実使用flowを確認。未実施なら運用完了としない",
-      "status": "not_run",
+      "status": "partial",
       "milestone": "M6",
       "gate": "runtime",
-      "evidence": [],
+      "evidence": [
+        {
+          "cwd": "/home/tn/projects/prep-watchdeck/apps/web",
+          "command": "delegated Chromium IME / actual-data persona acceptance",
+          "file": "/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.json",
+          "result": "partial",
+          "runId": "markets-persona-20261001",
+          "sourceBaseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+          "targetVersion": "sha256:18dea91c3876de6ad9354b95d230855a2fb5f478d44a1097f605459593d6c39e",
+          "viewports": [
+            1440,
+            390
+          ]
+        }
+      ],
       "remaining": [
         {
           "category": "runtime_gate",
-          "detail": "M6本番配置・実使用・起動復帰・実数値受入は今回の対象外。"
+          "detail": "現役read-only数値照合/代理flow/隔離候補再起動は実施済み。本番M6の配置・本番起動復帰・本人の有用性受入は未実施。"
         }
       ],
       "initialGapClassification": [
@@ -1500,6 +1529,19 @@
             "PF02": "unknown: dedicated readonly credential not identified; no live DB/provider access",
             "PF03": "unknown: no production browser or selection/notes side-effect GET"
           }
+        },
+        {
+          "cwd": "/home/tn/projects/prep-watchdeck/apps/web",
+          "command": "delegated Chromium IME / actual-data persona acceptance",
+          "file": "/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.json",
+          "result": "pass",
+          "runId": "markets-persona-20261001",
+          "sourceBaseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+          "targetVersion": "sha256:18dea91c3876de6ad9354b95d230855a2fb5f478d44a1097f605459593d6c39e",
+          "viewports": [
+            1440,
+            390
+          ]
         }
       ],
       "remaining": [],

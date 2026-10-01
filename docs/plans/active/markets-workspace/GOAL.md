@@ -1,7 +1,9 @@
 # Markets workspace 実装
 
+timestamp="2026-10-01(木)_20:31 JST"
+
 - 作成: `2026-09-28T20:00:00+09:00`
-- 更新: `2026-09-29T06:55:18+09:00`
+- 更新: `2026-10-01T20:31:46+09:00`
 - 状態: `実装計画`
 
 ---
@@ -30,3 +32,18 @@
 完了条件は原本の担当AC全pass。作業用台帳は同directoryの `acceptance.json`。未実施は `not_run` のまま。既存状態を破壊せず、開発変更のrollbackはこのbranchを稼働releaseへ反映しないこと。本番M6は別の判断と承認。現役DBのPF01/PF02・実データ確認と実機のPF03は未確認であり、隔離fixtureで進める。
 
 開発受入は`PARTIAL`。隔離gateとworker→Browser接続試験は通過。AC20のOS実IME・実機focus、およびAC21の全必須AC照合が残る。PF01〜03の実データ確認とM6は別の未確認欄で管理する。詳細は同directoryの`RESUME.md`と`acceptance.json`に記録する。
+
+## 2026-10-01 操作受入の追加範囲
+
+本人操作に依存していたMKT-003/004を、依頼に基づき代理ペルソナとPlaywrightで進める。
+現在checkoutの起点は`1a0a1b7`、作業branchは`ai/markets-persona-acceptance-20261001-2002`。
+上のM0〜M5記録は当時の実施範囲であり、今回のread-only実データ確認は別checkpointとする。
+
+1. Chromiumのtrusted compositionで、変換中の保存応答、銘柄切替、focus、確定・取消、再訪を確認。
+2. 現役Universeと採用mapを前後hash付きで読取り、全体とTop20の接続を照合。
+3. 専用DBの既存資格で短いREAD ONLY transactionを使い、各Venue最大3契約、5秒以上の間隔、最大6分で端点・到着を観測。候補指標は隔離stateだけへ投影する。
+4. 現役artifactと公開RESTから得た実数値を使う隔離候補Webで、Desktop/390pxの参照→native→保存→再訪→次銘柄を確認。
+
+完了条件は上記の代理操作と観測を根拠付きで記録すること。OS候補窓・物理端末・本人の主観、本番配置と本番起動復帰は別の未確認事項として残す。
+証拠と再実行方法は[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md](/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md)へ記録する。
+本番へのPOST、unit操作、DB変更、map修復は行わない。rollbackは今回起動した隔離processを終了すること。

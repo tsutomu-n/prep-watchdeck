@@ -64,6 +64,16 @@
           "evidenceKind": "static",
           "checkedAt": "2026-09-30T21:52:28+09:00",
           "note": "本人の実日本語IMEと端末操作は未実施"
+        },
+        {
+          "command": "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e universe-explorer.e2e.ts -g 'P01|P02'",
+          "sourceBaseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+          "sourceFingerprint": "sha256:18dea91c3876de6ad9354b95d230855a2fb5f478d44a1097f605459593d6c39e",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/markets-workspace/persona-acceptance.md",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-10-01T20:20:49+09:00",
+          "note": "Chromium CDP composition4PASS。変換中の保存応答・候補置換/取消・focus・下書き/保存/再訪を確認。OS実IME/本人端末は未確認。"
         }
       ]
     },
@@ -86,6 +96,16 @@
           "evidenceKind": "static",
           "checkedAt": "2026-09-30T21:52:28+09:00",
           "note": "現役M6実データへの接続・受入は未承認"
+        },
+        {
+          "command": "observe-live-markets.py + probe-live-endpoints.py + verify-live-values.py + Playwright persona P01/P02/P03",
+          "sourceBaseline": "1a0a1b743a5060ff642c1b9314154ec4469496ff",
+          "sourceFingerprint": "sha256:18dea91c3876de6ad9354b95d230855a2fb5f478d44a1097f605459593d6c39e",
+          "exitCode": 0,
+          "logPath": "docs/plans/active/markets-workspace/persona-acceptance.md",
+          "evidenceKind": "observed",
+          "checkedAt": "2026-10-01T20:20:49+09:00",
+          "note": "代理実データ操作4PASS、候補Web新規process復帰2PASS。PF01整合copy、PF02専用DB READ ONLY73samples、現役v2/候補v3各12数値照合。map不一致/欠測/503を保持。書込境界2PASSも追加。本番M6配置・本番起動復帰/本人有用性は未確認。"
         }
       ]
     },
