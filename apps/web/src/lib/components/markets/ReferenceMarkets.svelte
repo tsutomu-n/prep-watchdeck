@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick, untrack } from "svelte";
   import { page } from "$app/state";
-  import { pushState } from "$app/navigation";
+  import { pushState, replaceState } from "$app/navigation";
   import { subscribeReferenceTime } from "$lib/theme/display-preferences";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
@@ -253,6 +253,7 @@
       detailTimer = setTimeout(() => {
         if (mounted && mobile && !restoreList && selectedId === initialSelected &&
           page.url.href === initialUrl && !detailHistory) {
+          replaceState("", { ...page.state, referenceDetail: false });
           pushState("", { ...page.state, referenceDetail: true });
         }
       }, 0);
@@ -330,6 +331,7 @@
       mobileListOrigin = true;
       listPageTop = window.scrollY;
       mobileListScroll = { top: tableScroll?.scrollTop ?? 0, left: tableScroll?.scrollLeft ?? 0 };
+      replaceState("", { ...page.state, referenceDetail: false });
       pushState("", { ...page.state, referenceDetail: true });
     }
     selectedId = row.id; lastSelected = row; selectedRemoved = false;

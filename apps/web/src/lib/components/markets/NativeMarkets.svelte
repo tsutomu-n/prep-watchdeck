@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick, untrack } from "svelte";
-  import { pushState } from "$app/navigation";
+  import { pushState, replaceState } from "$app/navigation";
   import { page } from "$app/state";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
@@ -252,6 +252,7 @@
         initialDetailTimer = window.setTimeout(() => {
           if (!mounted || page.url.href !== initialUrl || !mobileViewport || detailHistory ||
               selectedVenueInstrumentId !== target.venueInstrumentId) return;
+          replaceState("", { ...page.state, nativeDetail: false });
           pushState("", { ...page.state, nativeDetail: true });
         }, 0);
       }
@@ -333,6 +334,13 @@
     auditJump = null;
     auditJumpMessage = null;
     sourceQualityOpen = false;
+  });
+
+  $effect(() => {
+    const entry = selectedAuditEntry;
+    if (sourceQualityOpen && !pinnedAuditRunId && entry) {
+      untrack(() => selectAuditRun(entry.runId));
+    }
   });
 
   async function refreshQuality() {
@@ -583,7 +591,12 @@
           instrumentId: instrument.venueInstrumentId
         };
       }
-      if (!detailHistory) pushState("", { ...page.state, nativeDetail: true });
+      if (!detailHistory) {
+        // SvelteKit resets page.state after reload while history can retain a detail entry.
+        // Normalize the current list entry so one Back returns to the visible list.
+        replaceState("", { ...page.state, nativeDetail: false });
+        pushState("", { ...page.state, nativeDetail: true });
+      }
       void tick().then(() => {
         document.getElementById("inspector-title")?.focus({ preventScroll: true });
         document.getElementById("native-detail")?.scrollIntoView({ block: "start" });

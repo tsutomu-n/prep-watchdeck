@@ -151,6 +151,10 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   await scroller.evaluate(el => { el.scrollTop = 180; el.scrollLeft = 40; });
   const scroll = await scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }));
   expect(scroll.top).toBeGreaterThan(0);
+  await expect.poll(async () => {
+    const href = await page.getByRole("link", { name: "Bitget · BTCUSDT を確認", includeHidden: true }).getAttribute("href");
+    return Number(new URL(href!, page.url()).searchParams.get("returnListTop"));
+  }).toBe(scroll.top);
   if (mobile) {
     await page.goForward();
     await expect(detailBack).toBeVisible();
@@ -1589,6 +1593,7 @@ test("隔離DB書込完了からworker・artifact・API・Browserへの後着訂
     await expect(page.getByRole("heading", { name: "銘柄一覧" })).toBeVisible();
     await clickNativeListButton(page, "BTC bitgetをお気に入り登録");
     await expect(page.getByRole("button", { name: "BTC bitgetをお気に入り解除" })).toHaveAttribute("aria-pressed", "true");
+    await clickNativeListButton(page, "BTC bitgetを詳細表示");
     await receive("stop");
     await page.clock.fastForward(310_000);
     await expect(panel).not.toContainText("+20.00%");
