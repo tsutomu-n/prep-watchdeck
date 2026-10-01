@@ -1,22 +1,40 @@
 type AddressedRequest = {
   url: URL;
   getClientAddress(): string;
+  request?: Request;
 };
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
 const LOOPBACK_ADDRESSES = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
 
 export function isLocalhostRequest(event: AddressedRequest) {
-  if (!LOCAL_HOSTS.has(event.url.hostname)) return false;
   try {
-    return LOOPBACK_ADDRESSES.has(event.getClientAddress());
+    if (!LOOPBACK_ADDRESSES.has(event.getClientAddress())) return false;
+    return LOCAL_HOSTS.has(event.url.hostname) || trustedTailscaleOrigin(event) !== null;
   } catch {
     return false;
   }
 }
 
-export function hasSameOrigin(event: { url: URL; request: Request }) {
-  return event.request.headers.get("origin") === event.url.origin;
+// Serve strips client-supplied identity headers and injects the authenticated identity.
+// Trust them only on loopback, at the explicitly configured HTTPS origin.
+function trustedTailscaleOrigin(event: AddressedRequest): string | null {
+  const configured = process.env.PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN;
+  if (!configured || !event.request?.headers.get("tailscale-user-login")?.trim()) return null;
+  try {
+    const origin = new URL(configured);
+    if (origin.protocol !== "https:" || !origin.hostname.endsWith(".ts.net") ||
+        origin.username || origin.password || origin.pathname !== "/" ||
+        origin.search || origin.hash || origin.host !== event.url.host ||
+        !["http:", "https:"].includes(event.url.protocol) ||
+        !LOOPBACK_ADDRESSES.has(event.getClientAddress())) return null;
+    return origin.origin;
+  } catch { return null; }
+}
+
+export function hasSameOrigin(event: AddressedRequest & { request: Request }) {
+  const expected = trustedTailscaleOrigin(event) ?? event.url.origin;
+  return event.request.headers.get("origin") === expected;
 }
 
 export async function readLocalJson(event: AddressedRequest & { request: Request }, maximum = 65_536) {

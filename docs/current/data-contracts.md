@@ -1,8 +1,9 @@
 # prep-watchdeck 現行データ契約
 
+timestamp="2026-10-02(金)_07:19 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-30T23:21:28+09:00`
-- 検証: `2026-09-30T23:21:28+09:00`
+- 更新: `2026-10-02T07:19:27+09:00`
+- 検証: `2026-10-02T07:19:27+09:00`
 - 状態: `現行`
 
 ---
@@ -135,13 +136,18 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 | GET | `/api/chart-history?instrument=<id>&timeframe=<tf>&before=<ISO UTC>` | 選択Venueのnative足。beforeは排他的 |
 | GET | `/api/price-change?instrument=<id>&referenceTime=<HH:mm>` | 指定JST時刻基準の約定騰落率 |
 | GET | `/api/rankings` | 固定参照の独立ランキング。下記の期間・方向・下限で問い合わせ |
-| POST | `/api/selection` | 現在はlocalhost限定でselection write |
+| POST | `/api/selection` | 許可済みlocal / Tailscale接続でselection write |
 | GET | `/api/market-past-notes?venueInstrumentId=...` | Past Note読取 |
-| POST | `/api/market-past-notes` | 現在はlocalhost限定で保存 |
+| POST | `/api/market-past-notes` | 許可済みlocal / Tailscale接続で保存 |
 | GET | `/api/health` | Web process health |
 
-localhost限定、route数、bundle構成は現行runtime値。将来remote accessや新surfaceを追加できるが、authentication、
-authorization、CSRF、secret、conflict等をその変更で設計する。
+local APIの接続判定はloopbackを要求する。外部hostnameは既定では拒否し、
+`PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN`に明示したHTTPS originのhostnameとportに一致し、
+Tailscale Serveが付与した`Tailscale-User-Login`があるloopback proxy requestだけを追加で許可する。
+Serveは受信したidentity headerを除去して認証済みidentityを付与するため、backendをloopbackに限定し、
+既存tailnet ACLを接続権限の境界とする。Funnelやidentityのない接続は許可しない。
+JSON writeはさらにブラウザーのOriginが設定したHTTPS originと完全一致することを要求する。
+TLS終端後のbackend HTTP originやcross-originのwriteは拒否し、localhostの既存判定も維持する。
 
 ## 拡張時の原則
 
@@ -291,7 +297,7 @@ Auditは`schemas/audit-request.schema.json`の手動requestをCLIだけで受け
 前回完了runのIDは失敗した最新runと別に保持する。差異の値と欠測・不正件数は共存できる。
 `schemaVersion=1`、未知schemaや破損indexを空の成功記録へ置き換えない。
 
-Webの`GET /api/candle-recovery`と`GET /api/candle-audits`はlocalhost限定・no-store。
+Webの`GET /api/candle-recovery`と`GET /api/candle-audits`は上記の許可済みlocal / Tailscale接続限定・no-store。
 未生成なら`state=not_run`、有効なら`available`、破損・読取不能なら503 `unavailable`を返す。
 `GET /api/candle-audits/<runId>?offset=&limit=`は不変reportから最大200件ずつ返す。
 `schemas/candle-audit-detail.schema.json`が返却形で、0始まりoffset、全集約済みmarker bucketを含む。
