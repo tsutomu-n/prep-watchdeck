@@ -321,6 +321,45 @@ test.afterEach(async ({ page }) => {
   expect(pageErrors.get(page) ?? [], "ブラウザの未処理例外").toEqual([]);
 });
 
+test("一覧選択した取引所契約を再読込しても同じ詳細へ戻れる", async ({ page }, testInfo) => {
+  await page.goto("/?mode=native");
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
+  const chart = page.getByRole("region", { name: "価格・出来高" });
+  await expect(chart).toContainText("bitget:ETHUSDT");
+  await page.reload();
+  await expect(chart).toContainText("bitget:ETHUSDT");
+  expect(new URL(page.url()).searchParams.get("instrument")).toBe("bitget:ETHUSDT");
+  expect(new URL(page.url()).searchParams.get("version")).toBe("3");
+  if (testInfo.project.name === "mobile-390") {
+    const back = page.getByRole("button", { name: "一覧へ戻る", exact: true });
+    await expect(back).toBeVisible();
+    await back.click();
+    await expect(back).toBeHidden();
+    await expect(page.getByRole("button", { name: "ETH bitgetを詳細表示", exact: true })).toBeVisible();
+  }
+});
+
+test("一覧選択した参照銘柄を再読込しても同じ詳細へ戻れる", async ({ page }, testInfo) => {
+  await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
+  await page.route("**/api/rankings?*", route => route.fulfill({
+    json: rankingFixture(new URL(route.request().url()).searchParams)
+  }));
+  await page.goto("/");
+  await page.getByTestId("ranking-row").filter({ hasText: "BTC" }).locator("button.select-row").click();
+  const selected = page.getByRole("heading", { name: "BTC", exact: true });
+  await expect(selected).toBeVisible();
+  await page.reload();
+  await expect(selected).toBeVisible();
+  expect(new URL(page.url()).searchParams.get("selected")).toBe("asset:BTC");
+  if (testInfo.project.name === "mobile-390") {
+    const back = page.getByRole("button", { name: "一覧へ戻る", exact: true });
+    await expect(back).toBeVisible();
+    await back.click();
+    await expect(back).toBeHidden();
+    await expect(page.getByTestId("ranking-row").filter({ hasText: "BTC" })).toBeVisible();
+  }
+});
+
 test("Universe Explorerの主要flowを操作できる", async ({ page }, testInfo) => {
   await page.goto("/?mode=native");
 

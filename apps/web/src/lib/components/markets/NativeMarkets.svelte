@@ -582,6 +582,9 @@
   }
 
   function selectInstrument(instrument: UniverseInstrumentArtifact) {
+    const selectionUrl = new URL(page.url);
+    selectionUrl.searchParams.set("instrument", instrument.venueInstrumentId);
+    selectionUrl.searchParams.set("version", String(instrument.venueInstrumentVersionId));
     if (mobileViewport) {
       if (!mobileDetailOpen) {
         listPosition = {
@@ -594,13 +597,17 @@
       if (!detailHistory) {
         // SvelteKit resets page.state after reload while history can retain a detail entry.
         // Normalize the current list entry so one Back returns to the visible list.
-        replaceState("", { ...page.state, nativeDetail: false });
-        pushState("", { ...page.state, nativeDetail: true });
+        replaceState(selectionUrl, { ...page.state, nativeDetail: false });
+        pushState(selectionUrl, { ...page.state, nativeDetail: true });
+      } else {
+        replaceState(selectionUrl, page.state);
       }
       void tick().then(() => {
         document.getElementById("inspector-title")?.focus({ preventScroll: true });
         document.getElementById("native-detail")?.scrollIntoView({ block: "start" });
       });
+    } else {
+      replaceState(selectionUrl, page.state);
     }
     selectedVenueInstrumentId = instrument.venueInstrumentId;
     try {

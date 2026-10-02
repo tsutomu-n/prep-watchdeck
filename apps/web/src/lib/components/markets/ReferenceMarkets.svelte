@@ -327,12 +327,17 @@
   });
 
   async function select(row: RankedRow) {
+    const selectionUrl = new URL(page.url);
+    selectionUrl.searchParams.set("selected", row.id);
+    selectionUrl.searchParams.delete("restoreList");
     if (mobile && !mobileDetail) {
       mobileListOrigin = true;
       listPageTop = window.scrollY;
       mobileListScroll = { top: tableScroll?.scrollTop ?? 0, left: tableScroll?.scrollLeft ?? 0 };
-      replaceState("", { ...page.state, referenceDetail: false });
-      pushState("", { ...page.state, referenceDetail: true });
+      replaceState(selectionUrl, { ...page.state, referenceDetail: false });
+      pushState(selectionUrl, { ...page.state, referenceDetail: true });
+    } else {
+      replaceState(selectionUrl, page.state);
     }
     selectedId = row.id; lastSelected = row; selectedRemoved = false;
     try {
