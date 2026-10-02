@@ -128,14 +128,13 @@ def test_current_endpoints_precede_old_baselines_without_losing_daily_insert_cou
     _, audits = _fake_connection(monkeypatch)
     now = datetime(2026, 10, 2, 4, 0, tzinfo=UTC)
     end = now - timedelta(minutes=4)
-    next_end = now - timedelta(minutes=1)
     recent = now - timedelta(minutes=19)
     daily = now - timedelta(minutes=1444)
     targets = [_target(symbol, index + 1) for index, symbol in enumerate(("A", "B", "C", "D"))]
     pending = {
         targets[0]: {recent, daily},
         targets[1]: {end, daily},
-        targets[2]: {next_end},
+        targets[2]: {end},
         targets[3]: {daily},
     }
     requested = []
@@ -202,7 +201,7 @@ def test_current_endpoints_precede_old_baselines_without_losing_daily_insert_cou
 
     result = asyncio.run(exercise())
     assert [symbol for symbol, _ in requested[:2]] == ["B", "C"]
-    assert requested[1][1] == (next_end,)
+    assert requested[1][1] == (end,)
     assert result.summary.http_requests == request_budget
     assert sum(audits[-1]["metrics"]["priorityRequests"].values()) == request_budget
     assert audits[-1]["metrics"]["priorityRequests"]["current"] == 2
@@ -541,8 +540,10 @@ def test_endpoint_sql_version_start_existing_rows_and_native_insert_only(
 
 
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated TEST_DATABASE_URL")
-@pytest.mark.parametrize("venue", ["bitget", "aster"])
-def test_other_venues_keep_metric_endpoints_without_preview_budget(venue: str) -> None:
+@pytest.mark.parametrize("venue", ["bitget", "aster", "hyperliquid"])
+def test_preview_only_targets_leave_queue_and_other_venues_keep_metric_endpoints(
+    venue: str,
+) -> None:
     assert TEST_DATABASE_URL is not None
     now = datetime.now(UTC).replace(second=0, microsecond=0)
     cutoff = now - timedelta(minutes=3)
@@ -571,6 +572,23 @@ def test_other_venues_keep_metric_endpoints_without_preview_budget(venue: str) -
         assert version is not None
         snapshot = load_missing_endpoints(connection, now=now, version_id=version[0])
         target = next(iter(snapshot))
-        assert snapshot[target] == tuple(
-            cutoff - timedelta(minutes=age) for age in (1, 16, 61, 1441)
+        metric_buckets = tuple(cutoff - timedelta(minutes=age) for age in (1, 16, 61, 1441))
+        ahead_buckets = tuple(cutoff + timedelta(minutes=age) for age in (2, 1, 0))
+        assert snapshot[target] == (
+            (*ahead_buckets, *metric_buckets) if venue == "hyperliquid" else metric_buckets
         )
+        if venue == "hyperliquid":
+            connection.execute(
+                """INSERT INTO candle_1m (
+                    venue_instrument_version_id, bucket_at, open_price, high_price,
+                    low_price, close_price, finality, observed_at
+                ) SELECT %s, bucket_at, 100, 101, 99, 100, 'derived_final', %s
+                  FROM unnest(%s::timestamptz[]) AS bucket_at""",
+                (version[0], now, list(metric_buckets)),
+            )
+            assert load_missing_endpoints(connection, now=now, version_id=version[0]) == {}
+            assert connection.execute(
+                "SELECT count(*) FROM candle_1m WHERE venue_instrument_version_id=%s "
+                "AND bucket_at=ANY(%s::timestamptz[])",
+                (version[0], list(ahead_buckets)),
+            ).fetchone() == (0,)

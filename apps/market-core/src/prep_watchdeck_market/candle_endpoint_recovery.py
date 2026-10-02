@@ -97,7 +97,14 @@ def load_missing_endpoints(
     for row in rows:
         target = RecoveryTarget(*row[:8])
         found.setdefault(target, []).append(row[8])
-    return {target: tuple(buckets) for target, buckets in found.items()}
+    metric_end = cutoff - timedelta(minutes=1)
+    result: EndpointSnapshot = {}
+    for target, buckets in found.items():
+        if metric_end not in buckets:
+            buckets = [bucket for bucket in buckets if bucket < cutoff]
+        if buckets:
+            result[target] = tuple(buckets)
+    return result
 
 
 def _remaining_snapshot(
@@ -268,15 +275,11 @@ class CandleEndpointRecovery:
             current_end = cutoff - timedelta(minutes=1)
             recent_start = cutoff - timedelta(minutes=61)
             priorities = {
-                "current": [
-                    target
-                    for target, buckets in before.items()
-                    if any(bucket >= current_end for bucket in buckets)
-                ],
+                "current": [target for target, buckets in before.items() if current_end in buckets],
                 "recent": [
                     target
                     for target, buckets in before.items()
-                    if all(bucket < current_end for bucket in buckets)
+                    if current_end not in buckets
                     and any(bucket >= recent_start for bucket in buckets)
                 ],
                 "daily": [
