@@ -1421,7 +1421,10 @@ test("P01 日本語で記録する比較担当は保存応答中のChromium IME�
   const draft = await page.evaluate(() => sessionStorage.getItem("market-note-draft:bitget:ETHUSDT/3"));
   expect(JSON.parse(draft!)).toMatchObject({ note: "Bの下書き" });
   await page.reload();
-  await clickNativeListButton(page, "BTC bitgetを詳細表示");
+  await expect(page.getByRole("region", { name: "価格・出来高" })).toContainText("bitget:BTCUSDT");
+  if (testInfo.project.name === "mobile-390") {
+    await expect(page.getByRole("button", { name: "一覧へ戻る", exact: true })).toBeVisible();
+  }
   await expect(page.locator(".note-list")).toContainText("保存する本文・追加入力日本語");
   await expect(note).toHaveValue("");
   await clickNativeListButton(page, "ETH bitgetを詳細表示");
