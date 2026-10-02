@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_21:01 JST"
+timestamp="2026-10-02(金)_21:30 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T21:01:54+09:00`
-- 検証: `2026-10-02T21:01:54+09:00`
+- 更新: `2026-10-02T21:30:37+09:00`
+- 検証: `2026-10-02T21:30:37+09:00`
 - 状態: `現行`
 
 ---
@@ -100,8 +100,19 @@ Webのlistenerは`127.0.0.1:5173`を維持し、既存Tailscale ServeのHTTPS pr
 `https://ubuntu.narluga-gecko.ts.net:8444/`。スマホ本人による接続確認はserver検証と別に行う。
 
 Web unitに`PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN=https://ubuntu.narluga-gecko.ts.net:8444`を
-指定する。Viteの既存allowed host設定も保持する。設定したorigin、loopbackのproxy接続、
-Serveの認証済みidentity headerが揃った場合だけlocal APIを利用できる。
+指定する。Viteの既存allowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
+Serveの認証済みuser identity headerが揃った場合にlocal APIを利用できる。
+
+タグ付き端末にはuser identity headerが付かないため、このサーバー自身から同じHTTPS URLを開く場合は
+別途自端末を確認する。proxyが付けたHTTPS・Host情報と単一の接続元IPを確認し、local tailscaledの
+read-only status / WhoIsで、Running状態、設定hostとSelfのDNS、接続元とSelfのIP、WhoIsのStableIDと
+Self IDが一致するタグ付き自端末だけを許可する。問い合わせ先は
+`/var/run/tailscale/tailscaled.sock`のUnix socketに固定し、外部API、CLI実行、追加credentialを使わない。
+socketが読めない、timeout、不正response、別端末、Funnel経由の場合は拒否する。
+タグ付き端末全体を許可する設定ではない。
+
+JSON更新には引き続き設定したHTTPS originとの一致が必要。検証時にidentity headerを手作業で付けて
+認証成功と扱わない。serverからのHTTP・ブラウザー検証と、スマホ実機での本人操作確認を分ける。
 URL変更時はこのoriginとVite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
 
 ```bash

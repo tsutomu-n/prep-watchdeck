@@ -153,11 +153,11 @@ describe("market artifact and local selection repositories", () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
-  test("requires both a localhost Host and a loopback client address", () => {
-    expect(localRequest("http://localhost/api/selection", "127.0.0.1")).toBe(true);
-    expect(localRequest("http://[::1]/api/selection", "::ffff:127.0.0.1")).toBe(true);
-    expect(localRequest("http://localhost/api/selection", "203.0.113.8")).toBe(false);
-    expect(localRequest("https://example.com/api/selection", "127.0.0.1")).toBe(false);
+  test("requires both a localhost Host and a loopback client address", async () => {
+    expect(await localRequest("http://localhost/api/selection", "127.0.0.1")).toBe(true);
+    expect(await localRequest("http://[::1]/api/selection", "::ffff:127.0.0.1")).toBe(true);
+    expect(await localRequest("http://localhost/api/selection", "203.0.113.8")).toBe(false);
+    expect(await localRequest("https://example.com/api/selection", "127.0.0.1")).toBe(false);
   });
 });
 

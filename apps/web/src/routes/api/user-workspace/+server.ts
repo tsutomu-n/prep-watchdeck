@@ -11,7 +11,7 @@ import type { RequestEvent } from "./$types";
 const headers = { "cache-control": "no-store" };
 
 export async function GET(event: RequestEvent) {
-  if (!isLocalhostRequest(event)) return fail(403, "localhost_required");
+  if (!await isLocalhostRequest(event)) return fail(403, "localhost_required");
   try {
     return json(await createUserWorkspaceRepository().read(), { headers });
   } catch (cause) { return failure(cause); }

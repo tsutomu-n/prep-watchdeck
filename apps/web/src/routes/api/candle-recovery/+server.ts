@@ -7,7 +7,7 @@ import type { RequestEvent } from "./$types";
 const headers = { "cache-control": "no-store" };
 
 export async function GET(event: RequestEvent) {
-  if (!isLocalhostRequest(event)) return json({ error: "localhost_required" }, { status: 403, headers });
+  if (!await isLocalhostRequest(event)) return json({ error: "localhost_required" }, { status: 403, headers });
   if ([...event.url.searchParams.keys()].length) {
     return json({ error: "invalid_query" }, { status: 400, headers });
   }

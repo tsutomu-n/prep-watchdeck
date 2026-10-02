@@ -6,7 +6,7 @@ import { RankingReader } from "$lib/server/ranking";
 const reader = new RankingReader();
 
 export const GET: RequestHandler = async (event) => {
-  if (!isLocalhostRequest(event)) return json({ error: "ローカル接続のみ利用できます" }, { status: 403 });
+  if (!await isLocalhostRequest(event)) return json({ error: "ローカル接続のみ利用できます" }, { status: 403 });
   try {
     return json(await reader.read(event.url.searchParams), { headers: { "Cache-Control": "no-store" } });
   } catch (error) {

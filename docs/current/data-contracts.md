@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-02(金)_14:15 JST"
+timestamp="2026-10-02(金)_21:34 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T14:15:04+09:00`
-- 検証: `2026-10-02T14:15:04+09:00`
+- 更新: `2026-10-02T21:34:33+09:00`
+- 検証: `2026-10-02T21:34:33+09:00`
 - 状態: `現行`
 
 ---
@@ -151,9 +151,15 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 
 local APIの接続判定はloopbackを要求する。外部hostnameは既定では拒否し、
 `PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN`に明示したHTTPS originのhostnameとportに一致し、
-Tailscale Serveが付与した`Tailscale-User-Login`があるloopback proxy requestだけを追加で許可する。
+Tailscale Serveが付与した`Tailscale-User-Login`があるloopback proxy requestを追加で許可する。
 Serveは受信したidentity headerを除去して認証済みidentityを付与するため、backendをloopbackに限定し、
-既存tailnet ACLを接続権限の境界とする。Funnelやidentityのない接続は許可しない。
+既存tailnet ACLを接続権限の境界とする。
+
+タグ付き自端末にはuser identity headerがない。identityなしの例外は、proxyのHTTPS・Hostが設定authorityと
+一致し、単一のforwarded IPがlocal tailscaledのRunning状態のタグ付きSelf IPであり、Self DNSが設定host、
+WhoIs Node StableIDがSelf IDと一致する場合だけに限定する。local APIの取得は固定Unix socketへのread-only
+requestで、時間・responseサイズを制限する。別端末、検証失敗、Funnelは拒否し、既存ACLを変更しない。
+接続判定は非同期であり、各routeは認証結果をawaitしてから読取・更新へ進む。
 JSON writeはさらにブラウザーのOriginが設定したHTTPS originと完全一致することを要求する。
 TLS終端後のbackend HTTP originやcross-originのwriteは拒否し、localhostの既存判定も維持する。
 

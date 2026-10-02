@@ -11,7 +11,7 @@ function failure(status: number, code: string) {
 }
 
 export async function GET(event: RequestEvent) {
-  if (!isLocalhostRequest(event)) return failure(403, "localhost_required");
+  if (!await isLocalhostRequest(event)) return failure(403, "localhost_required");
   const parameters = [...event.url.searchParams.entries()];
   if (parameters.some(([key]) => key !== "offset" && key !== "limit") ||
       new Set(parameters.map(([key]) => key)).size !== parameters.length) {

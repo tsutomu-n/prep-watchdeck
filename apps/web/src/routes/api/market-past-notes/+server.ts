@@ -8,7 +8,7 @@ import type { RequestEvent } from "./$types";
 const headers = { "cache-control": "no-store" };
 
 export async function GET(event: RequestEvent) {
-  if (!isLocalhostRequest(event)) return fail(403, "localhost_required");
+  if (!await isLocalhostRequest(event)) return fail(403, "localhost_required");
   const keys = [...event.url.searchParams.keys()];
   if (keys.length !== 1 || keys[0] !== "venueInstrumentId") return fail(400, "invalid_query");
   const id = event.url.searchParams.get("venueInstrumentId") ?? "";
