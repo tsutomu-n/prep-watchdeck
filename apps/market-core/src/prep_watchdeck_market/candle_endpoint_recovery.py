@@ -43,7 +43,7 @@ from prep_watchdeck_market.sources.candle_history import (
 ENDPOINT_RUN_SECONDS = 60.0
 ENDPOINT_MAX_REQUESTS = 20
 ENDPOINT_REQUEST_INTERVAL_SECONDS = 3.0
-ENDPOINT_MINUTE_OFFSETS = (1, 16, 61, 1441)
+ENDPOINT_MINUTE_OFFSETS = (-2, -1, 0, 1, 16, 61, 1441)
 EndpointSnapshot = dict[RecoveryTarget, tuple[datetime, ...]]
 
 
@@ -53,8 +53,9 @@ def load_missing_endpoints(
     now: datetime,
     version_id: int | None = None,
 ) -> EndpointSnapshot:
-    """Read absent exact close endpoints inside active current definitions only."""
+    """Read absent metric endpoints and closed next-cutoff bars of current definitions."""
     cutoff = recovery_cutoff(now)
+    closed_window_end = now.replace(second=0, microsecond=0)
     try:
         with connection.transaction():
             connection.execute("SET TRANSACTION READ ONLY")
@@ -76,10 +77,19 @@ def load_missing_endpoints(
                   AND vi.venue IN ('bitget', 'hyperliquid', 'aster')
                   AND (%s::bigint IS NULL OR vi.venue_instrument_version_id = %s)
                   AND endpoint.bucket_at >= vi.valid_from
+                  AND endpoint.bucket_at < %s
+                  AND (vi.venue = 'hyperliquid' OR endpoint.bucket_at < %s)
                   AND candle.venue_instrument_version_id IS NULL
                 ORDER BY vi.venue, vi.source_symbol, endpoint.bucket_at DESC
                 """,
-                (cutoff, list(ENDPOINT_MINUTE_OFFSETS), version_id, version_id),
+                (
+                    cutoff,
+                    list(ENDPOINT_MINUTE_OFFSETS),
+                    version_id,
+                    version_id,
+                    closed_window_end,
+                    cutoff,
+                ),
             ).fetchall()
     except psycopg.Error:
         raise RecoveryStoreError("endpoint scan unavailable") from None
@@ -159,6 +169,7 @@ class CandleEndpointRecovery:
         started_at = self._clock()
         cutoff = recovery_cutoff(started_at)
         last_target_cutoff = cutoff
+        last_closed_window_end = started_at.replace(second=0, microsecond=0)
         loop = asyncio.get_running_loop()
         deadline = loop.time() + ENDPOINT_RUN_SECONDS
         run_id = uuid4()
@@ -200,7 +211,7 @@ class CandleEndpointRecovery:
                 execution=execution,
                 trigger=trigger,
                 window=RecoveryWindow(
-                    start=cutoff - timedelta(minutes=1441), end=last_target_cutoff
+                    start=cutoff - timedelta(minutes=1441), end=last_closed_window_end
                 ),
                 summary=RecoverySummary(
                     target_count=len(before),
@@ -226,6 +237,7 @@ class CandleEndpointRecovery:
                 "recoveryMode": "endpoints",
                 "initialCutoff": cutoff.isoformat(),
                 "lastTargetCutoff": last_target_cutoff.isoformat(),
+                "lastClosedWindowEnd": last_closed_window_end.isoformat(),
                 "minuteOffsets": list(ENDPOINT_MINUTE_OFFSETS),
                 "refreshedBeforeEachTarget": True,
                 "currentEndpointsFirst": True,
@@ -256,11 +268,15 @@ class CandleEndpointRecovery:
             current_end = cutoff - timedelta(minutes=1)
             recent_start = cutoff - timedelta(minutes=61)
             priorities = {
-                "current": [target for target, buckets in before.items() if current_end in buckets],
+                "current": [
+                    target
+                    for target, buckets in before.items()
+                    if any(bucket >= current_end for bucket in buckets)
+                ],
                 "recent": [
                     target
                     for target, buckets in before.items()
-                    if current_end not in buckets
+                    if all(bucket < current_end for bucket in buckets)
                     and any(bucket >= recent_start for bucket in buckets)
                 ],
                 "daily": [
@@ -303,6 +319,9 @@ class CandleEndpointRecovery:
                     target_now = self._clock()
                     target_cutoff = recovery_cutoff(target_now)
                     last_target_cutoff = max(last_target_cutoff, target_cutoff)
+                    last_closed_window_end = max(
+                        last_closed_window_end, target_now.replace(second=0, microsecond=0)
+                    )
                     refreshed = await _thread_call(
                         load_missing_endpoints,
                         connection,

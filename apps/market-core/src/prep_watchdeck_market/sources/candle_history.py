@@ -176,10 +176,19 @@ class NativeCandleHistoryClient:
                         raise HistoryFetchError("history server unavailable")
                     if response.status != 200:
                         raise HistoryFetchError("history request rejected")
-                    data = await response.content.read(MAX_BODY_BYTES + 1)
+                    data = bytearray()
+                    while True:
+                        # StreamReader.read(n) may return one available fragment.
+                        # Read to EOF while retaining at most the size limit + 1 byte.
+                        chunk = await response.content.read(
+                            min(64 * 1024, MAX_BODY_BYTES + 1 - len(data))
+                        )
+                        if not chunk:
+                            break
+                        data.extend(chunk)
+                        if len(data) > MAX_BODY_BYTES:
+                            raise HistoryPayloadInvalid("history response exceeds size limit")
                     observed_at = datetime.now(UTC)
-                    if len(data) > MAX_BODY_BYTES:
-                        raise HistoryPayloadInvalid("history response exceeds size limit")
                     try:
                         parsed = json.loads(
                             data,

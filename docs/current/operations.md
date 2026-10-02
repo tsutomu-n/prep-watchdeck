@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_14:59 JST"
+timestamp="2026-10-02(金)_15:34 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T14:59:39+09:00`
-- 検証: `2026-10-02T14:59:39+09:00`
+- 更新: `2026-10-02T15:34:39+09:00`
+- 検証: `2026-10-02T15:34:39+09:00`
 - 状態: `現行`
 
 ---
@@ -391,18 +391,24 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 falseに戻しても追加済みの正当な保存足を自動削除しない。
 
 有効なserviceでは15分ごとの履歴回復に加え、毎分の不足endpoint回復が動く。
-後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足だけを
-公式native履歴から回収する。最大20 HTTP request・60秒・最低3秒間隔で、未処理対象は
+後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足を
+公式native履歴から回収する。Hyperliquidだけは形成中の足を除いた直近の確定済み3本も、
+欠損を確認して保存し、次の指標cutoffで補修待ちを減らす。Bitget・Asterは従来の必要足を
+維持する。Providerが実際に返した確定足だけを扱う。180秒のgraceは指標cutoffの
+猶予であり、Hyperliquidの先取り保存に180秒を追加で待つ指定ではない。最大20 HTTP request・60秒・最低3秒間隔で、未処理対象は
 次runへ順番に送る。現在の終値、15分・1時間の基準、24時間の基準の順に処理し、
 各優先度で公平な再開位置を保持する。直近の取得に24時間前の範囲を混ぜず、
 過去側の不正応答が先に保存した現在の足を失わせない。各範囲は最大1page。
 通常履歴は既定5秒間隔・自動120 request上限を維持する。
+HTTP応答は8MiB上限と既存timeout内でEOFまで受信する。分割到着したJSONを
+途中で解析しない。過大応答、重複key、非有限値、identity不一致等は引き続き拒否する。
 近い不足endpointは1つの取得範囲へまとめるが、保存するのは事前確認した不足行だけ。
 取引数0でもProviderが返した正当な足は保存し、Providerが返さない時刻の足は作らない。
 新version開始前の基準足は旧版から付け替えず、履歴が成立するまで欠測を維持する。
 Endpoint回復の対象別エラーは`collector_runs.metrics.targetErrors`へ最大128件を保持する。
 銘柄ID・version・安全なerrorCodeだけを残し、後続runによるartifact更新後も確認できる。
-`priorityRequests`で優先度別のHTTP request数を記録する。
+`priorityRequests`で優先度別のHTTP request数を記録する。指標の`lastTargetCutoff`と
+保存可能な足のexclusive endである`lastClosedWindowEnd`を分け、監査windowは保存対象を覆う。
 Bitget取得失敗のservice logにはHTTP statusを残し、URL・応答本文を出さない。
 
 Bitgetの確定足pollは120秒周期・同時4 requestを維持し、各request時刻で終了時刻を決めて

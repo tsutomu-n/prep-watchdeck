@@ -42,6 +42,7 @@ from prep_watchdeck_market.sources.candle_history import (
     HistoryBudgetExceeded,
     HistoryFetchError,
     HistoryFetchResult,
+    HistoryPayloadInvalid,
     HistoryRateLimited,
     NativeCandleHistoryClient,
     _parse_hyperliquid_page,
@@ -262,6 +263,47 @@ def test_history_timeout_retries_have_a_bounded_error(
             await client._request_json("GET", "https://example.invalid/private")
         assert "secret" not in str(error.value)
         assert client.request_count == 3
+
+    asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("body_limit", [1024, 12])
+def test_history_transport_reads_delayed_json_fragments_and_rejects_oversize(
+    monkeypatch: pytest.MonkeyPatch, body_limit: int
+) -> None:
+    monkeypatch.setattr("prep_watchdeck_market.sources.candle_history.MAX_BODY_BYTES", body_limit)
+
+    async def exercise() -> None:
+        async def handler(request: web.Request) -> web.StreamResponse:
+            response = web.StreamResponse(headers={"Content-Type": "application/json"})
+            await response.prepare(request)
+            await response.write(b'{"price')
+            await asyncio.sleep(0.02)
+            await response.write(b'":1.25}')
+            await response.write_eof()
+            return response
+
+        application = web.Application()
+        application.router.add_get("/history", handler)
+        runner = web.AppRunner(application)
+        await runner.setup()
+        site = web.TCPSite(runner, "127.0.0.1", 0)
+        await site.start()
+        try:
+            port = site._server.sockets[0].getsockname()[1]  # type: ignore[union-attr]
+            async with aiohttp.ClientSession() as session:
+                client = NativeCandleHistoryClient(session, max_requests=1, deadline_seconds=5)
+                url = f"http://127.0.0.1:{port}/history"
+                if body_limit == 12:
+                    with pytest.raises(HistoryPayloadInvalid, match="exceeds size limit"):
+                        await client._request_json("GET", url)
+                else:
+                    payload, observed_at = await client._request_json("GET", url)
+                    assert payload == {"price": Decimal("1.25")}
+                    assert observed_at.tzinfo == UTC
+                assert client.request_count == 1
+        finally:
+            await runner.cleanup()
 
     asyncio.run(exercise())
 
