@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_15:49 JST"
+timestamp="2026-10-02(金)_16:05 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T15:49:53+09:00`
-- 検証: `2026-10-02T15:49:53+09:00`
+- 更新: `2026-10-02T16:05:08+09:00`
+- 検証: `2026-10-02T16:05:08+09:00`
 - 状態: `現行`
 
 ---
@@ -411,6 +411,12 @@ Endpoint回復の対象別エラーは`collector_runs.metrics.targetErrors`へ�
 `priorityRequests`で優先度別のHTTP request数を記録する。指標の`lastTargetCutoff`と
 保存可能な足のexclusive endである`lastClosedWindowEnd`を分け、監査windowは保存対象を覆う。
 Bitget取得失敗のservice logにはHTTP statusを残し、URL・応答本文を出さない。
+
+HyperliquidのWebSocket候補はprocess内のメモリに保持し、足終了5秒後に`derived_final`として
+保存する。同一process内の再接続では候補を保持するが、process停止時は未保存候補を失うため、
+再起動前後の足が一時的に欠測になる場合がある。5秒の確定判定と180秒の指標cutoff猶予を
+混同しない。自動回復は不足足を再取得するが、取得予算内で即座に全件回復する保証はない。
+再起動後はhealthの成功だけで完了とせず、複数cutoffの指標件数と回復監査を確認する。
 
 Bitgetの確定足pollは120秒周期・同時4 requestを維持し、各request時刻で終了時刻を決めて
 直近8本を保持する。注文上限だけのcatalog変更で不要に版を更新することも避ける。
