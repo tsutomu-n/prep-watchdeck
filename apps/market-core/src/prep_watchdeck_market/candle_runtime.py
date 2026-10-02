@@ -433,9 +433,11 @@ async def _fetch_bitget_instrument(
         )
     except (aiohttp.ClientError, TimeoutError, ValueError, CandleParseError) as exc:
         logger.warning(
-            "Bitget candle fetch skipped symbol={symbol} errorType={error_type}",
+            "Bitget candle fetch skipped symbol={symbol} errorType={error_type} "
+            "httpStatus={http_status}",
             symbol=instrument.source_symbol,
             error_type=type(exc).__name__,
+            http_status=exc.status if isinstance(exc, aiohttp.ClientResponseError) else None,
         )
         return
     await writer.add(candles)

@@ -137,7 +137,7 @@ class CandleEndpointRecovery:
         self._state_dir = state_dir
         self._on_inserted = on_inserted
         self._clock = utc_clock or (lambda: datetime.now(UTC))
-        self._last_target: tuple[str, str, int] | None = None
+        self._last_targets: dict[str, tuple[str, str, int]] = {}
         self._venue_cooldown_until: dict[Venue, float] = {}
 
     @staticmethod
@@ -173,6 +173,7 @@ class CandleEndpointRecovery:
         run_started = False
         finalized = False
         client: NativeCandleHistoryClient | None = None
+        priority_requests = dict.fromkeys(("current", "recent", "daily"), 0)
 
         def state(execution: RecoveryExecution, error_code: str | None) -> CandleRecoveryState:
             missing = sum(map(len, before.values())) if scanned else None
@@ -220,16 +221,28 @@ class CandleEndpointRecovery:
             )
 
         def audit_metrics() -> dict[str, object]:
+            failed_targets = sorted(errors, key=self._key)
             return {
                 "recoveryMode": "endpoints",
                 "initialCutoff": cutoff.isoformat(),
                 "lastTargetCutoff": last_target_cutoff.isoformat(),
                 "minuteOffsets": list(ENDPOINT_MINUTE_OFFSETS),
                 "refreshedBeforeEachTarget": True,
+                "currentEndpointsFirst": True,
+                "priorityRequests": dict(priority_requests),
                 "targetCount": len(before),
                 "httpRequests": client.request_count if client else 0,
                 "missingBefore": sum(map(len, before.values())) if scanned else None,
                 "remaining": sum(map(len, after.values())) if after is not None else None,
+                "targetErrors": [
+                    {
+                        "venueInstrumentId": target.instrument_id,
+                        "venueInstrumentVersionId": target.version_id,
+                        "errorCode": errors[target],
+                    }
+                    for target in failed_targets[:128]
+                ],
+                "targetErrorsTruncated": len(failed_targets) > 128,
             }
 
         try:
@@ -240,17 +253,22 @@ class CandleEndpointRecovery:
             write_artifact_atomic(state_path, state("running", None))
             before = await _thread_call(load_missing_endpoints, connection, now=started_at)
             scanned = True
-            ordered = sorted(before, key=self._key)
-            if self._last_target is not None:
-                split = next(
-                    (
-                        index
-                        for index, target in enumerate(ordered)
-                        if self._key(target) > self._last_target
-                    ),
-                    len(ordered),
-                )
-                ordered = ordered[split:] + ordered[:split]
+            current_end = cutoff - timedelta(minutes=1)
+            recent_start = cutoff - timedelta(minutes=61)
+            priorities = {
+                "current": [target for target, buckets in before.items() if current_end in buckets],
+                "recent": [
+                    target
+                    for target, buckets in before.items()
+                    if current_end not in buckets
+                    and any(bucket >= recent_start for bucket in buckets)
+                ],
+                "daily": [
+                    target
+                    for target, buckets in before.items()
+                    if any(bucket < recent_start for bucket in buckets)
+                ],
+            }
             client = NativeCandleHistoryClient(
                 session,
                 max_requests=ENDPOINT_MAX_REQUESTS,
@@ -258,72 +276,94 @@ class CandleEndpointRecovery:
                 min_interval_seconds=ENDPOINT_REQUEST_INTERVAL_SECONDS,
             )
             exhausted = False
-            for target in ordered:
-                if (
-                    exhausted
-                    or loop.time() >= deadline
-                    or client.request_count >= ENDPOINT_MAX_REQUESTS
-                ):
-                    deferred.add(target)
-                    continue
-                if self._venue_cooldown_until.get(target.venue, 0) > loop.time():
-                    deferred.add(target)
-                    continue
-                target_now = self._clock()
-                last_target_cutoff = max(last_target_cutoff, recovery_cutoff(target_now))
-                refreshed = await _thread_call(
-                    load_missing_endpoints,
-                    connection,
-                    now=target_now,
-                    version_id=target.version_id,
-                )
-                if target not in refreshed:
-                    self._last_target = self._key(target)
-                    continue
-                before[target] = tuple(
-                    sorted(set(before[target]).union(refreshed[target]), reverse=True)
-                )
-                requests_before = client.request_count
-                try:
-                    fetched = await client.fetch_missing(
-                        target, refreshed[target], max_pages=2, coalesce=True, newest_first=True
+            for priority, targets in priorities.items():
+                ordered = sorted(targets, key=self._key)
+                last_target = self._last_targets.get(priority)
+                if last_target is not None:
+                    split = next(
+                        (
+                            index
+                            for index, target in enumerate(ordered)
+                            if self._key(target) > last_target
+                        ),
+                        len(ordered),
                     )
-                    if fetched.rejected_buckets:
-                        errors[target] = "history_conflicting_bucket"
-                    if fetched.candles:
-
-                        def insert_target(
-                            current: RecoveryTarget, candles: tuple[Candle1m, ...]
-                        ) -> int:
-                            count = insert_missing_candles(
-                                connection, current, candles, run_id=run_id
-                            )
-                            inserted[current] = count
-                            return count
-
-                        count = await _thread_call(insert_target, target, fetched.candles)
-                        if count and self._on_inserted:
-                            self._on_inserted()
-                    if fetched.budget_scope:
+                    ordered = ordered[split:] + ordered[:split]
+                for target in ordered:
+                    if (
+                        exhausted
+                        or loop.time() >= deadline
+                        or client.request_count >= ENDPOINT_MAX_REQUESTS
+                    ):
                         deferred.add(target)
-                        exhausted = fetched.budget_scope == "run"
-                except HistoryRateLimited as error:
-                    errors[target] = "history_rate_limited"
-                    self._venue_cooldown_until[target.venue] = loop.time() + (
-                        error.retry_after_seconds if error.retry_after_seconds is not None else 60
+                        continue
+                    if self._venue_cooldown_until.get(target.venue, 0) > loop.time():
+                        deferred.add(target)
+                        continue
+                    target_now = self._clock()
+                    target_cutoff = recovery_cutoff(target_now)
+                    last_target_cutoff = max(last_target_cutoff, target_cutoff)
+                    refreshed = await _thread_call(
+                        load_missing_endpoints,
+                        connection,
+                        now=target_now,
+                        version_id=target.version_id,
                     )
-                except HistoryBudgetExceeded:
-                    deferred.add(target)
-                    exhausted = True
-                except RecoveryVersionChanged:
-                    errors[target] = "target_version_changed"
-                except HistoryPayloadInvalid:
-                    errors[target] = "history_payload_invalid"
-                except (HistoryFetchError, CandleParseError, RecoveryStoreError, ValueError):
-                    errors[target] = "history_unavailable"
-                finally:
-                    if client.request_count > requests_before:
-                        self._last_target = self._key(target)
+                    missing = tuple(
+                        bucket
+                        for bucket in refreshed.get(target, ())
+                        if (bucket >= target_cutoff - timedelta(minutes=61))
+                        == (priority != "daily")
+                    )
+                    if not missing:
+                        self._last_targets[priority] = self._key(target)
+                        continue
+                    before[target] = tuple(sorted(set(before[target]).union(missing), reverse=True))
+                    requests_before = client.request_count
+                    try:
+                        fetched = await client.fetch_missing(
+                            target, missing, max_pages=1, coalesce=True, newest_first=True
+                        )
+                        if fetched.rejected_buckets:
+                            errors[target] = "history_conflicting_bucket"
+                        if fetched.candles:
+
+                            def insert_target(
+                                current: RecoveryTarget, candles: tuple[Candle1m, ...]
+                            ) -> int:
+                                count = insert_missing_candles(
+                                    connection, current, candles, run_id=run_id
+                                )
+                                inserted[current] = inserted.get(current, 0) + count
+                                return count
+
+                            count = await _thread_call(insert_target, target, fetched.candles)
+                            if count and self._on_inserted:
+                                self._on_inserted()
+                        if fetched.budget_scope:
+                            deferred.add(target)
+                            exhausted = fetched.budget_scope == "run"
+                    except HistoryRateLimited as error:
+                        errors[target] = "history_rate_limited"
+                        self._venue_cooldown_until[target.venue] = loop.time() + (
+                            error.retry_after_seconds
+                            if error.retry_after_seconds is not None
+                            else 60
+                        )
+                    except HistoryBudgetExceeded:
+                        deferred.add(target)
+                        exhausted = True
+                    except RecoveryVersionChanged:
+                        errors[target] = "target_version_changed"
+                    except HistoryPayloadInvalid:
+                        errors[target] = "history_payload_invalid"
+                    except (HistoryFetchError, CandleParseError, RecoveryStoreError, ValueError):
+                        errors[target] = "history_unavailable"
+                    finally:
+                        started_requests = client.request_count - requests_before
+                        priority_requests[priority] += started_requests
+                        if started_requests:
+                            self._last_targets[priority] = self._key(target)
             after = await _thread_call(_remaining_snapshot, connection, before)
             remaining = sum(map(len, after.values()))
             error_code = (

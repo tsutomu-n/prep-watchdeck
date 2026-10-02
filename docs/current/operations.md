@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_14:15 JST"
+timestamp="2026-10-02(金)_14:59 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T14:15:04+09:00`
-- 検証: `2026-10-02T14:15:04+09:00`
+- 更新: `2026-10-02T14:59:39+09:00`
+- 検証: `2026-10-02T14:59:39+09:00`
 - 状態: `現行`
 
 ---
@@ -264,7 +264,7 @@ Decision 0012の範囲内であり、scopeと安全性を確認して導入で�
 
 ランキングは独立した公開データcollectorとSQLiteを使う。元のMarket Core、Postgres、artifactへ
 書き込まず、既存serviceの環境変数やDB接続情報を引き継がない。確認済みの固定参照契約だけを取得する。
-現mapの原資産・固定参照の全件gateは成立し、534参照を採用する。元数量換算とWidgetは各3件未確認。
+現mapの原資産・固定参照の全件gateは成立し、536参照を採用する。元数量換算とWidgetは各3件未確認。
 `--require-ranking-qualified`は成功するが、数量・Widgetも要求する`--require-reviewed`は終了1となる。
 行の要確認・未対応・対象外は名簿に残し、数値を生成しない。
 対応表の更新方法は
@@ -334,13 +334,13 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 | 元IDを保持した候補decisionsと一次根拠、Widget metadataを作成する | 原資産・固定参照契約を確定し、元数量換算・Widgetの対応を別に記録する。参照revision変更は別履歴になる。 | 全対象の取扱いに根拠があり、原資産・固定参照の要確認がない。残る数量・Chart未確認と制限を明示できる。 |
 | `compile-map --roster`と`--decisions`へ候補の絶対パスを渡して新しいv2 mapを出力する | 名簿のID/version・fingerprintと判断の整合を検査する。v1は暗黙変換しない。 | `validate-map`の`--require-ranking-qualified`が終了0となり、証拠checkerの内容監査も成立する。 |
 | 候補directoryにinitial-roster.json、initial-map.json、qualification-evidence.jsonをそろえて`verify-map-evidence.py --directory`で照合する | 全original、revision、Widget、行・数量の未解決台帳を照合する。 | map versionと根拠が一致し、`rankingQualified`がtrue。数量・Widgetも全確認する場合は`--require-reviewed`と`qualificationComplete`を使う。checker成功と根拠の正当性を別に監査する。 |
+| 旧map/sourceの所在を保全し、反映対象を確定して専用processだけ再起動する | 再起動時に新mapを採用し、新revisionの履歴不足は明示する。 | 新map version・対応件数・鮮度・参照Chartを実際のAPIと画面で確認する。稼働unitの場合は別承認を得る。 |
 
 `scripts/ranking/refresh-roster-candidate.py`は、確認済みの完全snapshot・現行定義のread-only
 監査・最新official catalog・明示した新規判断を使い、別directoryへ更新候補を作る。
 既存の採用済み参照provider/revisionを固定し、identityが変わった場合や新規銘柄の根拠が
 足りない場合は拒否する。live mapやサービスを自動変更しない。引数は`--help`で確認し、
 出力候補へ上記のmap/evidence検査を適用する。日付だけの更新で名簿の古さを隠さない。
-| 旧map/sourceの所在を保全し、反映対象を確定して専用processだけ再起動する | 再起動時に新mapを採用し、新revisionの履歴不足は明示する。 | 新map version・対応件数・鮮度・参照Chartを実際のAPIと画面で確認する。稼働unitの場合は別承認を得る。 |
 
 削除した契約は新mapの参照対象から外れ、通常の専用stateの保存整理の対象になる。
 追加指標の導入自体は表・保存形式・保存期間を変更しない。旧revisionの履歴を新revisionへ
@@ -393,10 +393,17 @@ falseに戻しても追加済みの正当な保存足を自動削除しない。
 有効なserviceでは15分ごとの履歴回復に加え、毎分の不足endpoint回復が動く。
 後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足だけを
 公式native履歴から回収する。最大20 HTTP request・60秒・最低3秒間隔で、未処理対象は
-次runへ順番に送る。通常履歴は既定5秒間隔・自動120 request上限を維持する。
+次runへ順番に送る。現在の終値、15分・1時間の基準、24時間の基準の順に処理し、
+各優先度で公平な再開位置を保持する。直近の取得に24時間前の範囲を混ぜず、
+過去側の不正応答が先に保存した現在の足を失わせない。各範囲は最大1page。
+通常履歴は既定5秒間隔・自動120 request上限を維持する。
 近い不足endpointは1つの取得範囲へまとめるが、保存するのは事前確認した不足行だけ。
 取引数0でもProviderが返した正当な足は保存し、Providerが返さない時刻の足は作らない。
 新version開始前の基準足は旧版から付け替えず、履歴が成立するまで欠測を維持する。
+Endpoint回復の対象別エラーは`collector_runs.metrics.targetErrors`へ最大128件を保持する。
+銘柄ID・version・安全なerrorCodeだけを残し、後続runによるartifact更新後も確認できる。
+`priorityRequests`で優先度別のHTTP request数を記録する。
+Bitget取得失敗のservice logにはHTTP statusを残し、URL・応答本文を出さない。
 
 Bitgetの確定足pollは120秒周期・同時4 requestを維持し、各request時刻で終了時刻を決めて
 直近8本を保持する。注文上限だけのcatalog変更で不要に版を更新することも避ける。
