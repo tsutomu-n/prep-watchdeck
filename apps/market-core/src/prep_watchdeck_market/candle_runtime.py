@@ -14,7 +14,10 @@ from prep_watchdeck_market.candle_store import CandleStoreResult, upsert_candles
 from prep_watchdeck_market.candles import Candle1m, CandleParseError
 from prep_watchdeck_market.models import CatalogInstrument, Venue
 from prep_watchdeck_market.sources.aster_candle_stream import produce_aster_candles
-from prep_watchdeck_market.sources.bitget_candles import parse_bitget_finished_candles
+from prep_watchdeck_market.sources.bitget_candles import (
+    BITGET_LIVE_CANDLE_LIMIT,
+    parse_bitget_finished_candles,
+)
 from prep_watchdeck_market.sources.hyperliquid_candle_stream import (
     produce_hyperliquid_candles,
 )
@@ -166,7 +169,7 @@ class CandleRuntime:
             while not stop_event.is_set():
                 instruments = _active_venue_instruments(self._instrument_supplier(), venue)
                 fingerprint = tuple(
-                    (instrument.venue_instrument_id, instrument.definition_sha256())
+                    (instrument.venue_instrument_id, instrument.semantic_definition_sha256())
                     for instrument in instruments
                 )
                 if fingerprint != current_fingerprint:
@@ -360,8 +363,6 @@ async def poll_bitget_sweep(
         return
     now = (utc_clock or (lambda: datetime.now(UTC)))()
     _require_aware(now)
-    end_time = now.replace(second=0, microsecond=0)
-    end_time_ms = int(end_time.timestamp() * 1_000)
     loop = asyncio.get_running_loop()
     started = loop.time()
     interval = sweep_seconds / len(active)
@@ -383,7 +384,6 @@ async def poll_bitget_sweep(
                         session,
                         instrument,
                         writer,
-                        end_time_ms=end_time_ms,
                         utc_clock=utc_clock,
                     ),
                     name=f"bitget-candle-{instrument.source_symbol}",
@@ -403,10 +403,15 @@ async def _fetch_bitget_instrument(
     instrument: CatalogInstrument,
     writer: CandleBatchWriter,
     *,
-    end_time_ms: int,
     utc_clock: UtcClock | None,
 ) -> None:
     try:
+        # A full sweep takes two minutes. Later instruments must request the
+        # latest finished window, rather than reuse the sweep's starting clock.
+        request_at = (utc_clock or (lambda: datetime.now(UTC)))()
+        _require_aware(request_at)
+        end_time = request_at.replace(second=0, microsecond=0)
+        end_time_ms = int(end_time.timestamp() * 1_000)
         async with session.get(
             BITGET_FINISHED_CANDLES_URL,
             params={
@@ -414,7 +419,7 @@ async def _fetch_bitget_instrument(
                 "productType": "USDT-FUTURES",
                 "granularity": "1m",
                 "endTime": str(end_time_ms),
-                "limit": "3",
+                "limit": str(BITGET_LIVE_CANDLE_LIMIT),
             },
             timeout=aiohttp.ClientTimeout(total=20),
         ) as response:

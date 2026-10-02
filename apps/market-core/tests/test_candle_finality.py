@@ -26,10 +26,10 @@ def test_candle_finality_table(venue: str) -> None:
             observed_at=OBSERVED_AT,
         )
 
-        assert len(candles) == 3
-        assert len({candle.storage_key for candle in candles}) == 3
-        assert candles[0].bucket_start == datetime(2026, 8, 14, 9, 58, tzinfo=UTC)
-        assert candles[0].close_price == Decimal("104.5")
+        assert len(candles) == 5
+        assert len({candle.storage_key for candle in candles}) == 5
+        assert candles[0].bucket_start == datetime(2026, 8, 14, 9, 56, tzinfo=UTC)
+        assert candles[2].close_price == Decimal("104.5")
         assert all(candle.finality == "confirmed" for candle in candles)
         assert all(candle.source_confirmed for candle in candles)
         return

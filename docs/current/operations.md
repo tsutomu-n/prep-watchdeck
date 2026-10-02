@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_07:19 JST"
+timestamp="2026-10-02(金)_14:15 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T07:19:27+09:00`
-- 検証: `2026-10-02T07:19:27+09:00`
+- 更新: `2026-10-02T14:15:04+09:00`
+- 検証: `2026-10-02T14:15:04+09:00`
 - 状態: `現行`
 
 ---
@@ -334,6 +334,12 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 | 元IDを保持した候補decisionsと一次根拠、Widget metadataを作成する | 原資産・固定参照契約を確定し、元数量換算・Widgetの対応を別に記録する。参照revision変更は別履歴になる。 | 全対象の取扱いに根拠があり、原資産・固定参照の要確認がない。残る数量・Chart未確認と制限を明示できる。 |
 | `compile-map --roster`と`--decisions`へ候補の絶対パスを渡して新しいv2 mapを出力する | 名簿のID/version・fingerprintと判断の整合を検査する。v1は暗黙変換しない。 | `validate-map`の`--require-ranking-qualified`が終了0となり、証拠checkerの内容監査も成立する。 |
 | 候補directoryにinitial-roster.json、initial-map.json、qualification-evidence.jsonをそろえて`verify-map-evidence.py --directory`で照合する | 全original、revision、Widget、行・数量の未解決台帳を照合する。 | map versionと根拠が一致し、`rankingQualified`がtrue。数量・Widgetも全確認する場合は`--require-reviewed`と`qualificationComplete`を使う。checker成功と根拠の正当性を別に監査する。 |
+
+`scripts/ranking/refresh-roster-candidate.py`は、確認済みの完全snapshot・現行定義のread-only
+監査・最新official catalog・明示した新規判断を使い、別directoryへ更新候補を作る。
+既存の採用済み参照provider/revisionを固定し、identityが変わった場合や新規銘柄の根拠が
+足りない場合は拒否する。live mapやサービスを自動変更しない。引数は`--help`で確認し、
+出力候補へ上記のmap/evidence検査を適用する。日付だけの更新で名簿の古さを隠さない。
 | 旧map/sourceの所在を保全し、反映対象を確定して専用processだけ再起動する | 再起動時に新mapを採用し、新revisionの履歴不足は明示する。 | 新map version・対応件数・鮮度・参照Chartを実際のAPIと画面で確認する。稼働unitの場合は別承認を得る。 |
 
 削除した契約は新mapの参照対象から外れ、通常の専用stateの保存整理の対象になる。
@@ -375,7 +381,7 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 
 ## 保存足の回収・照合・比較・出力
 
-このRepositoryの作業branchにある操作手順。稼働releaseへの配置、設定変更、本番DBへの適用、
+このRepositoryで実装済みの操作手順。稼働releaseへの配置、設定変更、本番DBへの適用、
 実Provider keyの使用は別の承認・受入で扱う。初回は隔離DBと専用state rootで実行する。
 
 `apps/market-core/`で`uv run watchdeck-market recover-candles --instrument <ID> --since <ISO> --until <ISO> --json`
@@ -383,6 +389,35 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 許可済み対象への`--apply`はnative履歴を取得し、欠損だけ挿入する。現行契約の版・定義hashが変わったら
 対象を停止する。自動実行は`PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED=true`を明示したserviceだけで有効。
 falseに戻しても追加済みの正当な保存足を自動削除しない。
+
+有効なserviceでは15分ごとの履歴回復に加え、毎分の不足endpoint回復が動く。
+後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足だけを
+公式native履歴から回収する。最大20 HTTP request・60秒・最低3秒間隔で、未処理対象は
+次runへ順番に送る。通常履歴は既定5秒間隔・自動120 request上限を維持する。
+近い不足endpointは1つの取得範囲へまとめるが、保存するのは事前確認した不足行だけ。
+取引数0でもProviderが返した正当な足は保存し、Providerが返さない時刻の足は作らない。
+新version開始前の基準足は旧版から付け替えず、履歴が成立するまで欠測を維持する。
+
+Bitgetの確定足pollは120秒周期・同時4 requestを維持し、各request時刻で終了時刻を決めて
+直近8本を保持する。注文上限だけのcatalog変更で不要に版を更新することも避ける。
+実際の価格・数量単位・上場定義の変更は引き続き新versionとして扱う。
+Asterの上場境界`onboardDate`を確認できる`PERPETUAL`では、`createTime`だけの変動で
+履歴を区切らない。上場境界が変わる場合や確認できない場合は版を分ける。
+上場境界の原文定義は[公式Aster Exchange Information](https://asterdex.github.io/aster-api-website/futures-v3/market-data/#exchange-information)を参照する。
+
+### 定期的にデータ運用を確認する
+
+`scripts/market/check-data-operations.py --market-state-dir <絶対state path> --mapping <絶対map path> --json`
+はartifactとloopback Ranking healthだけを読み、取得・DB更新・map採用を行わない。
+更新停止、収集失敗、現行UniverseとmapのID/version不一致は終了1、不正入力は終了2。
+銘柄履歴の不足、取得予算の未処理、24時間を過ぎた名簿は警告として件数・理由を残す。
+価格・秘密情報・個人メモをlogへ出さない。
+
+`config/systemd/prep-watchdeck-data-operations.service.in`と対応timerはread-only確認の任意template。
+`@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用stateへ置換してuser unitへ
+配置した場合だけ、timerを明示的にenable/startする。5分ごとに確認し、結果は
+`journalctl --user -u prep-watchdeck-data-operations.service`で読む。
+timer停止は監視だけを止める。回復を止める場合は上記の有効化設定をfalseへ戻す。
 
 自動600秒・手動4時間の上限は事前scanと取得後rescanにも適用する。上限後は新しい検査を開始せず、
 未検査の欠損件数は`null`と記録する。進行中のDB処理はstatement timeoutの範囲で終了を待つ。

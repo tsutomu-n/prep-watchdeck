@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
+from dataclasses import replace
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -18,6 +19,75 @@ from prep_watchdeck_market.sources.selected_streams import ASTER_SELECTED_WS_URL
 
 FIXTURES = Path(__file__).parent / "fixtures" / "catalog"
 OBSERVED_AT = datetime(2026, 8, 14, 10, 0, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("field", ["maxOrderQty", "maxMarketOrderQty", "posLimit"])
+def test_bitget_order_limits_keep_semantic_definition_and_full_provenance(field: str) -> None:
+    payload = json.loads((FIXTURES / "bitget.json").read_text(encoding="utf-8"))
+    original = parse_bitget_catalog(payload, observed_at=OBSERVED_AT).instruments[0]
+    changed = replace(original, raw_definition={**original.raw_definition, field: "123"})
+
+    assert changed.definition_sha256() != original.definition_sha256()
+    assert changed.semantic_definition_sha256() == original.semantic_definition_sha256()
+    assert changed.raw_definition[field] == "123"
+    assert original.raw_definition == payload["data"][0]
+
+
+@pytest.mark.parametrize("field", ["launchTime", "pricePlace", "unknownDefinitionField"])
+def test_bitget_listing_price_precision_and_unknown_changes_separate_versions(field: str) -> None:
+    payload = json.loads((FIXTURES / "bitget.json").read_text(encoding="utf-8"))
+    original = parse_bitget_catalog(payload, observed_at=OBSERVED_AT).instruments[0]
+    changed = replace(original, raw_definition={**original.raw_definition, field: "123"})
+
+    assert changed.semantic_definition_sha256() != original.semantic_definition_sha256()
+
+
+def test_normalized_changes_separate_versions() -> None:
+    payload = json.loads((FIXTURES / "bitget.json").read_text(encoding="utf-8"))
+    original = parse_bitget_catalog(payload, observed_at=OBSERVED_AT).instruments[0]
+    changed_definitions = (
+        replace(original, base_asset="OTHER"),
+        replace(original, funding_interval_seconds=3_600),
+        replace(original, price_tick=Decimal("0.10")),
+        replace(original, amount_step=Decimal("1")),
+        replace(original, contract_multiplier=Decimal("1000")),
+    )
+    for changed in changed_definitions:
+        assert changed.semantic_definition_sha256() != original.semantic_definition_sha256()
+
+
+def test_aster_unconfirmed_raw_fields_continue_separating_versions() -> None:
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    original = parse_aster_catalog(payload, observed_at=OBSERVED_AT).instruments[0]
+    changed = replace(original, raw_definition={**original.raw_definition, "imn": "123"})
+
+    assert changed.semantic_definition_sha256() != original.semantic_definition_sha256()
+
+
+def test_aster_create_time_drift_preserves_identity_only_with_exact_listing_boundary() -> None:
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    parsed = parse_aster_catalog(payload, observed_at=OBSERVED_AT).instruments[0]
+    original = replace(
+        parsed,
+        raw_definition={
+            **parsed.raw_definition,
+            "onboardDate": 1_790_751_900_000,
+            "createTime": 100,
+        },
+    )
+    changed = replace(original, raw_definition={**original.raw_definition, "createTime": 101})
+    assert changed.definition_sha256() != original.definition_sha256()
+    assert changed.semantic_definition_sha256() == original.semantic_definition_sha256()
+    relisted = replace(
+        changed, raw_definition={**changed.raw_definition, "onboardDate": 1_790_751_900_001}
+    )
+    assert relisted.semantic_definition_sha256() != original.semantic_definition_sha256()
+    for invalid in (None, 0, True, "1790751900000"):
+        first = replace(
+            original, raw_definition={**original.raw_definition, "onboardDate": invalid}
+        )
+        second = replace(first, raw_definition={**first.raw_definition, "createTime": 101})
+        assert first.semantic_definition_sha256() != second.semantic_definition_sha256()
 
 
 def test_aster_uses_official_v3_hosts() -> None:

@@ -41,6 +41,7 @@ from prep_watchdeck_market.sources.bitget_candles import parse_bitget_history_ca
 from prep_watchdeck_market.sources.candle_history import (
     HistoryBudgetExceeded,
     HistoryFetchError,
+    HistoryFetchResult,
     HistoryRateLimited,
     NativeCandleHistoryClient,
     _parse_hyperliquid_page,
@@ -82,7 +83,7 @@ def test_recovery_window_and_full_bitget_history_parser() -> None:
     candles, conflicts = parse_bitget_history_candles(
         {"code": "00000", "data": rows}, source_symbol="BTCUSDT", observed_at=now
     )
-    assert len(candles) == 8  # The live poll's last-three slice must not affect history.
+    assert len(candles) == 8  # The live overlap limit must not truncate full history pages.
     assert conflicts == ()
     assert all(item.finality == "confirmed" and item.observed_at == now for item in candles)
     assert all(item.source_at is None for item in candles)
@@ -92,6 +93,89 @@ def test_recovery_window_and_full_bitget_history_parser() -> None:
     )
     assert len(candles) == 7
     assert conflicts == (window.start + timedelta(minutes=3),)
+
+
+def test_history_coalesces_sparse_missing_buckets_without_accepting_other_rows(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def exercise() -> None:
+        start = _now() - timedelta(hours=1)
+        missing = tuple(start + timedelta(minutes=index) for index in (0, 15, 45))
+        calls = []
+
+        async def request(_self, _method, _url, **kwargs):
+            calls.append(kwargs["params"])
+            return {
+                "code": "00000",
+                "data": [_bitget_row(start + timedelta(minutes=i)) for i in (0, 1, 15, 45)],
+            }, _now()
+
+        monkeypatch.setattr(NativeCandleHistoryClient, "_request_json", request)
+        async with aiohttp.ClientSession() as session:
+            client = NativeCandleHistoryClient(session, max_requests=2, deadline_seconds=5)
+            result = await client.fetch_missing(
+                _target("BTCUSDT", start), missing, max_pages=1, coalesce=True
+            )
+        assert len(calls) == 1
+        assert calls[0]["startTime"] == str(int(start.timestamp() * 1000))
+        assert calls[0]["endTime"] == str(
+            int((missing[-1] + timedelta(minutes=1)).timestamp() * 1000)
+        )
+        assert tuple(candle.bucket_start for candle in result.candles) == missing
+        assert result.budget_scope is None
+
+    asyncio.run(exercise())
+
+
+def test_automatic_recovery_resumes_after_served_targets_when_request_budget_is_exhausted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    start = _now() - timedelta(minutes=10)
+    targets = tuple(_target(f"TEST{index}USDT", start) for index in range(5))
+    served: list[str] = []
+
+    class Connection:
+        def close(self):
+            pass
+
+    async def open_connection(*_args, **_kwargs):
+        return Connection()
+
+    class Client:
+        def __init__(self, *_args, **_kwargs):
+            self.request_count = 0
+
+        async def fetch_missing(self, target, _missing, **kwargs):
+            assert kwargs["coalesce"] is True
+            if self.request_count == 2:
+                return HistoryFetchResult((), 0, 0, "run")
+            self.request_count += 1
+            served.append(target.instrument_id)
+            return HistoryFetchResult((), 0, 1)
+
+    module = "prep_watchdeck_market.candle_recovery."
+    monkeypatch.setattr(module + "_open_connection", open_connection)
+    monkeypatch.setattr(module + "load_recovery_targets", lambda *_a, **_k: targets)
+    monkeypatch.setattr(module + "scan_missing_candles", lambda *_a, **_k: (start,))
+    monkeypatch.setattr(module + "start_recovery_run", lambda *_a, **_k: None)
+    monkeypatch.setattr(module + "finish_recovery_run", lambda *_a, **_k: None)
+    monkeypatch.setattr(module + "NativeCandleHistoryClient", Client)
+
+    async def exercise() -> None:
+        recovery = CandleRecovery("unused", tmp_path)
+        async with aiohttp.ClientSession() as session:
+            for _ in range(3):
+                state = await recovery.run(
+                    session,
+                    RecoveryWindowRequest(start, start + timedelta(minutes=1)),
+                    apply=True,
+                    trigger="periodic",
+                )
+                assert state.summary.http_requests == 2
+                assert state.summary.deferred_targets == 3
+        assert served[:5] == [target.instrument_id for target in targets]
+
+    asyncio.run(exercise())
 
 
 def test_hyperliquid_close_timestamp_and_partial_page_budget() -> None:

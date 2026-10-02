@@ -1,8 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
+timestamp="2026-10-02(金)_14:15 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-30T21:04:03+09:00`
-- 検証: `2026-09-30T21:04:03+09:00`
+- 更新: `2026-10-02T14:15:04+09:00`
+- 検証: `2026-10-02T14:15:04+09:00`
 - 状態: `現行`
 
 ---
@@ -208,6 +209,10 @@ Market CoreのRecoveryは既存Postgresの現行契約と保存`candle_1m`を読
 有効時だけMarket Service内の独立taskが起動時と15分境界で実行する。専用lock、HTTP件数・時間・
 page上限を持ち、同じ版と定義hashを再確認して欠損行だけ挿入する。挿入時には既存artifactとmetricsの
 更新を通知する。完了runは`collector_runs`と任意の`candle-recovery-state.json`へ記録する。
+request予算を使った最後の対象の次から再開し、特定Venueの先頭へ処理が偏らない。
+同じ有効化設定で、別taskが毎分native指標の現在・15分・1時間・24時間の不足endpointを確認する。
+対象ごとにcutoffを再取得し、最大20 request・60秒・最低3秒間隔で公式履歴の実在足だけを
+挿入する。専用lockと`candle-endpoint-recovery-state.json`を持ち、通常の履歴回復とは独立する。
 過去日の遅着足は次のmaintenanceで確認済みParquetを再発行してからretention判定する。
 
 Auditは手動の保存snapshot二つを固定copyして比較し、不変run directoryと最新indexを発行する。

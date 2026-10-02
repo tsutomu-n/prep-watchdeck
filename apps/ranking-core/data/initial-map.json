@@ -1,11 +1,11 @@
 {
   "schemaVersion": "ranking-map-v2",
-  "version": "07bfd5c76b6fc8cbc882aeba",
-  "verifiedAt": 1789554453038,
-  "rosterGeneratedAt": 1789166400800,
-  "rosterFingerprint": "6483590f64384715c9d8d7d3ef8c6bf4b1aebd3d88dd6d218802931fb0af1763",
-  "rosterSource": "/home/tn/.local/share/prep-watchdeck-market/artifacts/universe-snapshot.json",
-  "sourceInstrumentCount": 1203,
+  "version": "d5bfc5975f303258223b3288",
+  "verifiedAt": 1790919217296,
+  "rosterGeneratedAt": 1790919180876,
+  "rosterFingerprint": "9c2f1c3817a5dc241024bda2b24c2d19cb7b7e88cd1e46c8194b7f190a7ded8d",
+  "rosterSource": "/tmp/prep-watchdeck-ranking-roster-diagnosis-20261002/universe-captured.json",
+  "sourceInstrumentCount": 1095,
   "rows": [
     {
       "id": "crypto:0G",
@@ -24,7 +24,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:0GUSDT",
-          "versionId": 2307,
+          "versionId": 8893,
           "symbol": "0GUSDT",
           "baseAsset": "0G",
           "multiplier": 1
@@ -77,7 +77,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:1INCHUSDT",
-          "versionId": 60,
+          "versionId": 8867,
           "symbol": "1INCHUSDT",
           "baseAsset": "1INCH",
           "multiplier": 1
@@ -127,7 +127,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:2ZUSDT",
-          "versionId": 380,
+          "versionId": 8896,
           "symbol": "2ZUSDT",
           "baseAsset": "2Z",
           "multiplier": 1
@@ -222,7 +222,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:4STOCKUSDT",
-          "versionId": 4344,
+          "versionId": 6102,
           "symbol": "4STOCKUSDT",
           "baseAsset": "4STOCK",
           "multiplier": 1
@@ -263,7 +263,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AUSDT",
-          "versionId": 327,
+          "versionId": 8881,
           "symbol": "AUSDT",
           "baseAsset": "A",
           "multiplier": 1
@@ -374,7 +374,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ACEUSDT",
-          "versionId": 2033,
+          "versionId": 7273,
           "symbol": "ACEUSDT",
           "baseAsset": "ACE",
           "multiplier": 1
@@ -519,7 +519,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ACUUSDT",
-          "versionId": 2311,
+          "versionId": 8907,
           "symbol": "ACUUSDT",
           "baseAsset": "ACU",
           "multiplier": 1
@@ -571,7 +571,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ADAUSDT",
-          "versionId": 3133,
+          "versionId": 7642,
           "symbol": "ADAUSDT",
           "baseAsset": "ADA",
           "multiplier": 1
@@ -632,7 +632,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AEONUSDT",
-          "versionId": 4033,
+          "versionId": 8915,
           "symbol": "AEONUSDT",
           "baseAsset": "AEON",
           "multiplier": 1
@@ -996,14 +996,6 @@
           "symbol": "AINUSDT",
           "baseAsset": "AIN",
           "multiplier": 1
-        },
-        {
-          "venue": "bitget",
-          "instrumentId": "bitget:AINUSDT",
-          "versionId": 342,
-          "symbol": "AINUSDT",
-          "baseAsset": "AIN",
-          "multiplier": 1
         }
       ],
       "reference": {
@@ -1051,7 +1043,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AIOUSDT",
-          "versionId": 355,
+          "versionId": 8891,
           "symbol": "AIOUSDT",
           "baseAsset": "AIO",
           "multiplier": 1
@@ -1168,7 +1160,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AIXBTUSDT",
-          "versionId": 256,
+          "versionId": 7332,
           "symbol": "AIXBTUSDT",
           "baseAsset": "AIXBT",
           "multiplier": 1
@@ -1219,7 +1211,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AKEUSDT",
-          "versionId": 980,
+          "versionId": 6438,
           "symbol": "AKEUSDT",
           "baseAsset": "AKE",
           "multiplier": 1
@@ -1227,7 +1219,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AKEUSDT",
-          "versionId": 3202,
+          "versionId": 8895,
           "symbol": "AKEUSDT",
           "baseAsset": "AKE",
           "multiplier": 1
@@ -1271,7 +1263,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AKTUSDT",
-          "versionId": 207,
+          "versionId": 7307,
           "symbol": "AKTUSDT",
           "baseAsset": "AKT",
           "multiplier": 1
@@ -1365,7 +1357,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ALGOUSDT",
-          "versionId": 679,
+          "versionId": 4409,
           "symbol": "ALGOUSDT",
           "baseAsset": "ALGO",
           "multiplier": 1
@@ -1373,7 +1365,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ALGOUSDT",
-          "versionId": 39,
+          "versionId": 7738,
           "symbol": "ALGOUSDT",
           "baseAsset": "ALGO",
           "multiplier": 1
@@ -1434,7 +1426,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ALICEUSDT",
-          "versionId": 38,
+          "versionId": 7653,
           "symbol": "ALICEUSDT",
           "baseAsset": "ALICE",
           "multiplier": 1
@@ -1530,7 +1522,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ALTUSDT",
-          "versionId": 153,
+          "versionId": 7276,
           "symbol": "ALTUSDT",
           "baseAsset": "ALT",
           "multiplier": 1
@@ -1642,7 +1634,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ANKRUSDT",
-          "versionId": 84,
+          "versionId": 7676,
           "symbol": "ANKRUSDT",
           "baseAsset": "ANKR",
           "multiplier": 1
@@ -1725,7 +1717,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:APEUSDT",
-          "versionId": 45,
+          "versionId": 7658,
           "symbol": "APEUSDT",
           "baseAsset": "APE",
           "multiplier": 1
@@ -1827,7 +1819,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:API3USDT",
-          "versionId": 66,
+          "versionId": 7669,
           "symbol": "API3USDT",
           "baseAsset": "API3",
           "multiplier": 1
@@ -1863,6 +1855,39 @@
       ]
     },
     {
+      "id": "crypto:APM",
+      "asset": "APM",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:APMUSDT",
+          "versionId": 6421,
+          "symbol": "APMUSDT",
+          "baseAsset": "APM",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # APMUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=APMUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
+      ]
+    },
+    {
       "id": "crypto:APR",
       "asset": "APR",
       "status": "verified",
@@ -1879,7 +1904,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:APRUSDT",
-          "versionId": 394,
+          "versionId": 7393,
           "symbol": "APRUSDT",
           "baseAsset": "APR",
           "multiplier": 1
@@ -1992,7 +2017,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARUSDT",
-          "versionId": 35,
+          "versionId": 7652,
           "symbol": "ARUSDT",
           "baseAsset": "AR",
           "multiplier": 1
@@ -2053,7 +2078,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARBUSDT",
-          "versionId": 3147,
+          "versionId": 7739,
           "symbol": "ARBUSDT",
           "baseAsset": "ARB",
           "multiplier": 1
@@ -2150,6 +2175,39 @@
       ]
     },
     {
+      "id": "crypto:ARGUS",
+      "asset": "ARGUS",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:ARGUSUSDT",
+          "versionId": 6117,
+          "symbol": "ARGUSUSDT",
+          "baseAsset": "ARGUS",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # ARGUSUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ARGUSUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
+      ]
+    },
+    {
       "id": "crypto:ARIA",
       "asset": "ARIA",
       "status": "verified",
@@ -2210,7 +2268,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARKUSDT",
-          "versionId": 3233,
+          "versionId": 9055,
           "symbol": "ARKUSDT",
           "baseAsset": "ARK",
           "multiplier": 1
@@ -2260,7 +2318,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARKMUSDT",
-          "versionId": 133,
+          "versionId": 7691,
           "symbol": "ARKMUSDT",
           "baseAsset": "ARKM",
           "multiplier": 1
@@ -2312,7 +2370,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARPAUSDT",
-          "versionId": 105,
+          "versionId": 7679,
           "symbol": "ARPAUSDT",
           "baseAsset": "ARPA",
           "multiplier": 1
@@ -2364,7 +2422,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARXUSDT",
-          "versionId": 457,
+          "versionId": 8914,
           "symbol": "ARXUSDT",
           "baseAsset": "ARX",
           "multiplier": 1
@@ -2407,7 +2465,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ASRUSDT",
-          "versionId": 315,
+          "versionId": 7743,
           "symbol": "ASRUSDT",
           "baseAsset": "ASR",
           "multiplier": 1
@@ -2457,7 +2515,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ASTERUSDT",
-          "versionId": 2051,
+          "versionId": 7384,
           "symbol": "ASTERUSDT",
           "baseAsset": "ASTER",
           "multiplier": 1
@@ -2758,7 +2816,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AUCTIONUSDT",
-          "versionId": 284,
+          "versionId": 7349,
           "symbol": "AUCTIONUSDT",
           "baseAsset": "AUCTION",
           "multiplier": 1
@@ -2800,9 +2858,17 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:AVAUSDT",
+          "versionId": 6420,
+          "symbol": "AVAUSDT",
+          "baseAsset": "AVA",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:AVAUSDT",
-          "versionId": 251,
+          "versionId": 7329,
           "symbol": "AVAUSDT",
           "baseAsset": "AVA",
           "multiplier": 1
@@ -2832,7 +2898,9 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # AVAUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=AVAUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=AVAUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # AVAUSDT"
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # AVAUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # AVAUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=AVAUSDT"
       ]
     },
     {
@@ -2894,7 +2962,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AVAXUSDT",
-          "versionId": 24,
+          "versionId": 7647,
           "symbol": "AVAXUSDT",
           "baseAsset": "AVAX",
           "multiplier": 1
@@ -3050,7 +3118,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AWEUSDT",
-          "versionId": 322,
+          "versionId": 7369,
           "symbol": "AWEUSDT",
           "baseAsset": "AWE",
           "multiplier": 1
@@ -3154,7 +3222,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AXSUSDT",
-          "versionId": 22,
+          "versionId": 7646,
           "symbol": "AXSUSDT",
           "baseAsset": "AXS",
           "multiplier": 1
@@ -3215,7 +3283,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:AZTECUSDT",
-          "versionId": 433,
+          "versionId": 5755,
           "symbol": "AZTECUSDT",
           "baseAsset": "AZTEC",
           "multiplier": 1
@@ -3276,7 +3344,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BUSDT",
-          "versionId": 3171,
+          "versionId": 8879,
           "symbol": "BUSDT",
           "baseAsset": "B",
           "multiplier": 1
@@ -3320,7 +3388,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:B-MONEYUSDT",
-          "versionId": 4245,
+          "versionId": 6069,
           "symbol": "B-MONEYUSDT",
           "baseAsset": "B-MONEY",
           "multiplier": 1
@@ -3364,7 +3432,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:B2USDT",
-          "versionId": 314,
+          "versionId": 8876,
           "symbol": "B2USDT",
           "baseAsset": "B2",
           "multiplier": 1
@@ -3457,7 +3525,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BABYUSDT",
-          "versionId": 2043,
+          "versionId": 8872,
           "symbol": "BABYUSDT",
           "baseAsset": "BABY",
           "multiplier": 1
@@ -3510,7 +3578,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:1MBABYDOGEUSDT",
-          "versionId": 212,
+          "versionId": 7309,
           "symbol": "1MBABYDOGEUSDT",
           "baseAsset": "1MBABYDOGE",
           "multiplier": 1000000
@@ -3560,7 +3628,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BANUSDT",
-          "versionId": 242,
+          "versionId": 7325,
           "symbol": "BANUSDT",
           "baseAsset": "BAN",
           "multiplier": 1
@@ -3757,7 +3825,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BANKUSDT",
-          "versionId": 4022,
+          "versionId": 8874,
           "symbol": "BANKUSDT",
           "baseAsset": "BANK",
           "multiplier": 1
@@ -3809,7 +3877,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BARDUSDT",
-          "versionId": 371,
+          "versionId": 5743,
           "symbol": "BARDUSDT",
           "baseAsset": "BARD",
           "multiplier": 1
@@ -4061,7 +4129,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BBUSDT",
-          "versionId": 2036,
+          "versionId": 7740,
           "symbol": "BBUSDT",
           "baseAsset": "BB",
           "multiplier": 1
@@ -4113,7 +4181,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BCHUSDT",
-          "versionId": 4,
+          "versionId": 7641,
           "symbol": "BCHUSDT",
           "baseAsset": "BCH",
           "multiplier": 1
@@ -4166,7 +4234,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BEAMUSDT",
-          "versionId": 161,
+          "versionId": 7282,
           "symbol": "BEAMUSDT",
           "baseAsset": "BEAM",
           "multiplier": 1
@@ -4216,7 +4284,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BEATUSDT",
-          "versionId": 4028,
+          "versionId": 7745,
           "symbol": "BEATUSDT",
           "baseAsset": "BEAT",
           "multiplier": 1
@@ -4294,41 +4362,6 @@
       ]
     },
     {
-      "id": "crypto:BEN",
-      "asset": "BEN",
-      "status": "unsupported",
-      "reason": "no_adopted_reference_after_identity_audit",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BENUSDT",
-          "versionId": 3221,
-          "symbol": "BENUSDT",
-          "baseAsset": "BEN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "no_eligible_reference_contract",
-        "evidence": [
-          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo"
-        ],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BENUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BENUSDT",
-        "https://x.com/Aster_DEX/status/2096965860405690670",
-        "https://www.lbank.com/id/support/articles/2096804716414500864",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-        "https://fapi.binance.com/fapi/v1/exchangeInfo"
-      ]
-    },
-    {
       "id": "crypto:BERA",
       "asset": "BERA",
       "status": "verified",
@@ -4345,7 +4378,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BERAUSDT",
-          "versionId": 279,
+          "versionId": 7345,
           "symbol": "BERAUSDT",
           "baseAsset": "BERA",
           "multiplier": 1
@@ -4431,7 +4464,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BICOUSDT",
-          "versionId": 1155,
+          "versionId": 4415,
           "symbol": "BICOUSDT",
           "baseAsset": "BICO",
           "multiplier": 1
@@ -4439,7 +4472,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BICOUSDT",
-          "versionId": 184,
+          "versionId": 7295,
           "symbol": "BICOUSDT",
           "baseAsset": "BICO",
           "multiplier": 1
@@ -4483,7 +4516,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BIGTIMEUSDT",
-          "versionId": 3232,
+          "versionId": 7265,
           "symbol": "BIGTIMEUSDT",
           "baseAsset": "BIGTIME",
           "multiplier": 1
@@ -4542,7 +4575,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BILLUSDT",
-          "versionId": 2608,
+          "versionId": 8911,
           "symbol": "BILLUSDT",
           "baseAsset": "BILL",
           "multiplier": 1
@@ -4655,7 +4688,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BIRBUSDT",
-          "versionId": 429,
+          "versionId": 7705,
           "symbol": "BIRBUSDT",
           "baseAsset": "BIRB",
           "multiplier": 1
@@ -5206,7 +5239,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BRUSDT",
-          "versionId": 3613,
+          "versionId": 7359,
           "symbol": "BRUSDT",
           "baseAsset": "BR",
           "multiplier": 1
@@ -5396,7 +5429,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BROCCOLIUSDT",
-          "versionId": 283,
+          "versionId": 7348,
           "symbol": "BROCCOLIUSDT",
           "baseAsset": "BROCCOLI",
           "multiplier": 1
@@ -5696,7 +5729,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:BTWUSDT",
-          "versionId": 455,
+          "versionId": 8913,
           "symbol": "BTWUSDT",
           "baseAsset": "BTW",
           "multiplier": 1
@@ -5729,41 +5762,6 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # BTWUSDT",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BTWUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BTWUSDT"
-      ]
-    },
-    {
-      "id": "crypto:BUILD",
-      "asset": "BUILD",
-      "status": "unsupported",
-      "reason": "no_adopted_reference_after_identity_audit",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BUILDUSDT",
-          "versionId": 3439,
-          "symbol": "BUILDUSDT",
-          "baseAsset": "BUILD",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "no_eligible_reference_contract",
-        "evidence": [
-          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo"
-        ],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BUILDUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BUILDUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-        "https://fapi.binance.com/fapi/v1/exchangeInfo",
-        "https://www.bitmart.com/en-US/support/articles/7923014477723/360001026214/37247171757467",
-        "https://x.com/Aster_DEX/status/2097299961293762999"
       ]
     },
     {
@@ -5823,7 +5821,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CUSDT",
-          "versionId": 345,
+          "versionId": 8889,
           "symbol": "CUSDT",
           "baseAsset": "C",
           "multiplier": 1
@@ -5867,7 +5865,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:C98USDT",
-          "versionId": 2277,
+          "versionId": 7665,
           "symbol": "C98USDT",
           "baseAsset": "C98",
           "multiplier": 1
@@ -6055,7 +6053,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CARVUSDT",
-          "versionId": 224,
+          "versionId": 7317,
           "symbol": "CARVUSDT",
           "baseAsset": "CARV",
           "multiplier": 1
@@ -6335,7 +6333,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CELOUSDT",
-          "versionId": 2278,
+          "versionId": 7673,
           "symbol": "CELOUSDT",
           "baseAsset": "CELO",
           "multiplier": 1
@@ -6386,7 +6384,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CELRUSDT",
-          "versionId": 110,
+          "versionId": 7682,
           "symbol": "CELRUSDT",
           "baseAsset": "CELR",
           "multiplier": 1
@@ -6477,7 +6475,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CFGUSDT",
-          "versionId": 2057,
+          "versionId": 7706,
           "symbol": "CFGUSDT",
           "baseAsset": "CFG",
           "multiplier": 1
@@ -6521,7 +6519,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CFXUSDT",
-          "versionId": 690,
+          "versionId": 4410,
           "symbol": "CFXUSDT",
           "baseAsset": "CFX",
           "multiplier": 1
@@ -6739,7 +6737,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CHIPUSDT",
-          "versionId": 2315,
+          "versionId": 7409,
           "symbol": "CHIPUSDT",
           "baseAsset": "CHIP",
           "multiplier": 1
@@ -6936,7 +6934,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CLANKERUSDT",
-          "versionId": 396,
+          "versionId": 8898,
           "symbol": "CLANKERUSDT",
           "baseAsset": "CLANKER",
           "multiplier": 1
@@ -7114,7 +7112,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:COMPUSDT",
-          "versionId": 61,
+          "versionId": 8868,
           "symbol": "COMPUSDT",
           "baseAsset": "COMP",
           "multiplier": 1
@@ -7165,7 +7163,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:COOKIEUSDT",
-          "versionId": 3612,
+          "versionId": 7338,
           "symbol": "COOKIEUSDT",
           "baseAsset": "COOKIE",
           "multiplier": 1
@@ -7394,7 +7392,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CROSSUSDT",
-          "versionId": 341,
+          "versionId": 8887,
           "symbol": "CROSSUSDT",
           "baseAsset": "CROSS",
           "multiplier": 1
@@ -7486,6 +7484,59 @@
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # CRV",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CRVUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=CRVUSDT"
+      ]
+    },
+    {
+      "id": "crypto:CT",
+      "asset": "CT",
+      "status": "verified",
+      "reason": null,
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:CTUSDT",
+          "versionId": 9307,
+          "symbol": "CTUSDT",
+          "baseAsset": "CT",
+          "multiplier": 1
+        },
+        {
+          "venue": "bitget",
+          "instrumentId": "bitget:CTUSDT",
+          "versionId": 9186,
+          "symbol": "CTUSDT",
+          "baseAsset": "CT",
+          "multiplier": 1
+        }
+      ],
+      "reference": {
+        "provider": "bybit",
+        "symbol": "CTUSDT",
+        "baseAsset": "CT",
+        "multiplier": 1,
+        "quoteAsset": "USDT",
+        "settleAsset": "USDT",
+        "contractType": "linear_perpetual",
+        "revision": "14764b052ff0d9765ac4"
+      },
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "normal_widget_symbol_unavailable",
+        "evidence": [
+          "Normal public advanced Widget explicitly displays このシンボルは存在しません for BYBIT:CTUSDT.P; see widgetObservations. Ranking public reference remains qualified."
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # CTUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=CTUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo",
+        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # CTUSDT",
+        "https://api.bitget.com/api/v3/market/index-components?symbol=CTUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=CTUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # CTUSDT"
       ]
     },
     {
@@ -7589,7 +7640,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CTSIUSDT",
-          "versionId": 2072,
+          "versionId": 7680,
           "symbol": "CTSIUSDT",
           "baseAsset": "CTSI",
           "multiplier": 1
@@ -7630,7 +7681,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CVCUSDT",
-          "versionId": 171,
+          "versionId": 7284,
           "symbol": "CVCUSDT",
           "baseAsset": "CVC",
           "multiplier": 1
@@ -7672,7 +7723,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CVXUSDT",
-          "versionId": 134,
+          "versionId": 7692,
           "symbol": "CVXUSDT",
           "baseAsset": "CVX",
           "multiplier": 1
@@ -7774,7 +7825,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:CYSUSDT",
-          "versionId": 3616,
+          "versionId": 7398,
           "symbol": "CYSUSDT",
           "baseAsset": "CYS",
           "multiplier": 1
@@ -7920,7 +7971,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DEEPUSDT",
-          "versionId": 225,
+          "versionId": 7318,
           "symbol": "DEEPUSDT",
           "baseAsset": "DEEP",
           "multiplier": 1
@@ -8004,7 +8055,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DEXEUSDT",
-          "versionId": 260,
+          "versionId": 7335,
           "symbol": "DEXEUSDT",
           "baseAsset": "DEXE",
           "multiplier": 1
@@ -8048,7 +8099,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DGAIUSDT",
-          "versionId": 3186,
+          "versionId": 7417,
           "symbol": "DGAIUSDT",
           "baseAsset": "DGAI",
           "multiplier": 1
@@ -8200,7 +8251,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DOGSUSDT",
-          "versionId": 205,
+          "versionId": 7305,
           "symbol": "DOGSUSDT",
           "baseAsset": "DOGS",
           "multiplier": 1
@@ -8303,7 +8354,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DOODUSDT",
-          "versionId": 319,
+          "versionId": 5727,
           "symbol": "DOODUSDT",
           "baseAsset": "DOOD",
           "multiplier": 1
@@ -8459,7 +8510,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DRIFTUSDT",
-          "versionId": 236,
+          "versionId": 7698,
           "symbol": "DRIFTUSDT",
           "baseAsset": "DRIFT",
           "multiplier": 1
@@ -8490,6 +8541,39 @@
         "https://api.bitget.com/api/v3/market/index-components?symbol=DRIFTUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=DRIFTUSDT",
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # DRIFTUSDT"
+      ]
+    },
+    {
+      "id": "crypto:DRV",
+      "asset": "DRV",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:DRVUSDT",
+          "versionId": 6444,
+          "symbol": "DRVUSDT",
+          "baseAsset": "DRV",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # DRVUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=DRVUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
       ]
     },
     {
@@ -8612,7 +8696,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:DYMUSDT",
-          "versionId": 158,
+          "versionId": 7280,
           "symbol": "DYMUSDT",
           "baseAsset": "DYM",
           "multiplier": 1
@@ -8715,7 +8799,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:EDGEUSDT",
-          "versionId": 3181,
+          "versionId": 7707,
           "symbol": "EDGEUSDT",
           "baseAsset": "EDGE",
           "multiplier": 1
@@ -8912,7 +8996,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ELSAUSDT",
-          "versionId": 426,
+          "versionId": 8908,
           "symbol": "ELSAUSDT",
           "baseAsset": "ELSA",
           "multiplier": 1
@@ -9025,7 +9109,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ENJUSDT",
-          "versionId": 41,
+          "versionId": 7654,
           "symbol": "ENJUSDT",
           "baseAsset": "ENJ",
           "multiplier": 1
@@ -9182,7 +9266,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:EPICUSDT",
-          "versionId": 289,
+          "versionId": 7353,
           "symbol": "EPICUSDT",
           "baseAsset": "EPIC",
           "multiplier": 1
@@ -9284,7 +9368,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ESPUSDT",
-          "versionId": 432,
+          "versionId": 7406,
           "symbol": "ESPUSDT",
           "baseAsset": "ESP",
           "multiplier": 1
@@ -9500,7 +9584,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ETHFIUSDT",
-          "versionId": 165,
+          "versionId": 8870,
           "symbol": "ETHFIUSDT",
           "baseAsset": "ETHFI",
           "multiplier": 1
@@ -9553,7 +9637,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ETHWUSDT",
-          "versionId": 221,
+          "versionId": 7314,
           "symbol": "ETHWUSDT",
           "baseAsset": "ETHW",
           "multiplier": 1
@@ -9602,7 +9686,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:EULUSDT",
-          "versionId": 388,
+          "versionId": 7390,
           "symbol": "EULUSDT",
           "baseAsset": "EUL",
           "multiplier": 1
@@ -9696,9 +9780,17 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:FUSDT",
+          "versionId": 6443,
+          "symbol": "FUSDT",
+          "baseAsset": "F",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:FUSDT",
-          "versionId": 335,
+          "versionId": 8885,
           "symbol": "FUSDT",
           "baseAsset": "F",
           "multiplier": 1
@@ -9728,7 +9820,9 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # FUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=FUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=FUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # FUSDT"
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # FUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # FUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=FUSDT"
       ]
     },
     {
@@ -9748,7 +9842,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FARTCOINUSDT",
-          "versionId": 4020,
+          "versionId": 7741,
           "symbol": "FARTCOINUSDT",
           "baseAsset": "FARTCOIN",
           "multiplier": 1
@@ -9869,7 +9963,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FFUSDT",
-          "versionId": 3176,
+          "versionId": 7388,
           "symbol": "FFUSDT",
           "baseAsset": "FF",
           "multiplier": 1
@@ -9963,7 +10057,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FIDAUSDT",
-          "versionId": 213,
+          "versionId": 7310,
           "symbol": "FIDAUSDT",
           "baseAsset": "FIDA",
           "multiplier": 1
@@ -10015,7 +10109,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FIGHTUSDT",
-          "versionId": 428,
+          "versionId": 7405,
           "symbol": "FIGHTUSDT",
           "baseAsset": "FIGHT",
           "multiplier": 1
@@ -10067,7 +10161,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FILUSDT",
-          "versionId": 17,
+          "versionId": 7644,
           "symbol": "FILUSDT",
           "baseAsset": "FIL",
           "multiplier": 1
@@ -10128,7 +10222,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FLOCKUSDT",
-          "versionId": 3166,
+          "versionId": 7339,
           "symbol": "FLOCKUSDT",
           "baseAsset": "FLOCK",
           "multiplier": 1
@@ -10180,7 +10274,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FLOKIUSDT",
-          "versionId": 111,
+          "versionId": 7683,
           "symbol": "FLOKIUSDT",
           "baseAsset": "FLOKI",
           "multiplier": 1
@@ -10308,7 +10402,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FLUIDUSDT",
-          "versionId": 375,
+          "versionId": 7386,
           "symbol": "FLUIDUSDT",
           "baseAsset": "FLUID",
           "multiplier": 1
@@ -10358,7 +10452,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FLUXUSDT",
-          "versionId": 208,
+          "versionId": 7308,
           "symbol": "FLUXUSDT",
           "baseAsset": "FLUX",
           "multiplier": 1
@@ -10410,7 +10504,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FOGOUSDT",
-          "versionId": 420,
+          "versionId": 8906,
           "symbol": "FOGOUSDT",
           "baseAsset": "FOGO",
           "multiplier": 1
@@ -10556,7 +10650,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:FORMUSDT",
-          "versionId": 3238,
+          "versionId": 7357,
           "symbol": "FORMUSDT",
           "baseAsset": "FORM",
           "multiplier": 1
@@ -10685,7 +10779,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GUSDT",
-          "versionId": 959,
+          "versionId": 6446,
           "symbol": "GUSDT",
           "baseAsset": "G",
           "multiplier": 1
@@ -10693,7 +10787,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GUSDT",
-          "versionId": 202,
+          "versionId": 8034,
           "symbol": "GUSDT",
           "baseAsset": "G",
           "multiplier": 1
@@ -10744,7 +10838,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GALAUSDT",
-          "versionId": 28,
+          "versionId": 8865,
           "symbol": "GALAUSDT",
           "baseAsset": "GALA",
           "multiplier": 1
@@ -10797,7 +10891,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GASUSDT",
-          "versionId": 195,
+          "versionId": 7299,
           "symbol": "GASUSDT",
           "baseAsset": "GAS",
           "multiplier": 1
@@ -10856,7 +10950,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GENIUSUSDT",
-          "versionId": 2060,
+          "versionId": 8909,
           "symbol": "GENIUSUSDT",
           "baseAsset": "GENIUS",
           "multiplier": 1
@@ -10908,7 +11002,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GIGGLEUSDT",
-          "versionId": 390,
+          "versionId": 7391,
           "symbol": "GIGGLEUSDT",
           "baseAsset": "GIGGLE",
           "multiplier": 1
@@ -10952,7 +11046,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GLMUSDT",
-          "versionId": 178,
+          "versionId": 7290,
           "symbol": "GLMUSDT",
           "baseAsset": "GLM",
           "multiplier": 1
@@ -11002,7 +11096,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GMTUSDT",
-          "versionId": 42,
+          "versionId": 8866,
           "symbol": "GMTUSDT",
           "baseAsset": "GMT",
           "multiplier": 1
@@ -11055,7 +11149,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GMXUSDT",
-          "versionId": 83,
+          "versionId": 7675,
           "symbol": "GMXUSDT",
           "baseAsset": "GMX",
           "multiplier": 1
@@ -11155,7 +11249,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GPSUSDT",
-          "versionId": 285,
+          "versionId": 7350,
           "symbol": "GPSUSDT",
           "baseAsset": "GPS",
           "multiplier": 1
@@ -11268,7 +11362,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GRASSUSDT",
-          "versionId": 229,
+          "versionId": 7320,
           "symbol": "GRASSUSDT",
           "baseAsset": "GRASS",
           "multiplier": 1
@@ -11329,7 +11423,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GRIFFAINUSDT",
-          "versionId": 262,
+          "versionId": 7337,
           "symbol": "GRIFFAINUSDT",
           "baseAsset": "GRIFFAIN",
           "multiplier": 1
@@ -11382,7 +11476,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GRTUSDT",
-          "versionId": 69,
+          "versionId": 7671,
           "symbol": "GRTUSDT",
           "baseAsset": "GRT",
           "multiplier": 1
@@ -11432,7 +11526,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GRVTUSDT",
-          "versionId": 2062,
+          "versionId": 7414,
           "symbol": "GRVTUSDT",
           "baseAsset": "GRVT",
           "multiplier": 1
@@ -11467,6 +11561,39 @@
       ]
     },
     {
+      "id": "crypto:GSTOCK",
+      "asset": "GSTOCK",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:GSTOCKUSDT",
+          "versionId": 6500,
+          "symbol": "GSTOCKUSDT",
+          "baseAsset": "GSTOCK",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # GSTOCKUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=GSTOCKUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
+      ]
+    },
+    {
       "id": "crypto:GTC",
       "asset": "GTC",
       "status": "verified",
@@ -11475,7 +11602,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GTCUSDT",
-          "versionId": 1034,
+          "versionId": 4412,
           "symbol": "GTCUSDT",
           "baseAsset": "GTC",
           "multiplier": 1
@@ -11563,7 +11690,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GUNUSDT",
-          "versionId": 3198,
+          "versionId": 8871,
           "symbol": "GUNUSDT",
           "baseAsset": "GUN",
           "multiplier": 1
@@ -11615,7 +11742,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:GWEIUSDT",
-          "versionId": 423,
+          "versionId": 5752,
           "symbol": "GWEIUSDT",
           "baseAsset": "GWEI",
           "multiplier": 1
@@ -11667,7 +11794,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:HUSDT",
-          "versionId": 337,
+          "versionId": 8886,
           "symbol": "HUSDT",
           "baseAsset": "H",
           "multiplier": 1
@@ -11711,7 +11838,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:HAEDALUSDT",
-          "versionId": 312,
+          "versionId": 5724,
           "symbol": "HAEDALUSDT",
           "baseAsset": "HAEDAL",
           "multiplier": 1
@@ -11949,7 +12076,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:HIVEUSDT",
-          "versionId": 259,
+          "versionId": 7334,
           "symbol": "HIVEUSDT",
           "baseAsset": "HIVE",
           "multiplier": 1
@@ -12102,7 +12229,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:HOMEUSDT",
-          "versionId": 4023,
+          "versionId": 7373,
           "symbol": "HOMEUSDT",
           "baseAsset": "HOME",
           "multiplier": 1
@@ -12195,7 +12322,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:HUMAUSDT",
-          "versionId": 325,
+          "versionId": 8880,
           "symbol": "HUMAUSDT",
           "baseAsset": "HUMA",
           "multiplier": 1
@@ -12247,7 +12374,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:HYPEUSDT",
-          "versionId": 3165,
+          "versionId": 7331,
           "symbol": "HYPEUSDT",
           "baseAsset": "HYPE",
           "multiplier": 1
@@ -12361,7 +12488,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ICNTUSDT",
-          "versionId": 339,
+          "versionId": 5736,
           "symbol": "ICNTUSDT",
           "baseAsset": "ICNT",
           "multiplier": 1
@@ -12411,7 +12538,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ICPUSDT",
-          "versionId": 15,
+          "versionId": 8864,
           "symbol": "ICPUSDT",
           "baseAsset": "ICP",
           "multiplier": 1
@@ -12524,7 +12651,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:IDOLUSDT",
-          "versionId": 3614,
+          "versionId": 8882,
           "symbol": "IDOLUSDT",
           "baseAsset": "IDOL",
           "multiplier": 1
@@ -12567,7 +12694,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ILVUSDT",
-          "versionId": 353,
+          "versionId": 7380,
           "symbol": "ILVUSDT",
           "baseAsset": "ILV",
           "multiplier": 1
@@ -12720,7 +12847,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:INITUSDT",
-          "versionId": 305,
+          "versionId": 8873,
           "symbol": "INITUSDT",
           "baseAsset": "INIT",
           "multiplier": 1
@@ -12781,7 +12908,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:INJUSDT",
-          "versionId": 3230,
+          "versionId": 7677,
           "symbol": "INJUSDT",
           "baseAsset": "INJ",
           "multiplier": 1
@@ -12842,7 +12969,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:INXUSDT",
-          "versionId": 2055,
+          "versionId": 5754,
           "symbol": "INXUSDT",
           "baseAsset": "INX",
           "multiplier": 1
@@ -12894,7 +13021,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:IOUSDT",
-          "versionId": 185,
+          "versionId": 7296,
           "symbol": "IOUSDT",
           "baseAsset": "IO",
           "multiplier": 1
@@ -12947,7 +13074,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:IOSTUSDT",
-          "versionId": 4015,
+          "versionId": 7657,
           "symbol": "IOSTUSDT",
           "baseAsset": "IOST",
           "multiplier": 1
@@ -13048,7 +13175,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:IOTXUSDT",
-          "versionId": 115,
+          "versionId": 7686,
           "symbol": "IOTXUSDT",
           "baseAsset": "IOTX",
           "multiplier": 1
@@ -13100,7 +13227,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:IRYSUSDT",
-          "versionId": 408,
+          "versionId": 7397,
           "symbol": "IRYSUSDT",
           "baseAsset": "IRYS",
           "multiplier": 1
@@ -13381,7 +13508,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:JTOUSDT",
-          "versionId": 2283,
+          "versionId": 7271,
           "symbol": "JTOUSDT",
           "baseAsset": "JTO",
           "multiplier": 1
@@ -13545,7 +13672,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KAITOUSDT",
-          "versionId": 287,
+          "versionId": 7351,
           "symbol": "KAITOUSDT",
           "baseAsset": "KAITO",
           "multiplier": 1
@@ -13667,7 +13794,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KATUSDT",
-          "versionId": 440,
+          "versionId": 5757,
           "symbol": "KATUSDT",
           "baseAsset": "KAT",
           "multiplier": 1
@@ -13711,7 +13838,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KAVAUSDT",
-          "versionId": 3607,
+          "versionId": 7663,
           "symbol": "KAVAUSDT",
           "baseAsset": "KAVA",
           "multiplier": 1
@@ -13753,7 +13880,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KERNELUSDT",
-          "versionId": 303,
+          "versionId": 7363,
           "symbol": "KERNELUSDT",
           "baseAsset": "KERNEL",
           "multiplier": 1
@@ -13899,7 +14026,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KMNOUSDT",
-          "versionId": 222,
+          "versionId": 7315,
           "symbol": "KMNOUSDT",
           "baseAsset": "KMNO",
           "multiplier": 1
@@ -13949,7 +14076,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KNCUSDT",
-          "versionId": 47,
+          "versionId": 7660,
           "symbol": "KNCUSDT",
           "baseAsset": "KNC",
           "multiplier": 1
@@ -14033,7 +14160,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:KSMUSDT",
-          "versionId": 34,
+          "versionId": 7651,
           "symbol": "KSMUSDT",
           "baseAsset": "KSM",
           "multiplier": 1
@@ -14083,7 +14210,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:LAUSDT",
-          "versionId": 2602,
+          "versionId": 7372,
           "symbol": "LAUSDT",
           "baseAsset": "LA",
           "multiplier": 1
@@ -14135,7 +14262,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:LABUSDT",
-          "versionId": 392,
+          "versionId": 7744,
           "symbol": "LABUSDT",
           "baseAsset": "LAB",
           "multiplier": 1
@@ -14179,7 +14306,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LAPTOPUSDT",
-          "versionId": 4345,
+          "versionId": 6103,
           "symbol": "LAPTOPUSDT",
           "baseAsset": "LAPTOP",
           "multiplier": 1
@@ -14220,7 +14347,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:LAYERUSDT",
-          "versionId": 280,
+          "versionId": 7346,
           "symbol": "LAYERUSDT",
           "baseAsset": "LAYER",
           "multiplier": 1
@@ -14383,7 +14510,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:LINEAUSDT",
-          "versionId": 360,
+          "versionId": 7382,
           "symbol": "LINEAUSDT",
           "baseAsset": "LINEA",
           "multiplier": 1
@@ -14617,7 +14744,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:LPTUSDT",
-          "versionId": 137,
+          "versionId": 7694,
           "symbol": "LPTUSDT",
           "baseAsset": "LPT",
           "multiplier": 1
@@ -14701,9 +14828,17 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:LSKUSDT",
+          "versionId": 6105,
+          "symbol": "LSKUSDT",
+          "baseAsset": "LSK",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:LSKUSDT",
-          "versionId": 177,
+          "versionId": 8056,
           "symbol": "LSKUSDT",
           "baseAsset": "LSK",
           "multiplier": 1
@@ -14733,7 +14868,9 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # LSKUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=LSKUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=LSKUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # LSKUSDT"
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # LSKUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # LSKUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=LSKUSDT"
       ]
     },
     {
@@ -14866,7 +15003,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:LUNAUSDT",
-          "versionId": 63,
+          "versionId": 7667,
           "symbol": "LUNAUSDT",
           "baseAsset": "LUNA",
           "multiplier": 1
@@ -15125,7 +15262,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MAGMAUSDT",
-          "versionId": 3180,
+          "versionId": 8904,
           "symbol": "MAGMAUSDT",
           "baseAsset": "MAGMA",
           "multiplier": 1
@@ -15169,7 +15306,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MANAUSDT",
-          "versionId": 662,
+          "versionId": 4407,
           "symbol": "MANAUSDT",
           "baseAsset": "MANA",
           "multiplier": 1
@@ -15229,7 +15366,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MANTAUSDT",
-          "versionId": 152,
+          "versionId": 7275,
           "symbol": "MANTAUSDT",
           "baseAsset": "MANTA",
           "multiplier": 1
@@ -15341,7 +15478,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MARSCOINUSDT",
-          "versionId": 3243,
+          "versionId": 7416,
           "symbol": "MARSCOINUSDT",
           "baseAsset": "MARSCOIN",
           "multiplier": 1
@@ -15384,7 +15521,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MASKUSDT",
-          "versionId": 67,
+          "versionId": 7670,
           "symbol": "MASKUSDT",
           "baseAsset": "MASK",
           "multiplier": 1
@@ -15512,7 +15649,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MEUSDT",
-          "versionId": 249,
+          "versionId": 7328,
           "symbol": "MEUSDT",
           "baseAsset": "ME",
           "multiplier": 1
@@ -15573,7 +15710,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MEGAUSDT",
-          "versionId": 395,
+          "versionId": 7394,
           "symbol": "MEGAUSDT",
           "baseAsset": "MEGA",
           "multiplier": 1
@@ -15687,7 +15824,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MEMEUSDT",
-          "versionId": 145,
+          "versionId": 7269,
           "symbol": "MEMEUSDT",
           "baseAsset": "MEME",
           "multiplier": 1
@@ -15739,7 +15876,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MEMESTOCKUSDT",
-          "versionId": 3192,
+          "versionId": 9049,
           "symbol": "MEMESTOCKUSDT",
           "baseAsset": "MEMESTOCK",
           "multiplier": 1
@@ -15821,7 +15958,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MERLUSDT",
-          "versionId": 3162,
+          "versionId": 7323,
           "symbol": "MERLUSDT",
           "baseAsset": "MERL",
           "multiplier": 1
@@ -15882,7 +16019,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:METUSDT",
-          "versionId": 386,
+          "versionId": 7389,
           "symbol": "METUSDT",
           "baseAsset": "MET",
           "multiplier": 1
@@ -15943,7 +16080,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:METISUSDT",
-          "versionId": 163,
+          "versionId": 7283,
           "symbol": "METISUSDT",
           "baseAsset": "METIS",
           "multiplier": 1
@@ -15987,7 +16124,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MEWUSDT",
-          "versionId": 190,
+          "versionId": 7297,
           "symbol": "MEWUSDT",
           "baseAsset": "MEW",
           "multiplier": 1
@@ -16029,7 +16166,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MINAUSDT",
-          "versionId": 4016,
+          "versionId": 7674,
           "symbol": "MINAUSDT",
           "baseAsset": "MINA",
           "multiplier": 1
@@ -16172,7 +16309,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MMTUSDT",
-          "versionId": 399,
+          "versionId": 8899,
           "symbol": "MMTUSDT",
           "baseAsset": "MMT",
           "multiplier": 1
@@ -16257,7 +16394,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MOCAUSDT",
-          "versionId": 194,
+          "versionId": 7298,
           "symbol": "MOCAUSDT",
           "baseAsset": "MOCA",
           "multiplier": 1
@@ -16410,7 +16547,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MOODENGUSDT",
-          "versionId": 217,
+          "versionId": 7312,
           "symbol": "MOODENGUSDT",
           "baseAsset": "MOODENG",
           "multiplier": 1
@@ -16471,7 +16608,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MORPHOUSDT",
-          "versionId": 243,
+          "versionId": 7326,
           "symbol": "MORPHOUSDT",
           "baseAsset": "MORPHO",
           "multiplier": 1
@@ -16532,7 +16669,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MOVEUSDT",
-          "versionId": 3234,
+          "versionId": 7327,
           "symbol": "MOVEUSDT",
           "baseAsset": "MOVE",
           "multiplier": 1
@@ -16593,7 +16730,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MOVRUSDT",
-          "versionId": 1715,
+          "versionId": 7696,
           "symbol": "MOVRUSDT",
           "baseAsset": "MOVR",
           "multiplier": 1
@@ -16635,9 +16772,17 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:MTLUSDT",
+          "versionId": 5024,
+          "symbol": "MTLUSDT",
+          "baseAsset": "MTL",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:MTLUSDT",
-          "versionId": 55,
+          "versionId": 7664,
           "symbol": "MTLUSDT",
           "baseAsset": "MTL",
           "multiplier": 1
@@ -16667,7 +16812,9 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # MTLUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=MTLUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=MTLUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # MTLUSDT"
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # MTLUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # MTLUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=MTLUSDT"
       ]
     },
     {
@@ -16687,7 +16834,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MUBARAKUSDT",
-          "versionId": 2599,
+          "versionId": 7354,
           "symbol": "MUBARAKUSDT",
           "baseAsset": "MUBARAK",
           "multiplier": 1
@@ -16739,7 +16886,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:MYXUSDT",
-          "versionId": 316,
+          "versionId": 8877,
           "symbol": "MYXUSDT",
           "baseAsset": "MYX",
           "multiplier": 1
@@ -16791,7 +16938,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NAORISUSDT",
-          "versionId": 3173,
+          "versionId": 8890,
           "symbol": "NAORISUSDT",
           "baseAsset": "NAORIS",
           "multiplier": 1
@@ -16843,7 +16990,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NEARUSDT",
-          "versionId": 32,
+          "versionId": 7650,
           "symbol": "NEARUSDT",
           "baseAsset": "NEAR",
           "multiplier": 1
@@ -16904,7 +17051,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NEIROCTOUSDT",
-          "versionId": 220,
+          "versionId": 7313,
           "symbol": "NEIROCTOUSDT",
           "baseAsset": "NEIROCTO",
           "multiplier": 1
@@ -17051,7 +17198,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NEWTUSDT",
-          "versionId": 336,
+          "versionId": 7375,
           "symbol": "NEWTUSDT",
           "baseAsset": "NEWT",
           "multiplier": 1
@@ -17101,7 +17248,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:10000NEXUSDT",
-          "versionId": 4032,
+          "versionId": 7709,
           "symbol": "10000NEXUSDT",
           "baseAsset": "10000NEX",
           "multiplier": null
@@ -17155,7 +17302,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NIGHTUSDT",
-          "versionId": 411,
+          "versionId": 8903,
           "symbol": "NIGHTUSDT",
           "baseAsset": "NIGHT",
           "multiplier": 1
@@ -17207,7 +17354,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NILUSDT",
-          "versionId": 297,
+          "versionId": 7360,
           "symbol": "NILUSDT",
           "baseAsset": "NIL",
           "multiplier": 1
@@ -17260,7 +17407,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NMRUSDT",
-          "versionId": 291,
+          "versionId": 7355,
           "symbol": "NMRUSDT",
           "baseAsset": "NMR",
           "multiplier": 1
@@ -17352,7 +17499,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:NOTUSDT",
-          "versionId": 183,
+          "versionId": 7294,
           "symbol": "NOTUSDT",
           "baseAsset": "NOT",
           "multiplier": 1
@@ -17741,9 +17888,17 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:ONEUSDT",
+          "versionId": 6107,
+          "symbol": "ONEUSDT",
+          "baseAsset": "ONE",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:ONEUSDT",
-          "versionId": 73,
+          "versionId": 8033,
           "symbol": "ONEUSDT",
           "baseAsset": "ONE",
           "multiplier": 1
@@ -17772,7 +17927,9 @@
         "TradingView public Widget catalog identity: crypto/XTVCONE",
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # ONEUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=ONEUSDT",
-        "https://fapi.binance.com/fapi/v1/exchangeInfo # ONEUSDT"
+        "https://fapi.binance.com/fapi/v1/exchangeInfo # ONEUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # ONEUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ONEUSDT"
       ]
     },
     {
@@ -17784,7 +17941,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ONGUSDT",
-          "versionId": 1172,
+          "versionId": 9159,
           "symbol": "ONGUSDT",
           "baseAsset": "ONG",
           "multiplier": 1
@@ -17792,7 +17949,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ONGUSDT",
-          "versionId": 4017,
+          "versionId": 7288,
           "symbol": "ONGUSDT",
           "baseAsset": "ONG",
           "multiplier": 1
@@ -17844,7 +18001,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ONTUSDT",
-          "versionId": 3148,
+          "versionId": 7678,
           "symbol": "ONTUSDT",
           "baseAsset": "ONT",
           "multiplier": 1
@@ -17957,7 +18114,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:OPENUSDT",
-          "versionId": 363,
+          "versionId": 5741,
           "symbol": "OPENUSDT",
           "baseAsset": "OPEN",
           "multiplier": 1
@@ -18009,7 +18166,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:OPGUSDT",
-          "versionId": 446,
+          "versionId": 8910,
           "symbol": "OPGUSDT",
           "baseAsset": "OPG",
           "multiplier": 1
@@ -18157,7 +18314,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ORDERUSDT",
-          "versionId": 206,
+          "versionId": 7306,
           "symbol": "ORDERUSDT",
           "baseAsset": "ORDER",
           "multiplier": 1
@@ -18207,7 +18364,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ORDIUSDT",
-          "versionId": 122,
+          "versionId": 7689,
           "symbol": "ORDIUSDT",
           "baseAsset": "ORDI",
           "multiplier": 1
@@ -18249,6 +18406,39 @@
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # ORDI",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ORDIUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ORDIUSDT"
+      ]
+    },
+    {
+      "id": "crypto:PAID",
+      "asset": "PAID",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:PAIDUSDT",
+          "versionId": 8310,
+          "symbol": "PAIDUSDT",
+          "baseAsset": "PAID",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # PAIDUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PAIDUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
       ]
     },
     {
@@ -18502,39 +18692,6 @@
       ]
     },
     {
-      "id": "crypto:PENGUIN",
-      "asset": "PENGUIN",
-      "status": "unsupported",
-      "reason": "no_adopted_reference_after_identity_audit",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:PENGUINUSDT",
-          "versionId": 895,
-          "symbol": "PENGUINUSDT",
-          "baseAsset": "PENGUIN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "no_eligible_reference_contract",
-        "evidence": [
-          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo"
-        ],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PENGUINUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PENGUINUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-        "https://fapi.binance.com/fapi/v1/exchangeInfo"
-      ]
-    },
-    {
       "id": "crypto:PEOPLE",
       "asset": "PEOPLE",
       "status": "verified",
@@ -18543,7 +18700,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PEOPLEUSDT",
-          "versionId": 1449,
+          "versionId": 4408,
           "symbol": "PEOPLEUSDT",
           "baseAsset": "PEOPLE",
           "multiplier": 1
@@ -18612,7 +18769,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PEPEUSDT",
-          "versionId": 114,
+          "versionId": 7685,
           "symbol": "PEPEUSDT",
           "baseAsset": "PEPE",
           "multiplier": 1
@@ -18674,7 +18831,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PHAUSDT",
-          "versionId": 3611,
+          "versionId": 7336,
           "symbol": "PHAUSDT",
           "baseAsset": "PHA",
           "multiplier": 1
@@ -18773,7 +18930,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PIUSDT",
-          "versionId": 286,
+          "versionId": 7742,
           "symbol": "PIUSDT",
           "baseAsset": "PI",
           "multiplier": 1
@@ -18814,7 +18971,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PIEVERSEUSDT",
-          "versionId": 407,
+          "versionId": 8901,
           "symbol": "PIEVERSEUSDT",
           "baseAsset": "PIEVERSE",
           "multiplier": 1
@@ -18918,7 +19075,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PIXELUSDT",
-          "versionId": 157,
+          "versionId": 7279,
           "symbol": "PIXELUSDT",
           "baseAsset": "PIXEL",
           "multiplier": 1
@@ -19064,7 +19221,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PNUTUSDT",
-          "versionId": 237,
+          "versionId": 7322,
           "symbol": "PNUTUSDT",
           "baseAsset": "PNUT",
           "multiplier": 1
@@ -19186,7 +19343,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:POLYXUSDT",
-          "versionId": 143,
+          "versionId": 7267,
           "symbol": "POLYXUSDT",
           "baseAsset": "POLYX",
           "multiplier": 1
@@ -19247,7 +19404,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PONSUSDT",
-          "versionId": 4034,
+          "versionId": 7415,
           "symbol": "PONSUSDT",
           "baseAsset": "PONS",
           "multiplier": 1
@@ -19300,7 +19457,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:POPCATUSDT",
-          "versionId": 197,
+          "versionId": 7300,
           "symbol": "POPCATUSDT",
           "baseAsset": "POPCAT",
           "multiplier": 1
@@ -19401,7 +19558,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:POWERUSDT",
-          "versionId": 409,
+          "versionId": 8902,
           "symbol": "POWERUSDT",
           "baseAsset": "POWER",
           "multiplier": 1
@@ -19443,9 +19600,17 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:POWRUSDT",
+          "versionId": 6106,
+          "symbol": "POWRUSDT",
+          "baseAsset": "POWR",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:POWRUSDT",
-          "versionId": 2039,
+          "versionId": 7316,
           "symbol": "POWRUSDT",
           "baseAsset": "POWR",
           "multiplier": 1
@@ -19475,7 +19640,9 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # POWRUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=POWRUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=POWRUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # POWRUSDT"
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # POWRUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # POWRUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=POWRUSDT"
       ]
     },
     {
@@ -19547,7 +19714,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PROMUSDT",
-          "versionId": 3167,
+          "versionId": 7341,
           "symbol": "PROMUSDT",
           "baseAsset": "PROM",
           "multiplier": 1
@@ -19640,7 +19807,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PROVEUSDT",
-          "versionId": 2049,
+          "versionId": 7379,
           "symbol": "PROVEUSDT",
           "baseAsset": "PROVE",
           "multiplier": 1
@@ -19871,7 +20038,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PUNDIXUSDT",
-          "versionId": 2044,
+          "versionId": 5725,
           "symbol": "PUNDIXUSDT",
           "baseAsset": "PUNDIX",
           "multiplier": 1
@@ -19953,7 +20120,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:PYTHUSDT",
-          "versionId": 3156,
+          "versionId": 7270,
           "symbol": "PYTHUSDT",
           "baseAsset": "PYTH",
           "multiplier": 1
@@ -20014,7 +20181,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:QUSDT",
-          "versionId": 361,
+          "versionId": 8892,
           "symbol": "QUSDT",
           "baseAsset": "Q",
           "multiplier": 1
@@ -20056,6 +20223,14 @@
       "reason": null,
       "originals": [
         {
+          "venue": "aster",
+          "instrumentId": "aster:QNTUSDT",
+          "versionId": 8582,
+          "symbol": "QNTUSDT",
+          "baseAsset": "QNT",
+          "multiplier": 1
+        },
+        {
           "venue": "bitget",
           "instrumentId": "bitget:QNTUSDT",
           "versionId": 126,
@@ -20088,7 +20263,9 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # QNTUSDT",
         "https://api.bitget.com/api/v3/market/index-components?symbol=QNTUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=QNTUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # QNTUSDT"
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # QNTUSDT",
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # QNTUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=QNTUSDT"
       ]
     },
     {
@@ -20255,7 +20432,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:RAVEUSDT",
-          "versionId": 4029,
+          "versionId": 7703,
           "symbol": "RAVEUSDT",
           "baseAsset": "RAVE",
           "multiplier": 1
@@ -20299,7 +20476,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:RAYUSDT",
-          "versionId": 3160,
+          "versionId": 7286,
           "symbol": "RAYUSDT",
           "baseAsset": "RAY",
           "multiplier": 1
@@ -20349,7 +20526,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:REUSDT",
-          "versionId": 456,
+          "versionId": 7412,
           "symbol": "REUSDT",
           "baseAsset": "RE",
           "multiplier": 1
@@ -20400,7 +20577,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:RECALLUSDT",
-          "versionId": 4027,
+          "versionId": 8897,
           "symbol": "RECALLUSDT",
           "baseAsset": "RECALL",
           "multiplier": 1
@@ -20452,7 +20629,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:REDUSDT",
-          "versionId": 288,
+          "versionId": 7352,
           "symbol": "REDUSDT",
           "baseAsset": "RED",
           "multiplier": 1
@@ -20626,7 +20803,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:REZUSDT",
-          "versionId": 179,
+          "versionId": 7291,
           "symbol": "REZUSDT",
           "baseAsset": "REZ",
           "multiplier": 1
@@ -20727,7 +20904,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:RIVERUSDT",
-          "versionId": 3204,
+          "versionId": 7392,
           "symbol": "RIVERUSDT",
           "baseAsset": "RIVER",
           "multiplier": 1
@@ -20779,7 +20956,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ROBOUSDT",
-          "versionId": 4030,
+          "versionId": 7749,
           "symbol": "ROBOUSDT",
           "baseAsset": "ROBO",
           "multiplier": 1
@@ -20873,7 +21050,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ROSEUSDT",
-          "versionId": 51,
+          "versionId": 7661,
           "symbol": "ROSEUSDT",
           "baseAsset": "ROSE",
           "multiplier": 1
@@ -21053,7 +21230,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:RUNEUSDT",
-          "versionId": 46,
+          "versionId": 7659,
           "symbol": "RUNEUSDT",
           "baseAsset": "RUNE",
           "multiplier": 1
@@ -21104,7 +21281,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:RVNUSDT",
-          "versionId": 109,
+          "versionId": 7681,
           "symbol": "RVNUSDT",
           "baseAsset": "RVN",
           "multiplier": 1
@@ -21154,7 +21331,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SUSDT",
-          "versionId": 268,
+          "versionId": 7340,
           "symbol": "SUSDT",
           "baseAsset": "S",
           "multiplier": 1
@@ -21207,7 +21384,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SAFEUSDT",
-          "versionId": 228,
+          "versionId": 7319,
           "symbol": "SAFEUSDT",
           "baseAsset": "SAFE",
           "multiplier": 1
@@ -21360,7 +21537,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SANDUSDT",
-          "versionId": 29,
+          "versionId": 7649,
           "symbol": "SANDUSDT",
           "baseAsset": "SAND",
           "multiplier": 1
@@ -21506,7 +21683,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:1000SATSUSDT",
-          "versionId": 148,
+          "versionId": 7272,
           "symbol": "1000SATSUSDT",
           "baseAsset": "1000SATS",
           "multiplier": 1000
@@ -21556,7 +21733,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SEIUSDT",
-          "versionId": 139,
+          "versionId": 7695,
           "symbol": "SEIUSDT",
           "baseAsset": "SEI",
           "multiplier": 1
@@ -21617,7 +21794,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SENTUSDT",
-          "versionId": 425,
+          "versionId": 7704,
           "symbol": "SENTUSDT",
           "baseAsset": "SENT",
           "multiplier": 1
@@ -21710,7 +21887,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SHELLUSDT",
-          "versionId": 282,
+          "versionId": 7347,
           "symbol": "SHELLUSDT",
           "baseAsset": "SHELL",
           "multiplier": 1
@@ -21840,6 +22017,39 @@
       ]
     },
     {
+      "id": "crypto:SI",
+      "asset": "SI",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:SIUSDT",
+          "versionId": 9438,
+          "symbol": "SIUSDT",
+          "baseAsset": "SI",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # SIUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=SIUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
+      ]
+    },
+    {
       "id": "crypto:SIGN",
       "asset": "SIGN",
       "status": "verified",
@@ -21856,7 +22066,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SIGNUSDT",
-          "versionId": 3170,
+          "versionId": 7367,
           "symbol": "SIGNUSDT",
           "baseAsset": "SIGN",
           "multiplier": 1
@@ -21908,7 +22118,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SIRENUSDT",
-          "versionId": 294,
+          "versionId": 7358,
           "symbol": "SIRENUSDT",
           "baseAsset": "SIREN",
           "multiplier": 1
@@ -22002,7 +22212,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SKRUSDT",
-          "versionId": 3206,
+          "versionId": 5751,
           "symbol": "SKRUSDT",
           "baseAsset": "SKR",
           "multiplier": 1
@@ -22124,7 +22334,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SKYAIUSDT",
-          "versionId": 320,
+          "versionId": 7700,
           "symbol": "SKYAIUSDT",
           "baseAsset": "SKYAI",
           "multiplier": 1
@@ -22339,7 +22549,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SOLUSDT",
-          "versionId": 12,
+          "versionId": 7643,
           "symbol": "SOLUSDT",
           "baseAsset": "SOL",
           "multiplier": 1
@@ -22440,7 +22650,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SOMIUSDT",
-          "versionId": 358,
+          "versionId": 7701,
           "symbol": "SOMIUSDT",
           "baseAsset": "SOMI",
           "multiplier": 1
@@ -22534,7 +22744,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SOONUSDT",
-          "versionId": 324,
+          "versionId": 8854,
           "symbol": "SOONUSDT",
           "baseAsset": "SOON",
           "multiplier": 1
@@ -22578,7 +22788,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SOPHUSDT",
-          "versionId": 4095,
+          "versionId": 5730,
           "symbol": "SOPHUSDT",
           "baseAsset": "SOPH",
           "multiplier": 1
@@ -22637,7 +22847,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SPACEUSDT",
-          "versionId": 427,
+          "versionId": 5753,
           "symbol": "SPACEUSDT",
           "baseAsset": "SPACE",
           "multiplier": 1
@@ -22681,7 +22891,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SPELLUSDT",
-          "versionId": 112,
+          "versionId": 7748,
           "symbol": "SPELLUSDT",
           "baseAsset": "SPELL",
           "multiplier": 1
@@ -22730,7 +22940,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SPKUSDT",
-          "versionId": 2301,
+          "versionId": 8884,
           "symbol": "SPKUSDT",
           "baseAsset": "SPK",
           "multiplier": 1
@@ -22843,7 +23053,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SQDUSDT",
-          "versionId": 332,
+          "versionId": 7374,
           "symbol": "SQDUSDT",
           "baseAsset": "SQD",
           "multiplier": 1
@@ -23030,7 +23240,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STBLUSDT",
-          "versionId": 771,
+          "versionId": 8577,
           "symbol": "STBLUSDT",
           "baseAsset": "STBL",
           "multiplier": 1
@@ -23089,7 +23299,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:STEEMUSDT",
-          "versionId": 241,
+          "versionId": 7324,
           "symbol": "STEEMUSDT",
           "baseAsset": "STEEM",
           "multiplier": 1
@@ -23122,58 +23332,6 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # STEEMUSDT",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # STEEMUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=STEEMUSDT"
-      ]
-    },
-    {
-      "id": "crypto:STG",
-      "asset": "STG",
-      "status": "verified",
-      "reason": null,
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:STGUSDT",
-          "versionId": 892,
-          "symbol": "STGUSDT",
-          "baseAsset": "STG",
-          "multiplier": 1
-        },
-        {
-          "venue": "bitget",
-          "instrumentId": "bitget:STGUSDT",
-          "versionId": 71,
-          "symbol": "STGUSDT",
-          "baseAsset": "STG",
-          "multiplier": 1
-        }
-      ],
-      "reference": {
-        "provider": "bybit",
-        "symbol": "STGUSDT",
-        "baseAsset": "STG",
-        "multiplier": 1,
-        "quoteAsset": "USDT",
-        "settleAsset": "USDT",
-        "contractType": "linear_perpetual",
-        "revision": "3e7d89a24cc5c497ba00"
-      },
-      "widget": {
-        "status": "supported",
-        "symbol": "BYBIT:STGUSDT.P",
-        "reason": null,
-        "evidence": [
-          "TradingView normal Widget symbol search: crypto/XTVCSTG"
-        ],
-        "referenceKey": "bybit:STGUSDT:3e7d89a24cc5c497ba00"
-      },
-      "evidence": [
-        "TradingView public Widget catalog identity: crypto/XTVCSTG",
-        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # STGUSDT",
-        "https://api.bitget.com/api/v3/market/index-components?symbol=STGUSDT",
-        "https://api.bybit.com/v5/market/index-price-components?indexName=STGUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # STGUSDT",
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # STGUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=STGUSDT"
       ]
     },
     {
@@ -23231,8 +23389,8 @@
     {
       "id": "crypto:STONK",
       "asset": "STONK",
-      "status": "unsupported",
-      "reason": "no_adopted_reference_after_identity_audit",
+      "status": "verified",
+      "reason": null,
       "originals": [
         {
           "venue": "aster",
@@ -23241,25 +23399,45 @@
           "symbol": "STONKUSDT",
           "baseAsset": "STONK",
           "multiplier": 1
+        },
+        {
+          "venue": "bitget",
+          "instrumentId": "bitget:STONKUSDT",
+          "versionId": 8916,
+          "symbol": "STONKUSDT",
+          "baseAsset": "STONK",
+          "multiplier": 1
         }
       ],
-      "reference": null,
+      "reference": {
+        "provider": "bybit",
+        "symbol": "STONKUSDT",
+        "baseAsset": "STONK",
+        "multiplier": 1,
+        "quoteAsset": "USDT",
+        "settleAsset": "USDT",
+        "contractType": "linear_perpetual",
+        "revision": "8199e69f731344733e99"
+      },
       "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "no_eligible_reference_contract",
+        "status": "supported",
+        "symbol": "BYBIT:STONKUSDT.P",
+        "reason": null,
         "evidence": [
-          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+          "Normal public TradingView advanced Widget exact symbol_resolved metadata and real chart rendering; see widgetObservations"
         ],
-        "referenceKey": null
+        "referenceKey": "bybit:STONKUSDT:8199e69f731344733e99"
       },
       "evidence": [
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # STONKUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=STONKUSDT",
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
         "https://fapi.binance.com/fapi/v1/exchangeInfo",
-        "https://x.com/Aster_DEX/status/2096917379364376636"
+        "https://x.com/Aster_DEX/status/2096917379364376636",
+        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # STONKUSDT",
+        "https://api.bitget.com/api/v3/market/index-components?symbol=STONKUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=STONKUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # STONKUSDT"
       ]
     },
     {
@@ -23306,7 +23484,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STONKSUSDT",
-          "versionId": 3215,
+          "versionId": 8196,
           "symbol": "STONKSUSDT",
           "baseAsset": "STONKS",
           "multiplier": 1
@@ -23348,7 +23526,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:STRKUSDT",
-          "versionId": 156,
+          "versionId": 7278,
           "symbol": "STRKUSDT",
           "baseAsset": "STRK",
           "multiplier": 1
@@ -23523,7 +23701,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SUNUSDT",
-          "versionId": 204,
+          "versionId": 7304,
           "symbol": "SUNUSDT",
           "baseAsset": "SUN",
           "multiplier": 1
@@ -23565,7 +23743,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SUPERUSDT",
-          "versionId": 175,
+          "versionId": 7287,
           "symbol": "SUPERUSDT",
           "baseAsset": "SUPER",
           "multiplier": 1
@@ -23616,7 +23794,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SUSHIUSDT",
-          "versionId": 1082,
+          "versionId": 4413,
           "symbol": "SUSHIUSDT",
           "baseAsset": "SUSHI",
           "multiplier": 1
@@ -23725,7 +23903,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SXTUSDT",
-          "versionId": 2045,
+          "versionId": 8878,
           "symbol": "SXTUSDT",
           "baseAsset": "SXT",
           "multiplier": 1
@@ -23777,7 +23955,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SYNUSDT",
-          "versionId": 2038,
+          "versionId": 7303,
           "symbol": "SYNUSDT",
           "baseAsset": "SYN",
           "multiplier": 1
@@ -23881,7 +24059,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TUSDT",
-          "versionId": 2962,
+          "versionId": 7301,
           "symbol": "TUSDT",
           "baseAsset": "T",
           "multiplier": 1
@@ -24015,7 +24193,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TAGUSDT",
-          "versionId": 2300,
+          "versionId": 8883,
           "symbol": "TAGUSDT",
           "baseAsset": "TAG",
           "multiplier": 1
@@ -24158,7 +24336,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TAOUSDT",
-          "versionId": 173,
+          "versionId": 7747,
           "symbol": "TAOUSDT",
           "baseAsset": "TAO",
           "multiplier": 1
@@ -24263,7 +24441,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:THETAUSDT",
-          "versionId": 1015,
+          "versionId": 4411,
           "symbol": "THETAUSDT",
           "baseAsset": "THETA",
           "multiplier": 1
@@ -24323,7 +24501,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TIAUSDT",
-          "versionId": 144,
+          "versionId": 7268,
           "symbol": "TIAUSDT",
           "baseAsset": "TIA",
           "multiplier": 1
@@ -24538,7 +24716,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TOSHIUSDT",
-          "versionId": 277,
+          "versionId": 7699,
           "symbol": "TOSHIUSDT",
           "baseAsset": "TOSHI",
           "multiplier": 1
@@ -24589,7 +24767,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TOWNSUSDT",
-          "versionId": 4026,
+          "versionId": 7378,
           "symbol": "TOWNSUSDT",
           "baseAsset": "TOWNS",
           "multiplier": 1
@@ -24681,7 +24859,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TRBUSDT",
-          "versionId": 64,
+          "versionId": 8869,
           "symbol": "TRBUSDT",
           "baseAsset": "TRB",
           "multiplier": 1
@@ -24742,7 +24920,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TREEUSDT",
-          "versionId": 349,
+          "versionId": 5737,
           "symbol": "TREEUSDT",
           "baseAsset": "TREE",
           "multiplier": 1
@@ -25135,7 +25313,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TURBOUSDT",
-          "versionId": 118,
+          "versionId": 7687,
           "symbol": "TURBOUSDT",
           "baseAsset": "TURBO",
           "multiplier": 1
@@ -25237,7 +25415,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:TUTUSDT",
-          "versionId": 2600,
+          "versionId": 7356,
           "symbol": "TUTUSDT",
           "baseAsset": "TUT",
           "multiplier": 1
@@ -25289,7 +25467,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:UAIUSDT",
-          "versionId": 3205,
+          "versionId": 8900,
           "symbol": "UAIUSDT",
           "baseAsset": "UAI",
           "multiplier": 1
@@ -25341,7 +25519,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:UBUSDT",
-          "versionId": 367,
+          "versionId": 5742,
           "symbol": "UBUSDT",
           "baseAsset": "UB",
           "multiplier": 1
@@ -25515,7 +25693,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:UNITASUSDT",
-          "versionId": 2302,
+          "versionId": 8912,
           "symbol": "UNITASUSDT",
           "baseAsset": "UNITAS",
           "multiplier": 1
@@ -25560,7 +25738,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:USUSDT",
-          "versionId": 413,
+          "versionId": 7399,
           "symbol": "USUSDT",
           "baseAsset": "US",
           "multiplier": 1
@@ -25695,7 +25873,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:USELESSUSDT",
-          "versionId": 4024,
+          "versionId": 8888,
           "symbol": "USELESSUSDT",
           "baseAsset": "USELESS",
           "multiplier": 1
@@ -25849,7 +26027,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:VANAUSDT",
-          "versionId": 3235,
+          "versionId": 7330,
           "symbol": "VANAUSDT",
           "baseAsset": "VANA",
           "multiplier": 1
@@ -26020,6 +26198,39 @@
       ]
     },
     {
+      "id": "crypto:VERONA",
+      "asset": "VERONA",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:VERONAUSDT",
+          "versionId": 8309,
+          "symbol": "VERONAUSDT",
+          "baseAsset": "VERONA",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # VERONAUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=VERONAUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
+      ]
+    },
+    {
       "id": "crypto:VET",
       "asset": "VET",
       "status": "verified",
@@ -26131,7 +26342,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:VTHOUSDT",
-          "versionId": 4021,
+          "versionId": 7342,
           "symbol": "VTHOUSDT",
           "baseAsset": "VTHO",
           "multiplier": 1
@@ -26180,7 +26391,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:VVVUSDT",
-          "versionId": 3237,
+          "versionId": 7344,
           "symbol": "VVVUSDT",
           "baseAsset": "VVV",
           "multiplier": 1
@@ -26284,7 +26495,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:WALUSDT",
-          "versionId": 2297,
+          "versionId": 7361,
           "symbol": "WALUSDT",
           "baseAsset": "WAL",
           "multiplier": 1
@@ -26326,7 +26537,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:WAXPUSDT",
-          "versionId": 2282,
+          "versionId": 7266,
           "symbol": "WAXPUSDT",
           "baseAsset": "WAXP",
           "multiplier": 1
@@ -26479,7 +26690,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:WIFUSDT",
-          "versionId": 3158,
+          "versionId": 7281,
           "symbol": "WIFUSDT",
           "baseAsset": "WIF",
           "multiplier": 1
@@ -26704,7 +26915,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:XAIUSDT",
-          "versionId": 151,
+          "versionId": 7274,
           "symbol": "XAIUSDT",
           "baseAsset": "XAI",
           "multiplier": 1
@@ -26765,7 +26976,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:XANUSDT",
-          "versionId": 3241,
+          "versionId": 8894,
           "symbol": "XANUSDT",
           "baseAsset": "XAN",
           "multiplier": 1
@@ -26839,6 +27050,49 @@
         "https://api.bybit.com/v5/market/index-price-components?indexName=XCNUSDT",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XCNUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=XCNUSDT"
+      ]
+    },
+    {
+      "id": "crypto:XDP",
+      "asset": "XDP",
+      "status": "verified",
+      "reason": null,
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:XDPUSDT",
+          "versionId": 8626,
+          "symbol": "XDPUSDT",
+          "baseAsset": "XDP",
+          "multiplier": 1
+        }
+      ],
+      "reference": {
+        "provider": "bybit",
+        "symbol": "XDPUSDT",
+        "baseAsset": "XDP",
+        "multiplier": 1,
+        "quoteAsset": "USDT",
+        "settleAsset": "USDT",
+        "contractType": "linear_perpetual",
+        "revision": "76156c9eb41b8a02e042"
+      },
+      "widget": {
+        "status": "supported",
+        "symbol": "BYBIT:XDPUSDT.P",
+        "reason": null,
+        "evidence": [
+          "Normal public TradingView advanced Widget exact symbol_resolved metadata and real chart rendering; see widgetObservations"
+        ],
+        "referenceKey": "bybit:XDPUSDT:76156c9eb41b8a02e042"
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # XDPUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=XDPUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=XDPUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # XDPUSDT"
       ]
     },
     {
@@ -27239,7 +27493,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:XTZUSDT",
-          "versionId": 20,
+          "versionId": 7645,
           "symbol": "XTZUSDT",
           "baseAsset": "XTZ",
           "multiplier": 1
@@ -27281,7 +27535,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:XVGUSDT",
-          "versionId": 3153,
+          "versionId": 7690,
           "symbol": "XVGUSDT",
           "baseAsset": "XVG",
           "multiplier": 1
@@ -27417,7 +27671,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:YFIUSDT",
-          "versionId": 1137,
+          "versionId": 4414,
           "symbol": "YFIUSDT",
           "baseAsset": "YFI",
           "multiplier": 1
@@ -27467,7 +27721,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:YGGUSDT",
-          "versionId": 135,
+          "versionId": 7693,
           "symbol": "YGGUSDT",
           "baseAsset": "YGG",
           "multiplier": 1
@@ -27528,7 +27782,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZAMAUSDT",
-          "versionId": 419,
+          "versionId": 8905,
           "symbol": "ZAMAUSDT",
           "baseAsset": "ZAMA",
           "multiplier": 1
@@ -27658,7 +27912,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZECUSDT",
-          "versionId": 779,
+          "versionId": 6745,
           "symbol": "ZECUSDT",
           "baseAsset": "ZEC",
           "multiplier": 1
@@ -27727,7 +27981,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZENUSDT",
-          "versionId": 3610,
+          "versionId": 7688,
           "symbol": "ZENUSDT",
           "baseAsset": "ZEN",
           "multiplier": 1
@@ -27830,7 +28084,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZESTUSDT",
-          "versionId": 3618,
+          "versionId": 7710,
           "symbol": "ZESTUSDT",
           "baseAsset": "ZEST",
           "multiplier": 1
@@ -27874,7 +28128,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZETAUSDT",
-          "versionId": 2284,
+          "versionId": 7277,
           "symbol": "ZETAUSDT",
           "baseAsset": "ZETA",
           "multiplier": 1
@@ -27933,7 +28187,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZILUSDT",
-          "versionId": 3139,
+          "versionId": 7656,
           "symbol": "ZILUSDT",
           "baseAsset": "ZIL",
           "multiplier": 1
@@ -28046,7 +28300,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZKCUSDT",
-          "versionId": 2555,
+          "versionId": 7383,
           "symbol": "ZKCUSDT",
           "baseAsset": "ZKC",
           "multiplier": 1
@@ -28098,7 +28352,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZKPUSDT",
-          "versionId": 415,
+          "versionId": 7400,
           "symbol": "ZKPUSDT",
           "baseAsset": "ZKP",
           "multiplier": 1
@@ -28142,7 +28396,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZORAUSDT",
-          "versionId": 740,
+          "versionId": 4378,
           "symbol": "ZORAUSDT",
           "baseAsset": "ZORA",
           "multiplier": 1
@@ -28150,7 +28404,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZORAUSDT",
-          "versionId": 3239,
+          "versionId": 8875,
           "symbol": "ZORAUSDT",
           "baseAsset": "ZORA",
           "multiplier": 1
@@ -28211,7 +28465,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZROUSDT",
-          "versionId": 192,
+          "versionId": 7697,
           "symbol": "ZROUSDT",
           "baseAsset": "ZRO",
           "multiplier": 1
@@ -28264,7 +28518,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ZRXUSDT",
-          "versionId": 52,
+          "versionId": 7662,
           "symbol": "ZRXUSDT",
           "baseAsset": "ZRX",
           "multiplier": 1
@@ -28295,6 +28549,39 @@
         "https://api.bitget.com/api/v3/market/index-components?symbol=ZRXUSDT",
         "https://api.bybit.com/v5/market/index-price-components?indexName=ZRXUSDT",
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # ZRXUSDT"
+      ]
+    },
+    {
+      "id": "crypto:ZZZ",
+      "asset": "ZZZ",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:ZZZUSDT",
+          "versionId": 6104,
+          "symbol": "ZZZUSDT",
+          "baseAsset": "ZZZ",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_adopted_reference",
+        "evidence": [
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+          "https://fapi.binance.com/fapi/v1/exchangeInfo"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # ZZZUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ZZZUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo"
       ]
     },
     {
@@ -28492,7 +28779,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:龙虾USDT",
-          "versionId": 438,
+          "versionId": 5756,
           "symbol": "龙虾USDT",
           "baseAsset": "龙虾",
           "multiplier": 1
@@ -28522,3273 +28809,6 @@
         "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # 龙虾USDT",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # 龙虾USDT",
         "https://fapi.binance.com/fapi/v1/exchangeInfo # 龙虾USDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AAOI",
-      "asset": "AAOI",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AAOIUSDT",
-          "versionId": 4306,
-          "symbol": "AAOIUSDT",
-          "baseAsset": "AAOI",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AAOIUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AAPL",
-      "asset": "AAPL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AAPLUSDT",
-          "versionId": 4246,
-          "symbol": "AAPLUSDT",
-          "baseAsset": "AAPL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AAPLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ADBE",
-      "asset": "ADBE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ADBEUSDT",
-          "versionId": 4327,
-          "symbol": "ADBEUSDT",
-          "baseAsset": "ADBE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ADBEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AGPU",
-      "asset": "AGPU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AGPUUSDT",
-          "versionId": 4339,
-          "symbol": "AGPUUSDT",
-          "baseAsset": "AGPU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AGPUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AMAT",
-      "asset": "AMAT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AMATUSDT",
-          "versionId": 4315,
-          "symbol": "AMATUSDT",
-          "baseAsset": "AMAT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AMATUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AMD",
-      "asset": "AMD",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AMDUSDT",
-          "versionId": 4272,
-          "symbol": "AMDUSDT",
-          "baseAsset": "AMD",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AMDUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AMZN",
-      "asset": "AMZN",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AMZNUSDT",
-          "versionId": 4249,
-          "symbol": "AMZNUSDT",
-          "baseAsset": "AMZN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AMZNUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ANTHROPIC",
-      "asset": "ANTHROPIC",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ANTHROPICUSDT",
-          "versionId": 1087,
-          "symbol": "ANTHROPICUSDT",
-          "baseAsset": "ANTHROPIC",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ANTHROPICUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ARM",
-      "asset": "ARM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ARMUSDT",
-          "versionId": 4290,
-          "symbol": "ARMUSDT",
-          "baseAsset": "ARM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ARMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ASML",
-      "asset": "ASML",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ASMLUSDT",
-          "versionId": 4326,
-          "symbol": "ASMLUSDT",
-          "baseAsset": "ASML",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ASMLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ASTS",
-      "asset": "ASTS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ASTSUSDT",
-          "versionId": 4294,
-          "symbol": "ASTSUSDT",
-          "baseAsset": "ASTS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ASTSUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AVGO",
-      "asset": "AVGO",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AVGOUSDT",
-          "versionId": 4271,
-          "symbol": "AVGOUSDT",
-          "baseAsset": "AVGO",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AVGOUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:AXTI",
-      "asset": "AXTI",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:AXTIUSDT",
-          "versionId": 4310,
-          "symbol": "AXTIUSDT",
-          "baseAsset": "AXTI",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AXTIUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BABA",
-      "asset": "BABA",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BABAUSDT",
-          "versionId": 4263,
-          "symbol": "BABAUSDT",
-          "baseAsset": "BABA",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BABAUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BBX",
-      "asset": "BBX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BBXUSDT",
-          "versionId": 4295,
-          "symbol": "BBXUSDT",
-          "baseAsset": "BBX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BBXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BE",
-      "asset": "BE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BEUSDT",
-          "versionId": 4291,
-          "symbol": "BEUSDT",
-          "baseAsset": "BE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BMNR",
-      "asset": "BMNR",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BMNRUSDT",
-          "versionId": 4330,
-          "symbol": "BMNRUSDT",
-          "baseAsset": "BMNR",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BMNRUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BRKB",
-      "asset": "BRKB",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BRKBUSDT",
-          "versionId": 4286,
-          "symbol": "BRKBUSDT",
-          "baseAsset": "BRKB",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BRKBUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BX",
-      "asset": "BX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BXUSDT",
-          "versionId": 4312,
-          "symbol": "BXUSDT",
-          "baseAsset": "BX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:BZ",
-      "asset": "BZ",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:BZUSDT",
-          "versionId": 4354,
-          "symbol": "BZUSDT",
-          "baseAsset": "BZ",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BZUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CBRS",
-      "asset": "CBRS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CBRSUSDT",
-          "versionId": 4266,
-          "symbol": "CBRSUSDT",
-          "baseAsset": "CBRS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CBRSUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CL",
-      "asset": "CL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CLUSDT",
-          "versionId": 4351,
-          "symbol": "CLUSDT",
-          "baseAsset": "CL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:COHR",
-      "asset": "COHR",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:COHRUSDT",
-          "versionId": 4288,
-          "symbol": "COHRUSDT",
-          "baseAsset": "COHR",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # COHRUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:COIN",
-      "asset": "COIN",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:COINUSDT",
-          "versionId": 4269,
-          "symbol": "COINUSDT",
-          "baseAsset": "COIN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # COINUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:COST",
-      "asset": "COST",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:COSTUSDT",
-          "versionId": 4319,
-          "symbol": "COSTUSDT",
-          "baseAsset": "COST",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # COSTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CRCL",
-      "asset": "CRCL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CRCLUSDT",
-          "versionId": 4257,
-          "symbol": "CRCLUSDT",
-          "baseAsset": "CRCL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CRCLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CRDO",
-      "asset": "CRDO",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CRDOUSDT",
-          "versionId": 4309,
-          "symbol": "CRDOUSDT",
-          "baseAsset": "CRDO",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CRDOUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CRM",
-      "asset": "CRM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CRMUSDT",
-          "versionId": 4317,
-          "symbol": "CRMUSDT",
-          "baseAsset": "CRM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CRMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CRWD",
-      "asset": "CRWD",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CRWDUSDT",
-          "versionId": 4313,
-          "symbol": "CRWDUSDT",
-          "baseAsset": "CRWD",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CRWDUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CRWV",
-      "asset": "CRWV",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CRWVUSDT",
-          "versionId": 4280,
-          "symbol": "CRWVUSDT",
-          "baseAsset": "CRWV",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CRWVUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CSCO",
-      "asset": "CSCO",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CSCOUSDT",
-          "versionId": 4281,
-          "symbol": "CSCOUSDT",
-          "baseAsset": "CSCO",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CSCOUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:CXMT",
-      "asset": "CXMT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:CXMTUSDT",
-          "versionId": 4076,
-          "symbol": "CXMTUSDT",
-          "baseAsset": "CXMT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # CXMTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:DELL",
-      "asset": "DELL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:DELLUSDT",
-          "versionId": 4298,
-          "symbol": "DELLUSDT",
-          "baseAsset": "DELL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # DELLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:DIS",
-      "asset": "DIS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:DISUSDT",
-          "versionId": 4282,
-          "symbol": "DISUSDT",
-          "baseAsset": "DIS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # DISUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:DKNG",
-      "asset": "DKNG",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:DKNGUSDT",
-          "versionId": 4322,
-          "symbol": "DKNGUSDT",
-          "baseAsset": "DKNG",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # DKNGUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:DRAM",
-      "asset": "DRAM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:DRAMUSDT",
-          "versionId": 4264,
-          "symbol": "DRAMUSDT",
-          "baseAsset": "DRAM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # DRAMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:EBAY",
-      "asset": "EBAY",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:EBAYUSDT",
-          "versionId": 4311,
-          "symbol": "EBAYUSDT",
-          "baseAsset": "EBAY",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # EBAYUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:EWJ",
-      "asset": "EWJ",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:EWJUSDT",
-          "versionId": 4325,
-          "symbol": "EWJUSDT",
-          "baseAsset": "EWJ",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # EWJUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:EWT",
-      "asset": "EWT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:EWTUSDT",
-          "versionId": 4293,
-          "symbol": "EWTUSDT",
-          "baseAsset": "EWT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # EWTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:EWY",
-      "asset": "EWY",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:EWYUSDT",
-          "versionId": 4258,
-          "symbol": "EWYUSDT",
-          "baseAsset": "EWY",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # EWYUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:EWZ",
-      "asset": "EWZ",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:EWZUSDT",
-          "versionId": 4332,
-          "symbol": "EWZUSDT",
-          "baseAsset": "EWZ",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # EWZUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:FLNC",
-      "asset": "FLNC",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:FLNCUSDT",
-          "versionId": 4287,
-          "symbol": "FLNCUSDT",
-          "baseAsset": "FLNC",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # FLNCUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:FUTU",
-      "asset": "FUTU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:FUTUUSDT",
-          "versionId": 4277,
-          "symbol": "FUTUUSDT",
-          "baseAsset": "FUTU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # FUTUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:GLW",
-      "asset": "GLW",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:GLWUSDT",
-          "versionId": 4324,
-          "symbol": "GLWUSDT",
-          "baseAsset": "GLW",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # GLWUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:GME",
-      "asset": "GME",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:GMEUSDT",
-          "versionId": 4320,
-          "symbol": "GMEUSDT",
-          "baseAsset": "GME",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # GMEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:GOOGL",
-      "asset": "GOOGL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:GOOGLUSDT",
-          "versionId": 4260,
-          "symbol": "GOOGLUSDT",
-          "baseAsset": "GOOGL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # GOOGLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:HD",
-      "asset": "HD",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:HDUSDT",
-          "versionId": 4307,
-          "symbol": "HDUSDT",
-          "baseAsset": "HD",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # HDUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:HIMS",
-      "asset": "HIMS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:HIMSUSDT",
-          "versionId": 4297,
-          "symbol": "HIMSUSDT",
-          "baseAsset": "HIMS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # HIMSUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:HOOD",
-      "asset": "HOOD",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:HOODUSDT",
-          "versionId": 4256,
-          "symbol": "HOODUSDT",
-          "baseAsset": "HOOD",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # HOODUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:HPE",
-      "asset": "HPE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:HPEUSDT",
-          "versionId": 4329,
-          "symbol": "HPEUSDT",
-          "baseAsset": "HPE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # HPEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:HYUNDAI",
-      "asset": "HYUNDAI",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:HYUNDAIUSDT",
-          "versionId": 4072,
-          "symbol": "HYUNDAIUSDT",
-          "baseAsset": "HYUNDAI",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # HYUNDAIUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:IBM",
-      "asset": "IBM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:IBMUSDT",
-          "versionId": 4299,
-          "symbol": "IBMUSDT",
-          "baseAsset": "IBM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # IBMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:INTC",
-      "asset": "INTC",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:INTCUSDT",
-          "versionId": 4255,
-          "symbol": "INTCUSDT",
-          "baseAsset": "INTC",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # INTCUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:IREN",
-      "asset": "IREN",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:IRENUSDT",
-          "versionId": 4304,
-          "symbol": "IRENUSDT",
-          "baseAsset": "IREN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # IRENUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:IWM",
-      "asset": "IWM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:IWMUSDT",
-          "versionId": 4321,
-          "symbol": "IWMUSDT",
-          "baseAsset": "IWM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # IWMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:JPM",
-      "asset": "JPM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:JPMUSDT",
-          "versionId": 4284,
-          "symbol": "JPMUSDT",
-          "baseAsset": "JPM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # JPMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:KORU",
-      "asset": "KORU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:KORUUSDT",
-          "versionId": 4334,
-          "symbol": "KORUUSDT",
-          "baseAsset": "KORU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # KORUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:KSTR",
-      "asset": "KSTR",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:KSTRUSDT",
-          "versionId": 4338,
-          "symbol": "KSTRUSDT",
-          "baseAsset": "KSTR",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # KSTRUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:KUAISHOU",
-      "asset": "KUAISHOU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:KUAISHOUUSDT",
-          "versionId": 4090,
-          "symbol": "KUAISHOUUSDT",
-          "baseAsset": "KUAISHOU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # KUAISHOUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:LITE",
-      "asset": "LITE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:LITEUSDT",
-          "versionId": 4275,
-          "symbol": "LITEUSDT",
-          "baseAsset": "LITE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # LITEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:LLY",
-      "asset": "LLY",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:LLYUSDT",
-          "versionId": 4302,
-          "symbol": "LLYUSDT",
-          "baseAsset": "LLY",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # LLYUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:LYTE",
-      "asset": "LYTE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:LYTEUSDT",
-          "versionId": 4340,
-          "symbol": "LYTEUSDT",
-          "baseAsset": "LYTE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # LYTEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MEITUAN",
-      "asset": "MEITUAN",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MEITUANUSDT",
-          "versionId": 4089,
-          "symbol": "MEITUANUSDT",
-          "baseAsset": "MEITUAN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MEITUANUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:META",
-      "asset": "META",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:METAUSDT",
-          "versionId": 4250,
-          "symbol": "METAUSDT",
-          "baseAsset": "META",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # METAUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MINIMAX",
-      "asset": "MINIMAX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MINIMAXUSDT",
-          "versionId": 4086,
-          "symbol": "MINIMAXUSDT",
-          "baseAsset": "MINIMAX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MINIMAXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MRNA",
-      "asset": "MRNA",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MRNAUSDT",
-          "versionId": 4343,
-          "symbol": "MRNAUSDT",
-          "baseAsset": "MRNA",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MRNAUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MRVL",
-      "asset": "MRVL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MRVLUSDT",
-          "versionId": 4273,
-          "symbol": "MRVLUSDT",
-          "baseAsset": "MRVL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MRVLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MSFT",
-      "asset": "MSFT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MSFTUSDT",
-          "versionId": 4251,
-          "symbol": "MSFTUSDT",
-          "baseAsset": "MSFT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MSFTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MSTR",
-      "asset": "MSTR",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MSTRUSDT",
-          "versionId": 4259,
-          "symbol": "MSTRUSDT",
-          "baseAsset": "MSTR",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MSTRUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MU",
-      "asset": "MU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MUUSDT",
-          "versionId": 4253,
-          "symbol": "MUUSDT",
-          "baseAsset": "MU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:MUU",
-      "asset": "MUU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MUUUSDT",
-          "versionId": 4342,
-          "symbol": "MUUUSDT",
-          "baseAsset": "MUU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MUUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NATGAS",
-      "asset": "NATGAS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NATGASUSDT",
-          "versionId": 4353,
-          "symbol": "NATGASUSDT",
-          "baseAsset": "NATGAS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NATGASUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NBIS",
-      "asset": "NBIS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NBISUSDT",
-          "versionId": 4289,
-          "symbol": "NBISUSDT",
-          "baseAsset": "NBIS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NBISUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NFLX",
-      "asset": "NFLX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NFLXUSDT",
-          "versionId": 4318,
-          "symbol": "NFLXUSDT",
-          "baseAsset": "NFLX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NFLXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NOK",
-      "asset": "NOK",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NOKUSDT",
-          "versionId": 4296,
-          "symbol": "NOKUSDT",
-          "baseAsset": "NOK",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NOKUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NOW",
-      "asset": "NOW",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NOWUSDT",
-          "versionId": 4300,
-          "symbol": "NOWUSDT",
-          "baseAsset": "NOW",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NOWUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NVDA",
-      "asset": "NVDA",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NVDAUSDT",
-          "versionId": 4248,
-          "symbol": "NVDAUSDT",
-          "baseAsset": "NVDA",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NVDAUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:NVO",
-      "asset": "NVO",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:NVOUSDT",
-          "versionId": 4303,
-          "symbol": "NVOUSDT",
-          "baseAsset": "NVO",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # NVOUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ONDS",
-      "asset": "ONDS",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ONDSUSDT",
-          "versionId": 4305,
-          "symbol": "ONDSUSDT",
-          "baseAsset": "ONDS",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ONDSUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:OPENAI",
-      "asset": "OPENAI",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:OPENAIUSDT",
-          "versionId": 1046,
-          "symbol": "OPENAIUSDT",
-          "baseAsset": "OPENAI",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # OPENAIUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ORCL",
-      "asset": "ORCL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ORCLUSDT",
-          "versionId": 4278,
-          "symbol": "ORCLUSDT",
-          "baseAsset": "ORCL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ORCLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:PAXG",
-      "asset": "PAXG",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:PAXGUSDT",
-          "versionId": 4352,
-          "symbol": "PAXGUSDT",
-          "baseAsset": "PAXG",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PAXGUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:PAYP",
-      "asset": "PAYP",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:PAYPUSDT",
-          "versionId": 4268,
-          "symbol": "PAYPUSDT",
-          "baseAsset": "PAYP",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PAYPUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:PLTR",
-      "asset": "PLTR",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:PLTRUSDT",
-          "versionId": 4270,
-          "symbol": "PLTRUSDT",
-          "baseAsset": "PLTR",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PLTRUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:POPMART",
-      "asset": "POPMART",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:POPMARTUSDT",
-          "versionId": 4084,
-          "symbol": "POPMARTUSDT",
-          "baseAsset": "POPMART",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # POPMARTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:QCOM",
-      "asset": "QCOM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:QCOMUSDT",
-          "versionId": 4308,
-          "symbol": "QCOMUSDT",
-          "baseAsset": "QCOM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # QCOMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:QNTX",
-      "asset": "QNTX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:QNTXUSDT",
-          "versionId": 4292,
-          "symbol": "QNTXUSDT",
-          "baseAsset": "QNTX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # QNTXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:QQQ",
-      "asset": "QQQ",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:QQQUSDT",
-          "versionId": 4252,
-          "symbol": "QQQUSDT",
-          "baseAsset": "QQQ",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # QQQUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:RIVN",
-      "asset": "RIVN",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:RIVNUSDT",
-          "versionId": 4316,
-          "symbol": "RIVNUSDT",
-          "baseAsset": "RIVN",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # RIVNUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:RKLB",
-      "asset": "RKLB",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:RKLBUSDT",
-          "versionId": 4279,
-          "symbol": "RKLBUSDT",
-          "baseAsset": "RKLB",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # RKLBUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SAMSUNG",
-      "asset": "SAMSUNG",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SAMSUNGUSDT",
-          "versionId": 4071,
-          "symbol": "SAMSUNGUSDT",
-          "baseAsset": "SAMSUNG",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SAMSUNGUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SKHY",
-      "asset": "SKHY",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SKHYUSDT",
-          "versionId": 4337,
-          "symbol": "SKHYUSDT",
-          "baseAsset": "SKHY",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SKHYUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SKHYNIX",
-      "asset": "SKHYNIX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SKHYNIXUSDT",
-          "versionId": 4070,
-          "symbol": "SKHYNIXUSDT",
-          "baseAsset": "SKHYNIX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SKHYNIXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SNDK",
-      "asset": "SNDK",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SNDKUSDT",
-          "versionId": 4254,
-          "symbol": "SNDKUSDT",
-          "baseAsset": "SNDK",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SNDKUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SNXX",
-      "asset": "SNXX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SNXXUSDT",
-          "versionId": 4341,
-          "symbol": "SNXXUSDT",
-          "baseAsset": "SNXX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SNXXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SOXL",
-      "asset": "SOXL",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SOXLUSDT",
-          "versionId": 4265,
-          "symbol": "SOXLUSDT",
-          "baseAsset": "SOXL",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SOXLUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SPCX",
-      "asset": "SPCX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SPCXUSDT",
-          "versionId": 4267,
-          "symbol": "SPCXUSDT",
-          "baseAsset": "SPCX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SPCXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:SPY",
-      "asset": "SPY",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:SPYUSDT",
-          "versionId": 4262,
-          "symbol": "SPYUSDT",
-          "baseAsset": "SPY",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SPYUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:STRC",
-      "asset": "STRC",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:STRCUSDT",
-          "versionId": 4336,
-          "symbol": "STRCUSDT",
-          "baseAsset": "STRC",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # STRCUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:STXX",
-      "asset": "STXX",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:STXXUSDT",
-          "versionId": 4328,
-          "symbol": "STXXUSDT",
-          "baseAsset": "STXX",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # STXXUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:TENCENT",
-      "asset": "TENCENT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:TENCENTUSDT",
-          "versionId": 4087,
-          "symbol": "TENCENTUSDT",
-          "baseAsset": "TENCENT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # TENCENTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:TQQQ",
-      "asset": "TQQQ",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:TQQQUSDT",
-          "versionId": 4335,
-          "symbol": "TQQQUSDT",
-          "baseAsset": "TQQQ",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # TQQQUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:TSLA",
-      "asset": "TSLA",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:TSLAUSDT",
-          "versionId": 4247,
-          "symbol": "TSLAUSDT",
-          "baseAsset": "TSLA",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # TSLAUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:TSM",
-      "asset": "TSM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:TSMUSDT",
-          "versionId": 4261,
-          "symbol": "TSMUSDT",
-          "baseAsset": "TSM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # TSMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:UBER",
-      "asset": "UBER",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:UBERUSDT",
-          "versionId": 4274,
-          "symbol": "UBERUSDT",
-          "baseAsset": "UBER",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # UBERUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:UNITREE",
-      "asset": "UNITREE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:UNITREEUSDT",
-          "versionId": 4077,
-          "symbol": "UNITREEUSDT",
-          "baseAsset": "UNITREE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # UNITREEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:URNM",
-      "asset": "URNM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:URNMUSDT",
-          "versionId": 4314,
-          "symbol": "URNMUSDT",
-          "baseAsset": "URNM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # URNMUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:USAR",
-      "asset": "USAR",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:USARUSDT",
-          "versionId": 4276,
-          "symbol": "USARUSDT",
-          "baseAsset": "USAR",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # USARUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:UVXY",
-      "asset": "UVXY",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:UVXYUSDT",
-          "versionId": 4331,
-          "symbol": "UVXYUSDT",
-          "baseAsset": "UVXY",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # UVXYUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:V",
-      "asset": "V",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:VUSDT",
-          "versionId": 4285,
-          "symbol": "VUSDT",
-          "baseAsset": "V",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # VUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:WDC",
-      "asset": "WDC",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:WDCUSDT",
-          "versionId": 4301,
-          "symbol": "WDCUSDT",
-          "baseAsset": "WDC",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # WDCUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:WMT",
-      "asset": "WMT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:WMTUSDT",
-          "versionId": 4283,
-          "symbol": "WMTUSDT",
-          "baseAsset": "WMT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # WMTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XAG",
-      "asset": "XAG",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XAGUSDT",
-          "versionId": 4347,
-          "symbol": "XAGUSDT",
-          "baseAsset": "XAG",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XAGUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XAU",
-      "asset": "XAU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XAUUSDT",
-          "versionId": 4346,
-          "symbol": "XAUUSDT",
-          "baseAsset": "XAU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XAUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XCU",
-      "asset": "XCU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XCUUSDT",
-          "versionId": 4348,
-          "symbol": "XCUUSDT",
-          "baseAsset": "XCU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XCUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XIAOMI",
-      "asset": "XIAOMI",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XIAOMIUSDT",
-          "versionId": 4085,
-          "symbol": "XIAOMIUSDT",
-          "baseAsset": "XIAOMI",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XIAOMIUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XLE",
-      "asset": "XLE",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XLEUSDT",
-          "versionId": 4333,
-          "symbol": "XLEUSDT",
-          "baseAsset": "XLE",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XLEUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XPD",
-      "asset": "XPD",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XPDUSDT",
-          "versionId": 4350,
-          "symbol": "XPDUSDT",
-          "baseAsset": "XPD",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XPDUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:XPT",
-      "asset": "XPT",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:XPTUSDT",
-          "versionId": 4349,
-          "symbol": "XPTUSDT",
-          "baseAsset": "XPT",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XPTUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ZHIPU",
-      "asset": "ZHIPU",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ZHIPUUSDT",
-          "versionId": 4088,
-          "symbol": "ZHIPUUSDT",
-          "baseAsset": "ZHIPU",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ZHIPUUSDT"
-      ]
-    },
-    {
-      "id": "out_of_scope:ZM",
-      "asset": "ZM",
-      "status": "out_of_scope",
-      "reason": "official_catalog_non_crypto",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:ZMUSDT",
-          "versionId": 4323,
-          "symbol": "ZMUSDT",
-          "baseAsset": "ZM",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "out_of_scope",
-        "evidence": [],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ZMUSDT"
       ]
     }
   ]

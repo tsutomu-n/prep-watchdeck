@@ -20,6 +20,7 @@ from prep_watchdeck_market.artifacts import (
     publish_artifacts,
     publish_selected_artifact,
 )
+from prep_watchdeck_market.candle_endpoint_recovery import CandleEndpointRecovery
 from prep_watchdeck_market.candle_recovery import CandleRecovery, recovery_window
 from prep_watchdeck_market.candle_recovery_state import RecoveryTrigger
 from prep_watchdeck_market.candle_runtime import CandleRuntime
@@ -137,15 +138,27 @@ class MarketService:
                 if self._recovery_enabled
                 else None
             )
+            endpoint_recovery_task = (
+                asyncio.create_task(
+                    self._endpoint_recovery_loop(stop_event),
+                    name="market-candle-endpoint-recovery-loop",
+                )
+                if self._recovery_enabled
+                else None
+            )
             tasks = (
-                catalog_task,
-                l1_task,
-                candle_task,
-                selection_task,
-                artifact_task,
-                selected_artifact_task,
-                metrics_task,
-            ) + (() if recovery_task is None else (recovery_task,))
+                (
+                    catalog_task,
+                    l1_task,
+                    candle_task,
+                    selection_task,
+                    artifact_task,
+                    selected_artifact_task,
+                    metrics_task,
+                )
+                + (() if recovery_task is None else (recovery_task,))
+                + (() if endpoint_recovery_task is None else (endpoint_recovery_task,))
+            )
             try:
                 await asyncio.gather(*tasks)
             finally:
@@ -162,13 +175,23 @@ class MarketService:
         )
         trigger: RecoveryTrigger = "startup"
         while not stop_event.is_set():
-            try:
-                state = await recovery.run(
+            run_task = asyncio.create_task(
+                recovery.run(
                     self._require_session(),
                     recovery_window(datetime.now(UTC)),
                     apply=True,
                     trigger=trigger,
+                ),
+                name="market-candle-recovery-run",
+            )
+            stop_task = asyncio.create_task(stop_event.wait())
+            try:
+                completed, _ = await asyncio.wait(
+                    (run_task, stop_task), return_when=asyncio.FIRST_COMPLETED
                 )
+                if stop_task in completed:
+                    return
+                state = await run_task
                 logger.info(
                     "candle recovery status={status} inserted={inserted} remaining={remaining}",
                     status=state.execution,
@@ -184,6 +207,11 @@ class MarketService:
                     "candle recovery unavailable errorType={error_type}",
                     error_type=type(error).__name__,
                 )
+            finally:
+                for task in (run_task, stop_task):
+                    if not task.done():
+                        task.cancel()
+                await asyncio.gather(run_task, stop_task, return_exceptions=True)
             trigger = "periodic"
             next_run = next_grid_at(datetime.now(UTC) + timedelta(microseconds=1), 900)
             delay = max(0.0, (next_run - datetime.now(UTC)).total_seconds())
@@ -193,6 +221,52 @@ class MarketService:
     def _notify_recovery_inserted(self) -> None:
         self._artifact_trigger.set()
         self._metrics_trigger.set()
+
+    async def _endpoint_recovery_loop(self, stop_event: asyncio.Event) -> None:
+        recovery = CandleEndpointRecovery(
+            self._database_url,
+            self._state_dir,
+            on_inserted=self._notify_recovery_inserted,
+        )
+        trigger: RecoveryTrigger = "startup"
+        while not stop_event.is_set():
+            run_task = asyncio.create_task(
+                recovery.run(self._require_session(), trigger=trigger),
+                name="market-candle-endpoint-recovery-run",
+            )
+            stop_task = asyncio.create_task(stop_event.wait())
+            try:
+                completed, _ = await asyncio.wait(
+                    (run_task, stop_task), return_when=asyncio.FIRST_COMPLETED
+                )
+                if stop_task in completed:
+                    return
+                state = await run_task
+                logger.info(
+                    "candle endpoints status={status} inserted={inserted} remaining={remaining}",
+                    status=state.execution,
+                    inserted=state.summary.inserted,
+                    remaining=state.summary.remaining,
+                )
+            except asyncio.CancelledError:
+                raise
+            except RuntimeLockUnavailable:
+                logger.info("candle endpoints skipped because another run holds the lock")
+            except Exception as error:
+                logger.warning(
+                    "candle endpoints unavailable errorType={error_type}",
+                    error_type=type(error).__name__,
+                )
+            finally:
+                for task in (run_task, stop_task):
+                    if not task.done():
+                        task.cancel()
+                await asyncio.gather(run_task, stop_task, return_exceptions=True)
+            trigger = "periodic"
+            next_run = next_grid_at(datetime.now(UTC) + timedelta(microseconds=1), 60)
+            delay = max(0.0, (next_run - datetime.now(UTC)).total_seconds())
+            with suppress(TimeoutError):
+                await asyncio.wait_for(stop_event.wait(), timeout=delay)
 
     async def refresh_catalog(self) -> CatalogRefreshResult:
         session = self._require_session()

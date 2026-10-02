@@ -13,6 +13,8 @@ from prep_watchdeck_market.candles import (
     timestamp_milliseconds,
 )
 
+BITGET_LIVE_CANDLE_LIMIT = 8
+
 
 def parse_bitget_finished_candles(
     payload: object,
@@ -20,14 +22,14 @@ def parse_bitget_finished_candles(
     source_symbol: str,
     observed_at: datetime,
 ) -> tuple[Candle1m, ...]:
-    """Keep the live poll's last-three policy outside the full history parser."""
+    """Retain a bounded overlap for sweep delay and missed live requests."""
     candles, _ = parse_bitget_history_candles(
         payload,
         source_symbol=source_symbol,
         observed_at=observed_at,
         duplicate_policy="last",
     )
-    return candles[-3:]
+    return candles[-BITGET_LIVE_CANDLE_LIMIT:]
 
 
 def parse_bitget_history_candles(

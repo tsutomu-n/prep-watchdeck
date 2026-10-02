@@ -294,12 +294,12 @@ class CandleRecovery:
             if instrument_id and not targets:
                 raise ValueError("recovery target is not an active current contract")
             ordered = list(targets)
+            offset = 0
             if ordered:
                 offset = self._next_start % len(ordered)
                 ordered = ordered[offset:] + ordered[:offset]
-                self._next_start = (offset + 1) % len(ordered)
             deferred: set[RecoveryTarget] = set()
-            for target in ordered:
+            for index, target in enumerate(ordered):
                 if loop.time() >= deadline_at:
                     deferred.add(target)
                     continue
@@ -316,6 +316,7 @@ class CandleRecovery:
                 )
                 assert isinstance(missing, tuple)
                 before[target] = missing
+                self._next_start = (offset + index + 1) % len(ordered)
             if not apply:
                 details = [
                     RecoveryTargetDetail(
@@ -364,7 +365,7 @@ class CandleRecovery:
                 venue for venue, until in self._venue_cooldown_until.items() if until > loop.time()
             }
             exhausted = False
-            for target in ordered:
+            for index, target in enumerate(ordered):
                 if target not in before:
                     continue
                 missing = before[target]
@@ -374,10 +375,14 @@ class CandleRecovery:
                     deferred.add(target)
                     continue
                 try:
+                    # Resume after the last served contract, rather than shifting only
+                    # one row per run and repeatedly consuming the budget on one venue.
+                    self._next_start = (offset + index + 1) % len(ordered)
                     fetched = await client.fetch_missing(
                         target,
                         missing,
                         max_pages=6 if trigger != "manual" else 16,
+                        coalesce=trigger != "manual",
                     )
                     if fetched.rejected_buckets:
                         errors[target] = "history_conflicting_bucket"
@@ -401,6 +406,8 @@ class CandleRecovery:
                         if target not in errors:
                             deferred.add(target)
                         if fetched.budget_scope == "run":
+                            if fetched.pages == 0:
+                                self._next_start = (offset + index) % len(ordered)
                             exhausted = True
                 except HistoryRateLimited as error:
                     blocked_venues.add(target.venue)
@@ -410,6 +417,7 @@ class CandleRecovery:
                     errors[target] = "history_rate_limited"
                 except HistoryBudgetExceeded:
                     deferred.add(target)
+                    self._next_start = (offset + index) % len(ordered)
                     exhausted = True
                 except RecoveryVersionChanged:
                     errors[target] = "target_version_changed"

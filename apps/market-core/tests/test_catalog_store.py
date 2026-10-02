@@ -57,6 +57,54 @@ def test_catalog_persistence_deduplicates_raw_and_versions_identity_changes() ->
                 repeated_batch,
                 resolve_market_groups(repeated_batch.instruments),
             )
+            original_version = connection.execute(
+                """
+                    SELECT venue_instrument_version_id, definition_hash, valid_from,
+                           raw_definition, raw_catalog_payload_id
+                    FROM venue_instrument_versions WHERE source_symbol = 'BTCUSDT'
+                """
+            ).fetchone()
+            limit_change_btc = replace(
+                first_batch.instruments[0],
+                raw_definition={
+                    **first_batch.instruments[0].raw_definition,
+                    "maxOrderQty": "1000",
+                    "maxMarketOrderQty": "200",
+                    "posLimit": "0.1",
+                },
+            )
+            limit_change_payload: dict[str, object] = {
+                "data": [limit_change_btc.raw_definition, {"symbol": "1000PEPEUSDT"}]
+            }
+            limit_change_batch = replace(
+                first_batch,
+                provenance=replace(
+                    first_batch.provenance,
+                    observed_at=first_at + timedelta(minutes=2),
+                    payload_hash=canonical_json_sha256(limit_change_payload),
+                ),
+                instruments=(limit_change_btc, first_batch.instruments[1]),
+                raw_payload=limit_change_payload,
+            )
+            limit_change = persist_catalog(
+                connection,
+                limit_change_batch,
+                resolve_market_groups(limit_change_batch.instruments),
+            )
+            assert (
+                connection.execute(
+                    """
+                    SELECT venue_instrument_version_id, definition_hash, valid_from,
+                           raw_definition, raw_catalog_payload_id
+                    FROM venue_instrument_versions WHERE source_symbol = 'BTCUSDT'
+                """
+                ).fetchone()
+                == original_version
+            )
+            assert connection.execute(
+                "SELECT payload FROM raw_catalog_payloads WHERE raw_catalog_payload_id = %s",
+                (limit_change.raw_payload_id,),
+            ).fetchone() == (limit_change_payload,)
 
             changed_btc = replace(
                 first_batch.instruments[0],
@@ -70,7 +118,7 @@ def test_catalog_persistence_deduplicates_raw_and_versions_identity_changes() ->
                 first_batch,
                 provenance=replace(
                     first_batch.provenance,
-                    observed_at=first_at + timedelta(minutes=2),
+                    observed_at=first_at + timedelta(minutes=3),
                     payload_hash=canonical_json_sha256(changed_payload),
                 ),
                 instruments=(changed_btc, first_batch.instruments[1]),
@@ -89,12 +137,16 @@ def test_catalog_persistence_deduplicates_raw_and_versions_identity_changes() ->
             assert repeated.instrument_versions_created == 0
             assert repeated.instrument_versions_unchanged == 2
             assert repeated.exclusions_inserted == 0
+            assert limit_change.raw_payload_inserted is True
+            assert limit_change.instrument_versions_created == 0
+            assert limit_change.instrument_versions_closed == 0
+            assert limit_change.instrument_versions_unchanged == 2
             assert changed.raw_payload_inserted is True
             assert changed.instrument_versions_created == 1
             assert changed.instrument_versions_closed == 1
 
             assert connection.execute("SELECT count(*) FROM raw_catalog_payloads").fetchone() == (
-                2,
+                3,
             )
             assert connection.execute(
                 "SELECT count(*) FROM venue_instrument_versions"

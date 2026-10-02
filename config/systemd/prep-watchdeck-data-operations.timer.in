@@ -1,0 +1,11 @@
+[Unit]
+Description=prep-watchdeck data operations check every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Unit=prep-watchdeck-data-operations.service
+
+[Install]
+WantedBy=timers.target

@@ -79,13 +79,18 @@ def _millis(value: datetime) -> int:
     return int(value.timestamp() * 1000)
 
 
-def _ranges(buckets: Sequence[datetime]) -> tuple[tuple[datetime, datetime], ...]:
+def _ranges(
+    buckets: Sequence[datetime], *, max_span_minutes: int | None = None
+) -> tuple[tuple[datetime, datetime], ...]:
     if not buckets:
         return ()
     ranges: list[tuple[datetime, datetime]] = []
-    start = previous = buckets[0]
-    for bucket in buckets[1:]:
-        if bucket != previous + timedelta(minutes=1):
+    ordered = sorted(set(buckets))
+    start = previous = ordered[0]
+    for bucket in ordered[1:]:
+        if (max_span_minutes is None and bucket != previous + timedelta(minutes=1)) or (
+            max_span_minutes is not None and bucket >= start + timedelta(minutes=max_span_minutes)
+        ):
             ranges.append((start, previous + timedelta(minutes=1)))
             start = bucket
         previous = bucket
@@ -102,10 +107,16 @@ class NativeCandleHistoryClient:
         *,
         max_requests: int,
         deadline_seconds: float,
+        min_interval_seconds: float | None = None,
     ) -> None:
         self._session = session
         self._max_requests = max_requests
         self._deadline = asyncio.get_running_loop().time() + deadline_seconds
+        self._min_interval_seconds = (
+            MIN_REQUEST_INTERVAL_SECONDS if min_interval_seconds is None else min_interval_seconds
+        )
+        if self._min_interval_seconds < 0:
+            raise ValueError("history request interval must be non-negative")
         self._last_started: float | None = None
         self.request_count = 0
 
@@ -128,7 +139,7 @@ class NativeCandleHistoryClient:
             self._check_budget()
             now = asyncio.get_running_loop().time()
             if self._last_started is not None:
-                wait = MIN_REQUEST_INTERVAL_SECONDS - (now - self._last_started)
+                wait = self._min_interval_seconds - (now - self._last_started)
                 if wait > 0:
                     if now + wait >= self._deadline:
                         raise HistoryBudgetExceeded("recovery deadline reached")
@@ -194,6 +205,8 @@ class NativeCandleHistoryClient:
         missing: Sequence[datetime],
         *,
         max_pages: int,
+        coalesce: bool = False,
+        newest_first: bool = False,
     ) -> HistoryFetchResult:
         expected = set(missing)
         accepted: dict[datetime, Candle1m] = {}
@@ -202,7 +215,9 @@ class NativeCandleHistoryClient:
 
         async def fetch_pages() -> None:
             nonlocal pages
-            for range_start, range_end in _ranges(missing):
+            page_minutes = {"bitget": 200, "hyperliquid": 360, "aster": 500}[target.venue]
+            ranges = _ranges(missing, max_span_minutes=page_minutes if coalesce else None)
+            for range_start, range_end in reversed(ranges) if newest_first else ranges:
                 if target.venue == "bitget":
                     if target.quote_asset != target.settle_asset or target.quote_asset not in {
                         "USDT",

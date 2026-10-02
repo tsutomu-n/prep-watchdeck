@@ -336,3 +336,78 @@ def test_recovery_startup_failure_is_isolated_and_periodic_run_follows(
         assert service._metrics_trigger.is_set()
 
     asyncio.run(scenario())
+
+
+def test_endpoint_recovery_failure_is_isolated_and_runs_on_minute_grid(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    async def scenario() -> None:
+        service = MarketService("unused", tmp_path, recovery_enabled=True)
+        service._session = cast(aiohttp.ClientSession, object())
+        stop = asyncio.Event()
+        triggers: list[str] = []
+        grids: list[int] = []
+
+        class FakeRecovery:
+            def __init__(self, _database_url, _state_dir, *, on_inserted):
+                self.on_inserted = on_inserted
+
+            async def run(self, _session, *, trigger: str):
+                triggers.append(trigger)
+                if trigger == "startup":
+                    raise RuntimeError("isolated endpoint failure")
+                self.on_inserted()
+                stop.set()
+                return SimpleNamespace(
+                    execution="partial", summary=SimpleNamespace(inserted=1, remaining=2)
+                )
+
+        def grid(_now, seconds: int):
+            grids.append(seconds)
+            return datetime.now(UTC)
+
+        monkeypatch.setattr("prep_watchdeck_market.service.CandleEndpointRecovery", FakeRecovery)
+        monkeypatch.setattr("prep_watchdeck_market.service.next_grid_at", grid)
+        await asyncio.wait_for(service._endpoint_recovery_loop(stop), timeout=1)
+        assert triggers == ["startup", "periodic"]
+        assert grids == [60]
+        assert service._artifact_trigger.is_set() and service._metrics_trigger.is_set()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("mode", ["endpoint", "history"])
+def test_recovery_service_stop_cancels_and_joins_active_run(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, mode: str
+) -> None:
+    async def scenario() -> None:
+        service = MarketService("unused", tmp_path, recovery_enabled=True)
+        service._session = cast(aiohttp.ClientSession, object())
+        stop = asyncio.Event()
+        active = asyncio.Event()
+        joined = asyncio.Event()
+
+        class FakeRecovery:
+            def __init__(self, *_args, **_kwargs):
+                pass
+
+            async def run(self, *_args, **_kwargs):
+                active.set()
+                try:
+                    await asyncio.Event().wait()
+                finally:
+                    await asyncio.sleep(0)
+                    joined.set()
+
+        name = "CandleEndpointRecovery" if mode == "endpoint" else "CandleRecovery"
+        monkeypatch.setattr(f"prep_watchdeck_market.service.{name}", FakeRecovery)
+        recovery_loop = (
+            service._endpoint_recovery_loop if mode == "endpoint" else service._recovery_loop
+        )
+        task = asyncio.create_task(recovery_loop(stop))
+        await active.wait()
+        stop.set()
+        await asyncio.wait_for(task, timeout=1)
+        assert joined.is_set()
+
+    asyncio.run(scenario())

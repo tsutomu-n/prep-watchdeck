@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal
@@ -100,6 +100,31 @@ class CatalogInstrument:
                 "venue": self.venue,
             }
         )
+
+    def semantic_definition_sha256(self) -> str:
+        """Compare definitions without identified non-contract metadata.
+
+        Keep the full definition hash as immutable provenance. Listing lifecycle,
+        normalized fields, and every unknown raw field still separate versions.
+        """
+
+        ignored: set[str] = set()
+        onboard_date = self.raw_definition.get("onboardDate")
+        if self.venue == "bitget":
+            ignored = {"maxOrderQty", "maxMarketOrderQty", "posLimit"}
+        elif (
+            self.venue == "aster"
+            and self.raw_definition.get("contractType") == "PERPETUAL"
+            and type(onboard_date) is int
+            and onboard_date > 0
+        ):
+            # onboardDate remains in the signature as the listing boundary.
+            # Aster's extra createTime metadata drifts without a contract change.
+            ignored = {"createTime"}
+        raw_definition = {
+            name: value for name, value in self.raw_definition.items() if name not in ignored
+        }
+        return replace(self, raw_definition=raw_definition).definition_sha256()
 
 
 @dataclass(frozen=True, slots=True)

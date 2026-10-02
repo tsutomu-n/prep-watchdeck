@@ -1,25 +1,37 @@
 # 初期の銘柄対応表
 
+timestamp="2026-10-02(金)_14:34 JST"
+
 - 作成: `2026-09-12T09:20:26+09:00`
-- 更新: `2026-09-16T19:56:52+09:00`
+- 更新: `2026-10-02T14:34:34+09:00`
 - 状態: `現行`
 
 このdirectoryは価格を含まない、手動照合済みの対応表とidentity根拠を保存する。
-初期map version `07bfd5c76b6fc8cbc882aeba`（`ranking-map-v2`）は元名簿1,203契約を691行に保持する。
-暗号資産の対象570行のうち534行に固定参照契約がある（Bybit 482、Binance 52）。Widget対応は531行。
-36行は根拠を確認した未対応、原資産・参照の要確認は0行。別に121行を公式catalogの分類に基づく
-暗号資産以外の対象外として保持する。元数量換算とWidgetの未確認はそれぞれ3件であり、
+現map version `d5bfc5975f303258223b3288`（`ranking-map-v2`）は2026-10-02の完全な元名簿1,095契約を576行に保持する。
+536行に固定参照契約がある（Bybit 484、Binance 52）。Widget対応は532行。
+40行は根拠を確認した未対応、原資産・参照の要確認は0行。旧名簿にだけ存在した127契約は
+完全な現行catalogとの照合で除外し、新しい19契約と既存287件のversion変更を明示確認した。
+元数量換算とWidgetの未確認はそれぞれ3件であり、
 ランキングの採用資格と別に管理する。取得・連続更新の実データ受入は対応表照合と別の証拠である。
 
-未対応36行は、採用したBybit/Binanceに同一資産の対応契約がない33行、参照契約の取扱い終了・
+未対応40行は、採用したBybit/Binanceに同一資産の対応契約がない37行、参照契約の取扱い終了・
 清算中1行、別資産として確認した元契約に参照契約がない1行、同名の外部参照が株式の別資産である1行。
 各判断は保存済みのidentity・catalog根拠に結び付ける。
 Aster AIはArtificial InuのCAとMEXC別名AIINUを確認し、採用2社の全catalog/指数から
 抽出したGensyn候補を別CAで除外して、確認時点の採用範囲では未対応とした。
 MEXC Meme+等の他市場や未文書化の別名まで不存在とする判断ではない。
 
+CT、XDP、STONKは公式catalogと同じ取引所・現物契約を指す指数構成を照合し、Bybit固定参照を採用した。
+XDPとSTONKのWidgetは通常の公開Widgetのexact metadataと実描画を確認した。CTは同じWidgetが
+「このシンボルは存在しません」と明示するため、参照価格の採用と別にWidget未対応として保持する。
+既存の固定参照、数量換算、CHEEMS・NEX・RATSの未確認状態を変更していない。
+
+最新catalogの全取得・pagination完了とhashは`catalogCapture`、全listingの必要なidentity項目は
+`catalogIdentityIndex`へ保存する。`catalogs`は採用元1,095契約と固定参照536契約のfull entryだけを
+保持し、未使用契約の運用設定を増殖させない。追加・除外・version照合の根拠は`rosterRefresh`へ記録する。
+
 元数量換算が未確認の3契約は次の一次情報が不足している。詳しい根拠と不足は
-/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core/data/qualification-evidence.json の
+/home/tn/projects/prep-watchdeck/apps/ranking-core/data/qualification-evidence.json の
 `unresolvedDetails`へ記録する。
 
 CHEEMSはBitgetのCheems metadataとBinanceの同じBSC CA、NEXはBitgetのNexus metadataと
@@ -39,12 +51,12 @@ Bybit PHAROSUSDTのproject名とPROS指数構成を照合し、既存のPharos�
 Bitget/Asterの元instrument IDと数量倍率、参照契約、Widget symbolを保持している。
 Aster画面の説明metadataはCoinMarketCap由来であり、独自の公式契約仕様とは区別する。
 
-- /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core/data/initial-map.json: version付きの起動用map。
-- /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core/data/initial-roster.json: 元の3取引所のidentityだけを抽出した名簿。
-- /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core/data/qualification-evidence.json: 公開catalog、指数構成のidentity、通常Widget検索で確認したmetadata、未解決一覧。指数価格は保存・計算していない。
+- /home/tn/projects/prep-watchdeck/apps/ranking-core/data/initial-map.json: version付きの起動用map。
+- /home/tn/projects/prep-watchdeck/apps/ranking-core/data/initial-roster.json: 元の3取引所のidentityだけを抽出した名簿。
+- /home/tn/projects/prep-watchdeck/apps/ranking-core/data/qualification-evidence.json: 公開catalog、指数構成のidentity、通常Widget検索で確認したmetadata、未解決一覧。指数価格は保存・計算していない。
 
 ```bash
-cd /home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700
+cd /home/tn/projects/prep-watchdeck
 uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json
 uv run --package prep-watchdeck-ranking python scripts/ranking/verify-map-evidence.py
 uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-ranking-qualified
@@ -63,8 +75,15 @@ uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --
 
 名簿更新時は別の出力先へ`export-roster`を実行し、追加・削除・version変更と元の対応表を照合する。
 各銘柄のstatus、根拠、数量倍率、固定した参照契約、Widget symbolをレビューした後、`compile-map`
-で全instrument IDとversionを照合する。/home/tn/projects/prep-watchdeck/.ai-work/ranking-continuation-20260912-115700/apps/ranking-core/data/initial-map.json も`--decisions`として読み込める。
+で全instrument IDとversionを照合する。/home/tn/projects/prep-watchdeck/apps/ranking-core/data/initial-map.json も`--decisions`として読み込める。
 未確認契約へ自動で接尾辞を付ける処理、障害時の自動Provider切替、履歴の連結は行わない。
+
+`scripts/ranking/refresh-roster-candidate.py`はcomplete・readyで新しいUniverse/service、全件取得した
+公式catalog、専用DBのread-only定義audit、明示レビュー済みdecisionsと追加identity根拠から、
+隔離した新directoryに候補3ファイルだけを生成する。collector件数・時刻・全ID/version・数量定義を
+照合し、既存の固定参照の変更や未確認資産の自動統合、live/sourceへの出力を拒否する。
+取得snapshotの日時だけを変える操作は再確認にならない。候補を検証した後でsourceに採用し、
+collectorの再起動後にも現Universeとの全ID/version一致を確認する。
 
 変更したmapは専用collectorの再起動時に採用する。既存の採用契約はBybit/Binanceのcatalogを
 1時間ごとに再確認し、廃止・revision変更を検出した場合は順位とWidgetから外す。

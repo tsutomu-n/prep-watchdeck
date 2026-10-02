@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 import psycopg
@@ -11,7 +11,13 @@ from psycopg import Connection
 from psycopg.types.json import Jsonb
 
 from prep_watchdeck_market.identity import IdentityResolution
-from prep_watchdeck_market.models import CatalogBatch, CatalogInstrument, canonical_json_sha256
+from prep_watchdeck_market.models import (
+    CatalogBatch,
+    CatalogInstrument,
+    QuantityUnit,
+    Venue,
+    canonical_json_sha256,
+)
 
 
 class CatalogStoreError(RuntimeError):
@@ -52,17 +58,35 @@ def persist_catalog(
             )
             exclusions_inserted = _persist_exclusions(cursor, batch, raw_payload_id)
             current_rows = {
-                str(row[1]): (int(row[0]), str(row[2]).strip(), row[3])
+                str(row[1]): (
+                    int(row[0]),
+                    str(row[2]).strip(),
+                    row[3],
+                    _stored_semantic_definition_hash(venue, row),
+                )
                 for row in cursor.execute(
                     """
                         SELECT venue_instrument_version_id, source_symbol,
-                               definition_hash, valid_from
+                               definition_hash, valid_from, active, source_status,
+                               asset_class, market_type, execution_model, base_asset,
+                               quote_asset, settle_asset, collateral_asset, quantity_unit,
+                               contract_multiplier, price_tick, amount_step,
+                               funding_interval_seconds, raw_definition
                         FROM venue_instrument_versions
                         WHERE venue = %s AND valid_to IS NULL
                         FOR UPDATE
                     """,
                     (venue,),
                 ).fetchall()
+            }
+            unchanged_symbols = {
+                source_symbol
+                for source_symbol, instrument in instruments.items()
+                if (current := current_rows.get(source_symbol)) is not None
+                and (
+                    current[1] == instrument.definition_sha256()
+                    or current[3] == instrument.semantic_definition_sha256()
+                )
             }
 
             current_version_ids: dict[str, int] = {}
@@ -71,13 +95,8 @@ def persist_catalog(
             versions_closed = 0
             memberships_closed = 0
 
-            for source_symbol, (version_id, _, valid_from) in current_rows.items():
-                instrument = instruments.get(source_symbol)
-                definition_changed = (
-                    instrument is not None
-                    and instrument.definition_sha256() != current_rows[source_symbol][1]
-                )
-                if instrument is None or definition_changed:
+            for source_symbol, (version_id, _, valid_from, _) in current_rows.items():
+                if source_symbol not in unchanged_symbols:
                     _require_later(observed_at, valid_from, "instrument definition")
                     memberships_closed += _close_version(cursor, version_id, observed_at)
                     versions_closed += 1
@@ -85,7 +104,7 @@ def persist_catalog(
             for source_symbol, instrument in instruments.items():
                 definition_hash = instrument.definition_sha256()
                 current = current_rows.get(source_symbol)
-                if current is not None and current[1] == definition_hash:
+                if current is not None and source_symbol in unchanged_symbols:
                     current_version_ids[instrument.venue_instrument_id] = current[0]
                     versions_unchanged += 1
                     continue
@@ -165,6 +184,29 @@ def persist_catalog(
         raise
     except psycopg.Error:
         raise CatalogStoreError("catalog persistence failed") from None
+
+
+def _stored_semantic_definition_hash(venue: Venue, row: Sequence[Any]) -> str:
+    instrument = CatalogInstrument(
+        venue=venue,
+        source_symbol=str(row[1]),
+        active=bool(row[4]),
+        source_status=str(row[5]),
+        asset_class=str(row[6]),
+        market_type=str(row[7]),
+        execution_model=str(row[8]),
+        base_asset=str(row[9]),
+        quote_asset=str(row[10]),
+        settle_asset=str(row[11]),
+        collateral_asset=row[12],
+        quantity_unit=cast(QuantityUnit, row[13]),
+        contract_multiplier=row[14],
+        price_tick=row[15],
+        amount_step=row[16],
+        funding_interval_seconds=row[17],
+        raw_definition=cast(dict[str, object], row[18]),
+    )
+    return instrument.semantic_definition_sha256()
 
 
 def _validate_input(

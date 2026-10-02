@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-02(金)_07:19 JST"
+timestamp="2026-10-02(金)_14:15 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T07:19:27+09:00`
-- 検証: `2026-10-02T07:19:27+09:00`
+- 更新: `2026-10-02T14:15:04+09:00`
+- 検証: `2026-10-02T14:15:04+09:00`
 - 状態: `現行`
 
 ---
@@ -35,6 +35,14 @@ timestamp="2026-10-02(金)_07:19 JST"
 - OIはraw値とraw unitを保持し、確認できる時だけbase/notionalへ派生する
 - 24h volumeはsource由来値とunitを保持する
 - source timestampがない場合はnullを維持する
+
+Catalogの完全なraw payloadと版のdefinition hashは保全する。Bitgetの公式定義における
+`maxOrderQty`、`maxMarketOrderQty`、`posLimit`だけの変更では、価格・数量・上場identityが
+変わらないため既存version/hash/開始時刻を維持する。Asterの`PERPETUAL`で正整数の
+`onboardDate`がある場合は、その上場境界を保持したままextra metadataの`createTime`だけの
+変動も版を分けない。`onboardDate`の変更、不在・不正な上場境界、その他のraw項目、normalized field、
+上場lifecycleの変更は従来どおり版を分ける。既存版のhashや過去の保存足を書き換えず、
+新しい完全なcatalog原文は別raw payloadとして記録する。
 
 現行参考mark中央値以外でUSD/USDC/USDT parityを無条件に仮定しない。
 
@@ -286,6 +294,9 @@ Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間�
 対象の現行ID・version・definitionHash、半開UTC窓、scan/insert/rescan件数、失敗と未処理を分ける。
 `execution=running|succeeded|partial|failed`で、部分成功を全契約成功へ昇格しない。
 手動scanだけではartifactを更新しない。
+同じschemaを使う`candle-endpoint-recovery-state.json`は指標のexact endpointだけを回復した
+別runを記録する。通常履歴の全時間格子に対する完了状態とは別であり、endpointの成功から
+全履歴の完全性を主張しない。両runはversion/hashを再確認し、既存足を上書きしない。
 時間上限やDB障害でscanが完了しない場合、全体の`missingBefore`・`remaining`・`newlyPresent`や
 対象の未検査件数は`null`とする。挿入後に中断しても、終了を確認したDB処理の挿入件数を保持する。
 

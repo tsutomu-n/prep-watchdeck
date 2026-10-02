@@ -192,7 +192,7 @@ def test_writer_admits_only_candles_covered_by_current_catalog_versions(
     asyncio.run(scenario())
 
 
-def test_bitget_sweep_aligns_end_time_limits_concurrency_and_keeps_last_three() -> None:
+def test_bitget_sweep_aligns_end_time_limits_concurrency_and_keeps_overlap() -> None:
     async def scenario() -> None:
         session = _FakeSession(expected_concurrency=4)
         writer = _CollectingWriter()
@@ -212,12 +212,62 @@ def test_bitget_sweep_aligns_end_time_limits_concurrency_and_keeps_last_three() 
         assert len(session.calls) == 6
         assert all(call["productType"] == "USDT-FUTURES" for call in session.calls)
         assert all(call["granularity"] == "1m" for call in session.calls)
-        assert all(call["limit"] == "3" for call in session.calls)
+        assert all(call["limit"] == "8" for call in session.calls)
         expected_end = int(observed_at.replace(second=0, microsecond=0).timestamp() * 1_000)
         assert all(call["endTime"] == str(expected_end) for call in session.calls)
         assert len(writer.batches) == 6
-        assert all(len(batch) == 3 for batch in writer.batches)
-        assert len({candle.storage_key for batch in writer.batches for candle in batch}) == 18
+        assert all(len(batch) == 8 for batch in writer.batches)
+        assert len({candle.storage_key for batch in writer.batches for candle in batch}) == 48
+        # Three-minute delayed metrics can still use their exact close endpoint.
+        metric_bucket = observed_at.replace(second=0, microsecond=0) - timedelta(minutes=4)
+        assert all(metric_bucket in {c.bucket_start for c in batch} for batch in writer.batches)
+
+    asyncio.run(scenario())
+
+
+def test_bitget_sweep_uses_each_request_clock_after_minutes_advance() -> None:
+    async def scenario() -> None:
+        request_clock = datetime(2026, 8, 14, 10, 1, 37, tzinfo=UTC)
+
+        class AdvancingSession(_FakeSession):
+            def get(
+                self,
+                _url: str,
+                *,
+                params: dict[str, str],
+                timeout: aiohttp.ClientTimeout,
+            ) -> _FakeResponse:
+                nonlocal request_clock
+                response = super().get(_url, params=params, timeout=timeout)
+                request_clock += timedelta(minutes=1)
+                return response
+
+        session = AdvancingSession(expected_concurrency=4)
+        writer = _CollectingWriter()
+        await poll_bitget_sweep(
+            cast(aiohttp.ClientSession, session),
+            tuple(_instrument(f"COIN{index}USDT") for index in range(6)),
+            cast(CandleBatchWriter, writer),
+            asyncio.Event(),
+            utc_clock=lambda: request_clock,
+            sweep_seconds=0,
+        )
+
+        first_end = datetime(2026, 8, 14, 10, 1, tzinfo=UTC)
+        expected_ends = [
+            str(int((first_end + timedelta(minutes=index)).timestamp() * 1_000))
+            for index in range(6)
+        ]
+        assert [call["endTime"] for call in session.calls] == expected_ends
+        assert session.max_active == 4
+        batches = {batch[0].source_symbol: batch for batch in writer.batches}
+        for call in session.calls:
+            batch = batches[call["symbol"]]
+            # Every response keeps the exact minute needed by a delayed metric.
+            cutoff_bucket = datetime.fromtimestamp(int(call["endTime"]) / 1_000, UTC) - timedelta(
+                minutes=4
+            )
+            assert cutoff_bucket in {candle.bucket_start for candle in batch}
 
     asyncio.run(scenario())
 
@@ -239,12 +289,13 @@ class _FakeSession:
     ) -> _FakeResponse:
         assert timeout.total == 20
         self.calls.append(dict(params))
-        return _FakeResponse(self)
+        return _FakeResponse(self, params)
 
 
 class _FakeResponse:
-    def __init__(self, session: _FakeSession) -> None:
+    def __init__(self, session: _FakeSession, params: dict[str, str]) -> None:
         self._session = session
+        self._params = params
 
     async def __aenter__(self) -> _FakeResponse:
         return self
@@ -270,10 +321,16 @@ class _FakeResponse:
             "code": "00000",
             "requestTime": 1_786_701_660_000,
             "data": [
-                ["1786701420000", "100", "101", "99", "100", "1", "100"],
-                ["1786701480000", "100", "102", "99", "101", "2", "201"],
-                ["1786701540000", "101", "103", "100", "102", "3", "305"],
-                ["1786701600000", "102", "104", "101", "103", "4", "410"],
+                [
+                    str(int(self._params["endTime"]) - minutes * 60_000),
+                    "100",
+                    "101",
+                    "99",
+                    "100",
+                    "1",
+                    "100",
+                ]
+                for minutes in range(9, 0, -1)
             ],
         }
 
