@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "logos": [
+    {
+      "assetId": "crypto:BTC",
+      "name": "Bitcoin",
+      "path": "/asset-logos/bitcoin-b0231779b54f.png",
+      "sha256": "b0231779b54f52e4352fa4300cb5353351bee8261f5d84b6e6ad8f6a2d24a1a4",
+      "sourceUrl": "https://raw.githubusercontent.com/bitpay/bitcoin-brand/887f040f7c44660b84c4000f4a54897ba5518194/bitcoin.png",
+      "identityEvidence": [
+        "apps/ranking-core/data/initial-map.json # crypto:BTC; status=verified; mapVersion=d5bfc5975f303258223b3288",
+        "TradingView public Widget catalog identity: crypto/XTVCBTC",
+        "https://bitcoin.org/en/vocabulary#btc",
+        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # BTCUSDT",
+        "https://api.bitget.com/api/v3/market/index-components?symbol=BTCUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=BTCUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # BTCUSDT",
+        "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # BTC",
+        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BTCUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BTCUSDT"
+      ],
+      "usage": {
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "termsUrl": "https://github.com/bitpay/bitcoin-brand/blob/887f040f7c44660b84c4000f4a54897ba5518194/LICENSE",
+        "attribution": "Bitcoin icon by BitPay, Inc. — CC0 1.0 Universal",
+        "attributionRequired": false,
+        "modifications": "none",
+        "redistribution": "permitted",
+        "notes": "BitPayのbitcoin-brandはBitcoinのアイコンを明示してCC0で提供。BitPay企業ロゴではない。元画像とブランド色を保持。"
+      },
+      "verifiedAt": "2026-10-02T11:55:11Z"
+    },
+    {
+      "assetId": "crypto:XMR",
+      "name": "Monero",
+      "path": "/asset-logos/monero-531faec93058.png",
+      "sha256": "531faec93058e37338ddd860191d4677a1a77778ccfa125de2232c4cd2554fb1",
+      "sourceUrl": "https://www.getmonero.org/press-kit/symbols/monero-symbol-on-white-480.png",
+      "identityEvidence": [
+        "apps/ranking-core/data/initial-map.json # crypto:XMR; status=verified; mapVersion=d5bfc5975f303258223b3288",
+        "TradingView public Widget catalog identity: crypto/XTVCXMR",
+        "https://www.getmonero.org/get-started/what-is-monero/",
+        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # XMRUSDT",
+        "https://api.bitget.com/api/v3/market/index-components?symbol=XMRUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=XMRUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # XMRUSDT",
+        "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # XMR",
+        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XMRUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=XMRUSDT"
+      ],
+      "usage": {
+        "license": "CC-BY-SA-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "termsUrl": "https://www.getmonero.org/legal/#copyright",
+        "attribution": "Monero Symbol by The Monero Project — CC BY-SA 4.0 — unchanged",
+        "attributionRequired": true,
+        "modifications": "none",
+        "redistribution": "permitted",
+        "notes": "公式LegalがMonero logoを含む内容の再配布を明示。出典、ライセンス、未改変の表示をcredits.htmlに掲載。"
+      },
+      "verifiedAt": "2026-10-02T11:55:11Z"
+    }
+  ]
+}

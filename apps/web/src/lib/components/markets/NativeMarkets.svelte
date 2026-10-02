@@ -4,6 +4,7 @@
   import { page } from "$app/state";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
+  import AssetIcon from "$lib/components/AssetIcon.svelte";
   import type { UserWorkspace } from "$lib/server/user-workspace-repository";
   import { subscribeReferenceTime } from "$lib/theme/display-preferences";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
@@ -993,6 +994,10 @@
                       aria-label={`${item.baseAsset} ${item.venue}を詳細表示`}
                       onclick={() => selectInstrument(item)}
                     >
+                      <div class="asset-icon-slot">
+                        <AssetIcon symbol={item.baseAsset} instrumentId={item.venueInstrumentId}
+                          instrumentVersionId={item.venueInstrumentVersionId} />
+                      </div>
                       <strong>{item.baseAsset}</strong>
                       <span>{item.venue} · {item.sourceSymbol}</span>
                       <small class="coverage-label">{coverageLabel(item, groupCounts)}</small>
@@ -1060,7 +1065,12 @@
           <div class="instrument-heading">
             <div>
               <p>確認する取引所 · {selectedVenueName}</p>
-              <h2 id="inspector-title" tabindex="-1">{selectedInstrument.baseAsset} PERP</h2>
+              <h2 id="inspector-title" tabindex="-1">
+                <AssetIcon symbol={selectedInstrument.baseAsset}
+                  instrumentId={selectedInstrument.venueInstrumentId}
+                  instrumentVersionId={selectedInstrument.venueInstrumentVersionId} size={32} />
+                <span>{selectedInstrument.baseAsset} PERP</span>
+              </h2>
               <span class="contract-symbol">{selectedInstrument.sourceSymbol}</span>
               <span class="primary-price">{formatPrice(selectedInstrument.markPrice)} <small>{selectedInstrument.quoteAsset} · Mark</small></span>
               <span class="coverage-label">{coverageLabel(selectedInstrument, groupCounts)}</span>
@@ -1427,7 +1437,9 @@
   th, td { padding: var(--space-sm); border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; }
   thead th { position: sticky; top: 0; z-index: 1; background: var(--panel-strong); color: var(--muted); font-size: var(--type-label-caps-size); }
   tbody tr.selected { background: var(--panel-selected); box-shadow: inset 3px 0 var(--focus); }
-  .instrument-select { display: grid; gap: var(--space-xxs); width: 100%; min-height: var(--control-height-dense); border: 0; background: transparent; color: var(--text); padding: 0; font: inherit; text-align: left; cursor: pointer; }
+  .instrument-select { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: var(--space-xxs) var(--space-sm); width: 100%; min-height: var(--control-height-dense); border: 0; background: transparent; color: var(--text); padding: 0; font: inherit; text-align: left; cursor: pointer; }
+  .asset-icon-slot { grid-column: 1; grid-row: 1 / span 3; align-self: center; }
+  .instrument-select > strong, .instrument-select > span, .instrument-select > small { grid-column: 2; min-width: 0; }
   .instrument-select strong { font-size: var(--type-data-md-size); }
   .instrument-select span, td small, .coverage-label { display: block; color: var(--muted); font-size: var(--type-label-caps-size); }
   .audit-badge { display: block; min-height: 44px; border: 0; background: transparent; color: var(--focus); padding: var(--space-xs) 0; text-align: left; font: inherit; font-size: var(--type-label-caps-size); cursor: pointer; overflow-wrap: anywhere; }
@@ -1461,7 +1473,8 @@
   .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   .instrument-heading { padding: var(--space-md); border-bottom: 1px solid var(--line-strong); background: var(--panel-selected); }
   .instrument-heading p { color: var(--focus); font-size: var(--type-label-caps-size); font-weight: 800; }
-  .instrument-heading h2 { margin-top: var(--space-xs); font-size: var(--type-title-lg-size); }
+  .instrument-heading h2 { display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs); font-size: var(--type-title-lg-size); }
+  .instrument-heading h2 > span { min-width: 0; overflow-wrap: anywhere; }
   .primary-price { display: block; margin-top: var(--space-sm); font-size: var(--type-data-lg-size); font-weight: 800; font-variant-numeric: tabular-nums; }
   .primary-price small { color: var(--muted); font-size: var(--type-body-sm-size); font-weight: 500; }
   .reference-block, .l1-block, .selection-state, .waiting-panel { padding: var(--space-md); border-bottom: 1px solid var(--line); }
@@ -1532,6 +1545,7 @@
     .table-scroll td:first-child button { width: 44px; padding: 0; }
     th, td { padding: var(--space-sm) var(--space-xs); }
     .instrument-select span { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .instrument-select { column-gap: var(--space-xs); }
     .instrument-select .coverage-label { display: none; }
     .metric-grid, .provenance { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .section-title, .instrument-heading, .subheading, .venue-depth-title { align-items: flex-start; }

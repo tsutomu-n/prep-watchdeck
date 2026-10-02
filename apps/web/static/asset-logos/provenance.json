@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "verifiedAt": "2026-10-02T11:55:11Z",
+  "assetMapVersion": "d5bfc5975f303258223b3288",
+  "distribution": "same-origin static PNG; no runtime external image or API lookup",
+  "logos": [
+    {
+      "assetId": "crypto:BTC",
+      "name": "Bitcoin",
+      "path": "/asset-logos/bitcoin-b0231779b54f.png",
+      "sha256": "b0231779b54f52e4352fa4300cb5353351bee8261f5d84b6e6ad8f6a2d24a1a4",
+      "sourceUrl": "https://raw.githubusercontent.com/bitpay/bitcoin-brand/887f040f7c44660b84c4000f4a54897ba5518194/bitcoin.png",
+      "identityEvidence": [
+        "apps/ranking-core/data/initial-map.json # crypto:BTC; status=verified; mapVersion=d5bfc5975f303258223b3288",
+        "TradingView public Widget catalog identity: crypto/XTVCBTC",
+        "https://bitcoin.org/en/vocabulary#btc",
+        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # BTCUSDT",
+        "https://api.bitget.com/api/v3/market/index-components?symbol=BTCUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=BTCUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # BTCUSDT",
+        "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # BTC",
+        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BTCUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BTCUSDT"
+      ],
+      "usage": {
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+        "termsUrl": "https://github.com/bitpay/bitcoin-brand/blob/887f040f7c44660b84c4000f4a54897ba5518194/LICENSE",
+        "attribution": "Bitcoin icon by BitPay, Inc. — CC0 1.0 Universal",
+        "attributionRequired": false,
+        "modifications": "none",
+        "redistribution": "permitted",
+        "notes": "BitPayのbitcoin-brandはBitcoinのアイコンを明示してCC0で提供。BitPay企業ロゴではない。元画像とブランド色を保持。"
+      },
+      "verifiedAt": "2026-10-02T11:55:11Z"
+    },
+    {
+      "assetId": "crypto:XMR",
+      "name": "Monero",
+      "path": "/asset-logos/monero-531faec93058.png",
+      "sha256": "531faec93058e37338ddd860191d4677a1a77778ccfa125de2232c4cd2554fb1",
+      "sourceUrl": "https://www.getmonero.org/press-kit/symbols/monero-symbol-on-white-480.png",
+      "identityEvidence": [
+        "apps/ranking-core/data/initial-map.json # crypto:XMR; status=verified; mapVersion=d5bfc5975f303258223b3288",
+        "TradingView public Widget catalog identity: crypto/XTVCXMR",
+        "https://www.getmonero.org/get-started/what-is-monero/",
+        "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES # XMRUSDT",
+        "https://api.bitget.com/api/v3/market/index-components?symbol=XMRUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=XMRUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # XMRUSDT",
+        "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # XMR",
+        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XMRUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=XMRUSDT"
+      ],
+      "usage": {
+        "license": "CC-BY-SA-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+        "termsUrl": "https://www.getmonero.org/legal/#copyright",
+        "attribution": "Monero Symbol by The Monero Project — CC BY-SA 4.0 — unchanged",
+        "attributionRequired": true,
+        "modifications": "none",
+        "redistribution": "permitted",
+        "notes": "公式LegalがMonero logoを含む内容の再配布を明示。出典、ライセンス、未改変の表示をcredits.htmlに掲載。"
+      },
+      "verifiedAt": "2026-10-02T11:55:11Z"
+    }
+  ],
+  "deferredSources": [
+    {
+      "source": "CoinGecko",
+      "apiReference": "https://docs.coingecko.com/reference/coins-id",
+      "termsUrl": "https://www.coingecko.com/en/api_terms",
+      "decision": "not_adopted",
+      "reason": "coins/{id}はthumb/small/large画像URLを返すが、API Termsの24時間キャッシュ更新・保存保護・API終了時削除等の条件に、単発取得してGitへ固定する運用を適合させていない。"
+    },
+    {
+      "source": "Ethereum brand assets",
+      "termsUrl": "https://ethereum.org/terms-of-use/",
+      "decision": "deferred",
+      "reason": "公式assetsとCC BY 4.0表記はあるが、ロゴの事前書面許可を要求する商標条項と本用途の適用を確定できていない。"
+    },
+    {
+      "source": "Solana Brand & Press",
+      "brandUrl": "https://solana.com/branding",
+      "termsUrl": "https://solana.com/tos",
+      "decision": "deferred",
+      "reason": "公式Brand & PressがPNG/SVGとガイドを提供する一方、Terms of Serviceがロゴの事前書面許可を要求する。本用途の再配信許可が明確になるまで代替表示を使う。"
+    },
+    {
+      "source": "Simple Icons",
+      "url": "https://github.com/simple-icons/simple-icons",
+      "decision": "not_adopted",
+      "reason": "ローカルGitHub Stars catalogで候補を確認し、README/LICENSEを再確認。CC0は各ブランドの商標許可を代替せず、元のブランド色・形状を保持する今回の初期集合では素材元の直接確認を優先した。"
+    }
+  ]
+}

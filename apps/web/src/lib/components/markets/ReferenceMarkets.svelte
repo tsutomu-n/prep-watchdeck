@@ -11,6 +11,7 @@
   import { formatPrice } from "$lib/market/universe-view";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
+  import AssetIcon from "$lib/components/AssetIcon.svelte";
   import type { FavoriteTarget, UserWorkspace } from "$lib/server/user-workspace-repository";
   import { DEFAULT_REFERENCE_TIME, formatPriceChange } from "$lib/market/price-change";
   import {
@@ -680,6 +681,7 @@
                   </small>
                 {/if}</td>
                 <th scope="row" class="asset-cell"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
+                  <div class="asset-icon-slot"><AssetIcon symbol={row.asset} assetId={row.id} originals={row.originals} /></div>
                   <strong>{row.asset}</strong><span>{row.venues.map((v) => v === "hyperliquid" ? "Hyperliquid" : v === "bitget" ? "Bitget" : "Aster").join(" · ")}</span>
                   <small class="desktop-only">{referenceLabel(row)}</small>
                   <small class="mobile-only">{row.reference ? `参照 ${row.reference.provider === "bybit" ? "Bybit" : "Binance"}` : "参照未対応"}</small>
@@ -740,7 +742,10 @@
       <button class="mobile-only detail-back" type="button" bind:this={detailBack} onclick={() => window.history.back()}>一覧へ戻る</button>
       {#if selected}
         <div class="selected-heading">
-          <div><span>選択中の参照契約</span><h2 id="chart-title">{selected.asset}</h2></div>
+          <div><span>選択中の参照契約</span><h2 id="chart-title">
+            <AssetIcon symbol={selected.asset} assetId={selected.id} originals={selected.originals} size={32} />
+            <span>{selected.asset}</span>
+          </h2></div>
           <p class="comparison-time">{#if data}比較値 · JST {rankingTimestamp(data.cutoff)}<br />{stale ? "更新停止・過去時点の値" : "確定1分足で比較"}{:else}比較条件を取得中{/if}</p>
         </div>
         <section class="source-context" aria-label="参照市場と確認する取引所">
@@ -876,7 +881,9 @@
   .selected-metrics dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
   .primary-metrics dd { font-weight: 750; }
   .indicator { display: block; color: var(--muted); font-size: var(--type-label-caps-size); white-space: normal; }
-  .select-row { display: grid; width: 100%; gap: var(--space-xxs); border: 0; padding: 0; background: transparent; color: var(--text); text-align: left; min-height: 42px; }
+  .select-row { display: grid; grid-template-columns: 22px minmax(0, 1fr); width: 100%; gap: var(--space-xxs) var(--space-sm); border: 0; padding: 0; background: transparent; color: var(--text); text-align: left; min-height: 42px; }
+  .asset-icon-slot { grid-column: 1; grid-row: 1 / span 3; align-self: center; }
+  .select-row > strong, .select-row > span, .select-row > small { grid-column: 2; min-width: 0; }
   .select-row strong { font-size: var(--type-data-md-size); overflow-wrap: anywhere; }
   .select-row span, .select-row small { color: var(--muted); font-size: var(--type-label-caps-size); overflow-wrap: anywhere; }
   .numeric { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
@@ -891,7 +898,8 @@
   .selected-heading { border-bottom: 1px solid var(--line-strong); padding: var(--space-sm) 0; }
   .selected-heading { display: flex; justify-content: space-between; gap: var(--space-md); align-items: center; }
   .selected-heading > div > span { color: var(--muted); font-size: var(--type-label-caps-size); }
-  .selected-heading h2 { margin: var(--space-xs) 0; font-size: var(--type-title-lg-size); }
+  .selected-heading h2 { display: flex; align-items: center; gap: var(--space-sm); margin: var(--space-xs) 0; font-size: var(--type-title-lg-size); }
+  .selected-heading h2 > span { min-width: 0; overflow-wrap: anywhere; }
   .selected-heading .comparison-time { text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
   .selected-heading p { margin: var(--space-xs) 0; color: var(--subtle); font-size: var(--type-body-sm-size); overflow-wrap: anywhere; }
   .native-candidates { display: flex; flex-wrap: wrap; gap: var(--space-sm); padding: var(--space-sm) 0; }
@@ -931,7 +939,7 @@
     thead th { font-size: 10px; white-space: normal; }thead button { font-size: inherit; width: 100%; }
     thead th:nth-child(2) { width: 32px; }thead th:nth-child(3) { width: 33%; }
     .rank { width: 32px; }.rank-change { min-width: 0; font-size: 10px; }
-    .asset-cell { position: relative; }.select-row { min-height: 44px; padding-right: 44px; }.select-row span { display: none; }
+    .asset-cell { position: relative; }.select-row { min-height: 44px; padding-right: 44px; column-gap: var(--space-xs); }.select-row span { display: none; }
     .mobile-favorite { position: absolute; top: 4px; right: 0; width: 44px; min-width: 44px; padding: 0; background: transparent; border: 0; }
     .mobile-sort-basis, .mobile-movement { display: block; font-size: 10px; color: var(--muted); overflow-wrap: anywhere; line-height: 1.5; }
     .mobile-movement span { display: block; }

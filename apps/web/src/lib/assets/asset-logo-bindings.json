@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "mapVersion": "d5bfc5975f303258223b3288",
+  "sourceMapSha256": "d177fef4315b743105f8b8d704ba68ef5fbbc1263dd0fcb720bdeadd8fd1eef2",
+  "bindings": [
+    {
+      "instrumentId": "aster:BTCUSDT",
+      "versionId": 640,
+      "assetId": "crypto:BTC"
+    },
+    {
+      "instrumentId": "aster:XMRUSDT",
+      "versionId": 675,
+      "assetId": "crypto:XMR"
+    },
+    {
+      "instrumentId": "bitget:BTCUSDT",
+      "versionId": 1,
+      "assetId": "crypto:BTC"
+    },
+    {
+      "instrumentId": "bitget:XMRUSDT",
+      "versionId": 3140,
+      "assetId": "crypto:XMR"
+    },
+    {
+      "instrumentId": "hyperliquid:BTC",
+      "versionId": 463,
+      "assetId": "crypto:BTC"
+    },
+    {
+      "instrumentId": "hyperliquid:XMR",
+      "versionId": 631,
+      "assetId": "crypto:XMR"
+    }
+  ]
+}

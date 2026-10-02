@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_16:05 JST"
+timestamp="2026-10-02(金)_21:01 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T16:05:08+09:00`
-- 検証: `2026-10-02T16:05:08+09:00`
+- 更新: `2026-10-02T21:01:54+09:00`
+- 検証: `2026-10-02T21:01:54+09:00`
 - 状態: `現行`
 
 ---
@@ -378,6 +378,25 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 自動追随したことや、全Widgetの個別描画を確認したことを、この配置結果から主張しない。
 詳細な検証結果は
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/validation.md](validation.md)を参照する。
+
+## 表示用ロゴの追加・更新
+
+ロゴはWeb内の表示用manifestとローカル画像から配信し、画面表示時に外部画像APIへ問い合わせない。
+市場収集・契約version・ランキング資格・数量倍率・参照provider・Widget対応は変更しない。
+
+追加時は採用済みmapの原契約ID/versionと原資産を確認し、正式な画像出典・保存/再配信条件・
+credit・未改変/変更内容・SHA256を`apps/web/src/lib/assets/asset-logos.json`へ記録する。
+同名symbol、1000等の文字列から画像を推測しない。未確認の素材を採用して全件を埋めない。
+素材の初期採用はBitPayのBitcoin icon（CC0）とMonero公式Symbol（CC BY-SA 4.0）。
+各出典・credit・ライセンスは`apps/web/static/asset-logos/credits.html`から確認できる。
+CoinGeckoのAPI画像は、保存・更新・再配信条件に適合する運用を導入していないため未採用。
+
+Repo rootで`bun scripts/assets/generate-logo-bindings.mjs`を実行し、画像のSHA256・静的形式・
+利用条件記録・map/evidenceの一致を検査して、確認済みassetの原契約ID/versionだけを生成する。
+`--check`は生成物との一致確認。mapを更新した場合も再生成・差分確認・Web検証を行う。
+新しい版が未照合の場合は中立表示になり、古い画像対応をsymbolから引き継がない。
+このcommandはmap/evidenceを読み、Webの表示用bindingだけを書き、runtime DB/stateへ作用しない。
+画像が読めなくても通常の一覧・選択・お気に入りを使え、同じ枠サイズ・行位置を維持する。
 
 ## 保存足の回収・照合・比較・出力
 
