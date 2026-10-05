@@ -1,10 +1,10 @@
 {
   "schemaVersion": "ranking-map-v2",
-  "version": "d5bfc5975f303258223b3288",
-  "verifiedAt": 1790919217296,
-  "rosterGeneratedAt": 1790919180876,
-  "rosterFingerprint": "9c2f1c3817a5dc241024bda2b24c2d19cb7b7e88cd1e46c8194b7f190a7ded8d",
-  "rosterSource": "/tmp/prep-watchdeck-ranking-roster-diagnosis-20261002/universe-captured.json",
+  "version": "6954e4c861aafd485f43b65c",
+  "verifiedAt": 1791197928342,
+  "rosterGeneratedAt": 1791197925102,
+  "rosterFingerprint": "f4b91a8e9cefcab333ae87308286d217822f289b4da70d3aec4ee8157afba7e7",
+  "rosterSource": "/home/tn/projects/prep-watchdeck/var/tmp/roster-freshness-20261005/universe-snapshot.json",
   "sourceInstrumentCount": 1095,
   "rows": [
     {
@@ -15868,42 +15868,6 @@
       ]
     },
     {
-      "id": "crypto:MEMESTOCK",
-      "asset": "MEMESTOCK",
-      "status": "unsupported",
-      "reason": "no_adopted_reference_after_identity_audit",
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:MEMESTOCKUSDT",
-          "versionId": 9049,
-          "symbol": "MEMESTOCKUSDT",
-          "baseAsset": "MEMESTOCK",
-          "multiplier": 1
-        }
-      ],
-      "reference": null,
-      "widget": {
-        "status": "unsupported",
-        "symbol": null,
-        "reason": "no_eligible_reference_contract",
-        "evidence": [
-          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo"
-        ],
-        "referenceKey": null
-      },
-      "evidence": [
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # MEMESTOCKUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=MEMESTOCKUSDT",
-        "https://x.com/Aster_DEX/status/2096602459405988223",
-        "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=MEMESTOCK&lang=en",
-        "https://memestock.run/stock",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-        "https://fapi.binance.com/fapi/v1/exchangeInfo"
-      ]
-    },
-    {
       "id": "crypto:MEME_ROBINHOOD",
       "asset": "MEME (Robinhood)",
       "status": "unsupported",
@@ -17544,6 +17508,37 @@
       ]
     },
     {
+      "id": "crypto:NULLMASK",
+      "asset": "NULLMASK",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:NULLMASKUSDT",
+          "versionId": 9449,
+          "symbol": "NULLMASKUSDT",
+          "baseAsset": "NULLMASK",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_eligible_reference_contract",
+        "evidence": [
+          "Complete current Bybit/Binance catalog and identified asset candidate audit"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # NULLMASKUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=NULLMASKUSDT",
+        "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=NULLMASK&lang=en"
+      ]
+    },
+    {
       "id": "crypto:NXPC",
       "asset": "NXPC",
       "status": "verified",
@@ -17898,7 +17893,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ONEUSDT",
-          "versionId": 8033,
+          "versionId": 9441,
           "symbol": "ONEUSDT",
           "baseAsset": "ONE",
           "multiplier": 1
@@ -19266,6 +19261,37 @@
       ]
     },
     {
+      "id": "crypto:POD",
+      "asset": "POD",
+      "status": "unsupported",
+      "reason": "no_adopted_reference_after_identity_audit",
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:PODUSDT",
+          "versionId": 9446,
+          "symbol": "PODUSDT",
+          "baseAsset": "POD",
+          "multiplier": 1
+        }
+      ],
+      "reference": null,
+      "widget": {
+        "status": "unsupported",
+        "symbol": null,
+        "reason": "no_eligible_reference_contract",
+        "evidence": [
+          "Complete current Bybit/Binance catalog and identified asset candidate audit"
+        ],
+        "referenceKey": null
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # PODUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PODUSDT",
+        "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=POD&lang=en"
+      ]
+    },
+    {
       "id": "crypto:POL",
       "asset": "POL",
       "status": "verified",
@@ -19749,48 +19775,6 @@
       ]
     },
     {
-      "id": "crypto:PROMPT",
-      "asset": "PROMPT",
-      "status": "verified",
-      "reason": null,
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:PROMPTUSDT",
-          "versionId": 936,
-          "symbol": "PROMPTUSDT",
-          "baseAsset": "PROMPT",
-          "multiplier": 1
-        }
-      ],
-      "reference": {
-        "provider": "bybit",
-        "symbol": "PROMPTUSDT",
-        "baseAsset": "PROMPT",
-        "multiplier": 1,
-        "quoteAsset": "USDT",
-        "settleAsset": "USDT",
-        "contractType": "linear_perpetual",
-        "revision": "27b15ad3d5a7a3b76cc5"
-      },
-      "widget": {
-        "status": "supported",
-        "symbol": "BYBIT:PROMPTUSDT.P",
-        "reason": null,
-        "evidence": [
-          "TradingView normal Widget symbol search: crypto/XTVCPROMPT"
-        ],
-        "referenceKey": "bybit:PROMPTUSDT:27b15ad3d5a7a3b76cc5"
-      },
-      "evidence": [
-        "TradingView public Widget catalog identity: crypto/XTVCPROMPT",
-        "https://api.bybit.com/v5/market/index-price-components?indexName=PROMPTUSDT",
-        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # PROMPTUSDT",
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PROMPTUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PROMPTUSDT"
-      ]
-    },
-    {
       "id": "crypto:PROVE",
       "asset": "PROVE",
       "status": "verified",
@@ -19951,46 +19935,6 @@
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PUMPUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PUMPUSDT",
         "https://fapi.binance.com/fapi/v1/exchangeInfo # PUMPUSDT"
-      ]
-    },
-    {
-      "id": "crypto:PUMPBTC",
-      "asset": "PUMPBTC",
-      "status": "verified",
-      "reason": null,
-      "originals": [
-        {
-          "venue": "aster",
-          "instrumentId": "aster:PUMPBTCUSDT",
-          "versionId": 963,
-          "symbol": "PUMPBTCUSDT",
-          "baseAsset": "PUMPBTC",
-          "multiplier": 1
-        }
-      ],
-      "reference": {
-        "provider": "binance",
-        "symbol": "PUMPBTCUSDT",
-        "baseAsset": "PUMPBTC",
-        "multiplier": 1,
-        "quoteAsset": "USDT",
-        "settleAsset": "USDT",
-        "contractType": "linear_perpetual",
-        "revision": "1765179ee44519abbdc3"
-      },
-      "widget": {
-        "status": "supported",
-        "symbol": "BINANCE:PUMPBTCUSDT.P",
-        "reason": null,
-        "evidence": [
-          "Normal TradingView Widget symbol search; exact provider, perpetual contract and quote currency"
-        ],
-        "referenceKey": "binance:PUMPBTCUSDT:1765179ee44519abbdc3"
-      },
-      "evidence": [
-        "Official index components identify the same venue and spot contract; see qualification-evidence.json",
-        "https://fapi.asterdex.com/fapi/v1/exchangeInfo # PUMPBTCUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PUMPBTCUSDT"
       ]
     },
     {
@@ -21717,6 +21661,47 @@
       ]
     },
     {
+      "id": "crypto:SCR",
+      "asset": "SCR",
+      "status": "verified",
+      "reason": null,
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:SCRUSDT",
+          "versionId": 9442,
+          "symbol": "SCRUSDT",
+          "baseAsset": "SCR",
+          "multiplier": 1
+        }
+      ],
+      "reference": {
+        "provider": "binance",
+        "symbol": "SCRUSDT",
+        "baseAsset": "SCR",
+        "multiplier": 1,
+        "quoteAsset": "USDT",
+        "settleAsset": "USDT",
+        "contractType": "linear_perpetual",
+        "revision": "5f08b33676cbf63ebc25"
+      },
+      "widget": {
+        "status": "supported",
+        "symbol": "BINANCE:SCRUSDT.P",
+        "reason": null,
+        "evidence": [
+          "TradingView public symbol search: exact BINANCE SCRUSDT.P swap perpetual USDT metadata"
+        ],
+        "referenceKey": "binance:SCRUSDT:5f08b33676cbf63ebc25"
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # SCRUSDT",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=SCRUSDT",
+        "https://fapi.binance.com/fapi/v1/exchangeInfo # SCRUSDT",
+        "https://fapi.binance.com/fapi/v1/constituents?symbol=SCRUSDT"
+      ]
+    },
+    {
       "id": "crypto:SEI",
       "asset": "SEI",
       "status": "verified",
@@ -22385,7 +22370,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SLPUSDT",
-          "versionId": 123,
+          "versionId": 9450,
           "symbol": "SLPUSDT",
           "baseAsset": "SLP",
           "multiplier": 1

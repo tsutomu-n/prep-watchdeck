@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-05(月)_17:52 JST"
+timestamp="2026-10-05(月)_20:00 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T17:52:40+09:00`
-- 検証: `2026-10-05T17:52:40+09:00`
+- 更新: `2026-10-05T20:00:19+09:00`
+- 検証: `2026-10-05T20:00:19+09:00`
 - 状態: `現行`
 
 ---
@@ -161,8 +161,11 @@ native APIの欠測・鮮度は騰落率欄の理由として示し、Market Cor
 
 /home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/apps/ranking-core/ は、Bybit・Binanceの公開USDT perpetualを
 別processで継続取得する。元の3 Venueから価格・売買代金を補完しない。既存artifactからは
-名簿作成時にidentityだけを抽出し、確認済みmapとして保存する。通常収集は保存済みmapで動作し、
-元のcollector、4 artifact bundleの鮮度、Postgres、Parquet、Selection、Past Noteへ依存しない。
+名簿作成時にidentityだけを抽出し、確認済みmapとして保存する。価格・売買代金の通常収集は
+保存済みmapで動作し、元のcollector、Postgres、Parquet、Selection、Past Noteへ依存しない。
+名簿の鮮度だけは、毎世代に元stateの`universe-snapshot.json`と`service-state.json`をread-onlyで照合する。
+完全で新しいcatalog取得と全original identity/versionのfingerprint一致を確認できた場合だけ、
+応答の名簿観測日時を更新する。参照契約・数量・mapの審査時刻は変更しない。照合失敗でも価格収集は継続する。
 
 ```text
 Bybit / Binance public trade klines

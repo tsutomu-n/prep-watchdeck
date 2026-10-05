@@ -3,6 +3,7 @@
 import asyncio
 import json
 import time
+from pathlib import Path
 from typing import Any, cast
 
 import aiohttp
@@ -12,12 +13,25 @@ from .mapping import reference_revision
 from .models import HISTORY_MINUTES, MINUTE, Provider, RankingMap, Reference
 from .providers import PublicClient, now_ms
 from .ranking import Generation, Order, Period
+from .roster import check_roster
 from .storage import Store, atomic_json
 
 
 class RankingService:
-    def __init__(self, store: Store, mapping: RankingMap, client: PublicClient) -> None:
+    def __init__(
+        self,
+        store: Store,
+        mapping: RankingMap,
+        client: PublicClient,
+        *,
+        original_state: Path | None = None,
+    ) -> None:
         self.store, self.mapping, self.client = store, mapping, client
+        self.original_artifacts = (
+            original_state.expanduser().resolve() / "artifacts" if original_state else None
+        )
+        self.roster_checked_at: int | None = None
+        self.roster_error: str | None = None
         self.generation: Generation | None = None
         self.queues: dict[Provider, asyncio.Queue[tuple[Reference, int]]] = {
             "bybit": asyncio.Queue(maxsize=2000),
@@ -170,12 +184,20 @@ class RankingService:
                 continue
             started = time.monotonic()
             try:
+                if self.original_artifacts is not None:
+                    observed, self.roster_error = check_roster(
+                        self.mapping, self.original_artifacts, now_ms()
+                    )
+                    if observed is not None:
+                        self.roster_checked_at = observed
                 candidate = Generation(
                     self.mapping,
                     cutoff,
                     now_ms(),
                     self.store,
                     previous=self.generation,
+                    roster_checked_at=self.roster_checked_at,
+                    roster_error=self.roster_error is not None,
                     invalid_keys=self.invalid_contracts,
                     unavailable_keys={
                         ref.key
@@ -249,6 +271,10 @@ class RankingService:
             "lastDurationMs": self.last_duration_ms,
             "lastError": self.last_error,
             "invalidContracts": sorted(self.invalid_contracts),
+            "roster": {
+                "checkedAt": self.roster_checked_at,
+                "error": self.roster_error,
+            },
             "providers": {p: h.public() for p, h in self.client.health.items()},
         }
 

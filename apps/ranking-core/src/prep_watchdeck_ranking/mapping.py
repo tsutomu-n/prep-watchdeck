@@ -45,6 +45,7 @@ def extract_roster(path: Path) -> dict[str, Any]:
         "sourcePath": str(resolved),
         "generatedAt": payload["generatedAt"],
         "sourceStatus": payload["status"],
+        "sourceQualityReasons": payload.get("qualityReasons", []),
         "items": entries,
         "catalogFingerprint": content_digest(entries),
     }

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-05(月)_17:52 JST"
+timestamp="2026-10-05(月)_20:00 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T17:52:40+09:00`
-- 検証: `2026-10-05T17:52:40+09:00`
+- 更新: `2026-10-05T20:00:19+09:00`
+- 検証: `2026-10-05T20:00:19+09:00`
 - 状態: `現行`
 
 ---
@@ -391,9 +391,14 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 実際に旧UniverseのHTTP 200・旧WorkingDirectory・ランキング停止を確認した後、
 ランキングの再起動と全件受入を経て追加drop-inを再適用し、配置版の画面を再確認した。
 
-元数量換算とWidgetの各3件は未確認を維持する。名簿は固定の審査済みsnapshotであり、
-24時間経過後の「取扱い名簿の更新が止まっています」は仕様どおり表示する。現在の全上場銘柄を
-自動追随したことや、全Widgetの個別描画を確認したことを、この配置結果から主張しない。
+元数量換算とWidgetの各3件は未確認を維持する。上記配置時点の名簿は固定snapshotだった。
+現行Rankingは`--original-state-dir`のUniverse/service artifactを毎世代read-onlyで照合し、
+新しい完全なcatalog取得と審査済みfingerprintが一致した場合に名簿の観測日時を更新する。
+一致する限り、mapを再配置しなくても24時間後の警告は再発しない。
+新規・削除・version変更は自動採用せず警告を残し、上の候補更新手順で審査する。
+`/health`の`roster.checkedAt`と`roster.error`で照合時刻・失敗理由を確認できる。
+元artifactが不完全・古い・読めない場合も警告を残すが、独立した価格・売買代金の収集は継続する。
+全上場銘柄の自動審査や全Widgetの個別描画を確認したことを、この照合から主張しない。
 詳細な検証結果は
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/validation.md](validation.md)を参照する。
 

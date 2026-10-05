@@ -1,6 +1,6 @@
 {
-  "sourcePath": "/tmp/prep-watchdeck-ranking-roster-diagnosis-20261002/universe-captured.json",
-  "generatedAt": "2026-10-02T05:33:00.876305Z",
+  "sourcePath": "/home/tn/projects/prep-watchdeck/var/tmp/roster-freshness-20261005/universe-snapshot.json",
+  "generatedAt": "2026-10-05T10:58:45.102708Z",
   "sourceStatus": "ready",
   "items": [
     {
@@ -3463,20 +3463,6 @@
     },
     {
       "venue": "aster",
-      "venueInstrumentId": "aster:MEMESTOCKUSDT",
-      "venueInstrumentVersionId": 9049,
-      "sourceSymbol": "MEMESTOCKUSDT",
-      "baseAsset": "MEMESTOCK",
-      "quoteAsset": "USDT",
-      "settleAsset": "USDT",
-      "collateralAsset": "USDT",
-      "active": true,
-      "marketType": "linear_perpetual",
-      "groupId": "crypto:MEMESTOCK:linear-perp",
-      "mappingMethod": "exact_base_heuristic"
-    },
-    {
-      "venue": "aster",
       "venueInstrumentId": "aster:MEMEUSDT",
       "venueInstrumentVersionId": 3188,
       "sourceSymbol": "MEMEUSDT",
@@ -3809,6 +3795,20 @@
       "active": true,
       "marketType": "linear_perpetual",
       "groupId": "crypto:NOT:linear-perp",
+      "mappingMethod": "exact_base_heuristic"
+    },
+    {
+      "venue": "aster",
+      "venueInstrumentId": "aster:NULLMASKUSDT",
+      "venueInstrumentVersionId": 9449,
+      "sourceSymbol": "NULLMASKUSDT",
+      "baseAsset": "NULLMASK",
+      "quoteAsset": "USDT",
+      "settleAsset": "USDT",
+      "collateralAsset": "USDT",
+      "active": true,
+      "marketType": "linear_perpetual",
+      "groupId": "crypto:NULLMASK:linear-perp",
       "mappingMethod": "exact_base_heuristic"
     },
     {
@@ -4191,6 +4191,20 @@
     },
     {
       "venue": "aster",
+      "venueInstrumentId": "aster:PODUSDT",
+      "venueInstrumentVersionId": 9446,
+      "sourceSymbol": "PODUSDT",
+      "baseAsset": "POD",
+      "quoteAsset": "USDT",
+      "settleAsset": "USDT",
+      "collateralAsset": "USDT",
+      "active": true,
+      "marketType": "linear_perpetual",
+      "groupId": "crypto:POD:linear-perp",
+      "mappingMethod": "exact_base_heuristic"
+    },
+    {
+      "venue": "aster",
       "venueInstrumentId": "aster:POLUSDT",
       "venueInstrumentVersionId": 869,
       "sourceSymbol": "POLUSDT",
@@ -4289,20 +4303,6 @@
     },
     {
       "venue": "aster",
-      "venueInstrumentId": "aster:PROMPTUSDT",
-      "venueInstrumentVersionId": 936,
-      "sourceSymbol": "PROMPTUSDT",
-      "baseAsset": "PROMPT",
-      "quoteAsset": "USDT",
-      "settleAsset": "USDT",
-      "collateralAsset": "USDT",
-      "active": true,
-      "marketType": "linear_perpetual",
-      "groupId": "crypto:PROMPT:linear-perp",
-      "mappingMethod": "exact_base_heuristic"
-    },
-    {
-      "venue": "aster",
       "venueInstrumentId": "aster:PROMUSDT",
       "venueInstrumentVersionId": 993,
       "sourceSymbol": "PROMUSDT",
@@ -4355,20 +4355,6 @@
       "active": true,
       "marketType": "linear_perpetual",
       "groupId": "crypto:PTB:linear-perp",
-      "mappingMethod": "exact_base_heuristic"
-    },
-    {
-      "venue": "aster",
-      "venueInstrumentId": "aster:PUMPBTCUSDT",
-      "venueInstrumentVersionId": 963,
-      "sourceSymbol": "PUMPBTCUSDT",
-      "baseAsset": "PUMPBTC",
-      "quoteAsset": "USDT",
-      "settleAsset": "USDT",
-      "collateralAsset": "USDT",
-      "active": true,
-      "marketType": "linear_perpetual",
-      "groupId": "crypto:PUMPBTC:linear-perp",
       "mappingMethod": "exact_base_heuristic"
     },
     {
@@ -4705,6 +4691,20 @@
       "active": true,
       "marketType": "linear_perpetual",
       "groupId": "crypto:SAPIEN:linear-perp",
+      "mappingMethod": "exact_base_heuristic"
+    },
+    {
+      "venue": "aster",
+      "venueInstrumentId": "aster:SCRUSDT",
+      "venueInstrumentVersionId": 9442,
+      "sourceSymbol": "SCRUSDT",
+      "baseAsset": "SCR",
+      "quoteAsset": "USDT",
+      "settleAsset": "USDT",
+      "collateralAsset": "USDT",
+      "active": true,
+      "marketType": "linear_perpetual",
+      "groupId": "crypto:SCR:linear-perp",
       "mappingMethod": "exact_base_heuristic"
     },
     {
@@ -10436,7 +10436,7 @@
     {
       "venue": "bitget",
       "venueInstrumentId": "bitget:ONEUSDT",
-      "venueInstrumentVersionId": 8033,
+      "venueInstrumentVersionId": 9441,
       "sourceSymbol": "ONEUSDT",
       "baseAsset": "ONE",
       "quoteAsset": "USDT",
@@ -11430,7 +11430,7 @@
     {
       "venue": "bitget",
       "venueInstrumentId": "bitget:SLPUSDT",
-      "venueInstrumentVersionId": 123,
+      "venueInstrumentVersionId": 9450,
       "sourceSymbol": "SLPUSDT",
       "baseAsset": "SLP",
       "quoteAsset": "USDT",
@@ -15334,5 +15334,5 @@
       "mappingMethod": "exact_base_heuristic"
     }
   ],
-  "catalogFingerprint": "9c2f1c3817a5dc241024bda2b24c2d19cb7b7e88cd1e46c8194b7f190a7ded8d"
+  "catalogFingerprint": "f4b91a8e9cefcab333ae87308286d217822f289b4da70d3aec4ee8157afba7e7"
 }

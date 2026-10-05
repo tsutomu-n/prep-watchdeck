@@ -221,10 +221,16 @@ class Generation:
         disconnected: set[str] | None = None,
         invalid_keys: set[str] | None = None,
         previous: Generation | None = None,
+        roster_checked_at: int | None = None,
+        roster_error: bool = False,
     ) -> None:
         if cutoff % MINUTE or generated_at < cutoff:
             raise ValueError("invalid generation cutoff")
         self.mapping, self.cutoff, self.generated_at = mapping, cutoff, generated_at
+        self.roster_checked_at = (
+            mapping.roster_generated_at if roster_checked_at is None else roster_checked_at
+        )
+        self.roster_error = roster_error
         self.metric_version = METRIC_VERSION
         # Share immutable inputs and the bounded base cache, without retaining a chain.
         self.previous = copy(previous) if previous else None
@@ -369,7 +375,8 @@ class Generation:
                 "previous_cutoff": previous.cutoff if previous else None,
                 "stale": stale,
                 "status": "stale" if stale else result.status,
-                "roster_stale": now - self.mapping.roster_generated_at > DAY,
+                "roster_generated_at": self.roster_checked_at,
+                "roster_stale": self.roster_error or now - self.roster_checked_at > DAY,
             }
         )
 

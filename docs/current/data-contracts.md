@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-05(月)_17:52 JST"
+timestamp="2026-10-05(月)_20:00 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T17:52:40+09:00`
-- 検証: `2026-10-05T17:52:40+09:00`
+- 更新: `2026-10-05T20:00:19+09:00`
+- 検証: `2026-10-05T20:00:19+09:00`
 - 状態: `現行`
 
 ---
@@ -252,7 +252,11 @@ T=Aは`starting`とし、順位を作らない。
 応答はgeneration ID、map/metric version、T・A・生成時刻、件数と除外理由、全行を含む。
 `history_missing / source_delayed / source_unavailable / reference_invalid / invalid_data` と、
 mapの要確認・未対応・対象外、下限未満・方向対象外を分ける。最新Tから150秒を超えた結果は`stale`、
-名簿確認から24時間を超えた状態は`rosterStale`。古い値の時刻を新しく付け替えない。
+名簿確認から24時間を超えた状態、または最新名簿の照合が失敗した状態は`rosterStale`。
+`rosterGeneratedAt`は審査済みsnapshotの時刻、または完全なcatalog取得と全identity/version一致を
+確認した最新Universe snapshotの観測時刻。後者はmapの`verifiedAt`や参照revisionを更新しない。
+照合時は元artifactとcatalog成功記録が30分以内かつcatalogのmaxAgeSeconds以内であることを確認する。
+新規・削除・version変更、部分取得、古い・不正な入力では警告を維持し、古い値の時刻を付け替えない。
 専用API未起動・初回世代待ち・不正な応答はWebで503、問い合わせ不正は400にする。
 
 
