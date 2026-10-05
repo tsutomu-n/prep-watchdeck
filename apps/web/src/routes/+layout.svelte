@@ -1,5 +1,6 @@
 <script lang="ts">
   import { page } from "$app/state";
+  import { initializePreferences } from "$lib/theme/workspace-preferences";
   import { onMount } from "svelte";
   import "$lib/styles/watchdeck-theme.css";
   import {
@@ -17,6 +18,8 @@
   let isMarketPage = $derived(page.url.pathname === "/" || page.url.pathname === "/rankings");
   let nativeMode = $derived(isMarketPage && page.url.searchParams.get("mode") === "native");
   let settingsPage = $derived(page.url.pathname === "/settings");
+
+  onMount(initializePreferences);
 
   onMount(() => {
     function syncDisplayPreferences(event: StorageEvent) {

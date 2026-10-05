@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { currentPreferences, preferences, nativeChartInterval } from "$lib/theme/workspace-preferences";
+  import { displayNumber } from "$lib/market/number-display";
+  import { formatPriceChange } from "$lib/market/price-change";
   import { onMount, tick, untrack } from "svelte";
   import { pushState, replaceState } from "$app/navigation";
   import { page } from "$app/state";
@@ -31,14 +34,11 @@
   import {
     coverageLabel,
     filterAndSortUniverse,
-    formatCompact,
-    formatFinite,
     formatPrice,
     formatBidAsk,
     spreadBps,
     sortNativeRows,
     type NativeSort,
-    formatRate,
     formatTimestamp,
     groupVenueCounts,
     type CoverageFilter,
@@ -48,6 +48,11 @@
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
   import type { MarketMetricsArtifact, MarketMetricRow, MetricValue } from "$lib/generated/market-metrics";
 
+  const formatCompact = (value: number | null | undefined) => displayNumber(value, $preferences.quantityDecimals, true);
+  const formatFinite = (value: number | null | undefined, digits = $preferences.quantityDecimals) => displayNumber(value, digits);
+  const formatRate = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? "—" : `${displayNumber(value * 100, $preferences.percentDecimals)}%`;
+  let startupViewPending = true;
+  let startupCancelled = false;
   const artifactPollMs = 5_000;
   const heartbeatMs = 5 * 60 * 1_000;
 
@@ -197,7 +202,7 @@
 
   function metricLabel(value: MetricValue | undefined, maxAgeSeconds = 300): string {
     const current = metricCurrent(value, maxAgeSeconds);
-    return current === null ? "—" : `${current > 0 ? "+" : ""}${current.toFixed(2)}%`;
+    return current === null ? "—" : formatPriceChange(current, $preferences.percentDecimals);
   }
   let selectedGroupId = $derived(selectedInstrument?.groupId ?? null);
   let selectedVersionId = $derived(selectedInstrument?.venueInstrumentVersionId);
@@ -223,6 +228,12 @@
   ]);
 
   onMount(() => {
+    const initial = currentPreferences();
+    chartTimeframe = nativeChartInterval(initial.chartInterval);
+    const startupUrl = page.url.href;
+    const cancelStartup = () => { startupCancelled = true; };
+    const interactionEvents = ["pointerdown", "keydown", "input", "change"];
+    for (const event of interactionEvents) document.addEventListener(event, cancelStartup, { once: true });
     const stopReferenceTime = subscribeReferenceTime((value) => {
       referenceTime = value;
       referenceReady = true;
@@ -233,7 +244,15 @@
     viewport.addEventListener("change", syncViewport);
     const loadWorkspace = () => {
       if (document.visibilityState !== "hidden") {
-        void readUserWorkspace().then((value) => { workspace = value; workspaceError = null; })
+        void readUserWorkspace().then((value) => { workspace = value; workspaceError = null;
+          if (startupViewPending) {
+            startupViewPending = false;
+            if (!startupCancelled && page.url.href === startupUrl && initial.nativeViewId
+              && [...page.url.searchParams.keys()].every(key => key === "mode")) {
+              if (value.savedViews.some(view => view.id === initial.nativeViewId && view.view.mode === "native")) applySavedView(initial.nativeViewId);
+              else workspaceError = "初期表示に指定した保存表示が見つかりません。初期値を使っています。";
+            }
+          } })
           .catch(() => workspaceError = "お気に入りを読み込めません");
       }
     };
@@ -294,6 +313,7 @@
     return () => {
       mounted = false;
       window.clearTimeout(initialDetailTimer);
+      for (const event of interactionEvents) document.removeEventListener(event, cancelStartup);
       stopReferenceTime();
       viewport.removeEventListener("change", syncViewport);
       window.clearInterval(timer);

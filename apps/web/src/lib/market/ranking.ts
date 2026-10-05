@@ -1,3 +1,4 @@
+import { displayNumber } from "./number-display";
 import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
 import { isReferenceTime } from "$lib/market/price-change";
 import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "$lib/market/turnover-format";
@@ -59,10 +60,11 @@ export function rankChangeLabel(row: RankedRow, expired = false): string {
   return `比較不可（${reasons[change.reason ?? ""] ?? "比較元なし"}）`;
 }
 
-export function indicatorLabel(indicator: RankedRow["turnoverRatio"], unit: "倍" | "%"): string {
+export function indicatorLabel(indicator: RankedRow["turnoverRatio"], unit: "倍" | "%", digits = 1): string {
   if (indicator.status === "ready" && indicator.value !== null) {
+    if (indicator.value !== 0 && Math.abs(indicator.value) < 0.5 * 10 ** -digits) return `${displayNumber(indicator.value, digits)}${unit}`;
     return `${indicator.value === 0 ? "0" : indicator.value.toLocaleString("ja-JP", {
-      minimumFractionDigits: 1, maximumFractionDigits: 1
+      minimumFractionDigits: digits, maximumFractionDigits: digits
     })}${unit}`;
   }
   return {
@@ -98,8 +100,8 @@ export function rankingTimestamp(value: number): string {
   }).format(value);
 }
 
-export function turnoverLabel(value: number, decimals = DEFAULT_TURNOVER_DECIMALS): string {
-  return formatTurnover(value, decimals, true);
+export function turnoverLabel(value: number, decimals = DEFAULT_TURNOVER_DECIMALS, compact = true): string {
+  return formatTurnover(value, decimals, compact);
 }
 
 export function readChartInterval(storage: Pick<Storage, "getItem">): ChartInterval {

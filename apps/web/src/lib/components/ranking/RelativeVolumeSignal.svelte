@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { preferences } from "$lib/theme/workspace-preferences";
   import type { RankedRow } from "$lib/generated/ranking-response";
   import { formatPriceChange } from "$lib/market/price-change";
   import { DEFAULT_TURNOVER_DECIMALS } from "$lib/market/turnover-format";
@@ -7,10 +8,10 @@
   let { row, expired = false, isNew = false, showAsset = false, decimals = DEFAULT_TURNOVER_DECIMALS, onselect }: {
     row: RankedRow; expired?: boolean; isNew?: boolean; showAsset?: boolean; decimals?: number; onselect: () => void;
   } = $props();
-  const signal = $derived(relativeVolumeState(row, expired));
+  const signal = $derived(relativeVolumeState(row, expired, $preferences));
   const bars = $derived(turnoverBarHeights(row.turnoverComparison));
   const fresh = $derived(isNew && signal.kind !== null);
-  const description = $derived(`${fresh ? "新着 · " : ""}${relativeVolumeDescription(row, expired, decimals)}`);
+  const description = $derived(`${fresh ? "新着 · " : ""}${relativeVolumeDescription(row, expired, decimals, $preferences, $preferences.percentDecimals, $preferences.ratioDecimals)}`);
 </script>
 
 <button type="button" class="volume-signal" class:with-asset={showAsset} class:surge={signal.kind !== null}
@@ -48,7 +49,7 @@
     </svg>
     {#if fresh}<span class="new-dot"></span>{/if}
   </span>
-  {#if showAsset}<span class="change">{row.returnPct === null ? "—" : formatPriceChange(row.returnPct)}</span>{/if}
+  {#if showAsset}<span class="change">{row.returnPct === null ? "—" : formatPriceChange(row.returnPct, $preferences.percentDecimals)}</span>{/if}
 </button>
 
 <style>

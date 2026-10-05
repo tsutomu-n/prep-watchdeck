@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script>
       (() => {
+        try {
+          const value = JSON.parse(localStorage.getItem("prep-watchdeck:workspace-preferences:v1") || "{}");
+          for (const [key, attribute, allowed] of [
+            ["layout", "data-layout", ["standard", "ultra"]],
+            ["textSize", "data-text-size", ["auto", "small", "standard", "large"]],
+            ["rowSpacing", "data-row-spacing", ["auto", "compact", "standard", "comfortable"]]
+          ]) if (value && allowed.includes(value[key])) document.documentElement.setAttribute(attribute, value[key]);
+        } catch { /* Invalid or unavailable storage uses the standard layout. */ }
         const fallback = "watchdeck";
         const schemes = new Set([
           "watchdeck",

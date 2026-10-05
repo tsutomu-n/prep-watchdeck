@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { preferences } from "$lib/theme/workspace-preferences";
   import type { RankedRow } from "$lib/generated/ranking-response";
   import { indicatorLabel, rankingTimestamp } from "$lib/market/ranking";
   import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "$lib/market/turnover-format";
@@ -27,8 +28,8 @@
     {/each}
   </dl>
   <dl class="day-ratios">
-    <div><dt>昨日比</dt><dd>{indicatorLabel(comparison.previousDayRatio, "倍")}</dd></div>
-    <div><dt>一昨日比</dt><dd>{indicatorLabel(comparison.twoDaysAgoRatio, "倍")}</dd></div>
+    <div><dt>昨日比</dt><dd>{indicatorLabel(comparison.previousDayRatio, "倍", $preferences.ratioDecimals)}</dd></div>
+    <div><dt>一昨日比</dt><dd>{indicatorLabel(comparison.twoDaysAgoRatio, "倍", $preferences.ratioDecimals)}</dd></div>
   </dl>
 </section>
 

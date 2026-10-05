@@ -60,3 +60,15 @@ test("new markers require a continuous published generation and a valid former c
   otherPeriod.previousCutoff = cutoff;
   expect(newlyIncreasedRows(previous, otherPeriod, cutoff + 68_000).size).toBe(0);
 });
+
+ test("custom thresholds change emphasis without changing market inputs", () => {
+  const row = rankingFixture(undefined, cutoff).rows.find(row => row.asset === "BTC")!;
+  row.returnPct = 1.5;
+  row.turnoverComparison.previousDayRatio.value = 2.5;
+  row.turnoverComparison.twoDaysAgoRatio.value = 2.5;
+  const before = JSON.stringify(row);
+  expect(relativeVolumeState(row, false, { surgeRatio: 2, directionPct: 1 }).kind).toBe("up");
+  expect(relativeVolumeState(row, false, { surgeRatio: 2, directionPct: 2 }).kind).toBe("volume");
+  expect(relativeVolumeState(row, true, { surgeRatio: 2, directionPct: 1 }).kind).toBeNull();
+  expect(JSON.stringify(row)).toBe(before);
+});

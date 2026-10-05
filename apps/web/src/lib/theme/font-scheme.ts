@@ -1,5 +1,5 @@
 export const fontSchemes = [
-  { id: "watchdeck", label: "標準（コンパクト）" },
+  { id: "watchdeck", label: "標準" },
   { id: "terminal", label: "等幅（ターミナル）" }
 ] as const;
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { currentPreferences, preferences } from "$lib/theme/workspace-preferences";
   import { onMount, tick, untrack } from "svelte";
   import { page } from "$app/state";
   import { pushState, replaceState } from "$app/navigation";
@@ -17,9 +18,9 @@
   import { recordRecentMarket } from "$lib/market/recent-markets";
   import AssetIcon from "$lib/components/AssetIcon.svelte";
   import type { FavoriteTarget, UserWorkspace } from "$lib/server/user-workspace-repository";
-  import { DEFAULT_REFERENCE_TIME, formatPriceChange } from "$lib/market/price-change";
+  import { DEFAULT_REFERENCE_TIME, formatPriceChange as baseFormatPriceChange } from "$lib/market/price-change";
   import {
-    CHART_INTERVAL_KEY, RANKING_MAX_AGE_MS, approvedWidgetSymbol, indicatorLabel, matchesRankingQuery,
+    CHART_INTERVAL_KEY, RANKING_MAX_AGE_MS, approvedWidgetSymbol, indicatorLabel as baseIndicatorLabel, matchesRankingQuery,
     rankChangeLabel, rankingQuery, rankingRowStateLabel, rankingStateLabel, rankingTimestamp, readChartInterval, referenceLabel,
     turnoverLabel, type ChartInterval, type RankingOrder, type RankingPeriod
   } from "$lib/market/ranking";
@@ -27,6 +28,12 @@
   let { market, legacyEntry = false }: {
     market: MarketArtifactBundle | null; legacyEntry?: boolean;
   } = $props();
+  const formatPriceChange = (value: number) => baseFormatPriceChange(value, $preferences.percentDecimals);
+  const indicatorLabel = (value: Parameters<typeof baseIndicatorLabel>[0], unit: "倍" | "%") =>
+    baseIndicatorLabel(value, unit, unit === "倍" ? $preferences.ratioDecimals : $preferences.percentDecimals);
+  let startupCancelled = false;
+  let startupViewPending = true;
+  let startupUrl = "";
   let noteTargetId = $state("");
   let period = $state<RankingPeriod>("15m");
   let order = $state<RankingOrder>("gainers");
@@ -77,6 +84,12 @@
   let mobileListScroll = { top: 0, left: 0 };
   let mobileListOrigin = false;
   let detailBack: HTMLButtonElement;
+
+  function hasViewQuery(params: URLSearchParams) {
+    return [...params.keys()].some(key => key !== "mode");
+  }
+  // Changing the rule does not create a market-arrival notification.
+  $effect(() => { void $preferences.surgeRatio; void $preferences.directionPct; newVolumeRows = new Set(); });
 
   function boundedNumber(value: string | null, maximum = Number.MAX_SAFE_INTEGER) {
     if (value === null || value.trim() === "") return null;
@@ -133,7 +146,7 @@
       workspace?.favorites.some(entry => entry.kind === "reference" && entry.id === row.id)
     )) && row.turnoverComparison.current.quoteTurnover !== null
       && row.turnoverComparison.current.quoteTurnover >= minimum)
-      .map(row => ({ row, signal: relativeVolumeState(row) }));
+      .map(row => ({ row, signal: relativeVolumeState(row, false, $preferences) }));
     const groups = (["up", "down", "volume"] as const).map(kind => candidates
       .filter(item => item.signal.kind === kind)
       .sort((a, b) => (b.signal.strength! - a.signal.strength!) || a.row.id.localeCompare(b.row.id))
@@ -191,7 +204,7 @@
       if (current !== requestId || !matchesRankingQuery(payload, new URLSearchParams(parameters))) return;
       now = Date.now();
       if (payload.generationId !== data?.generationId) {
-        newVolumeRows = newlyIncreasedRows(data, payload, now);
+        newVolumeRows = newlyIncreasedRows(data, payload, now, $preferences);
       }
       data = payload;
       if (selectedId) {
@@ -217,6 +230,11 @@
   }
 
   onMount(() => {
+    const initial = currentPreferences();
+    startupUrl = page.url.href;
+    const cancelStartup = () => { startupCancelled = true; };
+    const interactionEvents = ["pointerdown", "keydown", "input", "change"];
+    for (const event of interactionEvents) document.addEventListener(event, cancelStartup, { once: true });
     const stopReference = subscribeReferenceTime((value) => { reference = value; referenceReady = true; });
     const stopTurnover = subscribeTurnoverDecimals(value => { turnoverDecimals = value; });
     const width = window.matchMedia("(max-width: 960px)");
@@ -228,7 +246,15 @@
     }
     const loadWorkspace = () => {
       if (document.visibilityState !== "hidden") {
-        void readUserWorkspace().then((value) => { workspace = value; workspaceError = null; })
+        void readUserWorkspace().then((value) => { workspace = value; workspaceError = null;
+          if (startupViewPending) {
+            startupViewPending = false;
+            if (!startupCancelled && page.url.href === startupUrl && initial.referenceViewId
+              && !hasViewQuery(page.url.searchParams)) {
+              if (value.savedViews.some(view => view.id === initial.referenceViewId && view.view.mode === "reference")) applySavedView(initial.referenceViewId);
+              else workspaceError = "初期表示に指定した保存表示が見つかりません。初期値を使っています。";
+            }
+          } })
           .catch(() => workspaceError = "お気に入りを読み込めません");
       }
     };
@@ -238,18 +264,22 @@
       period = "24h";
       order = "turnover";
     }
+    if (initial.initialPeriod !== "default") period = initial.initialPeriod;
+    if (initial.initialOrder !== "default") order = initial.initialOrder;
+    preset = initial.initialColumns;
     const params = page.url.searchParams;
     try {
       const requestedPeriod = params.get("period") as RankingPeriod | null;
       const requestedOrder = params.get("order") as RankingOrder | null;
       const requestedReference = params.get("dailyReferenceJst");
       const requestedMinimum = params.get("minTurnover");
-      if (requestedPeriod && requestedOrder && requestedReference && requestedMinimum) {
-        rankingQuery(requestedPeriod, requestedReference, requestedOrder, Number(requestedMinimum));
-        period = requestedPeriod;
-        order = requestedOrder;
-        reference = requestedReference;
-        minimum = Number(requestedMinimum);
+      if (requestedPeriod || requestedOrder || requestedReference || requestedMinimum !== null) {
+        rankingQuery(requestedPeriod ?? period, requestedReference ?? reference,
+          requestedOrder ?? order, requestedMinimum === null ? minimum : Number(requestedMinimum));
+        period = requestedPeriod ?? period;
+        order = requestedOrder ?? order;
+        reference = requestedReference ?? reference;
+        minimum = requestedMinimum === null ? minimum : Number(requestedMinimum);
       }
       search = params.get("q") ?? "";
       const requestedVenue = params.get("venue");
@@ -268,7 +298,7 @@
       minRatio = boundedNumber(params.get("minRatio"));
       minDayPosition = boundedNumber(params.get("minDayPosition"), 100);
       maxDayPosition = boundedNumber(params.get("maxDayPosition"), 100);
-      preset = params.get("preset") === "movement" ? "movement" : "standard";
+      if (params.has("preset")) preset = params.get("preset") === "movement" ? "movement" : "standard";
       restoredScroll = {
         top: boundedNumber(params.get("listTop")) ?? 0,
         left: boundedNumber(params.get("listLeft")) ?? 0
@@ -276,6 +306,7 @@
       restoreList = params.get("restoreList") === "1";
     } catch { /* Invalid legacy query leaves safe defaults visible. */ }
     try { interval = readChartInterval(window.localStorage); } catch { interval = "15"; }
+    if (initial.chartInterval !== "last") interval = initial.chartInterval;
     let detailTimer: ReturnType<typeof setTimeout> | undefined;
     if (mobile && selectedId && !restoreList && !detailHistory) {
       const initialUrl = page.url.href;
@@ -295,6 +326,7 @@
     schedule();
     return () => {
       mounted = false; clearTimeout(detailTimer);
+      for (const event of interactionEvents) document.removeEventListener(event, cancelStartup);
       stopReference(); stopTurnover(); width.removeEventListener("change", updateWidth);
       controller?.abort(); clearTimeout(refreshTimer); clearInterval(clock);
       document.removeEventListener("visibilitychange", visible);
@@ -618,7 +650,7 @@
     </section>
 
     <div class="condition-summary" aria-label="適用中のランキング条件" aria-live="polite">
-      <p><strong>{periodLabel} · {orderLabel}</strong>{#if activeConditions.length}<span> · {activeConditions.join(" · ")}</span>{/if}</p>
+      <p><strong>{periodLabel} · {orderLabel}</strong> <span class="signal-conditions" title={`強調条件：昨日・一昨日の両方に対して${$preferences.surgeRatio}倍以上。方向の境界±${$preferences.directionPct}%`}> · 強調 ≥{$preferences.surgeRatio}倍 / ±{$preferences.directionPct}%</span>{#if activeConditions.length}<span> · {activeConditions.join(" · ")}</span>{/if}</p>
       {#if activeConditions.length}<button type="button" onclick={resetView}>条件をリセット</button>{/if}
     </div>
 
@@ -681,7 +713,7 @@
   </div>
 
       {#if volumeSpotlight.length}
-        <div class="volume-spotlight" role="group" aria-label={`${periodLabel}・昨日と一昨日の両方に対して売買代金が3倍以上の銘柄`} data-testid="volume-spotlight">
+        <div class="volume-spotlight" role="group" aria-label={`${periodLabel}・昨日と一昨日の両方に対して売買代金が${$preferences.surgeRatio}倍以上の銘柄`} data-testid="volume-spotlight">
           {#each volumeSpotlight as row (row.id)}
             <RelativeVolumeSignal {row} decimals={turnoverDecimals} showAsset isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} />
           {/each}
@@ -703,7 +735,7 @@
           </tr></thead>
           <tbody>
             {#each visibleRows.slice(0, limit) as row (row.id)}
-              {@const volumeSignal = relativeVolumeState(row, stale)}
+              {@const volumeSignal = relativeVolumeState(row, stale, $preferences)}
               <tr class:selected={selectedId === row.id} class:volume-surge={volumeSignal.kind !== null}
                 class:surge-up={volumeSignal.kind === "up"} class:surge-down={volumeSignal.kind === "down"}
                 data-testid="ranking-row" data-asset={row.asset} data-volume-surge={volumeSignal.kind ?? ""}>
@@ -716,7 +748,7 @@
                 <td class="rank">{row.rank ?? "—"}{#if sort === "server"}
                   {@const changeLabel = rankChangeLabel(row, comparisonExpired)}
                   <small class="rank-change" data-testid="rank-change" aria-label={changeLabel} title={changeLabel}>
-                    {mobile && (changeLabel.startsWith("比較不可") || row.rank === null) ? "—" : changeLabel}
+                    {(mobile || $preferences.layout === "ultra") && (changeLabel.startsWith("比較不可") || row.rank === null) ? "—" : changeLabel}
                   </small>
                 {/if}</td>
                 <th scope="row" class="asset-cell"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
@@ -747,7 +779,7 @@
                       ? "未取得" : formatPriceChange(row.windows[window as "15m" | "1h" | "24h"].returnPct!)}</span>
                   {/each}</td>
                 {/if}
-                <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${formatTurnover(row.quoteTurnover, turnoverDecimals)} USDT`}>{turnoverLabel(row.quoteTurnover, turnoverDecimals)}</span>{:else}<span class="missing">未取得</span>{/if}
+                <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${formatTurnover(row.quoteTurnover, turnoverDecimals)} USDT`}>{turnoverLabel(row.quoteTurnover, turnoverDecimals, $preferences.turnoverNotation === "compact")}</span>{:else}<span class="missing">未取得</span>{/if}
                   <span class="volume-signal-slot"><RelativeVolumeSignal {row} expired={stale} decimals={turnoverDecimals}
                     isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} /></span>
                   {#if row.rank === null && row.returnPct !== null}<small>{rankingStateLabel(row.state)}</small>{/if}
@@ -765,7 +797,7 @@
         <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
         <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。スマホの順位変化の「—」は比較できない状態で、理由は銘柄詳細で確認できます。</p>
         <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
-        <p class="metric-note">売買代金の棒は左から一昨日・昨日・現在で、同じ銘柄・参照契約の同じ時間帯を比較します。両日比3倍以上は青く強調し、矢印は騰落率が+2%以上／−2%以下の方向、それ以外は横線です。小さな点は連続した世代で新しく条件を満たした銘柄です。履歴不足・比較元ゼロは「?」、更新停止は時計で示します。ホバーまたは選択で比較値と理由を確認できます。過去24時間の平常比は銘柄詳細にも表示します。</p>
+        <p class="metric-note">売買代金の棒は左から一昨日・昨日・現在で、同じ銘柄・参照契約の同じ時間帯を比較します。両日比{$preferences.surgeRatio}倍以上は青く強調し、矢印は騰落率が+{$preferences.directionPct}%以上／−{$preferences.directionPct}%以下の方向、それ以外は横線です。小さな点は連続した世代で新しく条件を満たした銘柄です。履歴不足・比較元ゼロは「?」、更新停止は時計で示します。ホバーまたは選択で比較値と理由を確認できます。過去24時間の平常比は銘柄詳細にも表示します。</p>
         <p class="metric-note">スマホでは参照終値・追加指標・出典を銘柄詳細で確認できます。騰落率の計算基準は設定の「騰落率の基準時刻（JST）」で変更します。</p>
       </details>
       {#if data}
@@ -875,6 +907,7 @@
   .primary-metrics dt { color: var(--muted); font-size: var(--type-label-caps-size); }
   .selected-metrics.primary-metrics dd { font-size: var(--type-data-lg-size); line-height: 1.4; margin-top: var(--space-xs); }
   .ranking-page :where(a, button, input, select, summary):focus-visible { outline: var(--focus-ring-width) solid var(--focus); outline-offset: var(--focus-ring-offset); }
+  .signal-conditions { font-size: var(--type-label-caps-size); color: var(--muted); }
   .topbar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-md); padding: 0 0 var(--space-sm); border-bottom: 1px solid var(--line-strong); }
   h1 { margin: 0; font-size: var(--type-title-lg-size); line-height: var(--type-title-lg-leading); }
   .topbar p, .metric-note, .search-note { margin: var(--space-xs) 0; color: var(--muted); font-size: var(--type-body-sm-size); line-height: 1.5; }

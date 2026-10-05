@@ -39,7 +39,7 @@ describe("daily price change reference", () => {
     }
     expect(formatPriceChange(3)).toBe("+3.00%");
     expect(formatPriceChange(-3)).toBe("-3.00%");
-    expect(formatPriceChange(-0.001)).toBe("0.00%");
+    expect(formatPriceChange(-0.001)).toBe(">−0.01%");
   });
 
   test("preserves a valid setting and recovers from corrupt or unavailable storage", () => {

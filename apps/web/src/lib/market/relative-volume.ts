@@ -1,9 +1,12 @@
+import { formatPriceChange } from "./price-change";
 import type { RankedRow, RankingResponse, TurnoverComparison } from "$lib/generated/ranking-response";
 import { indicatorLabel, RANKING_MAX_AGE_MS, rankingTimestamp, referenceLabel } from "./ranking";
 import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "./turnover-format";
 
 export const TURNOVER_SURGE_RATIO = 3;
 export const PRICE_SURGE_PCT = 2;
+export type SurgeThresholds = { surgeRatio: number; directionPct: number };
+const defaultThresholds: SurgeThresholds = { surgeRatio: TURNOVER_SURGE_RATIO, directionPct: PRICE_SURGE_PCT };
 export type VolumeSurgeKind = "up" | "down" | "volume";
 
 export function turnoverBarHeights(comparison: TurnoverComparison): number[] | null {
@@ -15,7 +18,7 @@ export function turnoverBarHeights(comparison: TurnoverComparison): number[] | n
   return values.map(value => maximum === 0 ? 0 : value / maximum * 24);
 }
 
-export function relativeVolumeState(row: RankedRow, expired = false) {
+export function relativeVolumeState(row: RankedRow, expired = false, thresholds: SurgeThresholds = defaultThresholds) {
   const comparison = row.turnoverComparison;
   let reason = expired ? "更新停止・過去時点の値" : "";
   if (!reason && (row.mappingStatus !== "verified"
@@ -37,15 +40,15 @@ export function relativeVolumeState(row: RankedRow, expired = false) {
   const strength = available ? Math.min(...ratios.map(ratio => ratio.value!)) : null;
   const change = row.returnPct;
   const direction = expired || change === null || !Number.isFinite(change) ? "unknown"
-    : change >= PRICE_SURGE_PCT ? "up" : change <= -PRICE_SURGE_PCT ? "down" : "flat";
-  const kind: VolumeSurgeKind | null = strength !== null && strength >= TURNOVER_SURGE_RATIO
+    : change >= thresholds.directionPct ? "up" : change <= -thresholds.directionPct ? "down" : "flat";
+  const kind: VolumeSurgeKind | null = strength !== null && strength >= thresholds.surgeRatio
     ? direction === "up" || direction === "down" ? direction : "volume" : null;
   return { available, strength, direction, kind, reason: reason || (available ? "" : "入力不整合") };
 }
 
-export function relativeVolumeDescription(row: RankedRow, expired = false, decimals = DEFAULT_TURNOVER_DECIMALS): string {
+export function relativeVolumeDescription(row: RankedRow, expired = false, decimals = DEFAULT_TURNOVER_DECIMALS, thresholds: SurgeThresholds = defaultThresholds, percentDecimals = 2, ratioDecimals = 1): string {
   const comparison = row.turnoverComparison;
-  const state = relativeVolumeState(row, expired);
+  const state = relativeVolumeState(row, expired, thresholds);
   const samples = [
     ["一昨日", comparison.twoDaysAgo], ["昨日", comparison.previousDay], ["現在", comparison.current]
   ] as const;
@@ -55,14 +58,14 @@ export function relativeVolumeDescription(row: RankedRow, expired = false, decim
       : indicatorLabel({ value: null, status: sample.status }, "倍")}`);
   return [
     `${row.asset} · ${referenceLabel(row)} · 売買代金の過去日比較`,
-    `価格変化 ${row.returnPct === null ? "未取得" : `${row.returnPct > 0 ? "+" : ""}${row.returnPct.toFixed(2)}%`}`,
+    `価格変化 ${row.returnPct === null ? "未取得" : formatPriceChange(row.returnPct, percentDecimals)}`,
     ...(state.reason ? [state.reason] : []), ...lines,
-    `昨日比 ${indicatorLabel(comparison.previousDayRatio, "倍")} / 一昨日比 ${indicatorLabel(comparison.twoDaysAgoRatio, "倍")}`
+    `昨日比 ${indicatorLabel(comparison.previousDayRatio, "倍", ratioDecimals)} / 一昨日比 ${indicatorLabel(comparison.twoDaysAgoRatio, "倍", ratioDecimals)}`
   ].join("\n");
 }
 
 export function newlyIncreasedRows(
-  previous: RankingResponse | null, current: RankingResponse, now: number
+  previous: RankingResponse | null, current: RankingResponse, now: number, thresholds: SurgeThresholds = defaultThresholds
 ): Set<string> {
   if (!previous || previous.stale || current.stale
     || now - previous.cutoff > RANKING_MAX_AGE_MS || now - current.cutoff > RANKING_MAX_AGE_MS
@@ -76,7 +79,7 @@ export function newlyIncreasedRows(
   return new Set(current.rows.filter(row => {
     const before = old.get(row.id);
     if (!before) return false;
-    const state = relativeVolumeState(before);
-    return state.available && state.kind === null && relativeVolumeState(row).kind !== null;
+    const state = relativeVolumeState(before, false, thresholds);
+    return state.available && state.kind === null && relativeVolumeState(row, false, thresholds).kind !== null;
   }).map(row => row.id));
 }

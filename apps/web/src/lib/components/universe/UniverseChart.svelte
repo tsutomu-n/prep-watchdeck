@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { preferences } from "$lib/theme/workspace-preferences";
   import { onMount, untrack } from "svelte";
   import type { IChartApi, ISeriesApi, ISeriesMarkersPluginApi, LogicalRange, SeriesMarker, TickMarkType, Time, UTCTimestamp } from "lightweight-charts";
   import {
@@ -113,6 +114,10 @@
       candles = null;
       volumes = null;
     };
+  });
+
+  $effect(() => {
+    if (chartReady) volumes?.applyOptions({ visible: $preferences.chartVolume });
   });
 
   $effect.pre(() => {
