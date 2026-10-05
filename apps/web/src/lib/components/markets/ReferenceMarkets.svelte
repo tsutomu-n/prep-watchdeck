@@ -748,7 +748,7 @@
                 <td class="rank">{row.rank ?? "—"}{#if sort === "server"}
                   {@const changeLabel = rankChangeLabel(row, comparisonExpired)}
                   <small class="rank-change" data-testid="rank-change" aria-label={changeLabel} title={changeLabel}>
-                    {(mobile || $preferences.layout === "ultra") && (changeLabel.startsWith("比較不可") || row.rank === null) ? "—" : changeLabel}
+                    {(changeLabel.startsWith("比較不可") || row.rank === null) ? "—" : changeLabel}
                   </small>
                 {/if}</td>
                 <th scope="row" class="asset-cell"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>

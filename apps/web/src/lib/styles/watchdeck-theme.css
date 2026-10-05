@@ -62,28 +62,28 @@
   --font-sans:
     "Watchdeck Sans", "IPAPGothic", "IPA Pゴシック", "IBM Plex Sans", "Yu Gothic UI",
     "Hiragino Sans", system-ui, sans-serif;
-  --type-title-xl-size: 44px;
+  --type-title-xl-size: 24px;
   --type-title-xl-weight: 800;
   --type-title-xl-leading: 1;
-  --type-title-lg-size: 28px;
+  --type-title-lg-size: 18px;
   --type-title-lg-weight: 800;
   --type-title-lg-leading: 1.05;
-  --type-heading-md-size: 16px;
+  --type-heading-md-size: 13px;
   --type-heading-md-weight: 800;
   --type-heading-md-leading: 1.2;
-  --type-body-md-size: 14px;
+  --type-body-md-size: 12px;
   --type-body-md-weight: 500;
-  --type-body-md-leading: 1.45;
-  --type-body-sm-size: 12px;
+  --type-body-md-leading: 1.3;
+  --type-body-sm-size: 11px;
   --type-body-sm-weight: 500;
-  --type-body-sm-leading: 1.35;
+  --type-body-sm-leading: 1.2;
   --type-label-caps-size: 11px;
   --type-label-caps-weight: 600;
   --type-label-caps-leading: 1.2;
-  --type-data-lg-size: 20px;
+  --type-data-lg-size: 16px;
   --type-data-lg-weight: 800;
   --type-data-lg-leading: 1.1;
-  --type-data-md-size: 13px;
+  --type-data-md-size: 12px;
   --type-data-md-weight: 750;
   --type-data-md-leading: 1.2;
   --tracking-default: 0;
@@ -93,18 +93,20 @@
   --radius-xs: 2px;
   --radius-sm: 4px;
   --radius-md: 6px;
-  --space-xxs: 2px;
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-page: 12px;
-  --space-grid: 8px;
-  --row-height-desktop: 42px;
-  --row-height-mobile: 82px;
+  --space-xxs: 1px;
+  --space-xs: 2px;
+  --space-sm: 4px;
+  --space-md: 6px;
+  --space-lg: 8px;
+  --space-xl: 12px;
+  --space-page: 4px;
+  --space-grid: 4px;
+  --row-height-desktop: 26px;
+  --row-height-mobile: 52px;
+  --table-cell-padding-y: 2px;
+  --table-row-min: 24px;
 
-  --control-height-dense: 34px;
+  --control-height-dense: 26px;
   --control-height-touch: 44px;
   --control-height-primary-touch: 48px;
   --focus-ring-width: 2px;
@@ -421,31 +423,21 @@ body {
   }
 }
 
-/* Layout density is independent of palette and font family. */
+/* Ultra keeps legible text, removing vertical gaps and shortening controls. */
 :root[data-layout="ultra"] {
-  --type-title-xl-size: 24px;
-  --type-title-lg-size: 18px;
-  --type-heading-md-size: 13px;
-  --type-body-md-size: 12px;
-  --type-body-sm-size: 11px;
-  --type-label-caps-size: 11px;
-  --type-data-lg-size: 16px;
-  --type-data-md-size: 12px;
-  --type-body-md-leading: 1.3;
-  --type-body-sm-leading: 1.2;
-  --space-xxs: 1px;
-  --space-xs: 2px;
-  --space-sm: 4px;
-  --space-md: 6px;
-  --space-lg: 8px;
-  --space-xl: 12px;
-  --space-page: 4px;
-  --space-grid: 4px;
-  --row-height-desktop: 26px;
-  --row-height-mobile: 52px;
-  --control-height-dense: 26px;
-  --table-cell-padding-y: 2px;
+  --space-sm: 2px;
+  --space-md: 4px;
+  --space-lg: 6px;
+  --space-xl: 8px;
+  --space-page: 2px;
+  --space-grid: 2px;
+  --control-height-dense: 24px;
+  --control-height-touch: 24px;
+  --control-height-primary-touch: 28px;
+  --table-cell-padding-y: 0px;
   --table-row-min: 24px;
+  --row-height-desktop: 24px;
+  --row-height-mobile: 36px;
 }
 :root[data-text-size="small"] {
   --type-body-md-size: 12px; --type-body-sm-size: 11px;
@@ -464,54 +456,88 @@ body {
 :root[data-row-spacing="comfortable"] { --table-cell-padding-y: 12px; --table-row-min: 48px; --row-height-desktop: 56px; }
 :root :is(.ranking-page, .universe-page) :is(th, td) { padding-block: var(--table-cell-padding-y, var(--space-sm)); }
 :root .ranking-page .select-row { min-height: var(--table-row-min, 42px); }
-:root[data-layout="ultra"] .ranking-page .topbar { gap: 4px; }
-:root[data-layout="ultra"] .ranking-page .topbar > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-:root[data-layout="ultra"] .ranking-page .topbar p { margin: 0; }
-:root[data-layout="ultra"] .ranking-page .primary-metrics { gap: 4px; }
-:root[data-layout="ultra"] .ranking-page .selected-metrics { line-height: 1.3; }
-:root[data-layout="ultra"] .volume-details small { line-height: 1.25; }
-:root[data-layout="ultra"] .ranking-page .workspace { gap: 4px; }
-:root[data-layout="ultra"] .ranking-page .chart-caption { margin: 0; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .topbar { gap: 4px; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .topbar > div { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .topbar p { margin: 0; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .primary-metrics { gap: 4px; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .selected-metrics { line-height: 1.3; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .volume-details small { line-height: 1.25; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .workspace { gap: 4px; }
+:root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .chart-caption { margin: 0; }
 @media (min-width: 961px) and (pointer: fine) {
-  :root[data-layout="ultra"] .workspace-navigation a { min-height: 26px; padding-inline: 8px; font-size: 12px; }
-  :root[data-layout="ultra"] .ranking-page .select-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
-  :root[data-layout="ultra"] .ranking-page .select-row > span:not(.asset-icon-slot),
-  :root[data-layout="ultra"] .ranking-page .select-row > small { font-size: 11px; }
-  :root[data-layout="ultra"] .ranking-page .rank-change { display: inline; min-width: 0; margin-left: 2px; }
-  :root[data-layout="ultra"] .ranking-page .volume-signal-slot { display: inline-block; margin-left: 4px; }
-  :root[data-layout="ultra"] .volume-signal { min-height: 24px; min-width: 48px; padding: 0 2px; }
-  :root[data-layout="ultra"] .volume-signal .marks { gap: 3px; }
-  :root[data-layout="ultra"] .volume-signal .direction { width: 16px; height: 16px; }
-  :root[data-layout="ultra"] .volume-signal .volume-bars { width: 26px; height: 20px; }
-  :root[data-layout="ultra"] .ranking-page .purpose-switcher button { min-height: 26px; padding-block: 2px; }
-  :root[data-layout="ultra"] .ranking-page .more { min-height: 26px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .workspace-navigation a { min-height: 26px; padding-inline: 8px; font-size: 12px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .select-row { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .select-row > span:not(.asset-icon-slot),
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .select-row > small { font-size: 11px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .rank-change { display: inline; min-width: 0; margin-left: 2px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .volume-signal-slot { display: inline-block; margin-left: 4px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .volume-signal { min-height: 24px; min-width: 48px; padding: 0 2px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .volume-signal .marks { gap: 3px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .volume-signal .direction { width: 16px; height: 16px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .volume-signal .volume-bars { width: 26px; height: 20px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .purpose-switcher button { min-height: 26px; padding-block: 2px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .more { min-height: 26px; }
 }
 @media (max-width: 960px), (pointer: coarse) {
   :root .ranking-page .select-row { min-height: max(44px, var(--table-row-min, 44px)); }
-  :root[data-layout="ultra"] .ranking-page h1 { font-size: 18px; }
-  :root[data-layout="ultra"] .ranking-page .volume-signal { min-height: 44px; }
-  :root[data-layout="ultra"] .ranking-page .controls { gap: 4px; }
-  :root[data-layout="ultra"] .ranking-page .purpose-switcher { padding-block: 2px; gap: 2px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page h1 { font-size: 18px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .volume-signal { min-height: 44px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .controls { gap: 4px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .purpose-switcher { padding-block: 2px; gap: 2px; }
   :root[data-text-size="large"] .ranking-page :is(.indicator, .mobile-sort-basis, .mobile-movement, .rank-change) { font-size: 12px; }
 }
 
 :root .universe-page .instrument-select { min-height: var(--table-row-min, var(--control-height-dense)); }
 @media (min-width: 961px) and (pointer: fine) {
-  :root[data-layout="ultra"] .universe-page .instrument-select { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
-  :root[data-layout="ultra"] .universe-page .audit-badge { min-height: 24px; }
-  :root[data-layout="ultra"] .universe-page .identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .universe-page .instrument-select { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 4px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .universe-page .audit-badge { min-height: 24px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .universe-page .identity { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 }
 @media (max-width: 960px), (pointer: coarse) {
   :root .universe-page .instrument-select { min-height: max(44px, var(--table-row-min, 44px)); }
 }
 @media (min-width: 961px) and (pointer: fine) {
-  :root[data-layout="ultra"] { --control-height-dense: 24px; }
-  :root[data-layout="ultra"][data-row-spacing="auto"],
-  :root[data-layout="ultra"]:not([data-row-spacing]) { --table-cell-padding-y: 1px; }
-  :root[data-layout="ultra"] :is(.ranking-page, .universe-page) :is(td, th) { line-height: 1.1; }
-  :root[data-layout="ultra"] .ranking-page .indicator { line-height: 1.1; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) { --control-height-dense: 24px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"])[data-row-spacing="auto"],
+  :root:is([data-layout="normal"], [data-layout="ultra"]):not([data-row-spacing]) { --table-cell-padding-y: 1px; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) :is(.ranking-page, .universe-page) :is(td, th) { line-height: 1.1; }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .indicator { line-height: 1.1; }
 }
 @media (max-width: 960px) {
-  :root[data-layout="ultra"] .ranking-page .purpose-switcher { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  :root[data-layout="ultra"] .ranking-page .purpose-switcher button { padding-inline: 2px; font-size: var(--type-body-sm-size); }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .purpose-switcher { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .purpose-switcher button { padding-inline: 2px; font-size: var(--type-body-sm-size); }
+}
+
+/* Apply after the normal-layout rules; explicit row spacing still wins. */
+:root[data-layout="ultra"][data-row-spacing="auto"],
+:root[data-layout="ultra"]:not([data-row-spacing]) { --table-cell-padding-y: 0px; }
+:root[data-layout="ultra"] .workspace-navigation a { min-height: 24px; padding: 2px 8px; font-size: 12px; }
+:root[data-layout="ultra"] .ranking-page :is(.topbar, .reference-link, .check, .purpose-switcher button, .more) { min-height: 24px; }
+:root[data-layout="ultra"] .ranking-page .topbar { padding-bottom: 2px; }
+:root[data-layout="ultra"] .ranking-page .purpose-switcher { gap: 2px; padding-block: 2px; }
+:root[data-layout="ultra"] .ranking-page .purpose-description { margin: 2px 0; line-height: 1.2; }
+:root[data-layout="ultra"] .ranking-page .controls { padding-block: 2px; gap: 2px 4px; }
+:root[data-layout="ultra"] .ranking-page .controls > label:not(.check) { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+:root[data-layout="ultra"] .ranking-page .controls :is(select, input[type="search"]) { flex: 1; width: 0; }
+:root[data-layout="ultra"] .ranking-page .condition-summary { min-height: 20px; }
+:root[data-layout="ultra"] .ranking-page .condition-summary p { line-height: 1.2; }
+:root[data-layout="ultra"] .ranking-page .saved-view-bar { padding-block: 2px; }
+:root[data-layout="ultra"] .ranking-page .saved-view-bar > label { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+:root[data-layout="ultra"] .ranking-page .saved-view-bar > label select { width: 0; flex: 1; }
+:root[data-layout="ultra"] .ranking-page .comparison-status { padding: 2px; line-height: 1.2; }
+:root[data-layout="ultra"] .ranking-page .list-heading { padding-block: 2px; }
+:root[data-layout="ultra"] .ranking-page .select-row,
+:root[data-layout="ultra"] .universe-page .instrument-select { min-height: var(--table-row-min); }
+:root[data-layout="ultra"] .volume-signal { min-height: 24px; min-width: 44px; padding: 0 2px; }
+:root[data-layout="ultra"] .volume-signal .marks { gap: 2px; }
+:root[data-layout="ultra"] .volume-signal .direction { width: 14px; height: 14px; }
+:root[data-layout="ultra"] .volume-signal .volume-bars { width: 24px; height: 16px; }
+:root[data-layout="ultra"] .universe-page .audit-badge { min-height: 24px; padding-block: 0; }
+@media (max-width: 960px), (pointer: coarse) {
+  :root[data-layout="ultra"] .ranking-page .volume-signal { min-height: 24px; }
+  :root[data-layout="ultra"] .ranking-page .select-row { padding-right: 24px; grid-template-columns: 18px minmax(0, 1fr); row-gap: 0; }
+  :root[data-layout="ultra"] .ranking-page .asset-icon-slot { transform: scale(.8); transform-origin: left center; }
+  :root[data-layout="ultra"] .ranking-page .mobile-favorite { top: 0; width: 24px; min-width: 24px; min-height: 24px; }
+  :root[data-layout="ultra"] .ranking-page .select-row > small { line-height: 1.1; }
+  :root[data-layout="ultra"] .universe-page .table-scroll td:first-child button { width: 24px; }
 }

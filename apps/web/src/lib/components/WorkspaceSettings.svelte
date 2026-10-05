@@ -33,10 +33,10 @@
 {#if message}<p role="status" class="warning">{message}</p>{/if}
 <section aria-labelledby="layout-settings-title">
   <h2 id="layout-settings-title">レイアウトと文字</h2>
-  <p>超高密度は文字・行・操作部・パネルの余白をまとめて詰めます。配色とフォントはそのまま使えます。</p>
+  <p>超高密度は行・操作部・パネルの余白をまとめて詰めます。配色とフォントはそのまま使えます。</p>
   <div class="grid">
     <label>レイアウト<select aria-label="レイアウト" value={$preferences.layout} onchange={event => select("layout", event)}>
-      <option value="standard">標準</option><option value="ultra">超高密度</option>
+      <option value="normal">ノーマル</option><option value="ultra">超高密度</option>
     </select></label>
     <label>文字サイズ<select aria-label="文字サイズ" value={$preferences.textSize} onchange={event => select("textSize", event)}>
       <option value="auto">レイアウトに合わせる</option><option value="small">小（11〜12px）</option>
@@ -47,7 +47,7 @@
       <option value="standard">標準</option><option value="comfortable">ゆったり</option>
     </select></label>
   </div>
-  <p>スマホではボタンの押しやすさを保ちます。文字サイズ・行間を個別に選ぶと、レイアウトの既定値より優先します。</p>
+  <p>ノーマルは従来の超高密度です。新しい超高密度では上部操作と一覧をさらに詰め、スマホの操作高さも24px以上に縮めます。文字サイズ・行間を個別に選ぶと、レイアウトの既定値より優先します。</p>
   <button onclick={() => reset(["layout", "textSize", "rowSpacing"])}>レイアウトと文字を初期値に戻す</button>
 </section>
 

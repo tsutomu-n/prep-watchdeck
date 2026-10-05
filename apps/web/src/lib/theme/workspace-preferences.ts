@@ -1,8 +1,9 @@
 import { get, readonly, writable } from "svelte/store";
 
-export const WORKSPACE_PREFERENCES_KEY = "prep-watchdeck:workspace-preferences:v1";
+export const WORKSPACE_PREFERENCES_KEY = "prep-watchdeck:workspace-preferences:v2";
+const LEGACY_PREFERENCES_KEY = "prep-watchdeck:workspace-preferences:v1";
 export const defaultPreferences = {
-  layout: "standard" as "standard" | "ultra",
+  layout: "normal" as "normal" | "ultra",
   textSize: "auto" as "auto" | "small" | "standard" | "large",
   rowSpacing: "auto" as "auto" | "compact" | "standard" | "comfortable",
   percentDecimals: 2,
@@ -22,7 +23,7 @@ export const defaultPreferences = {
 };
 export type WorkspacePreferences = typeof defaultPreferences;
 const options = {
-  layout: ["standard", "ultra"], textSize: ["auto", "small", "standard", "large"],
+  layout: ["normal", "ultra"], textSize: ["auto", "small", "standard", "large"],
   rowSpacing: ["auto", "compact", "standard", "comfortable"], turnoverNotation: ["compact", "full"],
   initialPage: ["reference", "native"], initialPeriod: ["default", "15m", "1h", "24h", "daily"],
   initialOrder: ["default", "gainers", "losers", "turnover"], initialColumns: ["standard", "movement"],
@@ -58,6 +59,11 @@ export function parsePreferences(raw: string | null): WorkspacePreferences {
   try { return normalizePreferences(raw === null ? null : JSON.parse(raw)); }
   catch { return { ...defaultPreferences }; }
 }
+/** Both retired layouts migrate to normal; unrelated preferences survive. */
+export function readPreferences(current: string | null, legacy: string | null): WorkspacePreferences {
+  if (current !== null) return parsePreferences(current);
+  return { ...parsePreferences(legacy), layout: "normal" };
+}
 const state = writable<WorkspacePreferences>({ ...defaultPreferences });
 export const preferences = readonly(state);
 let initialized = false;
@@ -73,7 +79,7 @@ export function currentPreferences(): WorkspacePreferences {
   if (typeof window === "undefined") return { ...defaultPreferences };
   if (!initialized) {
     let value = { ...defaultPreferences };
-    try { value = parsePreferences(window.localStorage.getItem(WORKSPACE_PREFERENCES_KEY)); } catch { /* Defaults remain usable. */ }
+    try { value = readPreferences(window.localStorage.getItem(WORKSPACE_PREFERENCES_KEY), window.localStorage.getItem(LEGACY_PREFERENCES_KEY)); } catch { /* Defaults remain usable. */ }
     apply(value); initialized = true;
   }
   return get(state);

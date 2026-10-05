@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { writeFile } from "node:fs/promises";
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
 const savedViews = [{ id: "one-hour", name: "1時間の監視", view: {
@@ -33,8 +34,8 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
   await page.goto("/");
   const row = page.getByTestId("ranking-row").filter({ has: page.locator("strong", { hasText: /^BTC$/ }) });
   await expect(row).toBeVisible();
-  const standard = await row.boundingBox();
-  await page.screenshot({ path: testInfo.outputPath("standard.png"), fullPage: true });
+  const normal = await row.boundingBox();
+  await page.screenshot({ path: testInfo.outputPath("normal.png"), fullPage: true });
   await nav(page).getByRole("link", { name: "設定", exact: true }).click();
   await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
   await page.getByLabel("騰落率・Fundingの小数桁", { exact: true }).selectOption("4");
@@ -52,9 +53,9 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
   await expect(row.locator(".change")).toContainText("+1.2346%");
   await expect(row.locator(".turnover > span[title]")).toHaveText("1,234,567.89");
   const ultra = await row.boundingBox();
-  expect(ultra!.height).toBeLessThan(standard!.height);
-  expect(ultra!.y).toBeLessThan(standard!.y);
-  if ((page.viewportSize()?.width ?? 1440) > 960) expect(ultra!.height).toBeLessThanOrEqual(28);
+  expect(ultra!.height).toBeLessThan(normal!.height);
+  expect(ultra!.y).toBeLessThan(normal!.y);
+  if ((page.viewportSize()?.width ?? 1440) > 960) expect(ultra!.height).toBeLessThanOrEqual(26);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("ultra.png"), fullPage: true });
   await row.locator("button.select-row").focus();
@@ -68,7 +69,8 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
   await expect(row).toBeVisible();
   expect((await row.boundingBox())!.height).toBeGreaterThan(ultra!.height);
   expect(await row.locator("button.select-row strong").evaluate(el => parseFloat(getComputedStyle(el).fontSize))).toBe(15);
-  await testInfo.attach("density.json", { body: JSON.stringify({ standard, ultra }), contentType: "application/json" });
+  await writeFile(testInfo.outputPath("density.json"), JSON.stringify({ normal, ultra }, null, 2));
+  await testInfo.attach("density.json", { body: JSON.stringify({ normal, ultra }), contentType: "application/json" });
   expect(errors).toEqual([]);
 });
 
@@ -116,7 +118,7 @@ test("別タブに設定が反映され、保存不可でもタブ内で維持�
   await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
   await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue("ultra");
   await page.getByRole("button", { name: "レイアウトと文字を初期値に戻す", exact: true }).click();
-  await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue("standard");
+  await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue("normal");
   await other.close();
   await page.addInitScript(() => {
     Object.defineProperty(window, "localStorage", { get() { throw new Error("denied"); } });
@@ -152,4 +154,28 @@ test("遅い初期保存表示は開始済みの操作を上書きせず、削�
   await expect(page.getByText("初期表示に指定した保存表示が見つかりません。初期値を使っています。", { exact: true })).toBeVisible();
   await expect(page.getByLabel("ランキングの比較期間")).toHaveValue("24h");
   expect(errors).toEqual([]);
+});
+
+
+test("旧レイアウトをノーマルへ移行し、他の設定と新しい超高密度を保持する", async ({ page }) => {
+  await prepare(page);
+  await page.goto("/settings");
+  for (const layout of ["standard", "ultra"]) {
+    await page.evaluate(layout => {
+      localStorage.removeItem("prep-watchdeck:workspace-preferences:v2");
+      localStorage.setItem("prep-watchdeck:workspace-preferences:v1", JSON.stringify({
+        layout, percentDecimals: 4, chartInterval: "60", chartVolume: false
+      }));
+    }, layout);
+    await page.reload();
+    await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue("normal");
+    await expect(page.getByLabel("レイアウト", { exact: true }).locator("option")).toHaveText(["ノーマル", "超高密度"]);
+    await expect(page.locator("html")).toHaveAttribute("data-layout", "normal");
+    await expect(page.getByLabel("騰落率・Fundingの小数桁", { exact: true })).toHaveValue("4");
+    await expect(page.getByLabel("チャートの初期時間足", { exact: true })).toHaveValue("60");
+    await expect(page.getByLabel("取引所別チャートの出来高を表示", { exact: true })).not.toBeChecked();
+  }
+  await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
+  await page.reload();
+  await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue("ultra");
 });
