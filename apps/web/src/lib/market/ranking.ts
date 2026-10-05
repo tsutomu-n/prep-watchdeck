@@ -1,5 +1,6 @@
 import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
 import { isReferenceTime } from "$lib/market/price-change";
+import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "$lib/market/turnover-format";
 
 export type RankingPeriod = RankingResponse["period"];
 export type RankingOrder = RankingResponse["order"];
@@ -97,10 +98,8 @@ export function rankingTimestamp(value: number): string {
   }).format(value);
 }
 
-export function turnoverLabel(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    notation: value >= 10_000 ? "compact" : "standard", maximumFractionDigits: 2
-  }).format(value);
+export function turnoverLabel(value: number, decimals = DEFAULT_TURNOVER_DECIMALS): string {
+  return formatTurnover(value, decimals, true);
 }
 
 export function readChartInterval(storage: Pick<Storage, "getItem">): ChartInterval {

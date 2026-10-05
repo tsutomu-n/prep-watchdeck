@@ -1,5 +1,6 @@
 import type { RankedRow, RankingResponse, TurnoverComparison } from "$lib/generated/ranking-response";
 import { indicatorLabel, RANKING_MAX_AGE_MS, rankingTimestamp, referenceLabel } from "./ranking";
+import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "./turnover-format";
 
 export const TURNOVER_SURGE_RATIO = 3;
 export const PRICE_SURGE_PCT = 2;
@@ -42,7 +43,7 @@ export function relativeVolumeState(row: RankedRow, expired = false) {
   return { available, strength, direction, kind, reason: reason || (available ? "" : "入力不整合") };
 }
 
-export function relativeVolumeDescription(row: RankedRow, expired = false): string {
+export function relativeVolumeDescription(row: RankedRow, expired = false, decimals = DEFAULT_TURNOVER_DECIMALS): string {
   const comparison = row.turnoverComparison;
   const state = relativeVolumeState(row, expired);
   const samples = [
@@ -50,7 +51,7 @@ export function relativeVolumeDescription(row: RankedRow, expired = false): stri
   ] as const;
   const lines = samples.map(([label, sample]) => `${label} ${rankingTimestamp(sample.anchor)}〜${rankingTimestamp(sample.cutoff)} JST: ${
     sample.status === "ready" && sample.quoteTurnover !== null
-      ? `${sample.quoteTurnover.toLocaleString("ja-JP", { maximumFractionDigits: 2 })} USDT`
+      ? `${formatTurnover(sample.quoteTurnover, decimals)} USDT`
       : indicatorLabel({ value: null, status: sample.status }, "倍")}`);
   return [
     `${row.asset} · ${referenceLabel(row)} · 売買代金の過去日比較`,

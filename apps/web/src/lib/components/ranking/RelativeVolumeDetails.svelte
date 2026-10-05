@@ -1,8 +1,11 @@
 <script lang="ts">
   import type { RankedRow } from "$lib/generated/ranking-response";
   import { indicatorLabel, rankingTimestamp } from "$lib/market/ranking";
+  import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "$lib/market/turnover-format";
 
-  let { row, expired = false }: { row: RankedRow; expired?: boolean } = $props();
+  let { row, expired = false, decimals = DEFAULT_TURNOVER_DECIMALS }: {
+    row: RankedRow; expired?: boolean; decimals?: number;
+  } = $props();
   const comparison = $derived(row.turnoverComparison);
   const samples = $derived([
     ["一昨日", comparison.twoDaysAgo], ["昨日", comparison.previousDay], ["現在", comparison.current]
@@ -17,7 +20,7 @@
       <div>
         <dt>{label}<small>{rankingTimestamp(sample.anchor)}<br />〜 {rankingTimestamp(sample.cutoff)} JST</small></dt>
         <dd>
-          {sample.status === "ready" && sample.quoteTurnover !== null ? sample.quoteTurnover.toLocaleString("ja-JP", { maximumFractionDigits: 20 })
+          {sample.status === "ready" && sample.quoteTurnover !== null ? formatTurnover(sample.quoteTurnover, decimals)
             : indicatorLabel({ status: sample.status, value: null }, "倍")}
         </dd>
       </div>

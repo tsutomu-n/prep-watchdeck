@@ -1,15 +1,16 @@
 <script lang="ts">
   import type { RankedRow } from "$lib/generated/ranking-response";
   import { formatPriceChange } from "$lib/market/price-change";
+  import { DEFAULT_TURNOVER_DECIMALS } from "$lib/market/turnover-format";
   import { relativeVolumeDescription, relativeVolumeState, turnoverBarHeights } from "$lib/market/relative-volume";
 
-  let { row, expired = false, isNew = false, showAsset = false, onselect }: {
-    row: RankedRow; expired?: boolean; isNew?: boolean; showAsset?: boolean; onselect: () => void;
+  let { row, expired = false, isNew = false, showAsset = false, decimals = DEFAULT_TURNOVER_DECIMALS, onselect }: {
+    row: RankedRow; expired?: boolean; isNew?: boolean; showAsset?: boolean; decimals?: number; onselect: () => void;
   } = $props();
   const signal = $derived(relativeVolumeState(row, expired));
   const bars = $derived(turnoverBarHeights(row.turnoverComparison));
   const fresh = $derived(isNew && signal.kind !== null);
-  const description = $derived(`${fresh ? "新着 · " : ""}${relativeVolumeDescription(row, expired)}`);
+  const description = $derived(`${fresh ? "新着 · " : ""}${relativeVolumeDescription(row, expired, decimals)}`);
 </script>
 
 <button type="button" class="volume-signal" class:with-asset={showAsset} class:surge={signal.kind !== null}

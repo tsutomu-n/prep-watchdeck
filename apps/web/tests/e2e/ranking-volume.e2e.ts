@@ -28,7 +28,7 @@ test("同銘柄の過去日比較を文字なしのSVGで示し、両方向と�
   await expect(details).toBeVisible();
   await expect(details).toContainText("昨日比4.0倍");
   await expect(details).toContainText("一昨日比4.8倍");
-  await expect(details.locator(".day-windows dd").nth(0)).toHaveText("104,166.66666666667");
+  await expect(details.locator(".day-windows dd").nth(0)).toHaveText("104,166.67");
   await expect(details.locator(".day-windows dd").nth(1)).toHaveText("125,000");
   await expect(details.locator(".day-windows dd").nth(2)).toHaveText("500,000");
   await page.screenshot({ path: testInfo.outputPath("relative-volume-details.png"), fullPage: true });

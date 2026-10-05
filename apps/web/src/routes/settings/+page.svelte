@@ -2,11 +2,12 @@
   import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
   import FontSelector from "$lib/components/FontSelector.svelte";
   import ThemeSelector from "$lib/components/ThemeSelector.svelte";
+  import TurnoverDisplaySetting from "$lib/components/TurnoverDisplaySetting.svelte";
 </script>
 
 <svelte:head>
   <title>設定 · Prep Watchdeck</title>
-  <meta name="description" content="フォント、配色、騰落率の日本時間の基準時刻を設定します。" />
+  <meta name="description" content="フォント、配色、売買代金の表示小数桁、騰落率の日本時間の基準時刻を設定します。" />
 </svelte:head>
 
 <main class="settings-page">
@@ -25,6 +26,11 @@
       <div class="setting-control"><FontSelector /></div>
       <div class="setting-control"><ThemeSelector /></div>
     </div>
+  </section>
+
+  <section aria-labelledby="turnover-title">
+    <div class="section-heading"><h2 id="turnover-title">売買代金の表示</h2></div>
+    <TurnoverDisplaySetting />
   </section>
 
   <section aria-labelledby="reference-title">

@@ -2,7 +2,8 @@
   import { onMount, tick, untrack } from "svelte";
   import { page } from "$app/state";
   import { pushState, replaceState } from "$app/navigation";
-  import { subscribeReferenceTime } from "$lib/theme/display-preferences";
+  import { subscribeReferenceTime, subscribeTurnoverDecimals } from "$lib/theme/display-preferences";
+  import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "$lib/market/turnover-format";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
   import RelativeVolumeSignal from "$lib/components/ranking/RelativeVolumeSignal.svelte";
@@ -32,6 +33,7 @@
   let reference = $state(DEFAULT_REFERENCE_TIME);
   let referenceReady = $state(false);
   let minimum = $state(0);
+  let turnoverDecimals = $state(DEFAULT_TURNOVER_DECIMALS);
   let search = $state("");
   let includeUnranked = $state(false);
   let venue = $state<"all" | "bitget" | "hyperliquid" | "aster">("all");
@@ -216,6 +218,7 @@
 
   onMount(() => {
     const stopReference = subscribeReferenceTime((value) => { reference = value; referenceReady = true; });
+    const stopTurnover = subscribeTurnoverDecimals(value => { turnoverDecimals = value; });
     const width = window.matchMedia("(max-width: 960px)");
     const updateWidth = () => mobile = width.matches;
     updateWidth(); width.addEventListener("change", updateWidth);
@@ -292,7 +295,7 @@
     schedule();
     return () => {
       mounted = false; clearTimeout(detailTimer);
-      stopReference(); width.removeEventListener("change", updateWidth);
+      stopReference(); stopTurnover(); width.removeEventListener("change", updateWidth);
       controller?.abort(); clearTimeout(refreshTimer); clearInterval(clock);
       document.removeEventListener("visibilitychange", visible);
       document.removeEventListener("visibilitychange", loadWorkspace);
@@ -680,7 +683,7 @@
       {#if volumeSpotlight.length}
         <div class="volume-spotlight" role="group" aria-label={`${periodLabel}・昨日と一昨日の両方に対して売買代金が3倍以上の銘柄`} data-testid="volume-spotlight">
           {#each volumeSpotlight as row (row.id)}
-            <RelativeVolumeSignal {row} showAsset isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} />
+            <RelativeVolumeSignal {row} decimals={turnoverDecimals} showAsset isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} />
           {/each}
         </div>
       {/if}
@@ -744,8 +747,8 @@
                       ? "未取得" : formatPriceChange(row.windows[window as "15m" | "1h" | "24h"].returnPct!)}</span>
                   {/each}</td>
                 {/if}
-                <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${row.quoteTurnover.toLocaleString("en-US")} USDT`}>{turnoverLabel(row.quoteTurnover)}</span>{:else}<span class="missing">未取得</span>{/if}
-                  <span class="volume-signal-slot"><RelativeVolumeSignal {row} expired={stale}
+                <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${formatTurnover(row.quoteTurnover, turnoverDecimals)} USDT`}>{turnoverLabel(row.quoteTurnover, turnoverDecimals)}</span>{:else}<span class="missing">未取得</span>{/if}
+                  <span class="volume-signal-slot"><RelativeVolumeSignal {row} expired={stale} decimals={turnoverDecimals}
                     isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} /></span>
                   {#if row.rank === null && row.returnPct !== null}<small>{rankingStateLabel(row.state)}</small>{/if}
                 </td>
@@ -806,9 +809,9 @@
           <dl class="selected-metrics primary-metrics" data-testid="selected-primary-metrics">
             <div><dt>参照終値 · USDT</dt><dd>{selected.referenceClose.status === "ready" ? formatPrice(selected.referenceClose.value) : "未取得"}</dd></div>
             <div><dt>騰落率 · {periodLabel === "15分" || periodLabel === "1時間" ? `直近${periodLabel}` : periodLabel}</dt><dd class:up={(selected.returnPct ?? 0) > 0} class:down={(selected.returnPct ?? 0) < 0}>{selected.returnPct !== null ? formatPriceChange(selected.returnPct) : rankingRowStateLabel(selected)}</dd></div>
-            <div><dt>売買代金 · USDT</dt><dd>{selected.quoteTurnover !== null ? selected.quoteTurnover.toLocaleString("en-US") : "未取得"}</dd></div>
+            <div><dt>売買代金 · USDT</dt><dd>{selected.quoteTurnover !== null ? formatTurnover(selected.quoteTurnover, turnoverDecimals) : "未取得"}</dd></div>
           </dl>
-          <RelativeVolumeDetails row={selected} expired={stale} />
+          <RelativeVolumeDetails row={selected} expired={stale} decimals={turnoverDecimals} />
         {/if}
         {#if selected.state === "mapping_review"}<p class="selection-notice">{rankingRowStateLabel(selected)}。確認できるまで順位とチャートに含めません。</p>
         {:else if selected.state === "unsupported"}<p class="selection-notice">{rankingRowStateLabel(selected)}。順位とチャートの対象外です。</p>{/if}
