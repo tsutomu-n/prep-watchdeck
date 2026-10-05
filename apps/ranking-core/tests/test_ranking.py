@@ -53,7 +53,7 @@ def test_24h_needs_boundary_close_and_windows_share_one_generation(store: Store)
     generation = Generation(mapping("BTC"), CUTOFF, CUTOFF + 8000, store)
     result = generation.response("24h", "00:00", "gainers", 0, CUTOFF + 8000)
     row = result.rows[0]
-    assert result.schema_version == "ranking-v3"
+    assert result.schema_version == "ranking-v4"
     assert result.anchor == CUTOFF - DAY
     assert row.reference_close.value == 110
     assert row.windows["15m"].state == "ready"
@@ -189,7 +189,7 @@ def test_stale_does_not_retimestamp_previous_results_and_cache_is_bounded(store:
     gen = Generation(mapping("BTC"), CUTOFF, CUTOFF + 8000, store)
     for minute in range(60):
         gen.response("daily", f"00:{minute:02}", "gainers", 0, CUTOFF)
-    assert len(gen.cache) == 32
+    assert len(gen.cache) == 8
     result = gen.response("15m", "00:00", "gainers", 0, CUTOFF + DAY * 2)
     assert result.stale and result.roster_stale and result.status == "stale"
     assert result.generated_at == CUTOFF + 8000

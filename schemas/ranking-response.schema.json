@@ -355,6 +355,9 @@
           },
           "title": "Turnoverratios",
           "type": "object"
+        },
+        "turnoverComparison": {
+          "$ref": "#/$defs/TurnoverComparison"
         }
       },
       "required": [
@@ -375,7 +378,8 @@
         "dayRangePosition",
         "referenceClose",
         "windows",
-        "turnoverRatios"
+        "turnoverRatios",
+        "turnoverComparison"
       ],
       "title": "RankedRow",
       "type": "object"
@@ -501,6 +505,80 @@
       "title": "Reference",
       "type": "object"
     },
+    "TurnoverComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/TurnoverWindow"
+        },
+        "previousDay": {
+          "$ref": "#/$defs/TurnoverWindow"
+        },
+        "twoDaysAgo": {
+          "$ref": "#/$defs/TurnoverWindow"
+        },
+        "previousDayRatio": {
+          "$ref": "#/$defs/Indicator"
+        },
+        "twoDaysAgoRatio": {
+          "$ref": "#/$defs/Indicator"
+        }
+      },
+      "required": [
+        "current",
+        "previousDay",
+        "twoDaysAgo",
+        "previousDayRatio",
+        "twoDaysAgoRatio"
+      ],
+      "title": "TurnoverComparison",
+      "type": "object"
+    },
+    "TurnoverWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "title": "Anchor",
+          "type": "integer"
+        },
+        "cutoff": {
+          "title": "Cutoff",
+          "type": "integer"
+        },
+        "quoteTurnover": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quoteturnover"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "history_missing",
+            "starting",
+            "invalid_data",
+            "reference_unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor",
+        "cutoff",
+        "quoteTurnover",
+        "status"
+      ],
+      "title": "TurnoverWindow",
+      "type": "object"
+    },
     "Widget": {
       "additionalProperties": false,
       "properties": {
@@ -569,8 +647,8 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
-      "const": "ranking-v3",
-      "default": "ranking-v3",
+      "const": "ranking-v4",
+      "default": "ranking-v4",
       "title": "Schemaversion",
       "type": "string"
     },
@@ -583,8 +661,8 @@
       "type": "string"
     },
     "metricVersion": {
-      "const": "trade-close-quote-turnover-analysis-v3",
-      "default": "trade-close-quote-turnover-analysis-v3",
+      "const": "trade-close-quote-turnover-analysis-v4",
+      "default": "trade-close-quote-turnover-analysis-v4",
       "title": "Metricversion",
       "type": "string"
     },

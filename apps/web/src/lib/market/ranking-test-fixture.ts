@@ -1,6 +1,23 @@
-import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
+import type { RankedRow, RankingResponse, TurnoverComparison } from "$lib/generated/ranking-response";
 import { dailyBaselineAt } from "$lib/market/price-change";
 import { rankingQuery } from "$lib/market/ranking";
+
+function comparisonFixture(
+  anchor: number, cutoff: number, turnover: number | null, asset: string
+): TurnoverComparison {
+  const previousRatio = asset === "BTC" ? 4 : asset === "SOL" || asset === "NOCHART" ? 3 : 1;
+  const olderRatio = asset === "BTC" ? 4.8 : asset === "SOL" ? 4.7 : asset === "NOCHART" ? 3 : 1;
+  const status = anchor === cutoff ? "starting" : turnover === null ? "history_missing" : "ready";
+  return {
+    current: { anchor, cutoff, status, quoteTurnover: status === "ready" ? turnover : null },
+    previousDay: { anchor: anchor - 86_400_000, cutoff: cutoff - 86_400_000,
+      status, quoteTurnover: status === "ready" ? turnover! / previousRatio : null },
+    twoDaysAgo: { anchor: anchor - 172_800_000, cutoff: cutoff - 172_800_000,
+      status, quoteTurnover: status === "ready" ? turnover! / olderRatio : null },
+    previousDayRatio: { status, value: status === "ready" ? previousRatio : null },
+    twoDaysAgoRatio: { status, value: status === "ready" ? olderRatio : null }
+  };
+}
 
 export function rankingFixture(
   query = rankingQuery("15m", "00:00", "gainers", 0),
@@ -10,6 +27,8 @@ export function rankingFixture(
   const order = query.get("order") as RankingResponse["order"];
   const reference = query.get("dailyReferenceJst")!;
   const minimum = Number(query.get("minTurnover"));
+  const anchor = period === "daily" ? dailyBaselineAt(cutoff, reference)
+    : cutoff - (period === "15m" ? 15 : period === "1h" ? 60 : 1440) * 60_000;
   const rows: RankedRow[] = [
     { asset: "BTC", change: 2.125, turnover: 500_000 },
     { asset: "ETH", change: 1.2, turnover: 1_500_000 },
@@ -29,6 +48,7 @@ export function rankingFixture(
     state: change === null ? "history_missing" : turnover! < minimum ? "filtered"
       : (order === "gainers" && change <= 0) || (order === "losers" && change >= 0) ? "direction_excluded" : "ready",
     reason: change === null ? "history_missing" : null, returnPct: change, quoteTurnover: turnover, rank: null,
+    turnoverComparison: comparisonFixture(anchor, cutoff, turnover, asset),
     rankChange: { status: "unavailable", previousRank: null, delta: null, reason: "no_previous_generation" },
     turnoverRatio: { status: period === "daily" || period === "24h" ? "unsupported_period" : change === null ? "history_missing" : "ready",
       value: period === "daily" || period === "24h" || change === null ? null : asset === "BTC" ? 2 : 1 },
@@ -57,7 +77,7 @@ export function rankingFixture(
     : order === "losers" ? a.returnPct! - b.returnPct! : b.returnPct! - a.returnPct!);
   eligible.forEach((row, index) => row.rank = index + 1);
   rows.sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
-  return { schemaVersion: "ranking-v3", metricVersion: "trade-close-quote-turnover-analysis-v3",
+  return { schemaVersion: "ranking-v4", metricVersion: "trade-close-quote-turnover-analysis-v4",
     generationId: `fixture:${cutoff}`, mapVersion: "fixture-v1", cutoff, generatedAt: cutoff + 8000,
     previousGenerationId: null, previousCutoff: null,
     rosterGeneratedAt: cutoff, rosterStale: false, stale: false, status: "partial", period,

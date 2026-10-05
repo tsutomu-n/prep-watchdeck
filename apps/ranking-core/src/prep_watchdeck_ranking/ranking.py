@@ -1,7 +1,10 @@
 """Pure period calculation over one immutable, common-cutoff input generation."""
 
+from __future__ import annotations
+
 import math
 import re
+from array import array
 from collections import Counter, OrderedDict
 from copy import copy
 from dataclasses import dataclass
@@ -10,6 +13,7 @@ from types import MappingProxyType
 from typing import Literal, cast
 
 from .models import (
+    HISTORY_MINUTES,
     METRIC_VERSION,
     MINUTE,
     Coverage,
@@ -20,6 +24,8 @@ from .models import (
     RankingResponse,
     RankingWindow,
     RowState,
+    TurnoverComparison,
+    TurnoverWindow,
 )
 from .storage import Store
 
@@ -94,12 +100,27 @@ def anchor_at(cutoff: int, period: Period, daily_reference: str) -> int:
     return anchor - DAY if anchor > cutoff else anchor
 
 
+def compare_turnover(current: TurnoverWindow, baseline: TurnoverWindow) -> Indicator:
+    for sample in (current, baseline):
+        if sample.status != "ready":
+            return Indicator(status=sample.status)
+    assert current.quote_turnover is not None and baseline.quote_turnover is not None
+    if baseline.quote_turnover == 0:
+        return Indicator(status="no_baseline")
+    ratio = current.quote_turnover / baseline.quote_turnover
+    return (
+        Indicator(value=ratio, status="ready")
+        if math.isfinite(ratio)
+        else Indicator(status="invalid_data")
+    )
+
+
 @dataclass(frozen=True)
 class Series:
     first: int
-    closes: tuple[float | None, ...]
-    turnover_prefix: tuple[float, ...]
-    missing_prefix: tuple[int, ...]
+    closes: memoryview[float]
+    turnover_prefix: memoryview[float]
+    missing_prefix: memoryview[int]
     turnover_15m: Indicator
     turnover_1h: Indicator
     day_position: Indicator
@@ -107,7 +128,7 @@ class Series:
     @classmethod
     def from_rows(
         cls, first: int, cutoff: int, rows: list[tuple[int, float, float, float, float]]
-    ) -> "Series":
+    ) -> Series:
         size = (cutoff - first) // MINUTE + 1
         closes: list[float | None] = [None] * size
         turnovers: list[float | None] = [None] * size
@@ -121,22 +142,28 @@ class Series:
             missing.append(missing[-1] + (value is None))
         return cls(
             first,
-            tuple(closes),
-            tuple(total),
-            tuple(missing),
-            turnover_ratio(turnovers[1:], 15),
-            turnover_ratio(turnovers[1:], 60),
+            # A bytes-backed view keeps three days compact and truly immutable.
+            # Valid prices are positive, so 0 is an internal missing-close marker.
+            memoryview(array("d", (value or 0 for value in closes)).tobytes()).cast("d"),
+            memoryview(array("d", total).tobytes()).cast("d"),
+            memoryview(array("I", missing).tobytes()).cast("I"),
+            turnover_ratio(turnovers[-1440:], 15),
+            turnover_ratio(turnovers[-1440:], 60),
             day_range_position(cutoff, rows),
         )
+
+    def close_at(self, index: int) -> float | None:
+        value = self.closes[index]
+        return value if value != 0 else None
 
     def calculate(self, anchor: int, cutoff: int) -> tuple[float | None, float | None, RowState]:
         if anchor == cutoff:
             return None, None, "starting"
         start, end = (anchor - self.first) // MINUTE, (cutoff - self.first) // MINUTE
-        close = self.closes[end]
+        close = self.close_at(end)
         if close is None:
             return None, None, "source_delayed"
-        base = self.closes[start]
+        base = self.close_at(start)
         if base is None or self.missing_prefix[end + 1] != self.missing_prefix[start + 1]:
             return None, None, "history_missing"
         turnover = self.turnover_prefix[end + 1] - self.turnover_prefix[start + 1]
@@ -144,6 +171,43 @@ class Series:
         if not math.isfinite(change) or not math.isfinite(turnover):
             return None, None, "invalid_data"
         return change, max(0.0, turnover), "ready"
+
+    def turnover_window(self, anchor: int, cutoff: int) -> TurnoverWindow:
+        def unavailable(status: Literal["starting", "history_missing", "invalid_data"]):
+            return TurnoverWindow(anchor=anchor, cutoff=cutoff, status=status)
+
+        if anchor == cutoff:
+            return unavailable("starting")
+        start, end = (anchor - self.first) // MINUTE, (cutoff - self.first) // MINUTE
+        if start < 0 or end >= len(self.closes):
+            return unavailable("history_missing")
+        # The minute ending at the anchor belongs to the preceding interval.
+        if self.missing_prefix[end + 1] != self.missing_prefix[start + 1]:
+            return unavailable("history_missing")
+        total = self.turnover_prefix[end + 1] - self.turnover_prefix[start + 1]
+        if not math.isfinite(total) or total < 0:
+            return unavailable("invalid_data")
+        return TurnoverWindow(anchor=anchor, cutoff=cutoff, quote_turnover=total, status="ready")
+
+
+def turnover_comparison(series: Series | None, anchor: int, cutoff: int) -> TurnoverComparison:
+    windows = [
+        series.turnover_window(anchor - shift * DAY, cutoff - shift * DAY)
+        if series is not None
+        else TurnoverWindow(
+            anchor=anchor - shift * DAY,
+            cutoff=cutoff - shift * DAY,
+            status="reference_unavailable",
+        )
+        for shift in range(3)
+    ]
+    return TurnoverComparison(
+        current=windows[0],
+        previous_day=windows[1],
+        two_days_ago=windows[2],
+        previous_day_ratio=compare_turnover(windows[0], windows[1]),
+        two_days_ago_ratio=compare_turnover(windows[0], windows[2]),
+    )
 
 
 class Generation:
@@ -156,7 +220,7 @@ class Generation:
         unavailable_keys: set[str] | None = None,
         disconnected: set[str] | None = None,
         invalid_keys: set[str] | None = None,
-        previous: "Generation | None" = None,
+        previous: Generation | None = None,
     ) -> None:
         if cutoff % MINUTE or generated_at < cutoff:
             raise ValueError("invalid generation cutoff")
@@ -169,7 +233,7 @@ class Generation:
         self.unavailable_keys = frozenset(unavailable_keys or ())
         self.disconnected = frozenset(disconnected or ())
         self.invalid_keys = frozenset(invalid_keys or ())
-        first = cutoff - DAY
+        first = cutoff - HISTORY_MINUTES * MINUTE
         self.series = MappingProxyType(
             {
                 row.id: Series.from_rows(
@@ -199,7 +263,7 @@ class Generation:
             if not item.reference:
                 continue
             series = self.series[item.id]
-            close = series.closes[-1]
+            close = series.close_at(-1)
             close_indicator = (
                 Indicator(value=close, status="ready")
                 if close is not None
@@ -244,7 +308,7 @@ class Generation:
         if result is None:
             result = self._calculate(period, daily_reference, order, minimum, anchor)
             self.cache[key] = result
-            if len(self.cache) > 32:
+            if len(self.cache) > 8:
                 self.cache.popitem(last=False)
         else:
             self.cache.move_to_end(key)
@@ -317,6 +381,7 @@ class Generation:
         all_windows = self._windows(daily_reference)
         for item in self.mapping.rows:
             change, turnover = None, None
+            comparison_series = None
             ratio = position = Indicator(status="reference_unavailable")
             reference_close = Indicator(status="reference_unavailable")
             windows: dict[str, RankingWindow] = {}
@@ -327,6 +392,11 @@ class Generation:
             reason = item.reason
             if item.reference:
                 series = self.series[item.id]
+                if (
+                    item.reference.key not in self.invalid_keys
+                    and item.reference.key not in self.unavailable_keys
+                ):
+                    comparison_series = series
                 reference_close, windows = all_windows[item.id]
                 projection = windows[period]
                 change, turnover, state = (
@@ -388,6 +458,7 @@ class Generation:
                     reference_close=reference_close,
                     windows=windows,
                     turnover_ratios=ratios,
+                    turnover_comparison=turnover_comparison(comparison_series, anchor, self.cutoff),
                 )
             )
         eligible = [row for row in rows if row.state == "ready"]

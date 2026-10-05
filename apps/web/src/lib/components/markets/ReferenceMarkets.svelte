@@ -5,9 +5,12 @@
   import { subscribeReferenceTime } from "$lib/theme/display-preferences";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
+  import RelativeVolumeSignal from "$lib/components/ranking/RelativeVolumeSignal.svelte";
+  import RelativeVolumeDetails from "$lib/components/ranking/RelativeVolumeDetails.svelte";
   import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
   import { filterSortRankingRows, type RankingSort } from "$lib/market/market-view";
+  import { newlyIncreasedRows, relativeVolumeState } from "$lib/market/relative-volume";
   import { formatPrice } from "$lib/market/universe-view";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
@@ -51,6 +54,7 @@
   let limit = $state(50);
   let interval = $state<ChartInterval>("15");
   let data = $state<RankingResponse | null>(null);
+  let newVolumeRows = $state<Set<string>>(new Set());
   let lastSelected = $state<RankedRow | null>(null);
   let selectedId = $state<string | null>(null);
   let selectedRemoved = $state(false);
@@ -97,6 +101,7 @@
   const symbol = $derived(selectedRemoved ? null : approvedWidgetSymbol(selected));
   const stale = $derived(Boolean(data && (data.stale || now - data.cutoff > RANKING_MAX_AGE_MS)));
   const comparisonExpired = $derived(stale || Boolean(data?.previousCutoff && now - data.previousCutoff > RANKING_MAX_AGE_MS));
+  const newVolumeVisible = $derived(Boolean(data && !stale && now - data.generatedAt < 60_000));
   const visibleRows = $derived.by(() => {
     const current = filterSortRankingRows(data?.rows ?? [], {
       search, venue, includeUnranked, minRatio, ratioPeriod, minDayPosition, maxDayPosition,
@@ -116,6 +121,23 @@
       search, venue, includeUnranked, minRatio, ratioPeriod, minDayPosition, maxDayPosition,
       sort, direction
     }).length - visibleRows.length) : 0);
+  const volumeSpotlight = $derived.by(() => {
+    if (!data || stale) return [];
+    // Direction ranking affects table ranks, not discovery of the opposite direction.
+    const candidates = filterSortRankingRows(data.rows, {
+      search, venue, includeUnranked: true, minRatio, ratioPeriod, minDayPosition, maxDayPosition,
+      sort: "asset", direction: "asc"
+    }).filter(row => (!favoritesOnly || Boolean(
+      workspace?.favorites.some(entry => entry.kind === "reference" && entry.id === row.id)
+    )) && row.turnoverComparison.current.quoteTurnover !== null
+      && row.turnoverComparison.current.quoteTurnover >= minimum)
+      .map(row => ({ row, signal: relativeVolumeState(row) }));
+    const groups = (["up", "down", "volume"] as const).map(kind => candidates
+      .filter(item => item.signal.kind === kind)
+      .sort((a, b) => (b.signal.strength! - a.signal.strength!) || a.row.id.localeCompare(b.row.id))
+      .slice(0, 3).map(item => item.row));
+    return [0, 1, 2].flatMap(index => groups.flatMap(group => group[index] ? [group[index]] : []));
+  });
   const selectedFiltered = $derived(Boolean(selectedId && data && !visibleRows.some((row) => row.id === selectedId)));
   const quantityUnverified = $derived((data?.rows ?? []).reduce((count, row) =>
     count + row.originals.filter((item) => item.multiplier === null).length, 0));
@@ -159,13 +181,17 @@
     controller?.abort(); controller = new AbortController();
     const current = ++requestId;
     loading = true; error = null;
-    if (clear) data = null;
+    if (clear) { data = null; newVolumeRows = new Set(); }
     try {
       const response = await fetch(`/api/rankings?${parameters}`, { signal: controller.signal });
       if (!response.ok) throw new Error("ランキングの更新を待っています。専用収集の起動・取得状況を確認してください。");
       const payload: RankingResponse = await response.json();
       if (current !== requestId || !matchesRankingQuery(payload, new URLSearchParams(parameters))) return;
-      data = payload; now = Date.now();
+      now = Date.now();
+      if (payload.generationId !== data?.generationId) {
+        newVolumeRows = newlyIncreasedRows(data, payload, now);
+      }
+      data = payload;
       if (selectedId) {
         const updated = payload.rows.find((row) => row.id === selectedId);
         selectedRemoved = !updated;
@@ -651,6 +677,13 @@
     </div>
   </div>
 
+      {#if volumeSpotlight.length}
+        <div class="volume-spotlight" role="group" aria-label={`${periodLabel}・昨日と一昨日の両方に対して売買代金が3倍以上の銘柄`} data-testid="volume-spotlight">
+          {#each volumeSpotlight as row (row.id)}
+            <RelativeVolumeSignal {row} showAsset isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} />
+          {/each}
+        </div>
+      {/if}
       <div class="list-heading"><h2 id="list-title">{order === "gainers" ? "上昇率" : order === "losers" ? "下落率" : "売買代金"}ランキング</h2><span>{visibleRows.length} 件</span></div>
       {#if addedRows}<p class="search-note">新しい行が {addedRows} 件あります。固定解除で表示します。</p>{/if}
       <div class="table-scroll" aria-busy={loading} bind:this={tableScroll}
@@ -667,7 +700,10 @@
           </tr></thead>
           <tbody>
             {#each visibleRows.slice(0, limit) as row (row.id)}
-              <tr class:selected={selectedId === row.id} data-testid="ranking-row" data-asset={row.asset}>
+              {@const volumeSignal = relativeVolumeState(row, stale)}
+              <tr class:selected={selectedId === row.id} class:volume-surge={volumeSignal.kind !== null}
+                class:surge-up={volumeSignal.kind === "up"} class:surge-down={volumeSignal.kind === "down"}
+                data-testid="ranking-row" data-asset={row.asset} data-volume-surge={volumeSignal.kind ?? ""}>
                 <td class="desktop-only"><button type="button" disabled={!referenceTarget(row)}
                   title={workspace?.favorites.some((entry) => entry.kind === "reference" && entry.id === row.id) && !referenceFavoriteCurrent(row)
                     ? "参照対応が変わりました。確認してから再登録してください" : undefined}
@@ -709,7 +745,8 @@
                   {/each}</td>
                 {/if}
                 <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${row.quoteTurnover.toLocaleString("en-US")} USDT`}>{turnoverLabel(row.quoteTurnover)}</span>{:else}<span class="missing">未取得</span>{/if}
-                  <small class="indicator" data-testid="turnover-ratio">平常比 <span class:missing={row.turnoverRatio.status !== "ready"}>{indicatorLabel(row.turnoverRatio, "倍")}</span></small>
+                  <span class="volume-signal-slot"><RelativeVolumeSignal {row} expired={stale}
+                    isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} /></span>
                   {#if row.rank === null && row.returnPct !== null}<small>{rankingStateLabel(row.state)}</small>{/if}
                 </td>
               </tr>
@@ -725,6 +762,7 @@
         <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
         <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。スマホの順位変化の「—」は比較できない状態で、理由は銘柄詳細で確認できます。</p>
         <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
+        <p class="metric-note">売買代金の棒は左から一昨日・昨日・現在で、同じ銘柄・参照契約の同じ時間帯を比較します。両日比3倍以上は青く強調し、矢印は騰落率が+2%以上／−2%以下の方向、それ以外は横線です。小さな点は連続した世代で新しく条件を満たした銘柄です。履歴不足・比較元ゼロは「?」、更新停止は時計で示します。ホバーまたは選択で比較値と理由を確認できます。過去24時間の平常比は銘柄詳細にも表示します。</p>
         <p class="metric-note">スマホでは参照終値・追加指標・出典を銘柄詳細で確認できます。騰落率の計算基準は設定の「騰落率の基準時刻（JST）」で変更します。</p>
       </details>
       {#if data}
@@ -770,6 +808,7 @@
             <div><dt>騰落率 · {periodLabel === "15分" || periodLabel === "1時間" ? `直近${periodLabel}` : periodLabel}</dt><dd class:up={(selected.returnPct ?? 0) > 0} class:down={(selected.returnPct ?? 0) < 0}>{selected.returnPct !== null ? formatPriceChange(selected.returnPct) : rankingRowStateLabel(selected)}</dd></div>
             <div><dt>売買代金 · USDT</dt><dd>{selected.quoteTurnover !== null ? selected.quoteTurnover.toLocaleString("en-US") : "未取得"}</dd></div>
           </dl>
+          <RelativeVolumeDetails row={selected} expired={stale} />
         {/if}
         {#if selected.state === "mapping_review"}<p class="selection-notice">{rankingRowStateLabel(selected)}。確認できるまで順位とチャートに含めません。</p>
         {:else if selected.state === "unsupported"}<p class="selection-notice">{rankingRowStateLabel(selected)}。順位とチャートの対象外です。</p>{/if}
@@ -871,6 +910,9 @@
   thead button { font-size: inherit; color: inherit; padding: 0; background: transparent; border: 0; }
   tbody th { font-weight: 500; text-align: left; }
   tr { background: var(--panel); }
+  tr.volume-surge:not(.selected) { background: color-mix(in srgb, var(--activity) 7%, var(--panel-solid)); box-shadow: inset 3px 0 var(--activity); }
+  tr.surge-up:not(.selected) { box-shadow: inset 3px 0 var(--up); }
+  tr.surge-down:not(.selected) { box-shadow: inset 3px 0 var(--down); }
   tr.selected { background: var(--panel-selected); box-shadow: inset 3px 0 var(--focus); }
   button[aria-pressed="true"]:not(.select-row) { color: var(--focus); }
   .rank { color: var(--muted); font-variant-numeric: tabular-nums; width: 38px; text-align: right; }
@@ -890,6 +932,11 @@
   .up { color: var(--up); }.down { color: var(--down); }
   .missing { color: var(--quality-risk); font-size: var(--type-label-caps-size); white-space: normal; }
   .turnover small { display: block; color: var(--muted); font-size: var(--type-label-caps-size); white-space: normal; }
+  .volume-signal-slot { display: block; }
+  .volume-spotlight { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: var(--space-xs); margin-top: var(--space-sm); }
+  @media (max-width: 960px) {
+    .volume-spotlight { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 148px; overflow-x: auto; overscroll-behavior-x: contain; }
+  }
   .more { width: 100%; min-height: 44px; }
   .empty { padding: var(--space-lg); color: var(--muted); line-height: 1.6; font-size: var(--type-body-sm-size); }
   .coverage, .contracts, .metric-help { border-bottom: 1px solid var(--line); padding: var(--space-xs) 0; font-size: var(--type-body-sm-size); color: var(--muted); }

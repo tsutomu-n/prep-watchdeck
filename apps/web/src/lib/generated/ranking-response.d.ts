@@ -5,10 +5,10 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Schemaversion = "ranking-v3";
+export type Schemaversion = "ranking-v4";
 export type Generationid = string;
 export type Mapversion = string;
-export type Metricversion = "trade-close-quote-turnover-analysis-v3";
+export type Metricversion = "trade-close-quote-turnover-analysis-v4";
 export type Cutoff = number;
 export type Generatedat = number;
 export type Rostergeneratedat = number;
@@ -106,6 +106,10 @@ export type State1 =
   | "direction_excluded"
   | "invalid_data"
   | "reference_invalid";
+export type Anchor2 = number;
+export type Cutoff1 = number;
+export type Quoteturnover2 = number | null;
+export type Status4 = "ready" | "history_missing" | "starting" | "invalid_data" | "reference_unavailable";
 export type Rows1 = RankedRow[];
 
 export interface RankingResponse {
@@ -161,6 +165,7 @@ export interface RankedRow {
   referenceClose: Indicator2;
   windows: Windows;
   turnoverRatios: Turnoverratios;
+  turnoverComparison: TurnoverComparison;
 }
 export interface OriginalInstrument {
   venue: Venue;
@@ -220,4 +225,17 @@ export interface Turnoverratios {
 export interface Indicator3 {
   value: Value;
   status: Status3;
+}
+export interface TurnoverComparison {
+  current: TurnoverWindow;
+  previousDay: TurnoverWindow;
+  twoDaysAgo: TurnoverWindow;
+  previousDayRatio: Indicator3;
+  twoDaysAgoRatio: Indicator3;
+}
+export interface TurnoverWindow {
+  anchor: Anchor2;
+  cutoff: Cutoff1;
+  quoteTurnover: Quoteturnover2;
+  status: Status4;
 }

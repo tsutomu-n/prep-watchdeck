@@ -23,7 +23,7 @@ test("元数量とChartが未確認でも参照ランキングを読み分けら
   const btc = page.getByTestId("ranking-row").filter({ hasText: "BTC" });
   await expect(btc.locator(".rank")).toContainText("1");
   await expect(btc).toContainText("+2.13%");
-  await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 2.0倍");
+  await expect(btc.getByTestId("relative-volume-signal")).toHaveAttribute("title", /昨日比 4.0倍/);
   await btc.locator("button.select-row").click();
   await expect(page.getByTestId("quantity-review")).toContainText("元の取引所の数量換算は未確認です");
   await expect(page.getByText("チャートの対応確認が必要です。", { exact: true })).toBeVisible();
@@ -66,7 +66,7 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
   const btc = page.getByTestId("ranking-row").filter({ hasText: "BTC" });
   await expect(btc.getByTestId("rank-change")).toHaveAttribute("aria-label", "比較不可（初回・再起動後）");
   await expect(btc.getByTestId("rank-change")).toHaveText((page.viewportSize()?.width ?? 1440) <= 960 ? "—" : "比較不可（初回・再起動後）");
-  await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 2.0倍");
+  await expect(btc.getByTestId("relative-volume-signal")).toHaveAttribute("title", /昨日比 4.0倍/);
   await expect(btc.getByTestId("day-position")).toHaveText("当日位置 50.0%");
   await btc.locator("button.select-row").click();
   const selected = page.getByTestId("selected-metrics");
@@ -87,7 +87,7 @@ test("順位変化と追加指標が同じ世代で切り替わり選択を維�
     await expect(btc.locator("button.select-row")).toBeFocused();
   }
   await page.getByLabel("ランキングの比較期間").selectOption("daily");
-  await expect(btc.getByTestId("turnover-ratio")).toHaveText("平常比 15分・1時間のみ");
+  await expect(btc.getByTestId("relative-volume-signal")).toHaveAttribute("title", /昨日比 4.0倍/);
   await expect(selected).toContainText("15分・1時間のみ");
   await expect(btc.getByTestId("day-position")).toHaveText("当日位置 50.0%");
   // Browser clock must invalidate the comparison even when the collector stops responding.

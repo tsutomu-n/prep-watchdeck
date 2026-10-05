@@ -9,7 +9,7 @@ import aiohttp
 from aiohttp import web
 
 from .mapping import reference_revision
-from .models import MINUTE, Provider, RankingMap, Reference
+from .models import HISTORY_MINUTES, MINUTE, Provider, RankingMap, Reference
 from .providers import PublicClient, now_ms
 from .ranking import Generation, Order, Period
 from .storage import Store, atomic_json
@@ -59,7 +59,7 @@ class RankingService:
                 self.tasks.append(asyncio.create_task(self.backfill_worker(provider)))
         cutoff = now_ms() // MINUTE * MINUTE
         for reference in self.references:
-            first = cutoff - 1440 * MINUTE
+            first = cutoff - HISTORY_MINUTES * MINUTE
             present = {row[0] for row in self.store.window(reference.key, first, cutoff)}
             missing = next(
                 (end for end in range(first, cutoff + MINUTE, MINUTE) if end not in present), None
@@ -75,7 +75,7 @@ class RankingService:
             return
         self.pending.add(reference.key)
         cutoff = now_ms() // MINUTE * MINUTE
-        first = cutoff - (min(1441, max(2, minutes)) - 1) * MINUTE
+        first = cutoff - (min(HISTORY_MINUTES + 1, max(2, minutes)) - 1) * MINUTE
         self.queues[reference.provider].put_nowait((reference, first))
 
     async def check_catalogs(self) -> None:
@@ -148,7 +148,7 @@ class RankingService:
                     continue
                 cutoff = now_ms() // MINUTE * MINUTE
                 bars = await self.client.history(
-                    reference, max(first, cutoff - 1440 * MINUTE), cutoff
+                    reference, max(first, cutoff - HISTORY_MINUTES * MINUTE), cutoff
                 )
                 self.store.put(bars, now_ms())
             except (aiohttp.ClientError, TimeoutError, ValueError, KeyError, TypeError) as exc:
@@ -194,11 +194,14 @@ class RankingService:
                     if series is None:
                         continue
                     last_attempt = self.last_backfill.get(reference.key, 0)
-                    if series.closes[-1] is None:
+                    if series.close_at(-1) is None:
                         latest = self.store.latest(reference.key)
-                        self.enqueue(reference, (cutoff - latest) // MINUTE + 2 if latest else 1441)
+                        self.enqueue(
+                            reference,
+                            (cutoff - latest) // MINUTE + 2 if latest else HISTORY_MINUTES + 1,
+                        )
                     elif series.missing_prefix[-1] and now_ms() - last_attempt >= 300_000:
-                        self.enqueue(reference, 1441)
+                        self.enqueue(reference, HISTORY_MINUTES + 1)
                 self.store.prune(cutoff, {reference.key for reference in self.references})
                 default = candidate.response("15m", "00:00", "gainers", 0, now_ms())
                 payload = default.model_dump(mode="json", by_alias=True)

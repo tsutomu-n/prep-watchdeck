@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-02(金)_14:15 JST"
+timestamp="2026-10-05(月)_17:52 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T14:15:04+09:00`
-- 検証: `2026-10-02T14:15:04+09:00`
+- 更新: `2026-10-05T17:52:40+09:00`
+- 検証: `2026-10-05T17:52:40+09:00`
 - 状態: `現行`
 
 ---
@@ -181,10 +181,10 @@ Bybit / Binance public trade klines
 元の銘柄名簿とランキングmapのversionを分ける。契約revisionごとに履歴を保存し、変更された参照契約の
 履歴を連結しない。銘柄別の取得先はmapで固定する。通常の確定足はWebSocket、初期履歴と欠測はRESTを
 使う。毎分の終了時刻Tから8秒後に入力を固定し、12秒の処理deadlineを超えた世代はAPIへ発行しない。
-計算・保存・発行は重複起動しない。計算入力は24時間分を固定し、同じ世代の期間・HH:mm別の再計算で
+計算・保存・発行は重複起動しない。計算入力は3日分と価格境界を固定し、同じ世代の期間・HH:mm別の再計算で
 後着足を混ぜない。
 
-保存先は /home/tn/.local/share/prep-watchdeck-ranking が既定。SQLiteは最大48時間の確定足を保持し、
+保存先は /home/tn/.local/share/prep-watchdeck-ranking が既定。SQLiteは4日と1分の確定足を保持し、
 元stateと同一・内包関係の保存先を起動前に拒否する。公開HTTP接続に環境のproxyやDB接続設定を使わない。
 通常の制限付き起動は /home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/scripts/ranking/run-isolated.py を使う。
 bubblewrapでhost filesystemをread-onlyにし、専用stateと一時領域だけを書込み可能にする。
@@ -192,15 +192,16 @@ bubblewrapでhost filesystemをread-onlyにし、専用stateと一時領域だ�
 
 外部RESTはcatalog取得と履歴workerを共通の上限で制御し、各Provider 2 request/秒・同時2接続とする。
 WebSocketは全体6接続以内、再試行backoffは最大60秒、
-補完queueはProviderごと2,000、対象参照は最大1,500、問い合わせcacheは世代ごと32件。
+補完queueはProviderごと2,000、対象参照は最大1,500、問い合わせcacheは世代ごと8件。
 これらは上限であり、対応数や稼働受入の証明ではない。Browser数やHH:mmの変更で外部取得を増やさない。
 
 
 順位変化のため、発行済みの現在世代と直前1世代の固定入力を保持する。過去世代の連鎖は保持せず、
-各世代の条件cacheは32件以内。次世代を組み立てて公開する間だけ候補入力が加わる。
+各世代の条件cacheは8件以内。次世代を組み立てて公開する間だけ候補入力が加わる。
 再起動後は現在のDBから新しい世代を発行し、初回の比較元はなしとする。
-平常比とJST当日高安位置は、世代作成時のOHLC・quote turnoverから計算して固定し、
-指標を読むための追加REST、保存期間拡大、別Provider、Widgetデータ取得は加えない。
+平常比・JST当日高安位置・過去日比較は、世代作成時のOHLC・quote turnoverから計算して固定する。
+過去日比較に必要な初期履歴と保持期間を拡張し、指標を読むための追加REST、別Provider、
+Widgetデータ取得は加えない。
 
 ## 保存1分足の品質補助lane
 

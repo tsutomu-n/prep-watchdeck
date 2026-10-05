@@ -6,7 +6,7 @@ import sqlite3
 from collections.abc import Iterable
 from pathlib import Path
 
-from .models import MINUTE, MinuteBar, RankingMap
+from .models import MINUTE, RETENTION_MINUTES, MinuteBar, RankingMap
 
 
 def isolated_state(state: Path, original_state: Path) -> Path:
@@ -110,7 +110,7 @@ class Store:
     def prune(self, cutoff: int, keys: set[str]) -> None:
         with self.connection:
             self.connection.execute(
-                "DELETE FROM minute_bars WHERE end<?", (cutoff - 2881 * MINUTE,)
+                "DELETE FROM minute_bars WHERE end<?", (cutoff - RETENTION_MINUTES * MINUTE,)
             )
             existing = self.connection.execute("SELECT DISTINCT reference_key FROM minute_bars")
             for (key,) in list(existing):

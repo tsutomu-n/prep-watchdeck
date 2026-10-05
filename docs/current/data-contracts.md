@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-02(金)_21:34 JST"
+timestamp="2026-10-05(月)_17:52 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T21:34:33+09:00`
-- 検証: `2026-10-02T21:34:33+09:00`
+- 更新: `2026-10-05T17:52:40+09:00`
+- 検証: `2026-10-05T17:52:40+09:00`
 - 状態: `現行`
 
 ---
@@ -219,7 +219,7 @@ mapは元の全instrument ID・version、名簿fingerprint・確認時刻、共�
 原資産・数量倍率、固定参照のProvider・symbol・quote/settle・perpetual種別・revision、
 Widgetの別symbolと根拠を持つ。`verified / unsupported / review / out_of_scope`を区別する。
 `review`を対応済みとして価格取得せず、異なる原資産や数量を名前だけで結合しない。
-`ranking-map-v2`の行statusと`ranking-v3`応答の`mappingStatus`は、元の原資産同一性と
+`ranking-map-v2`の行statusと`ranking-v4`応答の`mappingStatus`は、元の原資産同一性と
 固定参照契約の採用資格を表す。元契約の`originals[].multiplier=null`は数量換算未確認であり、
 確認済み参照契約によるランキングを止めない。元数量を使う換算には利用できない。
 Widget symbolは独立に照合し、参照契約keyへ結び付ける。Widgetの`review`はChartだけを停止する。
@@ -248,7 +248,7 @@ Binanceはklineのquote asset volume、Bybitはturnoverを用いる。原資産�
 T=Aは`starting`とし、順位を作らない。
 
 `GET /api/rankings?period=15m&dailyReferenceJst=00:00&order=gainers&minTurnover=0` は
-独立APIの同一世代だけを返す。期間は`15m / 1h / daily`、順序は`gainers / losers / turnover`。
+独立APIの同一世代だけを返す。期間は`15m / 1h / 24h / daily`、順序は`gainers / losers / turnover`。
 応答はgeneration ID、map/metric version、T・A・生成時刻、件数と除外理由、全行を含む。
 `history_missing / source_delayed / source_unavailable / reference_invalid / invalid_data` と、
 mapの要確認・未対応・対象外、下限未満・方向対象外を分ける。最新Tから150秒を超えた結果は`stale`、
@@ -258,7 +258,7 @@ mapの要確認・未対応・対象外、下限未満・方向対象外を分�
 
 ### 順位比較と追加指標
 
-`metricVersion`は`trade-close-quote-turnover-analysis-v3`。応答の`previousGenerationId`と
+`metricVersion`は`trade-close-quote-turnover-analysis-v4`。応答の`previousGenerationId`と
 `previousCutoff`は比較元として保持した発行済み世代を示す。現在Tに対してT−60,000msの世代を、
 同じmap/metric version、期間、順序、下限、JST HH:mmで再計算する。JST可変期間の基準日時が
 切り替わる世代間は比較しない。初回とprocess再起動では比較元を持たず、保存済みsnapshotや
@@ -282,11 +282,29 @@ Webも取得停止時のclockで無効化する。過去世代の入力は後着
   範囲外の数値は`invalid_data`とし、0〜100への丸め込みで隠さない。
 
 high/lowと売買代金は世代作成時にSQLiteから一度読み、指標を固定する。Web/APIの読取り時には
-DBを再参照しない。SQLiteの表・保存期間は変更せず、指標は保存済みOHLCにも適用できる。
+DBを再参照しない。SQLiteの表は共通で、保存済みOHLCにも適用できる。
+
+### 昨日・一昨日の同時間帯との売買代金比較
+
+各行の`turnoverComparison`は、選択期間の`current / previousDay / twoDaysAgo`と
+`previousDayRatio / twoDaysAgoRatio`を持つ。各区間は`anchor / cutoff / quoteTurnover / status`を
+保持し、現在の[A,T)を24時間・48時間ずらした同じ長さで比較する。15分・1時間・24時間と、
+指定JST HH:mmからTまでの可変期間に対応する。値は同じ参照契約・revisionの確定1分足の
+USDT建てquote turnover合計であり、異なる銘柄、取引所、数量単位を混ぜない。
+
+現在をQ0、昨日をQ1、一昨日をQ2としてQ0/Q1、Q0/Q2を返す。期間内の全足がそろった場合だけ
+`ready`とし、足が1本でも欠ければ該当区間とその比較は`history_missing`。売買代金だけの比較に
+anchorで終了する足の終値は要求しない。長さ0は`starting`、参照を利用できない場合は
+`reference_unavailable`、非有限値等は`invalid_data`。実測の0は区間値として保持するが、
+分母0の倍率は`no_baseline`でnullにする。Q0=0かつ分母が正の場合は倍率0を返す。
+
+過去日の不足は現在の順位適格性や既存24時間平常比を失効させない。3日分の入力と必要な価格境界
+（4,321本）を世代作成時に固定し、前世代も後着訂正で書き換えない。SQLiteは4日と1分を保持する。
+比較は選択中の1期間分だけ返し、`windows`各期間へ同じ比較を重複格納しない。
 
 ### Markets workspaceの追加契約
 
-Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
+Ranking応答`ranking-v4`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
 
 `market-metrics.json`は既存4 artifactから独立した任意の読取laneで、`native-endpoints-v1`、`generationId`、`candleCutoff`、現行ID/version別の`oiChange`と`tradeChange`を保持する。数量OIは同一versionのL1 bucketの15分・1時間差。終値変化は全行共通cutoffの確定1分足の15分・1時間・24時間差であり、JST騰落率とは別の値である。180秒lagと300秒上限は設計初期値で、実データから測定した数値ではない。欠損や古い値を0へ置換しない。
 

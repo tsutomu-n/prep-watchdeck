@@ -134,7 +134,7 @@ def test_late_ohlc_and_turnover_correction_only_affects_new_generation(store: St
     new = Generation(gen.mapping, CUTOFF, CUTOFF + 9000, store)
     row = new.response("15m", "03:12", "turnover", 0, CUTOFF).rows[0]
     assert row.turnover_ratio.value == 2 and row.day_range_position.value == 50
-    assert new.series["asset:BTC"].first == CUTOFF - DAY
+    assert new.series["asset:BTC"].first == CUTOFF - 3 * DAY
 
 
 def test_unavailable_reference_invalidates_indicators_independently(store: Store) -> None:

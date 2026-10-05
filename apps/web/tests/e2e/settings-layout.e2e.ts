@@ -41,6 +41,10 @@ test("設定を一か所で変更し市場へ反映、詳細条件を閉じた�
   const conditions = page.locator("details").filter({ has: page.locator("summary", { hasText: /^ランキング条件/ }) });
   await expect(conditions).not.toHaveAttribute("open");
   if ((page.viewportSize()?.width ?? 1440) < 960) {
+    const candidates = page.getByTestId("volume-spotlight").getByTestId("relative-volume-signal");
+    await expect(candidates.nth(0)).toContainText("BTC");
+    await expect(candidates.nth(1)).toContainText("SOL");
+    await expect(candidates.nth(1)).toBeInViewport();
     expect(await page.getByTestId("ranking-row").first().evaluate(el => el.getBoundingClientRect().top)).toBeLessThan(844);
     expect(await page.locator(".ranking-list table").evaluate(el => el.getBoundingClientRect().width)).toBeLessThanOrEqual(390);
   }
@@ -80,7 +84,7 @@ test("スマホ詳細から戻って一覧位置とfocusを復元しPCは左右�
     await expect.poll(() => errors).toEqual([]);
     await expect(page.getByRole("heading", { name: "BTC", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "一覧へ戻る", exact: true }).click();
-    await expect(page.getByRole("button", { name: /^BTC(?:\s|$)/ })).toBeFocused();
+    await expect(page.locator('[data-testid="ranking-row"][data-asset="BTC"] button.select-row')).toBeFocused();
   } else {
     await expect(page.locator(".ranking-list")).toBeVisible();
     await expect(page.getByTestId("ranking-chart")).toBeVisible();

@@ -41,6 +41,7 @@
   --focus-on: #090c0d;
   --up: #9beaa7;
   --down: #ff9a8d;
+  --activity: light-dark(#225ba3, #7cb9f2);
   --warning: #ffd191;
   --warning-border: #e7b94b;
   --quality-good: #74d680;

@@ -50,7 +50,7 @@ def test_original_absence_does_not_block_saved_map_or_prices(store: Store) -> No
 
 def test_duplicate_upsert_and_pruning_are_bounded(store: Store) -> None:
     bar = candle(reference(), CUTOFF)
-    store.put([bar, bar, candle(reference(), CUTOFF - 3000 * MINUTE)], CUTOFF)
+    store.put([bar, bar, candle(reference(), CUTOFF - 6000 * MINUTE)], CUTOFF)
     assert len(store.window(reference().key, 0, CUTOFF)) == 2
     store.prune(CUTOFF, {reference().key})
     assert len(store.window(reference().key, 0, CUTOFF)) == 1
