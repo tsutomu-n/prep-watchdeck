@@ -451,7 +451,7 @@
     return null;
   });
   const purposeDescription = $derived(activePurpose === "market"
-    ? "直近24時間の売買代金順で、市場全体を確認。"
+    ? `直近24時間の売買代金順で、${venue === "all" ? "市場全体" : `${venueLabel(venue)}取扱い銘柄`}を確認。`
     : activePurpose === "movement" ? "直近15分の上昇率順。15分・1時間・24時間の変化を並べて確認。"
     : activePurpose === "activity" ? "15分の売買代金の平常比順。過去24時間内の中央値と比較し、履歴不足は末尾に表示。順位は売買代金順です。"
     : activePurpose === "favorites" ? "お気に入りを直近24時間の売買代金順で確認。"
@@ -630,12 +630,20 @@
       <a class="reference-link" href="/settings">日次基準 · JST {reference}</a>
     </header>
 
+    <div class="venue-switcher" role="group" aria-label="ランキングの取引所モード">
+      <span>取扱い</span>
+      <button type="button" aria-pressed={venue === "all"} onclick={() => venue = "all"}>すべて</button>
+      <button type="button" aria-pressed={venue === "hyperliquid"} onclick={() => venue = "hyperliquid"}>Hyperliquid</button>
+    </div>
+
     <div class="purpose-switcher" role="group" aria-label="目的別の表示">
       {#each purposes as purpose}
         <button type="button" aria-pressed={activePurpose === purpose.id} onclick={() => applyPurpose(purpose.id)}>{purpose.label}</button>
       {/each}
     </div>
-    <p class="purpose-description">{purposeDescription}</p>
+    <p class="purpose-description">{purposeDescription}
+      {#if venue === "hyperliquid"}<span>価格・売買代金はBybit／Binanceの参照データです。</span>{/if}
+    </p>
 
     <section class="controls" aria-label="ランキングの表示">
       <label>比較期間<select aria-label="ランキングの比較期間" bind:value={period}>
@@ -891,9 +899,12 @@
 
 <style>
   .ranking-page { padding: var(--space-page); color: var(--text); max-width: 1900px; margin: 0 auto; }
+  .venue-switcher { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); padding-top: var(--space-sm); }
+  .venue-switcher > span { color: var(--muted); font-size: var(--type-label-caps-size); margin-right: var(--space-xs); }
+  .venue-switcher button { font-weight: 700; }
   .purpose-switcher { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-xs); padding-top: var(--space-md); }
   .purpose-switcher button { min-height: var(--control-height-touch); padding: var(--space-xs); font-weight: 700; }
-  .ranking-page .purpose-switcher button[aria-pressed="true"] { color: var(--focus-on); background: var(--focus); border-color: var(--focus); }
+  .ranking-page :is(.purpose-switcher, .venue-switcher) button[aria-pressed="true"] { color: var(--focus-on); background: var(--focus); border-color: var(--focus); }
   .purpose-description { margin: var(--space-xs) 0 var(--space-sm); color: var(--muted); font-size: var(--type-label-caps-size); line-height: 1.5; }
   .source-context { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: var(--space-md); padding: var(--space-md) 0; border-bottom: 1px solid var(--line); }
   .source-context > div { min-width: 0; }

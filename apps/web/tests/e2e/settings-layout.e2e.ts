@@ -21,6 +21,73 @@ async function prepare(page: Page) {
   return errors;
 }
 
+test("Hyperliquidモードは取扱い銘柄を絞り、比較条件と参照チャートを保持する", async ({ page }, testInfo) => {
+  const errors = await prepare(page);
+  await page.route("**/api/rankings?**", route => {
+    const data = rankingFixture(new URL(route.request().url()).searchParams);
+    for (const row of data.rows) {
+      const venue = row.asset === "BTC" || row.asset === "MISSING" ? "hyperliquid" : "bitget";
+      row.venues = [venue];
+      row.originals = [{ ...row.originals[0], venue,
+        instrumentId: `${venue}:${row.asset}`, symbol: row.asset }];
+    }
+    return route.fulfill({ json: data });
+  });
+  await page.goto("/?mode=reference&period=1h&order=turnover");
+  const modes = page.getByRole("group", { name: "ランキングの取引所モード" });
+  const all = modes.getByRole("button", { name: "すべて", exact: true });
+  const hyperliquid = modes.getByRole("button", { name: "Hyperliquid", exact: true });
+  const rows = page.getByTestId("ranking-row");
+  const btc = rows.filter({ has: page.locator("strong", { hasText: /^BTC$/ }) });
+  await expect(rows).toHaveCount(4);
+  const rank = await btc.locator(".rank").innerText();
+  const change = await btc.locator(".change").innerText();
+  const turnover = await btc.locator(".turnover").innerText();
+  await expect(all).toHaveAttribute("aria-pressed", "true");
+  await rows.filter({ hasText: "ETH" }).locator("button.select-row").click();
+  const chart = page.getByTestId("ranking-chart");
+  await page.getByLabel("ランキングチャートの時間足").selectOption("60");
+  await expect(chart).toHaveAttribute("data-symbol", "BYBIT:ETHUSDT.P");
+  const frame = await chart.locator("iframe").elementHandle();
+  if ((page.viewportSize()?.width ?? 1440) < 960) {
+    await page.getByRole("button", { name: "一覧へ戻る", exact: true }).click();
+  }
+  await expect(page.locator(".ranking-conditions")).not.toHaveAttribute("open");
+  await hyperliquid.focus();
+  await hyperliquid.press("Space");
+  await expect(hyperliquid).toHaveAttribute("aria-pressed", "true");
+  await expect(all).toHaveAttribute("aria-pressed", "false");
+  await expect(rows).toHaveCount(1);
+  await expect(btc).toBeVisible();
+  await expect(btc.locator(".rank")).toHaveText(rank, { useInnerText: true });
+  await expect(btc.locator(".change")).toHaveText(change, { useInnerText: true });
+  await expect(btc.locator(".turnover")).toHaveText(turnover, { useInnerText: true });
+  await expect(page.getByLabel("ランキングの比較期間")).toHaveValue("1h");
+  await expect(page.getByLabel("ランキングの並び順")).toHaveValue("turnover");
+  await expect(page.getByLabel("取扱い取引所")).toHaveValue("hyperliquid");
+  await expect(page.getByTestId("volume-spotlight").getByTestId("relative-volume-signal")).toHaveCount(1);
+  await expect(page.getByTestId("volume-spotlight")).toContainText("BTC");
+  await expect(page.getByText("価格・売買代金はBybit／Binanceの参照データです。", { exact: true })).toBeVisible();
+  await expect(chart).toHaveAttribute("data-symbol", "BYBIT:ETHUSDT.P");
+  await expect(page.getByLabel("ランキングチャートの時間足")).toHaveValue("60");
+  expect(await frame!.evaluate(node => node.isConnected)).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("hyperliquid-mode.png") });
+
+  await page.locator(".ranking-conditions > summary").click();
+  await page.getByLabel("取扱い取引所").selectOption("bitget");
+  await expect(hyperliquid).toHaveAttribute("aria-pressed", "false");
+  await expect(all).toHaveAttribute("aria-pressed", "false");
+  await expect(rows).toHaveCount(3);
+  await all.click();
+  await expect(all).toHaveAttribute("aria-pressed", "true");
+  await expect(rows).toHaveCount(4);
+  await page.goto("/rankings?venue=hyperliquid&period=1h&order=turnover");
+  await expect(hyperliquid).toHaveAttribute("aria-pressed", "true");
+  await expect(rows).toHaveCount(1);
+  expect(errors).toEqual([]);
+});
+
 test("設定を一か所で変更し市場へ反映、詳細条件を閉じたまま上位を読める", async ({ page }) => {
   const errors = await prepare(page);
   await page.goto("/");
