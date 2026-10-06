@@ -1829,10 +1829,10 @@ for (const releaseOrder of ["before", "after"] as const) {
       await settleChartPaint(page);
     };
     if (releaseOrder === "before") await releaseOld();
-    await expect(panel).toContainText("数量OI: 15m +1010.00%", { timeout: 7_000 });
+    await expect(panel).toContainText("数量OI: 15m +1,010.00%", { timeout: 7_000 });
     if (releaseOrder === "after") await releaseOld();
     await expect(chart).toHaveAccessibleDescription(/15m 90本/);
-    await expect(panel).toContainText("数量OI: 15m +1010.00%");
+    await expect(panel).toContainText("数量OI: 15m +1,010.00%");
   });
 }
 
