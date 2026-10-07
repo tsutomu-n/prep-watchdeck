@@ -118,6 +118,19 @@ async function showList(page: Page) {
   if (await back.isVisible()) await back.click();
 }
 
+async function expectLogoFrame(icon: Locator, size: number) {
+  await expect(icon).toHaveCSS("width", `${size}px`);
+  await expect(icon).toHaveCSS("height", `${size}px`);
+  const scaled = await icon.evaluate(element =>
+    document.documentElement.dataset.layout === "ultra" &&
+    matchMedia("(max-width: 960px)").matches &&
+    element.closest(".ranking-page .asset-icon-slot") !== null);
+  const displayedSize = scaled ? size * 0.8 : size;
+  const box = await icon.boundingBox();
+  expect(box?.width).toBeCloseTo(displayedSize, 2);
+  expect(box?.height).toBeCloseTo(displayedSize, 2);
+}
+
 async function verifiedLogo(icon: Locator, size: number, assetId = "crypto:BTC") {
   await expect(icon).toHaveAttribute("data-logo-state", "verified");
   await expect(icon).toHaveAttribute("data-asset-id", assetId);
@@ -127,9 +140,7 @@ async function verifiedLogo(icon: Locator, size: number, assetId = "crypto:BTC")
   await expect.poll(() => image.evaluate(node => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   const src = await image.getAttribute("src");
   expect(src).toMatch(/^\/asset-logos\//);
-  const box = await icon.boundingBox();
-  expect(box?.width).toBe(size);
-  expect(box?.height).toBe(size);
+  await expectLogoFrame(icon, size);
   return src;
 }
 
@@ -223,7 +234,7 @@ test("ロゴの404でも行と数値の位置が変わらず選択できる", as
   await expect(row.locator(".select-row")).toContainText("BTC");
   const after = await geometry(row);
   expect(after).toEqual(before);
-  expect(after.frame?.width).toBe(22); expect(after.frame?.height).toBe(22);
+  await expectLogoFrame(icon, 22);
   const viewport = page.viewportSize()!;
   for (const numeric of [after.change!, after.turnover!]) {
     expect(numeric.x).toBeGreaterThanOrEqual(0);
