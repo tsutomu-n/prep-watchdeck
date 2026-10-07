@@ -1,10 +1,10 @@
 # prep-watchdeck ユーザーマニュアル
 
-timestamp="2026-10-06(火)_17:30 JST"
+timestamp="2026-10-07(水)_17:38 JST"
 
 - 作成: `2026-08-15T11:04:37+09:00`
-- 更新: `2026-10-06T17:30:22+09:00`
-- 検証: `2026-10-06T17:30:22+09:00`
+- 更新: `2026-10-07T17:38:27+09:00`
+- 検証: `2026-10-07T17:38:27+09:00`
 - 状態: `現行`
 
 ---
@@ -163,7 +163,7 @@ WebはPostgresへ直接接続しません。次の4 artifactを必須のまと�
 | --- | --- |
 | `universe-snapshot.json` | Instrument一覧、Venue別の値、Group、Quality |
 | `market-chart.json` | Collectorが保存した1分足の集約Chart |
-| `selected-market.json` | 選択Groupの板、約定、板上概算 |
+| `selected-market.json` | 選択Groupまたは単独契約の板、約定、板上概算 |
 | `service-state.json` | Catalog、L1、artifact発行の状態 |
 
 画面のChart履歴は、検証済みUniverseから銘柄を確認したうえでWeb serverが各取引所の公開APIから
@@ -194,8 +194,11 @@ WebはPostgresへ直接接続しません。次の4 artifactを必須のまと�
 | Past Noteを保存する | 選択中の`venueInstrumentId`単位でローカルfileへ保存する | そのInstrumentのメモ一覧に表示される |
 | `bash scripts/update-live.sh`を実行する | 現在の4 artifactを読み取る。新しい収集は行わない | artifactごとのstatusと`generatedAt`がterminalへ出る |
 
-単独または未GroupのInstrumentを選んでも、安全なGroupを前提とするChart、板、約定の購読は
-開始しません。似た名前の銘柄を推測で同一視しないためです。
+未Groupのactive契約でも単体Chartを表示できます。明示選択した契約がCLOBのlinear perpetualで、
+価格表示・決済・担保通貨、Base数量・倍率1を確認できれば、その取引所の契約1件だけの板・約定を購読します。
+他取引所との横断比較は行いません。「選択市場の板・約定」で対象契約と数量単位を確認できます。
+数量単位や倍率が未確認の場合は「購読対象外」と理由を表示し、数量換算や板上概算を推測で出しません。
+初期表示とURL復元は購読を開始せず、一覧の銘柄を明示選択した場合だけ要求します。
 
 ### 3.3 更新周期とQuality
 

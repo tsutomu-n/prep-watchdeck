@@ -286,9 +286,45 @@ test("groupのないactive契約も単体チャートとJST変化を表示する
   await page.goto(`/?mode=native&instrument=${encodeURIComponent(item.venueInstrumentId)}&version=${item.venueInstrumentVersionId}`);
   await expect(page.getByRole("region", { name: "価格・出来高" })).toBeVisible();
   await openSection(page, "選択データの監視状態");
-  await expect(page.getByText("板・約定購読は行いません。")).toBeVisible();
+  await expect(page.getByText("Base数量・契約倍率を確認できないため板・約定は購読しません").first()).toBeVisible();
+  await expect(page.getByRole("region", { name: "選択市場の板・約定" })).toContainText("購読対象外");
+  await expect(page.getByText("数量はBTC単位", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("この取引所の契約だけを監視します。横断比較は行いません。")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "約定価格の騰落率" })).toBeVisible();
   await expect(page.locator(".daily-change-block")).not.toContainText("group未確定");
+});
+
+test("未group契約の明示選択は単独板と約定を要求し他Venueを表示しない", async ({ page }) => {
+  const universePath = resolve(artifactRoot, "universe-snapshot.json");
+  const universe = JSON.parse(await readFile(universePath, "utf-8")) as UniverseSnapshotArtifact;
+  const item = universe.items.find(entry => entry.venueInstrumentId === "bitget:BTCUSDT")!;
+  item.groupId = null;
+  item.mappingMethod = null;
+  item.quantityUnit = "base";
+  item.contractMultiplier = 1;
+  await writeFile(universePath, JSON.stringify(universe));
+  await page.goto("/?mode=native");
+  await clickNativeListButton(page, "BTC bitgetを詳細表示");
+  await expect.poll(async () => {
+    try { return JSON.parse(await readFile(selectionPath, "utf-8")); }
+    catch { return null; }
+  }).toMatchObject({ groupId: null, venueInstrumentId: "bitget:BTCUSDT", venueInstrumentVersionId: 1 });
+  const selectedPath = resolve(artifactRoot, "selected-market.json");
+  const selected = JSON.parse(await readFile(selectedPath, "utf-8"));
+  selected.selection.groupId = null;
+  selected.selection.instruments = selected.selection.instruments.filter(
+    (instrument: { venueInstrumentId: string }) => instrument.venueInstrumentId === item.venueInstrumentId
+  );
+  selected.selection.trades = selected.selection.trades.filter(
+    (trade: { venueInstrumentId: string }) => trade.venueInstrumentId === item.venueInstrumentId
+  );
+  await writeFile(selectedPath, JSON.stringify(selected));
+  const detail = page.getByRole("region", { name: "選択市場の板・約定" });
+  await expect(detail.getByRole("heading", { name: "bitget · BTCUSDT" })).toBeVisible({ timeout: 10_000 });
+  await expect(detail).toContainText("数量はBTC単位");
+  await expect(detail.getByRole("heading", { name: /hyperliquid|aster/ })).toHaveCount(0);
+  await openSection(page, "選択データの監視状態");
+  await expect(page.getByText("この取引所の契約だけを監視します。横断比較は行いません。")).toBeVisible();
 });
 
 const runtimeRoot = resolve(process.cwd(), "../../var/tmp/e2e/runtime");
@@ -398,7 +434,7 @@ test("Universe Explorerの主要flowを操作できる", async ({ page }, testIn
     venueInstrumentId: "hyperliquid:BTC"
   });
   await expect(
-    page.getByRole("region", { name: "選択groupの板・約定" }).getByText(/artifactを待っています/)
+    page.getByRole("region", { name: "選択groupの板・約定" }).getByText("選択した市場の板・約定データを待っています")
   ).toBeVisible();
 
   await rm(resolve(artifactRoot, "service-state.json"), { force: true });

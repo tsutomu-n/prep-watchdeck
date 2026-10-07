@@ -153,6 +153,61 @@ describe("market artifact and local selection repositories", () => {
     } finally { await rm(root, { recursive: true, force: true }); }
   });
 
+  test("ungrouped selection keeps its version and cannot heartbeat a replacement contract", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-native-selection-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    const instrument = bundle.universe.items[0];
+    instrument.groupId = null;
+    instrument.quantityUnit = "base";
+    instrument.contractMultiplier = 1;
+    let now = new Date("2026-08-14T12:00:00.000Z");
+    const repository = new LocalFileSelectionCommandRepository(
+      paths.selectionCommandPath, { latest: async () => bundle }, () => now
+    );
+    const target = { groupId: null, venueInstrumentId: instrument.venueInstrumentId,
+      venueInstrumentVersionId: instrument.venueInstrumentVersionId };
+    try {
+      const first = await repository.execute({ action: "select", ...target });
+      expect(first).toMatchObject({ groupId: null, venueInstrumentVersionId: 1 });
+      now = new Date(+now + 300_000);
+      const heartbeat = await repository.execute({ action: "heartbeat", ...target,
+        expectedRequestedAt: first.requestedAt });
+      expect(heartbeat.requestedAt).toBe(first.requestedAt);
+      instrument.venueInstrumentVersionId = 2;
+      await expect(repository.execute({ action: "heartbeat", ...target,
+        venueInstrumentVersionId: 2, expectedRequestedAt: first.requestedAt
+      })).rejects.toMatchObject({ status: 409 });
+      const replacement = await repository.execute({ action: "select", ...target,
+        venueInstrumentVersionId: 2 });
+      expect(replacement.requestedAt).not.toBe(first.requestedAt);
+      expect(replacement).toMatchObject({ groupId: null, venueInstrumentVersionId: 2 });
+      expect(JSON.parse(await readFile(paths.selectionCommandPath, "utf-8"))).toEqual(replacement);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
+  test("ungrouped selection refuses unknown quantity without replacing the current command", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-native-unverified-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    const repository = new LocalFileSelectionCommandRepository(
+      paths.selectionCommandPath, { latest: async () => bundle },
+      () => new Date("2026-08-14T12:00:00.000Z")
+    );
+    const instrument = bundle.universe.items[0];
+    const target = { venueInstrumentId: instrument.venueInstrumentId,
+      venueInstrumentVersionId: instrument.venueInstrumentVersionId };
+    try {
+      const previous = await repository.execute({ action: "select", groupId: instrument.groupId!, ...target });
+      instrument.groupId = null;
+      instrument.quantityUnit = "unknown";
+      instrument.contractMultiplier = null;
+      await expect(repository.execute({ action: "select", groupId: null, ...target }))
+        .rejects.toMatchObject({ status: 409, code: "selection_instrument_ineligible" });
+      expect(JSON.parse(await readFile(paths.selectionCommandPath, "utf-8"))).toEqual(previous);
+    } finally { await rm(root, { recursive: true, force: true }); }
+  });
+
   test("requires both a localhost Host and a loopback client address", async () => {
     expect(await localRequest("http://localhost/api/selection", "127.0.0.1")).toBe(true);
     expect(await localRequest("http://[::1]/api/selection", "::ffff:127.0.0.1")).toBe(true);

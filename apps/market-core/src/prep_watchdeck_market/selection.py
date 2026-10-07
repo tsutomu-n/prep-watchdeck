@@ -28,24 +28,26 @@ class SelectionCleanupError(SelectionError):
 @dataclass(frozen=True, slots=True)
 class ActiveSelection:
     selection_id: UUID
-    group_id: str
+    group_id: str | None
     primary_venue_instrument_id: str
     subscription: object
     activated_at: datetime
     heartbeat_at: datetime
     expires_at: datetime
+    primary_venue_instrument_version_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class _PendingSelection:
     revision: int
-    group_id: str
+    group_id: str | None
     primary_venue_instrument_id: str
     requested_at: datetime
     activate_at: datetime
+    primary_venue_instrument_version_id: int | None
 
 
-Subscribe = Callable[[UUID, str, str], Awaitable[object]]
+Subscribe = Callable[[UUID, str | None, str, int | None], Awaitable[object]]
 Unsubscribe = Callable[[ActiveSelection], Awaitable[None]]
 
 
@@ -87,7 +89,11 @@ class SelectionController:
 
     @property
     def active_groups(self) -> tuple[str, ...]:
-        return () if self._active is None else (self._active.group_id,)
+        return (
+            ()
+            if self._active is None or self._active.group_id is None
+            else (self._active.group_id,)
+        )
 
     @property
     def heartbeat_due_at(self) -> datetime | None:
@@ -97,13 +103,20 @@ class SelectionController:
 
     def request(
         self,
-        group_id: str,
+        group_id: str | None,
         primary_venue_instrument_id: str,
         requested_at: datetime,
+        *,
+        primary_venue_instrument_version_id: int | None = None,
     ) -> int:
         _require_utc(requested_at, "requested_at")
-        if not group_id.strip():
+        if group_id is not None and not group_id.strip():
             raise ValueError("selected group_id must not be empty")
+        if group_id is None and (
+            type(primary_venue_instrument_version_id) is not int
+            or primary_venue_instrument_version_id <= 0
+        ):
+            raise ValueError("native selection requires an explicit primary version")
         if not primary_venue_instrument_id.strip():
             raise ValueError("primary venue_instrument_id must not be empty")
         self._revision += 1
@@ -113,6 +126,7 @@ class SelectionController:
             primary_venue_instrument_id=primary_venue_instrument_id,
             requested_at=requested_at,
             activate_at=requested_at + self._debounce,
+            primary_venue_instrument_version_id=primary_venue_instrument_version_id,
         )
         return self._revision
 
@@ -143,6 +157,8 @@ class SelectionController:
                 self._active is not None
                 and self._active.group_id == pending.group_id
                 and self._active.primary_venue_instrument_id == pending.primary_venue_instrument_id
+                and self._active.primary_venue_instrument_version_id
+                == pending.primary_venue_instrument_version_id
             ):
                 self._active = replace(
                     self._active,
@@ -163,6 +179,7 @@ class SelectionController:
                 selection_id,
                 pending.group_id,
                 pending.primary_venue_instrument_id,
+                pending.primary_venue_instrument_version_id,
             )
             if self._pending is None or self._pending.revision != pending.revision:
                 stale = ActiveSelection(
@@ -173,6 +190,7 @@ class SelectionController:
                     activated_at=now,
                     heartbeat_at=now,
                     expires_at=now + self._ttl,
+                    primary_venue_instrument_version_id=pending.primary_venue_instrument_version_id,
                 )
                 await self._cleanup(stale)
                 return self._active
@@ -184,6 +202,7 @@ class SelectionController:
                 activated_at=now,
                 heartbeat_at=now,
                 expires_at=now + self._ttl,
+                primary_venue_instrument_version_id=pending.primary_venue_instrument_version_id,
             )
             self._pending = None
             return self._active

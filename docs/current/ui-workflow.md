@@ -1,10 +1,10 @@
 # prep-watchdeck 現行UIワークフロー
 
-timestamp="2026-10-06(火)_17:30 JST"
+timestamp="2026-10-07(水)_17:38 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-06T17:30:22+09:00`
-- 検証: `2026-10-06T17:30:22+09:00`
+- 更新: `2026-10-07T17:38:27+09:00`
+- 検証: `2026-10-07T17:38:27+09:00`
 - 状態: `現行`
 
 ---
@@ -21,7 +21,7 @@ timestamp="2026-10-06(火)_17:30 JST"
 2. 検索、Venue、coverage、quality filterで対象を絞る。
 3. mark、JST基準の約定騰落率、reference種別、funding、OI、24時間出来高、freshness、provenanceをVenue別に確認する。
 4. group化済みinstrumentでは、条件を満たす時だけ参考mark中央値を確認する。
-5. 行を選び、primary Venue、Chart、groupの板・約定・book walkを確認する。
+5. 行を選び、primary Venue、Chart、groupまたは単独契約の板・約定・book walkを確認する。
 6. 後で再確認する文脈をPast Noteへ保存できる。
 
 `/`は参照市場の24時間・売買代金順を既定とする共通Markets workspace。`/rankings`は従来の15分・上昇率順を入口として維持する。取引所別Universeは`/?mode=native`で開き、参照行の確認済みoriginalのID/versionが現行Universeに一致するときだけnative詳細へ進める。戻るリンクは比較期間、並び順、指定JST時刻、検索・sort、平常比期間/下限・当日位置上下限・表示列を復元する。再取得後に選択行のfocusと表内scrollを復元する。
@@ -100,6 +100,12 @@ Chart時間足や日足の区切り、Universeの並び順を変えない。
 ## 選択
 
 現行実装では1 instrument/groupを選択し、500ms debounce後にselection commandを送り、5分ごとにheartbeatする。
+
+未groupでもactive linear CLOB、USD-like通貨、Base数量・倍率1を確認できる契約は、明示選択でその1契約だけを
+購読する。「選択市場の板・約定」と数量の単位を示し、横断比較は行わない。数量・倍率の確認ができない場合は
+理由と「購読対象外」を表示し、APIもcommandの書換えを拒否する。Chartの単体表示は継続する。
+単独heartbeatもhidden中は停止し、version違いのtokenでleaseを延長しない。
+未選択・不適格・version違いでは別の選択の板や品質理由を流用しない。
 
 この`1 selection`、debounce、TTL、heartbeatは現在のruntime値であり永久制約ではない。
 将来は複数selection、pinned symbol、ranking shortlist等へ拡張できる。

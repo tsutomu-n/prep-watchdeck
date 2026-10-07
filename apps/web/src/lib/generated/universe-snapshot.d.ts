@@ -64,6 +64,8 @@ export type Maxageseconds = number | null;
 export type Skewseconds = number | null;
 export type Unavailablereason = string | null;
 export type Parityassumptioncode = "usd_usdc_usdt_reference_only";
+export type Quantityunit = ("base" | "contracts" | "unknown") | null;
+export type Contractmultiplier = number | null;
 export type Items = UniverseInstrumentArtifact[];
 
 export interface UniverseSnapshotArtifact {
@@ -119,6 +121,8 @@ export interface UniverseInstrumentArtifact {
   volume24hRaw: Volume24Hraw;
   volume24hUnit: Volume24Hunit;
   referenceMarkMedian: ReferenceMarkMedianArtifact;
+  quantityUnit?: Quantityunit;
+  contractMultiplier?: Contractmultiplier;
 }
 export interface CatalogProvenanceArtifact {
   sourceKind: Sourcekind;

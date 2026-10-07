@@ -273,8 +273,15 @@
           "type": "string"
         },
         "groupId": {
-          "title": "Groupid",
-          "type": "string"
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Groupid"
         },
         "primaryVenueInstrumentId": {
           "title": "Primaryvenueinstrumentid",

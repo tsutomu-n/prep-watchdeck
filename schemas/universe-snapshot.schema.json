@@ -539,6 +539,35 @@
         },
         "referenceMarkMedian": {
           "$ref": "#/$defs/ReferenceMarkMedianArtifact"
+        },
+        "quantityUnit": {
+          "anyOf": [
+            {
+              "enum": [
+                "base",
+                "contracts",
+                "unknown"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quantityunit"
+        },
+        "contractMultiplier": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Contractmultiplier"
         }
       },
       "required": [

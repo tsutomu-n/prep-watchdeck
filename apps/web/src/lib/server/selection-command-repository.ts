@@ -4,12 +4,14 @@ import { writeJsonFileAtomic } from "./atomic-json-store";
 import { withLockFile } from "./lock-file-guard";
 import { createMarketArtifactRepository, type MarketArtifactRepository } from "./market-artifact-repository";
 import { resolveMarketStatePaths } from "./market-state-paths";
+import { selectionUnavailableReason } from "$lib/market/selection-eligibility";
 
 const TTL_MS = 15 * 60_000;
 
 export type SelectionCommand = {
   schemaVersion: 1;
-  groupId: string;
+  groupId: string | null;
+  venueInstrumentVersionId?: number;
   venueInstrumentId: string;
   requestedAt: string;
   heartbeatAt: string;
@@ -30,7 +32,7 @@ export class LocalFileSelectionCommandRepository {
 
   async execute(command: {
     action: "select" | "heartbeat";
-    groupId: string;
+    groupId: string | null;
     venueInstrumentId: string;
     venueInstrumentVersionId: number;
     expectedRequestedAt?: string;
@@ -50,6 +52,7 @@ export class LocalFileSelectionCommandRepository {
       if (command.action === "heartbeat") {
         if (!previous || previous.groupId !== command.groupId ||
             previous.venueInstrumentId !== command.venueInstrumentId ||
+            (command.groupId === null && previous.venueInstrumentVersionId !== command.venueInstrumentVersionId) ||
             previous.requestedAt !== command.expectedRequestedAt ||
             !validTime(previous.heartbeatAt, nowMs) ||
             nowMs - Date.parse(previous.heartbeatAt) >= TTL_MS) {
@@ -61,6 +64,7 @@ export class LocalFileSelectionCommandRepository {
       }
       const same = previous?.groupId === command.groupId &&
         previous.venueInstrumentId === command.venueInstrumentId &&
+        (command.groupId !== null || previous.venueInstrumentVersionId === command.venueInstrumentVersionId) &&
         validTime(previous.heartbeatAt, nowMs) &&
         nowMs - Date.parse(previous.heartbeatAt) < TTL_MS;
       if (same && previous) {
@@ -76,6 +80,7 @@ export class LocalFileSelectionCommandRepository {
         schemaVersion: 1,
         groupId: command.groupId,
         venueInstrumentId: command.venueInstrumentId,
+        ...(command.groupId === null ? { venueInstrumentVersionId: command.venueInstrumentVersionId } : {}),
         requestedAt: now,
         heartbeatAt: now
       };
@@ -109,12 +114,15 @@ export function createSelectionCommandRepository() {
 
 function assertEligibleSelection(
   universe: UniverseSnapshotArtifact,
-  command: { groupId: string; venueInstrumentId: string; venueInstrumentVersionId: number }
+  command: { groupId: string | null; venueInstrumentId: string; venueInstrumentVersionId: number }
 ) {
   const instrument = universe.items.find((item) => item.venueInstrumentId === command.venueInstrumentId);
   if (!instrument?.active || instrument.groupId !== command.groupId ||
       instrument.venueInstrumentVersionId !== command.venueInstrumentVersionId) {
     throw new SelectionError(409, "selection_instrument_changed");
+  }
+  if (selectionUnavailableReason(instrument)) {
+    throw new SelectionError(409, "selection_instrument_ineligible");
   }
 }
 
@@ -126,7 +134,10 @@ function validTime(value: string, nowMs: number) {
 function isSelectionCommand(payload: unknown): payload is SelectionCommand {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
   const value = payload as Partial<SelectionCommand>;
-  return value.schemaVersion === 1 && typeof value.groupId === "string" &&
+  return value.schemaVersion === 1 &&
+    (typeof value.groupId === "string" || value.groupId === null) &&
+    (value.groupId !== null || (Number.isSafeInteger(value.venueInstrumentVersionId) &&
+      Number(value.venueInstrumentVersionId) > 0)) &&
     typeof value.venueInstrumentId === "string" &&
     typeof value.requestedAt === "string" && typeof value.heartbeatAt === "string" &&
     Number.isFinite(Date.parse(value.requestedAt)) &&

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-07(水)_17:22 JST"
+timestamp="2026-10-07(水)_17:38 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-07T17:22:00+09:00`
-- 検証: `2026-10-07T17:22:00+09:00`
+- 更新: `2026-10-07T17:38:27+09:00`
+- 検証: `2026-10-07T17:38:27+09:00`
 - 状態: `現行`
 
 ---
@@ -43,13 +43,12 @@ localhost配置等は現在実装を説明する。`product-boundary.md`に反�
 - [0012 製品境界を拡張可能な裁量支援へ更新](decisions/0012-product-evolution-boundary.md): **将来の製品境界**
 - [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/decisions/0013-independent-ranking.md](decisions/0013-independent-ranking.md): 固定参照ランキングと資格判定の分離。
 - [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/decisions/0014-native-chart-history.md](decisions/0014-native-chart-history.md): native履歴・時間足とJST基準騰落率。
+- [0015 単独契約の板・約定観測](decisions/0015-native-selected-market.md): group比較の資格と単独契約観測の資格を分離する。
 
 Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴として参照できるが、Decision 0012と
 現行product boundaryに反する部分を将来機能の禁止根拠にしない。
 
 ## 実装計画
-
-- [未group契約の単独板・約定購読](plans/active/native-selected-market/GOAL.md): 安全な単独契約の限定購読とversion境界。
 
 ランキング・チャート統合とD05稼働受入は完了した。現行の運用・検証正本へ結果を反映し、
 完了planは削除した。過去の要求・試行・証拠台帳はPR #15のGit履歴で参照する。

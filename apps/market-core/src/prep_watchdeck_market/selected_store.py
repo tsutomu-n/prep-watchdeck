@@ -36,13 +36,13 @@ class SelectedStoreError(RuntimeError):
 
 
 class InvalidSelectionError(SelectedStoreError):
-    """The selection is inactive, expired, or not backed by an eligible current group."""
+    """The selection is inactive, expired, or not backed by eligible current contracts."""
 
 
 @dataclass(frozen=True, slots=True)
 class SelectionLease:
     selection_id: UUID
-    group_id: str
+    group_id: str | None
     primary_venue_instrument_version_id: int
     activated_at: datetime
     heartbeat_at: datetime
@@ -95,7 +95,7 @@ class SelectedInstrumentView:
 @dataclass(frozen=True, slots=True)
 class SelectedMarketView:
     selection_id: UUID
-    group_id: str
+    group_id: str | None
     primary_venue_instrument_id: str
     expires_at: datetime
     instruments: tuple[SelectedInstrumentView, ...]
@@ -106,13 +106,19 @@ def activate_selection(
     connection: Connection[Any],
     *,
     selection_id: UUID,
-    group_id: str,
+    group_id: str | None,
     primary_venue_instrument_id: str,
     activated_at: datetime,
+    primary_venue_instrument_version_id: int | None = None,
 ) -> SelectionTransition:
     _require_utc(activated_at, "activated_at")
-    if not group_id.strip():
+    if group_id is not None and not group_id.strip():
         raise ValueError("selected group_id must not be empty")
+    if group_id is None and (
+        type(primary_venue_instrument_version_id) is not int
+        or primary_venue_instrument_version_id <= 0
+    ):
+        raise InvalidSelectionError("native selection requires an explicit primary version")
     try:
         with connection.transaction(), connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_xact_lock(%s)", (_SELECTION_LOCK_ID,))
@@ -120,6 +126,7 @@ def activate_selection(
                 cursor,
                 group_id,
                 primary_venue_instrument_id,
+                primary_venue_instrument_version_id,
             )
             active_row = cursor.execute(
                 """
@@ -296,7 +303,7 @@ def store_selected_events(
     try:
         with connection.transaction(), connection.cursor() as cursor:
             lease = _active_selection(cursor, selection_id)
-            versions = _selected_versions(cursor, lease.group_id, events)
+            versions = _selected_versions(cursor, lease, events)
             depth_snapshots = 0
             trades_received = 0
             trades_stored = 0
@@ -307,7 +314,7 @@ def store_selected_events(
                 version_id = versions.get((event.venue, event.source_symbol))
                 if version_id is None:
                     raise InvalidSelectionError(
-                        "selected event does not belong to an eligible current group member"
+                        "selected event does not belong to an eligible current selected contract"
                     )
                 _insert_raw_event(cursor, selection_id, lease.group_id, version_id, event)
                 raw_stored += 1
@@ -348,23 +355,44 @@ def read_selected_market(
             row = cursor.execute(
                 """
                     SELECT lease.selection_id, lease.group_id, lease.expires_at,
-                           instrument.venue, instrument.source_symbol
+                           instrument.venue, instrument.source_symbol,
+                           instrument.venue_instrument_version_id
                     FROM selected_group_leases AS lease
                     JOIN venue_instrument_versions AS instrument
                       ON instrument.venue_instrument_version_id =
                          lease.primary_venue_instrument_version_id
                     WHERE lease.superseded_at IS NULL AND lease.expires_at > %s
+                      AND (lease.group_id IS NOT NULL OR (
+                        instrument.valid_to IS NULL AND instrument.active = true
+                        AND instrument.execution_model = 'clob'
+                        AND instrument.market_type = 'linear_perpetual'
+                        AND upper(instrument.quote_asset) IN ('USD', 'USDC', 'USDT')
+                        AND upper(instrument.settle_asset) IN ('USD', 'USDC', 'USDT')
+                        AND upper(instrument.collateral_asset) IN ('USD', 'USDC', 'USDT')
+                        AND instrument.quantity_unit = 'base'
+                        AND instrument.contract_multiplier = 1
+                      ))
                 """,
                 (now,),
             ).fetchone()
             if row is None:
                 return None
             selection_id = UUID(str(row[0]))
-            group_id = str(row[1])
+            group_id = None if row[1] is None else str(row[1])
             expires_at = _datetime(row[2])
             primary_venue_instrument_id = f"{row[3]}:{row[4]}"
-            instrument_rows = cursor.execute(
-                """
+            if group_id is None:
+                instrument_rows = cursor.execute(
+                    """
+                        SELECT venue_instrument_version_id, venue, source_symbol, quote_asset
+                        FROM venue_instrument_versions
+                        WHERE venue_instrument_version_id = %s
+                    """,
+                    (int(row[5]),),
+                ).fetchall()
+            else:
+                instrument_rows = cursor.execute(
+                    """
                     SELECT instrument.venue_instrument_version_id, instrument.venue,
                            instrument.source_symbol, instrument.quote_asset
                     FROM group_memberships AS membership
@@ -374,8 +402,8 @@ def read_selected_market(
                       AND instrument.valid_to IS NULL AND instrument.active = true
                     ORDER BY instrument.venue, instrument.source_symbol
                 """,
-                (group_id,),
-            ).fetchall()
+                    (group_id,),
+                ).fetchall()
             depth_rows = cursor.execute(
                 """
                     SELECT venue_instrument_version_id, side, level_index, price,
@@ -495,12 +523,34 @@ def _active_selection(cursor: Any, selection_id: UUID) -> SelectionLease:
 
 def _selected_versions(
     cursor: Any,
-    group_id: str,
+    lease: SelectionLease,
     events: Sequence[SelectedEvent],
 ) -> dict[tuple[Venue, str], int]:
     requested = sorted({(event.venue, event.source_symbol) for event in events})
     venues = [venue for venue, _ in requested]
     symbols = [symbol for _, symbol in requested]
+    if lease.group_id is None:
+        rows = cursor.execute(
+            """
+                SELECT venue, source_symbol, venue_instrument_version_id
+                FROM venue_instrument_versions
+                WHERE venue_instrument_version_id = %s
+                  AND valid_to IS NULL AND active = true
+                  AND execution_model = 'clob' AND market_type = 'linear_perpetual'
+                  AND upper(quote_asset) = ANY(%s)
+                  AND upper(settle_asset) = ANY(%s)
+                  AND upper(collateral_asset) = ANY(%s)
+                  AND quantity_unit = 'base' AND contract_multiplier = 1
+                FOR SHARE
+            """,
+            (
+                lease.primary_venue_instrument_version_id,
+                ["USD", "USDC", "USDT"],
+                ["USD", "USDC", "USDT"],
+                ["USD", "USDC", "USDT"],
+            ),
+        ).fetchall()
+        return {(_venue(row[0]), str(row[1])): int(row[2]) for row in rows}
     rows = cursor.execute(
         """
             WITH requested (venue, source_symbol) AS (
@@ -527,7 +577,7 @@ def _selected_versions(
         (
             venues,
             symbols,
-            group_id,
+            lease.group_id,
             ["USD", "USDC", "USDT"],
             ["USD", "USDC", "USDT"],
             ["USD", "USDC", "USDT"],
@@ -538,8 +588,9 @@ def _selected_versions(
 
 def _selected_primary_version(
     cursor: Any,
-    group_id: str,
+    group_id: str | None,
     venue_instrument_id: str,
+    expected_version_id: int | None = None,
 ) -> int:
     venue_text, separator, source_symbol = venue_instrument_id.partition(":")
     if (
@@ -553,6 +604,35 @@ def _selected_primary_version(
         }
     ):
         raise InvalidSelectionError("primary venue_instrument_id is invalid")
+    if group_id is None:
+        row = cursor.execute(
+            """
+                SELECT venue_instrument_version_id
+                FROM venue_instrument_versions
+                WHERE venue = %s AND source_symbol = %s
+                  AND venue_instrument_version_id = %s
+                  AND valid_to IS NULL AND active = true
+                  AND execution_model = 'clob' AND market_type = 'linear_perpetual'
+                  AND upper(quote_asset) = ANY(%s)
+                  AND upper(settle_asset) = ANY(%s)
+                  AND upper(collateral_asset) = ANY(%s)
+                  AND quantity_unit = 'base' AND contract_multiplier = 1
+                FOR SHARE
+            """,
+            (
+                venue_text,
+                source_symbol,
+                expected_version_id,
+                ["USD", "USDC", "USDT"],
+                ["USD", "USDC", "USDT"],
+                ["USD", "USDC", "USDT"],
+            ),
+        ).fetchone()
+        if row is None:
+            raise InvalidSelectionError(
+                "primary native contract is not eligible at the requested version"
+            )
+        return int(row[0])
     row = cursor.execute(
         """
             SELECT instrument.venue_instrument_version_id
@@ -584,13 +664,15 @@ def _selected_primary_version(
         raise InvalidSelectionError(
             "primary instrument is not an eligible current member of the selected group"
         )
+    if expected_version_id is not None and int(row[0]) != expected_version_id:
+        raise InvalidSelectionError("primary instrument version changed")
     return int(row[0])
 
 
 def _insert_raw_event(
     cursor: Any,
     selection_id: UUID,
-    group_id: str,
+    group_id: str | None,
     version_id: int,
     event: SelectedEvent,
 ) -> None:
@@ -707,7 +789,7 @@ def _prune_trades(cursor: Any, selection_id: UUID) -> None:
 
 def _active_lease(
     selection_id: UUID,
-    group_id: str,
+    group_id: str | None,
     primary_version_id: int,
     activated_at: datetime,
 ) -> SelectionLease:
@@ -727,7 +809,7 @@ def _active_lease(
 def _lease_from_row(row: Sequence[Any]) -> SelectionLease:
     return SelectionLease(
         selection_id=UUID(str(row[0])),
-        group_id=str(row[1]),
+        group_id=None if row[1] is None else str(row[1]),
         primary_venue_instrument_version_id=int(row[2]),
         activated_at=_datetime(row[3]),
         heartbeat_at=_datetime(row[4]),

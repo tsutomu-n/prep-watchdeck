@@ -30,11 +30,11 @@ function parseSelectionPayload(payload: unknown) {
     : ["action", "groupId", "venueInstrumentId", "venueInstrumentVersionId"];
   if ((action !== "select" && action !== "heartbeat") ||
       Object.keys(value).some((key) => !allowed.includes(key)) ||
-      typeof value.groupId !== "string" || !value.groupId.trim() ||
+      (value.groupId !== null && (typeof value.groupId !== "string" || !value.groupId.trim())) ||
       typeof value.venueInstrumentId !== "string" || !value.venueInstrumentId.trim() ||
       !Number.isSafeInteger(value.venueInstrumentVersionId) ||
       Number(value.venueInstrumentVersionId) < 1 ||
-      value.groupId.length > 160 || value.venueInstrumentId.length > 160 ||
+      (typeof value.groupId === "string" && value.groupId.length > 160) || value.venueInstrumentId.length > 160 ||
       (action === "heartbeat" &&
         (typeof value.expectedRequestedAt !== "string" ||
           !Number.isFinite(Date.parse(value.expectedRequestedAt))))) {
@@ -42,7 +42,7 @@ function parseSelectionPayload(payload: unknown) {
   }
   return {
     action: action as "select" | "heartbeat",
-    groupId: value.groupId,
+    groupId: value.groupId as string | null,
     venueInstrumentId: value.venueInstrumentId,
     venueInstrumentVersionId: value.venueInstrumentVersionId as number,
     expectedRequestedAt: action === "heartbeat" ? value.expectedRequestedAt as string : undefined

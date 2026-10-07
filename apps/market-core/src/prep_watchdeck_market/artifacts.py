@@ -127,6 +127,8 @@ class UniverseInstrumentArtifact(ArtifactModel):
     volume_24h_raw: float | None
     volume_24h_unit: str | None
     reference_mark_median: ReferenceMarkMedianArtifact
+    quantity_unit: Literal["base", "contracts", "unknown"] | None = None
+    contract_multiplier: float | None = None
 
 
 class UniverseSnapshotArtifact(ArtifactModel):
@@ -230,7 +232,7 @@ class BookWalkDisclaimersArtifact(ArtifactModel):
 
 class SelectedPayloadArtifact(ArtifactModel):
     selection_id: str
-    group_id: str
+    group_id: str | None
     primary_venue_instrument_id: str
     expires_at: datetime
     instruments: tuple[SelectedInstrumentArtifact, ...]
@@ -334,6 +336,8 @@ class UniverseRecord:
     volume_24h_unit: str | None
     l1_source_payload_hash: str | None
     error_code: str | None
+    quantity_unit: Literal["base", "contracts", "unknown"] | None = None
+    contract_multiplier: Decimal | None = None
 
     @property
     def venue_instrument_id(self) -> str:
@@ -459,6 +463,8 @@ def _universe_item(
         venue_instrument_version_id=record.venue_instrument_version_id,
         group_id=record.group_id,
         mapping_method=record.mapping_method,
+        quantity_unit=record.quantity_unit,
+        contract_multiplier=_finite_float(record.contract_multiplier),
         venue=record.venue,
         source_symbol=record.source_symbol,
         base_asset=record.base_asset,
@@ -1039,6 +1045,7 @@ def read_universe_records(connection: Connection[Any]) -> tuple[UniverseRecord, 
                            instrument.quote_asset, instrument.settle_asset,
                            instrument.collateral_asset, instrument.active,
                            instrument.market_type, instrument.execution_model,
+                           instrument.quantity_unit, instrument.contract_multiplier,
                            membership.group_id, membership.mapping_method,
                            catalog.source_kind AS catalog_source_kind,
                            catalog.endpoint AS catalog_endpoint,
@@ -1104,6 +1111,8 @@ def _universe_record_from_row(row: dict[str, Any]) -> UniverseRecord:
         active=bool(row["active"]),
         market_type=str(row["market_type"]),
         execution_model=str(row["execution_model"]),
+        quantity_unit=row["quantity_unit"],
+        contract_multiplier=_database_decimal(row["contract_multiplier"]),
         group_id=None if row["group_id"] is None else str(row["group_id"]),
         mapping_method=(None if row["mapping_method"] is None else str(row["mapping_method"])),
         catalog_source_kind=str(row["catalog_source_kind"]),

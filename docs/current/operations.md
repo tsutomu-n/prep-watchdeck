@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-05(月)_20:00 JST"
+timestamp="2026-10-07(水)_17:38 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T20:00:19+09:00`
-- 検証: `2026-10-05T20:00:19+09:00`
+- 更新: `2026-10-07T17:38:27+09:00`
+- 検証: `2026-10-07T17:38:27+09:00`
 - 状態: `現行`
 
 ---
@@ -140,6 +140,18 @@ PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' uv run watchdeck-market hea
 ```
 
 ## Artifactとfreshness
+
+### 単独契約selectionの反映境界
+
+未groupの板・約定購読にはmigration `0005_native_selected_market`を含むDBと、対応するMarket Core・Web・
+schema/生成型を一組で反映する。migrationはlease/rawのgroup列をnullableにするだけで、group FKと
+single-active制約、既存行、数量型を維持する。source変更と隔離gate成功はlive migration/deploy完了を意味しない。
+現役DBのmigration、unit操作、cutoverは明示承認を伴う別工程とする。
+
+古いCollectorのUniverseに数量単位・倍率が欠落している場合、新Webは未group購読を開始しない。
+旧Webは新artifactの追加fieldとnull groupへ未対応のため、同じsource版のreader/writerを使用する。
+旧版へのrollbackでは単独leaseが停止・失効済みであることと、旧版で読めるgroup command/artifactを確認する。
+保存済みのnull group履歴を削除したりNOT NULLを機械的に復元したりしない。
 
 現在のWeb read modelは`$PREP_WATCHDECK_MARKET_STATE_DIR/artifacts/`に4 JSONを持つ。
 missing、invalid、staleを前回値で上書きしない。

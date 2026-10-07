@@ -26,6 +26,30 @@ from prep_watchdeck_market.selection_runtime import (
 from prep_watchdeck_market.sources.selected_streams import SelectedEmitter
 
 
+def test_native_selection_command_requires_an_explicit_positive_version(tmp_path: Path) -> None:
+    now = datetime(2026, 8, 14, 12, 0, tzinfo=UTC)
+    path = tmp_path / "selection.json"
+    payload: dict[str, object] = {
+        "schemaVersion": 1,
+        "groupId": None,
+        "venueInstrumentId": "bitget:BTCUSDT",
+        "venueInstrumentVersionId": 42,
+        "requestedAt": now.isoformat(),
+        "heartbeatAt": now.isoformat(),
+    }
+    _atomic_write(path, payload)
+    command = read_selection_command(path, now=now)
+    assert command is not None
+    assert command.group_id is None
+    assert command.venue_instrument_version_id == 42
+    for version in (None, True, 0, -1, "42"):
+        _atomic_write(path, {**payload, "venueInstrumentVersionId": version})
+        assert read_selection_command(path, now=now) is None
+    del payload["venueInstrumentVersionId"]
+    _atomic_write(path, payload)
+    assert read_selection_command(path, now=now) is None
+
+
 def test_selection_command_runtime_switches_safely_with_one_bounded_writer(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,

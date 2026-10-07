@@ -16,7 +16,11 @@ import psycopg
 from psycopg import Connection
 
 from prep_watchdeck_market.models import CatalogInstrument, QuantityUnit, Venue
-from prep_watchdeck_market.selected_market import SelectedEvent, validate_selected_instrument
+from prep_watchdeck_market.selected_market import (
+    SelectedContractError,
+    SelectedEvent,
+    validate_selected_instrument,
+)
 from prep_watchdeck_market.selected_store import (
     InvalidSelectionError,
     SelectionTransition,
@@ -48,15 +52,16 @@ class SelectionRuntimeError(RuntimeError):
 
 
 class InvalidSelectionCommandError(SelectionRuntimeError):
-    """A requested group is not currently safe to subscribe."""
+    """A requested selection is not currently safe to subscribe."""
 
 
 @dataclass(frozen=True, slots=True)
 class SelectionCommand:
-    group_id: str
+    group_id: str | None
     venue_instrument_id: str
     requested_at: datetime
     heartbeat_at: datetime
+    venue_instrument_version_id: int | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,24 +102,36 @@ def read_selection_command(path: Path, *, now: datetime) -> SelectionCommand | N
         payload = json.loads(raw)
     except (UnicodeDecodeError, ValueError):
         return None
-    if not isinstance(payload, dict) or set(payload) != {
+    required = {
         "schemaVersion",
         "groupId",
         "venueInstrumentId",
         "requestedAt",
         "heartbeatAt",
-    }:
+    }
+    if (
+        not isinstance(payload, dict)
+        or not required <= set(payload)
+        or set(payload) - required - {"venueInstrumentVersionId"}
+    ):
         return None
     schema_version = payload.get("schemaVersion")
     if isinstance(schema_version, bool) or schema_version != 1:
         return None
     group_id = payload.get("groupId")
+    version_id = payload.get("venueInstrumentVersionId")
+    if group_id is not None and (not isinstance(group_id, str) or not group_id.strip()):
+        return None
+    if "venueInstrumentVersionId" in payload and (type(version_id) is not int or version_id <= 0):
+        return None
+    if group_id is None and version_id is None:
+        return None
     venue_instrument_id = payload.get("venueInstrumentId")
     requested_text = payload.get("requestedAt")
     heartbeat_text = payload.get("heartbeatAt")
     if not all(
         isinstance(value, str) and value.strip()
-        for value in (group_id, venue_instrument_id, requested_text, heartbeat_text)
+        for value in (venue_instrument_id, requested_text, heartbeat_text)
     ):
         return None
     try:
@@ -127,10 +144,11 @@ def read_selection_command(path: Path, *, now: datetime) -> SelectionCommand | N
     if heartbeat_at + SELECTION_TTL <= now:
         return None
     return SelectionCommand(
-        group_id=cast(str, group_id).strip(),
+        group_id=None if group_id is None else cast(str, group_id).strip(),
         venue_instrument_id=cast(str, venue_instrument_id).strip(),
         requested_at=requested_at,
         heartbeat_at=heartbeat_at,
+        venue_instrument_version_id=cast(int | None, version_id),
     )
 
 
@@ -170,7 +188,7 @@ class SelectionRuntime:
         self._writer_task: asyncio.Task[None] | None = None
         self._emitting_selection_id: UUID | None = None
         self._last_requested_at: datetime | None = None
-        self._last_identity: tuple[str, str] | None = None
+        self._last_identity: tuple[str | None, str, int | None] | None = None
         self._last_heartbeat_at: datetime | None = None
         self._reconcile_at: datetime | None = None
         self._active_instrument_fingerprint: tuple[tuple[str, str], ...] = ()
@@ -227,7 +245,11 @@ class SelectionRuntime:
                 await asyncio.wait_for(stop_event.wait(), timeout=self._poll_seconds)
 
     async def _accept_command(self, command: SelectionCommand, *, now: datetime) -> None:
-        identity = (command.group_id, command.venue_instrument_id)
+        identity = (
+            command.group_id,
+            command.venue_instrument_id,
+            command.venue_instrument_version_id,
+        )
         last_requested = self._last_requested_at
         if last_requested is not None and command.requested_at < last_requested:
             return
@@ -244,10 +266,11 @@ class SelectionRuntime:
             if active is None or active.expires_at <= now:
                 try:
                     await self._run_db(
-                        lambda: _load_group_instruments(
+                        lambda: _load_selection_instruments(
                             self._require_connection(),
                             command.group_id,
                             command.venue_instrument_id,
+                            command.venue_instrument_version_id,
                         )
                     )
                 except InvalidSelectionCommandError:
@@ -258,6 +281,7 @@ class SelectionRuntime:
                     command.group_id,
                     command.venue_instrument_id,
                     command.requested_at,
+                    primary_venue_instrument_version_id=command.venue_instrument_version_id,
                 )
                 return
             await self._heartbeat_active(command)
@@ -269,13 +293,15 @@ class SelectionRuntime:
         if active is None or (
             active.group_id != command.group_id
             or active.primary_venue_instrument_id != command.venue_instrument_id
+            or active.primary_venue_instrument_version_id != command.venue_instrument_version_id
         ):
             try:
                 await self._run_db(
-                    lambda: _load_group_instruments(
+                    lambda: _load_selection_instruments(
                         self._require_connection(),
                         command.group_id,
                         command.venue_instrument_id,
+                        command.venue_instrument_version_id,
                     )
                 )
             except InvalidSelectionCommandError:
@@ -290,6 +316,7 @@ class SelectionRuntime:
             active is not None
             and active.group_id == command.group_id
             and active.primary_venue_instrument_id == command.venue_instrument_id
+            and active.primary_venue_instrument_version_id == command.venue_instrument_version_id
         ):
             await self._heartbeat_active(command)
             return
@@ -297,6 +324,7 @@ class SelectionRuntime:
             command.group_id,
             command.venue_instrument_id,
             command.requested_at,
+            primary_venue_instrument_version_id=command.venue_instrument_version_id,
         )
 
     async def _heartbeat_active(self, command: SelectionCommand) -> None:
@@ -307,6 +335,7 @@ class SelectionRuntime:
         if (
             active.group_id != command.group_id
             or active.primary_venue_instrument_id != command.venue_instrument_id
+            or active.primary_venue_instrument_version_id != command.venue_instrument_version_id
             or command.heartbeat_at <= active.heartbeat_at
         ):
             return
@@ -323,29 +352,41 @@ class SelectionRuntime:
     async def _subscribe(
         self,
         selection_id: UUID,
-        group_id: str,
+        group_id: str | None,
         primary_venue_instrument_id: str,
+        primary_venue_instrument_version_id: int | None,
     ) -> object:
         reconcile_at = self._reconcile_at
         if reconcile_at is None:
             raise SelectionRuntimeError("selection activation occurred outside reconciliation")
         activated_at = max(reconcile_at, self._clock())
         instruments = await self._run_db(
-            lambda: _load_group_instruments(
+            lambda: _load_selection_instruments(
                 self._require_connection(),
                 group_id,
                 primary_venue_instrument_id,
+                primary_venue_instrument_version_id,
             )
         )
-        transition = await self._run_db(
-            lambda: activate_selection(
-                self._require_connection(),
-                selection_id=selection_id,
-                group_id=group_id,
-                primary_venue_instrument_id=primary_venue_instrument_id,
-                activated_at=activated_at,
+        try:
+            transition = await self._run_db(
+                lambda: activate_selection(
+                    self._require_connection(),
+                    selection_id=selection_id,
+                    group_id=group_id,
+                    primary_venue_instrument_id=primary_venue_instrument_id,
+                    activated_at=activated_at,
+                    **(
+                        {"primary_venue_instrument_version_id": primary_venue_instrument_version_id}
+                        if primary_venue_instrument_version_id is not None
+                        else {}
+                    ),
+                )
             )
-        )
+        except InvalidSelectionError:
+            raise InvalidSelectionCommandError(
+                "selected contract changed before activation"
+            ) from None
         await self._acknowledge_previous(transition, activated_at)
         self._emitting_selection_id = selection_id
         try:
@@ -426,10 +467,11 @@ class SelectionRuntime:
         self._next_membership_check = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
         try:
             instruments = await self._run_db(
-                lambda: _load_group_instruments(
+                lambda: _load_selection_instruments(
                     self._require_connection(),
                     active.group_id,
                     active.primary_venue_instrument_id,
+                    active.primary_venue_instrument_version_id,
                 )
             )
         except InvalidSelectionCommandError:
@@ -443,6 +485,7 @@ class SelectionRuntime:
             active.group_id,
             active.primary_venue_instrument_id,
             now,
+            primary_venue_instrument_version_id=active.primary_venue_instrument_version_id,
         )
 
     async def _emit(self, event: SelectedEvent) -> None:
@@ -575,6 +618,44 @@ class SelectionRuntime:
         if self._controller is None:
             raise SelectionRuntimeError("selection controller is not available")
         return self._controller
+
+
+def _load_selection_instruments(
+    connection: Connection[Any],
+    group_id: str | None,
+    primary_venue_instrument_id: str,
+    expected_version_id: int | None,
+) -> tuple[CatalogInstrument, ...]:
+    if group_id is not None:
+        return _load_group_instruments(connection, group_id, primary_venue_instrument_id)
+    if type(expected_version_id) is not int or expected_version_id <= 0:
+        raise InvalidSelectionCommandError("native selection requires an explicit version")
+    try:
+        row = connection.execute(
+            """
+                SELECT venue, source_symbol, active, source_status, asset_class,
+                       market_type, execution_model, base_asset, quote_asset,
+                       settle_asset, collateral_asset, quantity_unit, contract_multiplier,
+                       price_tick, amount_step, funding_interval_seconds, raw_definition
+                FROM venue_instrument_versions
+                WHERE venue_instrument_version_id = %s AND valid_to IS NULL
+            """,
+            (expected_version_id,),
+        ).fetchone()
+    except psycopg.Error:
+        raise SelectionRuntimeError("selected native contract lookup failed") from None
+    if row is None:
+        raise InvalidSelectionCommandError("selected native contract version is not current")
+    instrument = _instrument_from_row(row)
+    if instrument.venue_instrument_id != primary_venue_instrument_id:
+        raise InvalidSelectionCommandError("selected native contract identity changed")
+    try:
+        validate_selected_instrument(instrument)
+    except SelectedContractError:
+        raise InvalidSelectionCommandError(
+            "selected native contract cannot be normalized safely"
+        ) from None
+    return (instrument,)
 
 
 def _load_group_instruments(

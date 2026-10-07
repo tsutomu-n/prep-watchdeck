@@ -2,6 +2,7 @@
   import { currentPreferences, preferences, nativeChartInterval } from "$lib/theme/workspace-preferences";
   import { displayNumber } from "$lib/market/number-display";
   import { formatPriceChange } from "$lib/market/price-change";
+  import { selectionUnavailableReason } from "$lib/market/selection-eligibility";
   import { onMount, tick, untrack } from "svelte";
   import { pushState, replaceState } from "$app/navigation";
   import { page } from "$app/state";
@@ -205,9 +206,11 @@
     return current === null ? "—" : formatPriceChange(current, $preferences.percentDecimals);
   }
   let selectedGroupId = $derived(selectedInstrument?.groupId ?? null);
+  let selectedSubscriptionReason = $derived(selectedInstrument
+    ? selectionUnavailableReason(selectedInstrument) : null);
   let selectedVersionId = $derived(selectedInstrument?.venueInstrumentVersionId);
   let selectedPayload = $derived(
-    market?.selected.selection?.groupId === selectedGroupId &&
+    selectedSubscriptionReason === null && market?.selected.selection?.groupId === selectedGroupId &&
       market.selected.selection.primaryVenueInstrumentId === selectedVenueInstrumentId &&
       market.selected.selection.instruments.some((instrument) =>
         instrument.venueInstrumentId === selectedVenueInstrumentId &&
@@ -522,7 +525,7 @@
     const venueInstrumentId = selectedVenueInstrumentId;
     const versionId = selectedVersionId;
     const token = selectionToken;
-    if (!groupId || !venueInstrumentId || !versionId || !token) return;
+    if (!venueInstrumentId || !versionId || !token || selectedSubscriptionReason) return;
     const heartbeat = window.setInterval(() => {
       if (document.visibilityState !== "hidden") {
         selectionQueue = selectionQueue.catch(() => undefined).then(
@@ -568,7 +571,7 @@
   }
 
   async function postSelection(
-    action: "select" | "heartbeat", groupId: string, venueInstrumentId: string,
+    action: "select" | "heartbeat", groupId: string | null, venueInstrumentId: string,
     versionId: number, expectedRequestedAt?: string
   ) {
     const key = `${venueInstrumentId}/${versionId}`;
@@ -642,7 +645,7 @@
     selectionMessage = null;
     selectionError = null;
     wantedSelectionKey = `${instrument.venueInstrumentId}/${instrument.venueInstrumentVersionId}`;
-    if (instrument.active && instrument.groupId) {
+    if (selectionUnavailableReason(instrument) === null) {
       const { groupId, venueInstrumentId, venueInstrumentVersionId } = instrument;
       selectionQueue = selectionQueue.catch(() => undefined).then(() =>
         postSelection("select", groupId, venueInstrumentId, venueInstrumentVersionId)
@@ -1243,21 +1246,25 @@
             <summary>選択データの監視状態</summary>
             {#if selectedGroupId}
               <p>{selectedGroupId} / {groupVenueCount} Venue</p>
+            {:else if selectedSubscriptionReason === null}
+              <p class="neutral-note">この取引所の契約だけを監視します。横断比較は行いません。</p>
+            {/if}
+            {#if selectedSubscriptionReason}
+              <p class="neutral-note">{selectedSubscriptionReason}</p>
+            {:else}
               <p>行選択は500ms後に反映し、5分ごとに監視leaseを更新します。</p>
               {#if selectionMessage}<p class="quality-good">{selectionMessage}</p>{/if}
-            {:else}
-              <p class="neutral-note">安全に同一groupへ対応できないinstrumentです。板・約定購読は行いません。</p>
             {/if}
           </details>
 
           <section class="selected-market" aria-labelledby="selected-market-title">
             <div class="subheading selected-heading">
-              <div><h3 id="selected-market-title">選択groupの板・約定</h3><p>最大20段 / 直近100件</p></div>
-              <span class:quality-risk={market.selected.status !== "ready"}>{statusLabel(market.selected.status)}</span>
+              <div><h3 id="selected-market-title">{selectedGroupId ? "選択groupの板・約定" : "選択市場の板・約定"}</h3><p>最大20段 / 直近100件{selectedSubscriptionReason === null ? ` · 数量は${selectedInstrument.baseAsset}単位` : ""}</p></div>
+              <span class:quality-risk={selectedPayload && market.selected.status !== "ready"}>{selectedSubscriptionReason ? "購読対象外" : selectedPayload ? statusLabel(market.selected.status) : "待機中"}</span>
             </div>
             <p class="disclaimer">{market.selected.disclaimers.statement}</p>
             <p class="disclaimer">手数料を含まず、将来impactを予測せず、表示価格での注文成立を保証しません。</p>
-            {#if market.selected.qualityReasons.length > 0}
+            {#if selectedPayload && market.selected.qualityReasons.length > 0}
               <div class="quality-reasons selected-reasons">
                 <strong>Selected品質理由</strong>
                 <span>{reasonSummary(market.selected.qualityReasons)}</span>
@@ -1351,9 +1358,9 @@
               </details>
             {:else}
               <p class="waiting-copy">
-                {selectedGroupId
-                  ? `選択groupのartifactを待っています: ${reasonSummary(market.selected.qualityReasons)}`
-                  : "group未確定のため詳細購読はありません"}
+                {selectedSubscriptionReason ?? (selectionToken
+                  ? "選択した市場の板・約定データを待っています"
+                  : "一覧の銘柄を選択すると、この契約の板・約定監視を要求します")}
               </p>
             {/if}
           </section>

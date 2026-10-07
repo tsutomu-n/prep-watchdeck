@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-05(月)_20:00 JST"
+timestamp="2026-10-07(水)_17:38 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T20:00:19+09:00`
-- 検証: `2026-10-05T20:00:19+09:00`
+- 更新: `2026-10-07T17:38:27+09:00`
+- 検証: `2026-10-07T17:38:27+09:00`
 - 状態: `現行`
 
 ---
@@ -22,7 +22,7 @@ Bitget / Hyperliquid Core / Aster public API
                   v
         watchdeck-market service
           |       |        |
-          |       |        +-- selected group WS
+          |       |        +-- selected group / native contract WS
           |       +----------- catalog / L1 / candle
           v
  dedicated Postgres 17 ----> confirmed Parquet archive
@@ -80,10 +80,14 @@ idempotency、conflictを検証する。
 
 ### Selected market
 
-現在Webはselection commandをlocal fileへatomic writeし、market serviceが1 groupを購読する。
+現在Webはselection commandをlocal fileへatomic writeし、market serviceが1 groupまたは単独契約1件を購読する。
 現行値は500ms debounce、15分TTL、5分heartbeat、旧subscription cleanup、CLOB depth/trade等。
 
-1 selection、20 depth、100 trades等は永久上限ではない。複数selection、pinned/ranked capture、単独instrument detail等を
+group比較の資格と単独契約の観測資格を分離する。未groupでは契約ID/versionへ固定し、数量・倍率と
+通貨を検証して1契約だけ購読する。保存時もleaseのprimary versionへ照合する。
+既存のwriter、depth/trade保持、artifactを使い、別collectorや架空groupを追加しない。
+
+1 selection、20 depth、100 trades等は永久上限ではない。複数selection、pinned/ranked capture等を
 将来追加できる。
 
 ## Storage truth
@@ -129,7 +133,7 @@ path、port、DB engine、single-host構成は現行runtime値。local-first原�
 
 ## Chart履歴の取得
 
-Webの`GET /api/chart-history`は検証済みUniverseのactive grouped instrumentだけを解決し、
+Webの`GET /api/chart-history`は検証済みUniverseのactive linear instrumentをgroup所属に依存せず解決し、
 選択したVenueのnative時間足を取得する。Bitgetはv2の`candles`と`history-candles`、
 Hyperliquidは`candleSnapshot`、Asterは`klines`を使う。日足はUTC 00:00開始へ揃え、
 Bitgetでは`1Dutc`を指定する。Webへ取引所の秘密API keyを追加しない。

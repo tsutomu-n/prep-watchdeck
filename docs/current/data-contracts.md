@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-05(月)_20:00 JST"
+timestamp="2026-10-07(水)_17:38 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T20:00:19+09:00`
-- 検証: `2026-10-05T20:00:19+09:00`
+- 更新: `2026-10-07T17:38:27+09:00`
+- 検証: `2026-10-07T17:38:27+09:00`
 - 状態: `現行`
 
 ---
@@ -99,8 +99,14 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 
 ### selected-market.json
 
-現在は1 active selectionまたはnull。group instruments、最大20 bids/asks、直近100 trades、
+現在は1 active selectionまたはnull。group instrumentsまたは単独契約1件、最大20 bids/asks、直近100 trades、
 `$100/$500/$1,000` book walk等を持つ。
+
+`selection.groupId=null`は単独契約の選択を表す。`primaryVenueInstrumentId`と各instrumentの
+versionが一致するデータだけを表示する。架空groupや横断対応を作らない。数量は確認済みBase単位であり、
+active linear CLOB、USD-like quote/settle/collateral、`quantityUnit=base`、`contractMultiplier=1`が必要。
+Universeのoptional `quantityUnit` / `contractMultiplier`はCatalogの現行定義から公開する。
+古いartifactでこれらが欠落している未group契約は未確認として購読しない。
 
 現在のschemaではbook walkに`includesFees=false`、`predictsFutureImpact=false`、
 `confirmsOrderAvailability=false`を固定する。
@@ -126,8 +132,12 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 }
 ```
 
-現行validationはactive grouped instrument、timestamp、expiry等をfail-closedに確認する。
-将来、単独instrument、複数selection、pinned/watch queue等の別command contractを追加できる。
+group選択は上の既存commandを維持する。単独選択は`groupId=null`に加えて正の
+`venueInstrumentVersionId`を必須とし、DBの現行契約へ照合する。heartbeatは同じversionと
+`requestedAt` tokenの選択だけを延長し、version変更は新規選択として扱う。
+単独leaseの保存・イベント取込はprimary versionへ固定し、別Venue/symbolや退役versionを拒否する。
+現行validationはactive contract、数量単位、timestamp、expiry等をfail-closedに確認する。
+将来、複数selection、pinned/watch queue等の別command contractを追加できる。
 
 ## 現行Past Note
 
