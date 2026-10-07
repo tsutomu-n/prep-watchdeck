@@ -8,6 +8,14 @@
   let failedPath = $state<string | null>(null);
   const visible = $derived(Boolean(logo && loadedPath === logo.path && failedPath !== logo.path));
   const placeholder = $derived(logoPlaceholder(symbol));
+
+  function readCompletedImage(image: HTMLImageElement) {
+    // A cached image can finish before this instance receives its load event.
+    if (!image.complete) return;
+    const path = image.getAttribute("src");
+    if (image.naturalWidth > 0) loadedPath = path;
+    else failedPath = path;
+  }
 </script>
 
 <span
@@ -24,6 +32,7 @@
   {#if logo && failedPath !== logo.path}
     {#key logo.path}
       <img
+        use:readCompletedImage
         src={logo.path}
         alt=""
         width={size}
