@@ -1,14 +1,14 @@
 # 再開位置
 
-timestamp="2026-10-01(木)_20:31 JST"
+timestamp="2026-10-07(水)_19:06 JST"
 
 - 作成: `2026-09-28T20:00:00+09:00`
-- 更新: `2026-10-01T20:31:46+09:00`
+- 更新: `2026-10-07T19:06:07+09:00`
 - 状態: `実装計画`
 
 ---
 
-現在の代理操作は12件PASS。実データ読取は観測済み、M6の本番全条件はPARTIAL。詳細は[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md](/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md)と同directoryのacceptance.jsonを参照。
+現在の代理操作は12件PASS。実データ読取は観測済み、M6の本番全条件はPARTIAL。詳細は[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md](persona-acceptance.md)と同directoryのacceptance.jsonを参照。
 
 以下のM5記録は2026-09-29時点の証拠。今回の代理操作・現役read-only観測は追加checkpointであり、当時のnot_runは現在値ではない。
 
