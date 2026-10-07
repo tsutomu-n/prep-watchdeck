@@ -1,12 +1,147 @@
 {
   "schemaVersion": 1,
-  "mapVersion": "d5bfc5975f303258223b3288",
-  "sourceMapSha256": "d177fef4315b743105f8b8d704ba68ef5fbbc1263dd0fcb720bdeadd8fd1eef2",
+  "mapVersion": "6954e4c861aafd485f43b65c",
+  "sourceMapSha256": "121c13ce20b2aef732238b217a4dfe5303f0bfd495a0d970f18fcc4b40cf9319",
   "bindings": [
+    {
+      "instrumentId": "aster:1000PEPEUSDT",
+      "versionId": 691,
+      "assetId": "crypto:PEPE"
+    },
+    {
+      "instrumentId": "aster:1000SHIBUSDT",
+      "versionId": 650,
+      "assetId": "crypto:SHIB"
+    },
+    {
+      "instrumentId": "aster:AAVEUSDT",
+      "versionId": 663,
+      "assetId": "crypto:AAVE"
+    },
+    {
+      "instrumentId": "aster:ADAUSDT",
+      "versionId": 647,
+      "assetId": "crypto:ADA"
+    },
+    {
+      "instrumentId": "aster:APTUSDT",
+      "versionId": 685,
+      "assetId": "crypto:APT"
+    },
+    {
+      "instrumentId": "aster:ARBUSDT",
+      "versionId": 687,
+      "assetId": "crypto:ARB"
+    },
+    {
+      "instrumentId": "aster:ATOMUSDT",
+      "versionId": 657,
+      "assetId": "crypto:ATOM"
+    },
+    {
+      "instrumentId": "aster:AVAXUSDT",
+      "versionId": 652,
+      "assetId": "crypto:AVAX"
+    },
+    {
+      "instrumentId": "aster:BCHUSDT",
+      "versionId": 672,
+      "assetId": "crypto:BCH"
+    },
+    {
+      "instrumentId": "aster:BNBUSDT",
+      "versionId": 642,
+      "assetId": "crypto:BNB"
+    },
     {
       "instrumentId": "aster:BTCUSDT",
       "versionId": 640,
       "assetId": "crypto:BTC"
+    },
+    {
+      "instrumentId": "aster:DOGEUSDT",
+      "versionId": 645,
+      "assetId": "crypto:DOGE"
+    },
+    {
+      "instrumentId": "aster:DOTUSDT",
+      "versionId": 648,
+      "assetId": "crypto:DOT"
+    },
+    {
+      "instrumentId": "aster:ETCUSDT",
+      "versionId": 660,
+      "assetId": "crypto:ETC"
+    },
+    {
+      "instrumentId": "aster:ETHUSDT",
+      "versionId": 641,
+      "assetId": "crypto:ETH"
+    },
+    {
+      "instrumentId": "aster:FILUSDT",
+      "versionId": 667,
+      "assetId": "crypto:FIL"
+    },
+    {
+      "instrumentId": "aster:HBARUSDT",
+      "versionId": 866,
+      "assetId": "crypto:HBAR"
+    },
+    {
+      "instrumentId": "aster:ICPUSDT",
+      "versionId": 816,
+      "assetId": "crypto:ICP"
+    },
+    {
+      "instrumentId": "aster:INJUSDT",
+      "versionId": 688,
+      "assetId": "crypto:INJ"
+    },
+    {
+      "instrumentId": "aster:LINKUSDT",
+      "versionId": 671,
+      "assetId": "crypto:LINK"
+    },
+    {
+      "instrumentId": "aster:LTCUSDT",
+      "versionId": 653,
+      "assetId": "crypto:LTC"
+    },
+    {
+      "instrumentId": "aster:NEARUSDT",
+      "versionId": 655,
+      "assetId": "crypto:NEAR"
+    },
+    {
+      "instrumentId": "aster:OPUSDT",
+      "versionId": 683,
+      "assetId": "crypto:OP"
+    },
+    {
+      "instrumentId": "aster:SOLUSDT",
+      "versionId": 643,
+      "assetId": "crypto:SOL"
+    },
+    {
+      "instrumentId": "aster:SUIUSDT",
+      "versionId": 689,
+      "assetId": "crypto:SUI"
+    },
+    {
+      "instrumentId": "aster:TRXUSDT",
+      "versionId": 656,
+      "assetId": "crypto:TRX"
+    },
+    {
+      "instrumentId": "aster:UNIUSDT",
+      "versionId": 674,
+      "assetId": "crypto:UNI"
+    },
+    {
+      "instrumentId": "aster:XLMUSDT",
+      "versionId": 698,
+      "assetId": "crypto:XLM"
     },
     {
       "instrumentId": "aster:XMRUSDT",
@@ -14,9 +149,149 @@
       "assetId": "crypto:XMR"
     },
     {
+      "instrumentId": "aster:XRPUSDT",
+      "versionId": 644,
+      "assetId": "crypto:XRP"
+    },
+    {
+      "instrumentId": "bitget:AAVEUSDT",
+      "versionId": 3135,
+      "assetId": "crypto:AAVE"
+    },
+    {
+      "instrumentId": "bitget:ADAUSDT",
+      "versionId": 7642,
+      "assetId": "crypto:ADA"
+    },
+    {
+      "instrumentId": "bitget:APTUSDT",
+      "versionId": 48,
+      "assetId": "crypto:APT"
+    },
+    {
+      "instrumentId": "bitget:ARBUSDT",
+      "versionId": 7739,
+      "assetId": "crypto:ARB"
+    },
+    {
+      "instrumentId": "bitget:ATOMUSDT",
+      "versionId": 3226,
+      "assetId": "crypto:ATOM"
+    },
+    {
+      "instrumentId": "bitget:AVAXUSDT",
+      "versionId": 7647,
+      "assetId": "crypto:AVAX"
+    },
+    {
+      "instrumentId": "bitget:BCHUSDT",
+      "versionId": 7641,
+      "assetId": "crypto:BCH"
+    },
+    {
+      "instrumentId": "bitget:BNBUSDT",
+      "versionId": 13,
+      "assetId": "crypto:BNB"
+    },
+    {
       "instrumentId": "bitget:BTCUSDT",
       "versionId": 1,
       "assetId": "crypto:BTC"
+    },
+    {
+      "instrumentId": "bitget:DOGEUSDT",
+      "versionId": 11,
+      "assetId": "crypto:DOGE"
+    },
+    {
+      "instrumentId": "bitget:DOTUSDT",
+      "versionId": 10,
+      "assetId": "crypto:DOT"
+    },
+    {
+      "instrumentId": "bitget:ETCUSDT",
+      "versionId": 7,
+      "assetId": "crypto:ETC"
+    },
+    {
+      "instrumentId": "bitget:ETHUSDT",
+      "versionId": 2,
+      "assetId": "crypto:ETH"
+    },
+    {
+      "instrumentId": "bitget:FILUSDT",
+      "versionId": 7644,
+      "assetId": "crypto:FIL"
+    },
+    {
+      "instrumentId": "bitget:HBARUSDT",
+      "versionId": 91,
+      "assetId": "crypto:HBAR"
+    },
+    {
+      "instrumentId": "bitget:ICPUSDT",
+      "versionId": 8864,
+      "assetId": "crypto:ICP"
+    },
+    {
+      "instrumentId": "bitget:INJUSDT",
+      "versionId": 7677,
+      "assetId": "crypto:INJ"
+    },
+    {
+      "instrumentId": "bitget:LINKUSDT",
+      "versionId": 8,
+      "assetId": "crypto:LINK"
+    },
+    {
+      "instrumentId": "bitget:LTCUSDT",
+      "versionId": 5,
+      "assetId": "crypto:LTC"
+    },
+    {
+      "instrumentId": "bitget:NEARUSDT",
+      "versionId": 7650,
+      "assetId": "crypto:NEAR"
+    },
+    {
+      "instrumentId": "bitget:OPUSDT",
+      "versionId": 57,
+      "assetId": "crypto:OP"
+    },
+    {
+      "instrumentId": "bitget:PEPEUSDT",
+      "versionId": 7685,
+      "assetId": "crypto:PEPE"
+    },
+    {
+      "instrumentId": "bitget:SHIBUSDT",
+      "versionId": 26,
+      "assetId": "crypto:SHIB"
+    },
+    {
+      "instrumentId": "bitget:SOLUSDT",
+      "versionId": 7643,
+      "assetId": "crypto:SOL"
+    },
+    {
+      "instrumentId": "bitget:SUIUSDT",
+      "versionId": 113,
+      "assetId": "crypto:SUI"
+    },
+    {
+      "instrumentId": "bitget:TRXUSDT",
+      "versionId": 9,
+      "assetId": "crypto:TRX"
+    },
+    {
+      "instrumentId": "bitget:UNIUSDT",
+      "versionId": 3134,
+      "assetId": "crypto:UNI"
+    },
+    {
+      "instrumentId": "bitget:XLMUSDT",
+      "versionId": 18,
+      "assetId": "crypto:XLM"
     },
     {
       "instrumentId": "bitget:XMRUSDT",
@@ -24,14 +299,159 @@
       "assetId": "crypto:XMR"
     },
     {
+      "instrumentId": "bitget:XRPUSDT",
+      "versionId": 3,
+      "assetId": "crypto:XRP"
+    },
+    {
+      "instrumentId": "hyperliquid:AAVE",
+      "versionId": 488,
+      "assetId": "crypto:AAVE"
+    },
+    {
+      "instrumentId": "hyperliquid:ADA",
+      "versionId": 506,
+      "assetId": "crypto:ADA"
+    },
+    {
+      "instrumentId": "hyperliquid:APT",
+      "versionId": 487,
+      "assetId": "crypto:APT"
+    },
+    {
+      "instrumentId": "hyperliquid:ARB",
+      "versionId": 473,
+      "assetId": "crypto:ARB"
+    },
+    {
+      "instrumentId": "hyperliquid:ATOM",
+      "versionId": 465,
+      "assetId": "crypto:ATOM"
+    },
+    {
+      "instrumentId": "hyperliquid:AVAX",
+      "versionId": 468,
+      "assetId": "crypto:AVAX"
+    },
+    {
+      "instrumentId": "hyperliquid:BCH",
+      "versionId": 486,
+      "assetId": "crypto:BCH"
+    },
+    {
+      "instrumentId": "hyperliquid:BNB",
+      "versionId": 469,
+      "assetId": "crypto:BNB"
+    },
+    {
       "instrumentId": "hyperliquid:BTC",
       "versionId": 463,
       "assetId": "crypto:BTC"
     },
     {
+      "instrumentId": "hyperliquid:DOGE",
+      "versionId": 474,
+      "assetId": "crypto:DOGE"
+    },
+    {
+      "instrumentId": "hyperliquid:DOT",
+      "versionId": 498,
+      "assetId": "crypto:DOT"
+    },
+    {
+      "instrumentId": "hyperliquid:ETC",
+      "versionId": 534,
+      "assetId": "crypto:ETC"
+    },
+    {
+      "instrumentId": "hyperliquid:ETH",
+      "versionId": 464,
+      "assetId": "crypto:ETH"
+    },
+    {
+      "instrumentId": "hyperliquid:FIL",
+      "versionId": 517,
+      "assetId": "crypto:FIL"
+    },
+    {
+      "instrumentId": "hyperliquid:HBAR",
+      "versionId": 554,
+      "assetId": "crypto:HBAR"
+    },
+    {
+      "instrumentId": "hyperliquid:ICP",
+      "versionId": 626,
+      "assetId": "crypto:ICP"
+    },
+    {
+      "instrumentId": "hyperliquid:INJ",
+      "versionId": 475,
+      "assetId": "crypto:INJ"
+    },
+    {
+      "instrumentId": "hyperliquid:kPEPE",
+      "versionId": 477,
+      "assetId": "crypto:PEPE"
+    },
+    {
+      "instrumentId": "hyperliquid:kSHIB",
+      "versionId": 493,
+      "assetId": "crypto:SHIB"
+    },
+    {
+      "instrumentId": "hyperliquid:LINK",
+      "versionId": 480,
+      "assetId": "crypto:LINK"
+    },
+    {
+      "instrumentId": "hyperliquid:LTC",
+      "versionId": 472,
+      "assetId": "crypto:LTC"
+    },
+    {
+      "instrumentId": "hyperliquid:NEAR",
+      "versionId": 512,
+      "assetId": "crypto:NEAR"
+    },
+    {
+      "instrumentId": "hyperliquid:OP",
+      "versionId": 471,
+      "assetId": "crypto:OP"
+    },
+    {
+      "instrumentId": "hyperliquid:SOL",
+      "versionId": 467,
+      "assetId": "crypto:SOL"
+    },
+    {
+      "instrumentId": "hyperliquid:SUI",
+      "versionId": 476,
+      "assetId": "crypto:SUI"
+    },
+    {
+      "instrumentId": "hyperliquid:TRX",
+      "versionId": 492,
+      "assetId": "crypto:TRX"
+    },
+    {
+      "instrumentId": "hyperliquid:UNI",
+      "versionId": 494,
+      "assetId": "crypto:UNI"
+    },
+    {
+      "instrumentId": "hyperliquid:XLM",
+      "versionId": 573,
+      "assetId": "crypto:XLM"
+    },
+    {
       "instrumentId": "hyperliquid:XMR",
       "versionId": 631,
       "assetId": "crypto:XMR"
+    },
+    {
+      "instrumentId": "hyperliquid:XRP",
+      "versionId": 485,
+      "assetId": "crypto:XRP"
     }
   ]
 }

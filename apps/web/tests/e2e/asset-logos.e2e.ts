@@ -11,6 +11,7 @@ import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 type Original = RankedRow["originals"][number];
 type MapRow = { id: string; asset: string; originals: Original[] };
 const mapping = JSON.parse(readFileSync(resolve(process.cwd(), "../ranking-core/data/initial-map.json"), "utf8")) as { rows: MapRow[] };
+const logoManifest = JSON.parse(readFileSync(resolve(process.cwd(), "src/lib/assets/asset-logos.json"), "utf8")) as { logos: { path: string }[] };
 const runtimeRoot = resolve(process.cwd(), "../../var/tmp/e2e/runtime");
 const errors = new WeakMap<Page, string[]>();
 
@@ -117,9 +118,9 @@ async function showList(page: Page) {
   if (await back.isVisible()) await back.click();
 }
 
-async function verifiedLogo(icon: Locator, size: number) {
+async function verifiedLogo(icon: Locator, size: number, assetId = "crypto:BTC") {
   await expect(icon).toHaveAttribute("data-logo-state", "verified");
-  await expect(icon).toHaveAttribute("data-asset-id", "crypto:BTC");
+  await expect(icon).toHaveAttribute("data-asset-id", assetId);
   await expect(icon).toHaveAttribute("aria-hidden", "true");
   const image = icon.locator("img");
   await expect(image).toHaveAttribute("alt", "");
@@ -139,12 +140,16 @@ test.afterEach(async ({ page }) => {
   expect(errors.get(page) ?? [], "ブラウザの未処理例外").toEqual([]);
 });
 
-test("確認済みロゴはランキング・詳細・取引所別・お気に入りで同じ資産を示す", async ({ page }) => {
+test("確認済みロゴはランキング・詳細・取引所別・お気に入りで同じ資産を示す", async ({ page }, testInfo) => {
   const probe = await prepare(page);
   await page.goto("/rankings?includeUnranked=1");
   const row = page.locator('[data-testid="ranking-row"][data-asset="BTC"]');
   await expect(row).toBeVisible();
   const logo = await verifiedLogo(row.getByTestId("asset-icon"), 22);
+  for (const asset of ["ETH", "SOL"]) {
+    const addedRow = page.locator(`[data-testid="ranking-row"][data-asset="${asset}"]`);
+    expect(await verifiedLogo(addedRow.getByTestId("asset-icon"), 22, `crypto:${asset}`)).not.toBe(logo);
+  }
   await expect(row.locator(".select-row")).toContainText("BTC");
   const missing = page.locator('[data-testid="ranking-row"][data-asset="MISSING"]');
   await expect(missing.getByTestId("asset-icon")).toHaveAttribute("data-logo-state", "fallback");
@@ -168,12 +173,28 @@ test("確認済みロゴはランキング・詳細・取引所別・お気に�
   await expect(page.locator('button.instrument-select[data-instrument-id="aster:AIUSDT"]').getByTestId("asset-icon")).toHaveAttribute("data-logo-state", "fallback");
   await expect(page.locator('button.instrument-select[data-instrument-id="aster:1000SHIBUSDT"]')).toContainText("1000SHIB");
   await expect(page.locator('button.instrument-select[data-instrument-id="aster:1000SHIBUSDT"]')).toContainText("aster · 1000SHIBUSDT");
+  await verifiedLogo(page.locator('button.instrument-select[data-instrument-id="aster:1000SHIBUSDT"]').getByTestId("asset-icon"), 22, "crypto:SHIB");
   await page.getByRole("button", { name: "BTC bitgetをお気に入り登録", exact: true }).click();
   await page.getByLabel("お気に入りのみ", { exact: true }).check();
   await expect(page.locator("button.instrument-select")).toHaveCount(1);
   expect(await verifiedLogo(native.getByTestId("asset-icon"), 22)).toBe(logo);
   expect(probe.externalRequests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto("/asset-logos/credits.html");
+  const images = page.locator("main img");
+  await expect(images).toHaveCount(logoManifest.logos.length);
+  // Decode every actual local image, including those outside the ranking fixture.
+  await images.evaluateAll(elements => Promise.all(elements.map(element => (element as HTMLImageElement).decode())));
+  expect(await images.evaluateAll(elements => elements.every(element => (element as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  const paths = await images.evaluateAll(elements => elements.map(element => element.getAttribute("src")));
+  expect(paths.sort()).toEqual(logoManifest.logos.map(entry => entry.path).sort());
+  await expect(page.getByText("MIT License 全文", { exact: true })).toBeVisible();
+  for (const colorScheme of ["dark", "light"] as const) {
+    await page.emulateMedia({ colorScheme });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`asset-logos-${colorScheme}.png`), fullPage: true });
+  }
+  expect(probe.externalRequests).toEqual([]);
 });
 
 async function geometry(row: Locator) {

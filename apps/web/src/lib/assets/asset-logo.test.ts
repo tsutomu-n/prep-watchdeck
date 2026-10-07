@@ -1,17 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { resolveAssetLogo } from "./asset-logo";
 import bindings from "./asset-logo-bindings.json";
+import manifest from "./asset-logos.json";
 
 const btc = bindings.bindings.filter((row) => row.assetId === "crypto:BTC");
 const originals = btc.map((row) => ({ instrumentId: row.instrumentId, versionId: row.versionId }));
 
 describe("reviewed display asset identity", () => {
   it("uses the same local logo for reviewed originals across venues and reference views", () => {
-    const reference = resolveAssetLogo({ assetId: "crypto:BTC", originals });
-    expect(reference?.path).toMatch(/^\/asset-logos\//);
-    expect(btc).toHaveLength(3);
-    for (const original of btc) {
-      expect(resolveAssetLogo({ instrumentId: original.instrumentId, instrumentVersionId: original.versionId })).toEqual(reference);
+    for (const logo of manifest.logos) {
+      const assetOriginals = bindings.bindings.filter((row) => row.assetId === logo.assetId);
+      expect(assetOriginals.length, logo.assetId).toBeGreaterThan(0);
+      const reference = resolveAssetLogo({ assetId: logo.assetId, originals: assetOriginals });
+      expect(reference?.path, logo.assetId).toBe(logo.path);
+      for (const original of assetOriginals) {
+        expect(resolveAssetLogo({ instrumentId: original.instrumentId, instrumentVersionId: original.versionId })).toEqual(reference);
+      }
     }
   });
 
