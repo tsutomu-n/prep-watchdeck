@@ -3,6 +3,42 @@ import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
 const FIXTURE_NOW = Date.parse("2026-09-12T00:31:15Z");
 
+test("名簿の要確認と元取引所の価格欠測を分けて表示する", async ({ page }) => {
+  await prepare(page);
+  let status: "ready" | "review_required" | "source_stale" = "ready";
+  let qualityUnknown = false;
+  await page.route("**/api/rankings?**", async route => {
+    const payload = rankingFixture(new URL(route.request().url()).searchParams, FIXTURE_NOW - 15_000);
+    payload.rosterHealth.status = status;
+    payload.rosterHealth.marketDataIssueIds = status === "source_stale" || qualityUnknown ? null : ["aster:RLCUSDT"];
+    payload.rosterHealth.addedInstrumentIds = status === "review_required" ? ["aster:RLCUSDT"] : [];
+    payload.rosterHealth.changedInstrumentIds = status === "review_required" ? ["aster:DRVUSDT"] : [];
+    payload.rosterStale = status !== "ready";
+    await route.fulfill({ json: payload });
+  });
+  await page.goto("/rankings");
+  const notice = page.getByRole("complementary", { name: "取扱い名簿と価格データの状態" });
+  await expect(notice).toContainText("価格データに欠測・品質警告があります（1件）");
+  await expect(notice).not.toContainText("現在の上場状況は未確認");
+  await notice.getByText("価格データの確認対象", { exact: true }).click();
+  await expect(notice).toContainText("aster:RLCUSDT");
+  status = "review_required";
+  await page.reload();
+  await expect(notice).toContainText("追加 1件・削除 0件・契約変更 1件");
+  await notice.getByText("名簿の変更対象", { exact: true }).click();
+  await expect(notice).toContainText("aster:DRVUSDT");
+  status = "source_stale";
+  await page.reload();
+  await expect(notice).toContainText("取扱い名簿の取得元が期限切れです");
+  await expect(notice).not.toContainText("価格データに欠測");
+  status = "ready";
+  qualityUnknown = true;
+  await page.reload();
+  await expect(notice).toContainText("元取引所の価格データの品質は未確認です");
+  await expect(notice).not.toContainText("現在の上場状況は未確認");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
 async function showList(page: Page) {
   const back = page.getByRole("button", { name: "一覧へ戻る", exact: true });
   if (!await back.isVisible()) return false;

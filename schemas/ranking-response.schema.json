@@ -505,6 +505,100 @@
       "title": "Reference",
       "type": "object"
     },
+    "RosterHealth": {
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "enum": [
+            "ready",
+            "review_required",
+            "source_unavailable",
+            "source_stale",
+            "source_incomplete",
+            "source_invalid",
+            "unconfigured"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "catalogObservedAt": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Catalogobservedat"
+        },
+        "sourceInstruments": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourceinstruments"
+        },
+        "addedInstrumentIds": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Addedinstrumentids",
+          "type": "array"
+        },
+        "removedInstrumentIds": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Removedinstrumentids",
+          "type": "array"
+        },
+        "changedInstrumentIds": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Changedinstrumentids",
+          "type": "array"
+        },
+        "marketDataIssueIds": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Marketdataissueids"
+        }
+      },
+      "required": [
+        "status",
+        "catalogObservedAt",
+        "sourceInstruments",
+        "addedInstrumentIds",
+        "removedInstrumentIds",
+        "changedInstrumentIds",
+        "marketDataIssueIds"
+      ],
+      "title": "RosterHealth",
+      "type": "object"
+    },
     "TurnoverComparison": {
       "additionalProperties": false,
       "properties": {
@@ -647,8 +741,8 @@
   "additionalProperties": false,
   "properties": {
     "schemaVersion": {
-      "const": "ranking-v4",
-      "default": "ranking-v4",
+      "const": "ranking-v5",
+      "default": "ranking-v5",
       "title": "Schemaversion",
       "type": "string"
     },
@@ -681,6 +775,9 @@
     "rosterStale": {
       "title": "Rosterstale",
       "type": "boolean"
+    },
+    "rosterHealth": {
+      "$ref": "#/$defs/RosterHealth"
     },
     "stale": {
       "title": "Stale",
@@ -771,6 +868,7 @@
     "generatedAt",
     "rosterGeneratedAt",
     "rosterStale",
+    "rosterHealth",
     "stale",
     "status",
     "period",

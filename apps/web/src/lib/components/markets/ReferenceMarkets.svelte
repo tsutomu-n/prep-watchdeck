@@ -7,6 +7,7 @@
   import { DEFAULT_TURNOVER_DECIMALS, formatTurnover } from "$lib/market/turnover-format";
   import MarketPastNotesPanel from "$lib/components/universe/MarketPastNotesPanel.svelte";
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
+  import RosterNotice from "$lib/components/ranking/RosterNotice.svelte";
   import RelativeVolumeSignal from "$lib/components/ranking/RelativeVolumeSignal.svelte";
   import RelativeVolumeDetails from "$lib/components/ranking/RelativeVolumeDetails.svelte";
   import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
@@ -619,7 +620,7 @@
   {#if !query}<p class="notice" role="alert">売買代金の下限は0以上の数値を指定してください。</p>{/if}
   {#if error}<p class="notice" role="status">{error} <button type="button" onclick={() => query && refresh(query)}>再試行</button></p>{/if}
   {#if stale}<p class="notice" role="status">更新が停止しています。表示値は {data ? rankingTimestamp(data.cutoff) : ""} JST 時点です。</p>{/if}
-  {#if data?.rosterStale}<p class="notice">取扱い名簿の更新が止まっています。現在の上場状況は未確認です。</p>{/if}
+  {#if data}<RosterNotice {data} {now} />{/if}
   {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
 
   <div class="workspace">

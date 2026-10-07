@@ -1,6 +1,6 @@
 {
-  "mapVersion": "6954e4c861aafd485f43b65c",
-  "verifiedAt": 1791197928342,
+  "mapVersion": "c1381b1848be8f107fcacfea",
+  "verifiedAt": 1791376132384,
   "purpose": "Identity-only qualification. This file excludes market prices; index component prices are not used for rankings. Review rows are unresolved, not unsupported.",
   "catalogs": {
     "bybit": {
@@ -14885,7 +14885,7 @@
           "minNotionalValue": "5"
         },
         "unifiedMarginTrade": true,
-        "fundingInterval": 240,
+        "fundingInterval": 60,
         "settleCoin": "USDT",
         "copyTrading": "both",
         "upperFundingRate": "0.005",
@@ -17612,6 +17612,55 @@
         "underlyingTicker": "",
         "tags": []
       },
+      "RLCUSDT": {
+        "symbol": "RLCUSDT",
+        "contractType": "LinearPerpetual",
+        "status": "Trading",
+        "baseCoin": "RLC",
+        "quoteCoin": "USDT",
+        "launchTime": "1679468899000",
+        "deliveryTime": "0",
+        "deliveryFeeRate": "",
+        "priceScale": "4",
+        "leverageFilter": {
+          "minLeverage": "1",
+          "maxLeverage": "20.00",
+          "leverageStep": "0.01"
+        },
+        "priceFilter": {
+          "minPrice": "0.0001",
+          "maxPrice": "1999.9998",
+          "tickSize": "0.0001"
+        },
+        "lotSizeFilter": {
+          "maxOrderQty": "86380.0",
+          "minOrderQty": "0.1",
+          "qtyStep": "0.1",
+          "postOnlyMaxOrderQty": "86380.0",
+          "maxMktOrderQty": "8640.0",
+          "minNotionalValue": "5"
+        },
+        "unifiedMarginTrade": true,
+        "fundingInterval": 480,
+        "settleCoin": "USDT",
+        "copyTrading": "both",
+        "upperFundingRate": "0.025",
+        "lowerFundingRate": "-0.025",
+        "isPreListing": false,
+        "preListingInfo": null,
+        "riskParameters": {
+          "priceLimitRatioX": "0.1",
+          "priceLimitRatioY": "0.2"
+        },
+        "displayName": "RLCUSDT",
+        "symbolType": "",
+        "forbidUplWithdrawal": false,
+        "symbolId": 304,
+        "fullName": "iExec RLC",
+        "marketRegion": "",
+        "underlyingTicker": "",
+        "tags": []
+      },
       "ROBOUSDT": {
         "symbol": "ROBOUSDT",
         "contractType": "LinearPerpetual",
@@ -18135,7 +18184,7 @@
           "minNotionalValue": "5"
         },
         "unifiedMarginTrade": true,
-        "fundingInterval": 60,
+        "fundingInterval": 480,
         "settleCoin": "USDT",
         "copyTrading": "both",
         "upperFundingRate": "0.0033",
@@ -23794,16 +23843,16 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "tickSize": "0.0000001",
             "minPrice": "0.0000010",
+            "tickSize": "0.0000001",
             "filterType": "PRICE_FILTER",
             "maxPrice": "200"
           },
           {
-            "filterType": "LOT_SIZE",
-            "maxQty": "700000000",
             "minQty": "1",
-            "stepSize": "1"
+            "stepSize": "1",
+            "filterType": "LOT_SIZE",
+            "maxQty": "700000000"
           },
           {
             "maxQty": "200000000",
@@ -23812,18 +23861,18 @@
             "minQty": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
+            "multiplierDecimal": "4",
             "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
-            "multiplierDown": "0.8500",
-            "multiplierDecimal": "4"
+            "multiplierDown": "0.8500"
           },
           {
             "positionControlSide": "NONE",
@@ -23880,36 +23929,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
             "minPrice": "0.0000010",
-            "tickSize": "0.0000010",
-            "filterType": "PRICE_FILTER"
+            "maxPrice": "200",
+            "filterType": "PRICE_FILTER",
+            "tickSize": "0.0000010"
           },
           {
-            "minQty": "1",
-            "maxQty": "10000000",
-            "filterType": "LOT_SIZE",
-            "stepSize": "1"
-          },
-          {
-            "minQty": "1",
-            "filterType": "MARKET_LOT_SIZE",
             "stepSize": "1",
-            "maxQty": "4000000"
+            "minQty": "1",
+            "filterType": "LOT_SIZE",
+            "maxQty": "10000000"
+          },
+          {
+            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "4000000",
+            "minQty": "1",
+            "stepSize": "1"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
             "limit": 200
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
-            "multiplierUp": "1.1500",
             "multiplierDecimal": "4",
-            "multiplierDown": "0.8500",
-            "filterType": "PERCENT_PRICE"
+            "multiplierUp": "1.1500",
+            "filterType": "PERCENT_PRICE",
+            "multiplierDown": "0.8500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -23972,14 +24021,14 @@
             "maxPrice": "200"
           },
           {
-            "stepSize": "1",
-            "maxQty": "10000000",
             "filterType": "LOT_SIZE",
+            "maxQty": "10000000",
+            "stepSize": "1",
             "minQty": "1"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
             "maxQty": "1000000",
+            "filterType": "MARKET_LOT_SIZE",
             "minQty": "1",
             "stepSize": "1"
           },
@@ -23988,18 +24037,18 @@
             "limit": 200
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
-            "filterType": "PERCENT_PRICE",
-            "multiplierDecimal": "4",
             "multiplierUp": "1.1500",
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.8500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -24053,34 +24102,34 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "tickSize": "0.0000100",
-            "filterType": "PRICE_FILTER",
             "maxPrice": "200",
+            "filterType": "PRICE_FILTER",
+            "tickSize": "0.0000100",
             "minPrice": "0.0000100"
           },
           {
-            "filterType": "LOT_SIZE",
-            "stepSize": "1",
             "maxQty": "20000000",
+            "filterType": "LOT_SIZE",
+            "minQty": "1",
+            "stepSize": "1"
+          },
+          {
+            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "2000000",
+            "stepSize": "1",
             "minQty": "1"
           },
           {
-            "maxQty": "2000000",
-            "minQty": "1",
-            "stepSize": "1",
-            "filterType": "MARKET_LOT_SIZE"
-          },
-          {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "notional": "5",
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.8500",
+            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
             "multiplierDecimal": "4"
           },
@@ -24139,40 +24188,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000100",
-            "tickSize": "0.0000100",
             "maxPrice": "200",
-            "filterType": "PRICE_FILTER"
+            "filterType": "PRICE_FILTER",
+            "minPrice": "0.0000100",
+            "tickSize": "0.0000100"
           },
           {
-            "maxQty": "20000000",
-            "minQty": "1",
             "stepSize": "1",
-            "filterType": "LOT_SIZE"
+            "minQty": "1",
+            "filterType": "LOT_SIZE",
+            "maxQty": "20000000"
           },
           {
-            "minQty": "1",
-            "stepSize": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "2000000"
+            "maxQty": "2000000",
+            "minQty": "1",
+            "stepSize": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
-            "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1500",
             "multiplierDown": "0.8500",
+            "multiplierUp": "1.1500",
+            "filterType": "PERCENT_PRICE",
             "multiplierDecimal": "4"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -24225,36 +24274,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000010",
             "tickSize": "0.0000010",
             "maxPrice": "200",
+            "minPrice": "0.0000010",
             "filterType": "PRICE_FILTER"
           },
           {
+            "stepSize": "1",
             "filterType": "LOT_SIZE",
             "maxQty": "7000000",
-            "stepSize": "1",
             "minQty": "1"
           },
           {
+            "minQty": "1",
             "maxQty": "3000000",
             "filterType": "MARKET_LOT_SIZE",
-            "stepSize": "1",
-            "minQty": "1"
+            "stepSize": "1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
+            "multiplierDecimal": "4",
             "multiplierUp": "1.1500",
             "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.8500",
-            "multiplierDecimal": "4"
+            "multiplierDown": "0.8500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -24311,22 +24360,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "10",
-            "filterType": "PRICE_FILTER",
             "maxPrice": "200000",
+            "filterType": "PRICE_FILTER",
+            "minPrice": "10",
             "tickSize": "0.1"
           },
           {
-            "stepSize": "0.001",
             "minQty": "0.001",
             "maxQty": "300",
+            "stepSize": "0.001",
             "filterType": "LOT_SIZE"
           },
           {
-            "stepSize": "0.001",
-            "minQty": "0.001",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "50"
+            "stepSize": "0.001",
+            "maxQty": "50",
+            "minQty": "0.001"
           },
           {
             "limit": 200,
@@ -24337,10 +24386,10 @@
             "notional": "5"
           },
           {
-            "multiplierUp": "1.1000",
             "multiplierDecimal": "4",
             "multiplierDown": "0.9000",
-            "filterType": "PERCENT_PRICE"
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.1000"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -24397,22 +24446,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "minPrice": "0.0000100",
             "maxPrice": "200",
-            "tickSize": "0.0000100"
+            "tickSize": "0.0000100",
+            "filterType": "PRICE_FILTER"
           },
           {
             "minQty": "1",
-            "stepSize": "1",
             "filterType": "LOT_SIZE",
-            "maxQty": "10000000"
+            "maxQty": "10000000",
+            "stepSize": "1"
           },
           {
-            "stepSize": "1",
-            "filterType": "MARKET_LOT_SIZE",
             "maxQty": "5000000",
-            "minQty": "1"
+            "minQty": "1",
+            "stepSize": "1",
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
@@ -24423,14 +24472,14 @@
             "notional": "5"
           },
           {
-            "multiplierDecimal": "4",
             "multiplierUp": "1.2500",
-            "multiplierDown": "0.7500",
-            "filterType": "PERCENT_PRICE"
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
+            "multiplierDown": "0.7500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -24484,39 +24533,39 @@
         "filters": [
           {
             "maxPrice": "200",
-            "tickSize": "0.0000010",
+            "filterType": "PRICE_FILTER",
             "minPrice": "0.0000010",
-            "filterType": "PRICE_FILTER"
+            "tickSize": "0.0000010"
           },
           {
+            "minQty": "1",
             "maxQty": "400000000",
-            "stepSize": "1",
             "filterType": "LOT_SIZE",
-            "minQty": "1"
+            "stepSize": "1"
           },
           {
-            "maxQty": "40000000",
             "filterType": "MARKET_LOT_SIZE",
-            "stepSize": "1",
-            "minQty": "1"
+            "minQty": "1",
+            "maxQty": "40000000",
+            "stepSize": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
-            "multiplierDown": "0.9000",
-            "multiplierDecimal": "4",
             "multiplierUp": "1.1000",
-            "filterType": "PERCENT_PRICE"
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
+            "multiplierDown": "0.9000"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -24569,36 +24618,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "tickSize": "0.0000100",
             "filterType": "PRICE_FILTER",
-            "maxPrice": "200",
-            "minPrice": "0.0000100"
+            "tickSize": "0.0000100",
+            "minPrice": "0.0000100",
+            "maxPrice": "200"
           },
           {
-            "maxQty": "20000000",
-            "filterType": "LOT_SIZE",
+            "minQty": "1",
             "stepSize": "1",
-            "minQty": "1"
+            "filterType": "LOT_SIZE",
+            "maxQty": "20000000"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
             "stepSize": "1",
             "minQty": "1",
-            "maxQty": "3000000"
+            "maxQty": "3000000",
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1500",
             "multiplierDecimal": "4",
-            "multiplierDown": "0.8500"
+            "multiplierUp": "1.1500",
+            "multiplierDown": "0.8500",
+            "filterType": "PERCENT_PRICE"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -24656,36 +24705,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "tickSize": "0.0001000",
+            "filterType": "PRICE_FILTER",
             "minPrice": "0.0001000",
             "maxPrice": "200"
           },
           {
-            "stepSize": "1",
-            "minQty": "1",
             "filterType": "LOT_SIZE",
-            "maxQty": "6000000"
-          },
-          {
-            "maxQty": "600000",
             "stepSize": "1",
-            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "6000000",
             "minQty": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "minQty": "1",
+            "stepSize": "1",
+            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "600000"
+          },
+          {
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "notional": "5",
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "multiplierUp": "1.1500",
             "multiplierDown": "0.8500",
+            "multiplierDecimal": "4",
             "filterType": "PERCENT_PRICE",
-            "multiplierDecimal": "4"
+            "multiplierUp": "1.1500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -24742,21 +24791,21 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
-            "tickSize": "0.0000100",
+            "minPrice": "0.0000100",
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000100"
+            "tickSize": "0.0000100",
+            "maxPrice": "200"
           },
           {
+            "maxQty": "30000000",
             "stepSize": "1",
-            "filterType": "LOT_SIZE",
             "minQty": "1",
-            "maxQty": "30000000"
+            "filterType": "LOT_SIZE"
           },
           {
-            "stepSize": "1",
             "maxQty": "3000000",
             "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1",
             "minQty": "1"
           },
           {
@@ -24764,18 +24813,18 @@
             "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
             "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1000",
             "multiplierDown": "0.9000",
+            "multiplierUp": "1.1000",
             "multiplierDecimal": "4"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -24828,10 +24877,10 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
+            "maxPrice": "1",
             "minPrice": "0.00000001",
             "tickSize": "0.00000001",
-            "filterType": "PRICE_FILTER",
-            "maxPrice": "1"
+            "filterType": "PRICE_FILTER"
           },
           {
             "filterType": "LOT_SIZE",
@@ -24840,10 +24889,10 @@
             "maxQty": "20000000000"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "2000000000",
             "minQty": "1",
-            "stepSize": "1"
+            "stepSize": "1",
+            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "2000000000"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
@@ -24854,10 +24903,10 @@
             "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
             "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.1500",
             "multiplierDecimal": "4",
-            "multiplierUp": "1.1500"
+            "multiplierDown": "0.8500"
           },
           {
             "positionControlSide": "NONE",
@@ -24914,22 +24963,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
+            "tickSize": "0.000100",
             "maxPrice": "2000",
             "minPrice": "0.001000",
-            "tickSize": "0.000100"
+            "filterType": "PRICE_FILTER"
           },
           {
+            "filterType": "LOT_SIZE",
+            "stepSize": "1",
             "minQty": "1",
-            "stepSize": "1",
-            "maxQty": "3000000",
-            "filterType": "LOT_SIZE"
+            "maxQty": "3000000"
           },
           {
-            "stepSize": "1",
             "filterType": "MARKET_LOT_SIZE",
             "minQty": "1",
-            "maxQty": "300000"
+            "maxQty": "300000",
+            "stepSize": "1"
           },
           {
             "limit": 200,
@@ -24941,13 +24990,13 @@
           },
           {
             "multiplierDown": "0.8500",
-            "multiplierDecimal": "4",
             "multiplierUp": "1.1500",
-            "filterType": "PERCENT_PRICE"
+            "filterType": "PERCENT_PRICE",
+            "multiplierDecimal": "4"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -25000,40 +25049,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "minPrice": "0.0001000",
-            "tickSize": "0.0001000",
-            "maxPrice": "200"
+            "filterType": "PRICE_FILTER",
+            "maxPrice": "200",
+            "tickSize": "0.0001000"
           },
           {
-            "minQty": "1",
+            "maxQty": "10000000",
             "filterType": "LOT_SIZE",
-            "stepSize": "1",
-            "maxQty": "10000000"
-          },
-          {
-            "maxQty": "700000",
-            "filterType": "MARKET_LOT_SIZE",
             "stepSize": "1",
             "minQty": "1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "maxQty": "700000",
+            "stepSize": "1",
+            "filterType": "MARKET_LOT_SIZE",
+            "minQty": "1"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
+          },
+          {
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
             "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.9000",
             "multiplierUp": "1.1000",
+            "multiplierDown": "0.9000",
             "multiplierDecimal": "4"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -25086,9 +25135,9 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "tickSize": "0.0001000",
             "minPrice": "0.0001000",
+            "filterType": "PRICE_FILTER",
             "maxPrice": "200"
           },
           {
@@ -25112,14 +25161,14 @@
             "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
             "filterType": "PERCENT_PRICE",
+            "multiplierDown": "0.8500",
             "multiplierUp": "1.1500",
             "multiplierDecimal": "4"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -25173,26 +25222,26 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
+            "maxPrice": "200",
             "minPrice": "0.000010",
-            "tickSize": "0.000010",
             "filterType": "PRICE_FILTER",
-            "maxPrice": "200"
+            "tickSize": "0.000010"
           },
           {
             "maxQty": "6000000",
             "filterType": "LOT_SIZE",
-            "stepSize": "0.1",
-            "minQty": "0.1"
-          },
-          {
-            "filterType": "MARKET_LOT_SIZE",
             "minQty": "0.1",
-            "stepSize": "0.1",
-            "maxQty": "600000"
+            "stepSize": "0.1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "maxQty": "600000",
+            "minQty": "0.1",
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "0.1"
+          },
+          {
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "filterType": "MIN_NOTIONAL",
@@ -25200,13 +25249,13 @@
           },
           {
             "multiplierUp": "1.1000",
+            "multiplierDown": "0.9000",
             "multiplierDecimal": "4",
-            "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.9000"
+            "filterType": "PERCENT_PRICE"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -25259,36 +25308,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000100",
-            "filterType": "PRICE_FILTER",
             "maxPrice": "200",
-            "tickSize": "0.0000100"
+            "minPrice": "0.0000100",
+            "tickSize": "0.0000100",
+            "filterType": "PRICE_FILTER"
           },
           {
+            "minQty": "1",
             "filterType": "LOT_SIZE",
             "maxQty": "8000000",
-            "stepSize": "1",
-            "minQty": "1"
+            "stepSize": "1"
           },
           {
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "1100000",
             "minQty": "1",
-            "stepSize": "1"
+            "stepSize": "1",
+            "maxQty": "1100000"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
             "limit": 200
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
             "multiplierDecimal": "4",
             "multiplierDown": "0.8000",
-            "multiplierUp": "1.2000",
-            "filterType": "PERCENT_PRICE"
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.2000"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -25346,22 +25395,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
+            "filterType": "PRICE_FILTER",
             "maxPrice": "200",
             "minPrice": "0.0000010",
-            "filterType": "PRICE_FILTER",
             "tickSize": "0.0000010"
           },
           {
-            "maxQty": "200000000",
             "stepSize": "1",
+            "minQty": "1",
             "filterType": "LOT_SIZE",
-            "minQty": "1"
+            "maxQty": "200000000"
           },
           {
             "maxQty": "20000000",
             "stepSize": "1",
-            "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1"
+            "minQty": "1",
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
             "limit": 200,
@@ -25372,10 +25421,10 @@
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.8500",
             "multiplierUp": "1.1500",
-            "multiplierDecimal": "4"
+            "filterType": "PERCENT_PRICE",
+            "multiplierDecimal": "4",
+            "multiplierDown": "0.8500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -25432,40 +25481,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
             "filterType": "PRICE_FILTER",
-            "tickSize": "0.0000001",
-            "minPrice": "0.0000001"
+            "minPrice": "0.0000001",
+            "maxPrice": "200",
+            "tickSize": "0.0000001"
           },
           {
-            "minQty": "1",
             "filterType": "LOT_SIZE",
-            "stepSize": "1",
-            "maxQty": "2000000000"
-          },
-          {
-            "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "200000000",
+            "maxQty": "2000000000",
             "stepSize": "1",
             "minQty": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "minQty": "1",
+            "maxQty": "200000000",
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
+          },
+          {
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
             "multiplierUp": "1.1000",
-            "multiplierDecimal": "4",
             "multiplierDown": "0.9000",
-            "filterType": "PERCENT_PRICE"
+            "filterType": "PERCENT_PRICE",
+            "multiplierDecimal": "4"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -25518,36 +25567,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "tickSize": "0.0000100",
-            "maxPrice": "200",
             "filterType": "PRICE_FILTER",
+            "maxPrice": "200",
+            "tickSize": "0.0000100",
             "minPrice": "0.0000100"
           },
           {
-            "stepSize": "1",
-            "maxQty": "60000000",
             "filterType": "LOT_SIZE",
+            "maxQty": "60000000",
+            "stepSize": "1",
             "minQty": "1"
           },
           {
+            "minQty": "1",
             "maxQty": "6000000",
             "stepSize": "1",
-            "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1"
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
-            "multiplierDown": "0.8500",
+            "multiplierUp": "1.1500",
             "multiplierDecimal": "4",
-            "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1500"
+            "multiplierDown": "0.8500",
+            "filterType": "PERCENT_PRICE"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -25604,40 +25653,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0001000",
             "filterType": "PRICE_FILTER",
-            "tickSize": "0.0000100",
-            "maxPrice": "200"
+            "minPrice": "0.0001000",
+            "maxPrice": "200",
+            "tickSize": "0.0000100"
           },
           {
-            "stepSize": "1",
-            "filterType": "LOT_SIZE",
-            "maxQty": "30000000",
-            "minQty": "1"
-          },
-          {
-            "filterType": "MARKET_LOT_SIZE",
             "minQty": "1",
-            "maxQty": "3000000",
+            "maxQty": "30000000",
+            "filterType": "LOT_SIZE",
             "stepSize": "1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "maxQty": "3000000",
+            "minQty": "1",
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1"
+          },
+          {
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "filterType": "MIN_NOTIONAL",
             "notional": "5"
           },
           {
-            "multiplierDecimal": "4",
             "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1500",
-            "multiplierDown": "0.8500"
+            "multiplierDown": "0.8500",
+            "multiplierDecimal": "4",
+            "multiplierUp": "1.1500"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -25690,22 +25739,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
-            "tickSize": "0.0000010",
+            "minPrice": "0.0000010",
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000010"
+            "maxPrice": "200",
+            "tickSize": "0.0000010"
           },
           {
+            "maxQty": "60000000",
             "filterType": "LOT_SIZE",
             "minQty": "1",
-            "maxQty": "60000000",
             "stepSize": "1"
           },
           {
             "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "6000000",
-            "stepSize": "1"
+            "stepSize": "1",
+            "maxQty": "6000000"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
@@ -25716,10 +25765,10 @@
             "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
-            "multiplierUp": "1.1500",
+            "multiplierDecimal": "4",
             "filterType": "PERCENT_PRICE",
-            "multiplierDecimal": "4"
+            "multiplierDown": "0.8500",
+            "multiplierUp": "1.1500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -25776,36 +25825,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.000010",
-            "tickSize": "0.000010"
+            "maxPrice": "200",
+            "tickSize": "0.000010",
+            "minPrice": "0.000010"
           },
           {
-            "filterType": "LOT_SIZE",
             "stepSize": "0.1",
             "minQty": "0.1",
+            "filterType": "LOT_SIZE",
             "maxQty": "9000000"
           },
           {
             "filterType": "MARKET_LOT_SIZE",
+            "minQty": "0.1",
             "maxQty": "900000",
-            "stepSize": "0.1",
-            "minQty": "0.1"
+            "stepSize": "0.1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
             "multiplierDecimal": "4",
+            "multiplierUp": "1.1500",
             "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.8500",
-            "multiplierUp": "1.1500"
+            "multiplierDown": "0.8500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -25874,28 +25923,28 @@
             "minQty": "1"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "1100000",
             "minQty": "1",
             "stepSize": "1",
-            "maxQty": "1100000"
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
             "limit": 200,
             "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
+            "multiplierUp": "1.1500",
             "filterType": "PERCENT_PRICE",
             "multiplierDecimal": "4",
-            "multiplierUp": "1.1500"
+            "multiplierDown": "0.8500"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -25948,22 +25997,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "tickSize": "0.0000010",
+            "filterType": "PRICE_FILTER",
             "minPrice": "0.0000010",
-            "maxPrice": "200",
-            "filterType": "PRICE_FILTER"
+            "tickSize": "0.0000010",
+            "maxPrice": "200"
           },
           {
+            "maxQty": "70000000",
             "filterType": "LOT_SIZE",
             "minQty": "1",
-            "stepSize": "1",
-            "maxQty": "70000000"
+            "stepSize": "1"
           },
           {
-            "stepSize": "1",
+            "filterType": "MARKET_LOT_SIZE",
             "minQty": "1",
             "maxQty": "13000000",
-            "filterType": "MARKET_LOT_SIZE"
+            "stepSize": "1"
           },
           {
             "limit": 200,
@@ -25974,14 +26023,14 @@
             "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
-            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
-            "filterType": "PERCENT_PRICE"
+            "multiplierDecimal": "4",
+            "multiplierDown": "0.8500"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -26036,25 +26085,25 @@
         "filters": [
           {
             "minPrice": "0.0000001",
-            "filterType": "PRICE_FILTER",
             "tickSize": "0.0000001",
+            "filterType": "PRICE_FILTER",
             "maxPrice": "200"
           },
           {
+            "maxQty": "800000000",
             "minQty": "1",
             "stepSize": "1",
-            "filterType": "LOT_SIZE",
-            "maxQty": "800000000"
+            "filterType": "LOT_SIZE"
           },
           {
             "maxQty": "80000000",
-            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1",
             "minQty": "1",
-            "stepSize": "1"
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "filterType": "MIN_NOTIONAL",
@@ -26062,9 +26111,9 @@
           },
           {
             "filterType": "PERCENT_PRICE",
-            "multiplierDecimal": "4",
             "multiplierUp": "1.1000",
-            "multiplierDown": "0.9000"
+            "multiplierDown": "0.9000",
+            "multiplierDecimal": "4"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -26122,20 +26171,20 @@
         "filters": [
           {
             "filterType": "PRICE_FILTER",
-            "tickSize": "0.0001000",
             "minPrice": "0.0001000",
-            "maxPrice": "200"
+            "maxPrice": "200",
+            "tickSize": "0.0001000"
           },
           {
+            "maxQty": "2000000",
             "minQty": "1",
             "stepSize": "1",
-            "maxQty": "2000000",
             "filterType": "LOT_SIZE"
           },
           {
-            "stepSize": "1",
-            "maxQty": "800000",
             "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "800000",
+            "stepSize": "1",
             "minQty": "1"
           },
           {
@@ -26147,14 +26196,14 @@
             "notional": "5"
           },
           {
+            "multiplierDecimal": "4",
             "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
-            "multiplierDown": "0.8500",
-            "multiplierDecimal": "4"
+            "multiplierDown": "0.8500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -26207,36 +26256,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "minPrice": "0.0010000",
+            "filterType": "PRICE_FILTER",
             "tickSize": "0.0010000",
             "maxPrice": "200"
           },
           {
-            "filterType": "LOT_SIZE",
             "maxQty": "300000",
-            "minQty": "0.1",
-            "stepSize": "0.1"
+            "filterType": "LOT_SIZE",
+            "stepSize": "0.1",
+            "minQty": "0.1"
           },
           {
-            "maxQty": "50000",
+            "filterType": "MARKET_LOT_SIZE",
             "stepSize": "0.1",
             "minQty": "0.1",
-            "filterType": "MARKET_LOT_SIZE"
+            "maxQty": "50000"
           },
           {
             "limit": 200,
             "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
             "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1500",
-            "multiplierDecimal": "4"
+            "multiplierDecimal": "4",
+            "multiplierDown": "0.8500",
+            "multiplierUp": "1.1500"
           },
           {
             "positionControlSide": "NONE",
@@ -26295,24 +26344,24 @@
           {
             "maxPrice": "200",
             "tickSize": "0.0000010",
-            "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000010"
+            "minPrice": "0.0000010",
+            "filterType": "PRICE_FILTER"
           },
           {
             "filterType": "LOT_SIZE",
-            "stepSize": "1",
-            "maxQty": "900000000",
-            "minQty": "1"
-          },
-          {
-            "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "90000000",
             "minQty": "1",
+            "maxQty": "900000000",
             "stepSize": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "filterType": "MARKET_LOT_SIZE",
+            "minQty": "1",
+            "maxQty": "90000000",
+            "stepSize": "1"
+          },
+          {
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "notional": "5",
@@ -26381,20 +26430,20 @@
           {
             "tickSize": "0.0000100",
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000100",
-            "maxPrice": "200"
+            "maxPrice": "200",
+            "minPrice": "0.0000100"
           },
           {
+            "stepSize": "1",
             "maxQty": "6000000",
             "filterType": "LOT_SIZE",
-            "minQty": "1",
-            "stepSize": "1"
+            "minQty": "1"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1",
             "stepSize": "1",
-            "maxQty": "2000000"
+            "minQty": "1",
+            "maxQty": "2000000",
+            "filterType": "MARKET_LOT_SIZE"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
@@ -26405,14 +26454,14 @@
             "notional": "5"
           },
           {
-            "multiplierUp": "1.1500",
             "multiplierDecimal": "4",
+            "multiplierDown": "0.8500",
             "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.8500"
+            "multiplierUp": "1.1500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -26464,40 +26513,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
+            "filterType": "PRICE_FILTER",
             "tickSize": "0.0001000",
             "minPrice": "0.0001000",
-            "maxPrice": "20",
-            "filterType": "PRICE_FILTER"
+            "maxPrice": "20"
           },
           {
-            "filterType": "LOT_SIZE",
-            "maxQty": "900000",
-            "minQty": "0.1",
-            "stepSize": "0.1"
-          },
-          {
-            "minQty": "0.1",
-            "maxQty": "90000",
             "stepSize": "0.1",
-            "filterType": "MARKET_LOT_SIZE"
+            "maxQty": "900000",
+            "filterType": "LOT_SIZE",
+            "minQty": "0.1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "0.1",
+            "minQty": "0.1",
+            "maxQty": "90000"
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
+          },
+          {
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
             "multiplierDecimal": "4",
             "multiplierDown": "0.8500",
-            "multiplierUp": "1.1500",
-            "filterType": "PERCENT_PRICE"
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.1500"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -26551,39 +26600,39 @@
         "filters": [
           {
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000100",
+            "maxPrice": "200",
             "tickSize": "0.0000100",
-            "maxPrice": "200"
+            "minPrice": "0.0000100"
           },
           {
+            "maxQty": "20000000",
             "stepSize": "1",
             "minQty": "1",
-            "filterType": "LOT_SIZE",
-            "maxQty": "20000000"
+            "filterType": "LOT_SIZE"
           },
           {
             "filterType": "MARKET_LOT_SIZE",
             "stepSize": "1",
-            "maxQty": "2000000",
-            "minQty": "1"
+            "minQty": "1",
+            "maxQty": "2000000"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "filterType": "MIN_NOTIONAL",
             "notional": "5"
           },
           {
+            "multiplierUp": "1.1500",
             "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.8500",
-            "multiplierUp": "1.1500",
             "multiplierDecimal": "4"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -26636,40 +26685,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "tickSize": "0.0001",
-            "maxPrice": "100000",
-            "minPrice": "0.0001"
-          },
-          {
-            "maxQty": "2000000",
-            "filterType": "LOT_SIZE",
-            "stepSize": "1",
-            "minQty": "1"
+            "filterType": "PRICE_FILTER",
+            "minPrice": "0.0001",
+            "maxPrice": "100000"
           },
           {
             "minQty": "1",
+            "filterType": "LOT_SIZE",
+            "maxQty": "2000000",
+            "stepSize": "1"
+          },
+          {
             "maxQty": "400000",
+            "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
             "stepSize": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "notional": "5",
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1000",
-            "multiplierDown": "0.9000",
-            "multiplierDecimal": "4"
+            "filterType": "PERCENT_PRICE",
+            "multiplierDecimal": "4",
+            "multiplierDown": "0.9000"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -26722,22 +26771,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
-            "minPrice": "0.0000100",
+            "filterType": "PRICE_FILTER",
             "tickSize": "0.0000100",
-            "filterType": "PRICE_FILTER"
+            "minPrice": "0.0000100",
+            "maxPrice": "200"
           },
           {
-            "maxQty": "15000000",
             "stepSize": "1",
             "filterType": "LOT_SIZE",
+            "maxQty": "15000000",
             "minQty": "1"
           },
           {
             "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1",
             "maxQty": "3000000",
-            "stepSize": "1"
+            "stepSize": "1",
+            "minQty": "1"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
@@ -26748,14 +26797,14 @@
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "multiplierDown": "0.8500",
-            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
-            "multiplierDecimal": "4"
+            "multiplierDown": "0.8500",
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -26808,36 +26857,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000010",
             "filterType": "PRICE_FILTER",
+            "minPrice": "0.0000010",
             "maxPrice": "200",
             "tickSize": "0.0000010"
           },
           {
             "filterType": "LOT_SIZE",
-            "maxQty": "300000000",
             "minQty": "1",
-            "stepSize": "1"
+            "stepSize": "1",
+            "maxQty": "300000000"
           },
           {
+            "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "30000000",
             "stepSize": "1",
-            "minQty": "1"
+            "maxQty": "30000000"
           },
           {
             "limit": 200,
             "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
+            "multiplierUp": "1.1500",
             "multiplierDown": "0.8500",
-            "filterType": "PERCENT_PRICE",
             "multiplierDecimal": "4",
-            "multiplierUp": "1.1500"
+            "filterType": "PERCENT_PRICE"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -26894,26 +26943,26 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "100",
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000010",
-            "tickSize": "0.0000001"
+            "maxPrice": "100",
+            "tickSize": "0.0000001",
+            "minPrice": "0.0000010"
           },
           {
+            "minQty": "1",
             "filterType": "LOT_SIZE",
             "stepSize": "1",
-            "minQty": "1",
             "maxQty": "7000000000"
           },
           {
+            "stepSize": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "700000000",
             "minQty": "1",
-            "stepSize": "1"
+            "maxQty": "700000000"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "filterType": "MIN_NOTIONAL",
@@ -26922,12 +26971,12 @@
           {
             "multiplierDecimal": "4",
             "multiplierDown": "0.9000",
-            "multiplierUp": "1.1000",
-            "filterType": "PERCENT_PRICE"
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.1000"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -26980,36 +27029,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "tickSize": "0.0000100",
             "maxPrice": "200",
+            "minPrice": "0.0000100",
             "filterType": "PRICE_FILTER",
-            "minPrice": "0.0000100"
-          },
-          {
-            "minQty": "1",
-            "maxQty": "3000000",
-            "filterType": "LOT_SIZE",
-            "stepSize": "1"
+            "tickSize": "0.0000100"
           },
           {
             "stepSize": "1",
-            "maxQty": "1100000",
+            "minQty": "1",
+            "maxQty": "3000000",
+            "filterType": "LOT_SIZE"
+          },
+          {
+            "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1"
+            "maxQty": "1100000",
+            "stepSize": "1"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
             "limit": 200
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
-            "filterType": "PERCENT_PRICE",
+            "multiplierDecimal": "4",
             "multiplierUp": "1.1500",
-            "multiplierDecimal": "4"
+            "multiplierDown": "0.8500",
+            "filterType": "PERCENT_PRICE"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -27069,34 +27118,34 @@
           {
             "filterType": "PRICE_FILTER",
             "maxPrice": "200",
-            "minPrice": "0.0000010",
-            "tickSize": "0.0000010"
+            "tickSize": "0.0000010",
+            "minPrice": "0.0000010"
           },
           {
-            "maxQty": "60000000",
-            "stepSize": "1",
-            "filterType": "LOT_SIZE",
-            "minQty": "1"
-          },
-          {
-            "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "6000000",
             "minQty": "1",
+            "maxQty": "60000000",
+            "filterType": "LOT_SIZE",
             "stepSize": "1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MARKET_LOT_SIZE",
+            "minQty": "1",
+            "maxQty": "6000000",
+            "stepSize": "1"
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
-            "multiplierUp": "1.1500",
-            "multiplierDecimal": "4",
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
+          },
+          {
             "multiplierDown": "0.8500",
-            "filterType": "PERCENT_PRICE"
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.1500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -27153,36 +27202,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
+            "minPrice": "0.0000100",
             "maxPrice": "200",
             "tickSize": "0.0000100",
-            "minPrice": "0.0000100"
-          },
-          {
-            "minQty": "1",
-            "maxQty": "7000000",
-            "filterType": "LOT_SIZE",
-            "stepSize": "1"
+            "filterType": "PRICE_FILTER"
           },
           {
             "minQty": "1",
             "stepSize": "1",
+            "maxQty": "7000000",
+            "filterType": "LOT_SIZE"
+          },
+          {
+            "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "1200000"
+            "maxQty": "1200000",
+            "stepSize": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
-            "filterType": "MIN_NOTIONAL",
-            "notional": "5"
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
+            "multiplierDown": "0.8500",
             "multiplierDecimal": "4",
-            "multiplierDown": "0.8500"
+            "filterType": "PERCENT_PRICE"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -27239,10 +27288,10 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
             "tickSize": "0.0000001",
+            "maxPrice": "200",
             "minPrice": "0.0000001",
-            "maxPrice": "200"
+            "filterType": "PRICE_FILTER"
           },
           {
             "stepSize": "1",
@@ -27251,24 +27300,24 @@
             "maxQty": "500000000"
           },
           {
+            "maxQty": "80000000",
             "stepSize": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1",
-            "maxQty": "80000000"
+            "minQty": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "filterType": "MIN_NOTIONAL",
             "notional": "5"
           },
           {
-            "filterType": "PERCENT_PRICE",
+            "multiplierDecimal": "4",
             "multiplierDown": "0.8500",
-            "multiplierUp": "1.1500",
-            "multiplierDecimal": "4"
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.1500"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -27325,40 +27374,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "filterType": "PRICE_FILTER",
-            "maxPrice": "200",
+            "minPrice": "0.0000100",
             "tickSize": "0.0000100",
-            "minPrice": "0.0000100"
+            "maxPrice": "200",
+            "filterType": "PRICE_FILTER"
           },
           {
             "filterType": "LOT_SIZE",
+            "stepSize": "1",
             "minQty": "1",
-            "maxQty": "10000000",
+            "maxQty": "10000000"
+          },
+          {
+            "minQty": "1",
+            "maxQty": "2100000",
+            "filterType": "MARKET_LOT_SIZE",
             "stepSize": "1"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
-            "stepSize": "1",
-            "maxQty": "2100000",
-            "minQty": "1"
-          },
-          {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "filterType": "MIN_NOTIONAL",
             "notional": "5"
           },
           {
+            "filterType": "PERCENT_PRICE",
             "multiplierDecimal": "4",
-            "multiplierUp": "1.1500",
             "multiplierDown": "0.8500",
-            "filterType": "PERCENT_PRICE"
+            "multiplierUp": "1.1500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -27417,15 +27466,15 @@
             "tickSize": "0.0000001"
           },
           {
-            "stepSize": "1",
             "maxQty": "2500000000",
             "filterType": "LOT_SIZE",
+            "stepSize": "1",
             "minQty": "1"
           },
           {
-            "stepSize": "1",
-            "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
+            "minQty": "1",
+            "stepSize": "1",
             "maxQty": "600000000"
           },
           {
@@ -27433,18 +27482,18 @@
             "limit": 200
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
-            "filterType": "PERCENT_PRICE",
-            "multiplierUp": "1.1500",
+            "multiplierDecimal": "4",
             "multiplierDown": "0.8500",
-            "multiplierDecimal": "4"
+            "multiplierUp": "1.1500",
+            "filterType": "PERCENT_PRICE"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -27498,20 +27547,20 @@
         "filters": [
           {
             "filterType": "PRICE_FILTER",
-            "tickSize": "0.0001000",
             "minPrice": "0.0001000",
-            "maxPrice": "200"
+            "maxPrice": "200",
+            "tickSize": "0.0001000"
           },
           {
-            "minQty": "1",
             "maxQty": "1100000",
+            "stepSize": "1",
             "filterType": "LOT_SIZE",
-            "stepSize": "1"
+            "minQty": "1"
           },
           {
-            "minQty": "1",
-            "stepSize": "1",
             "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1",
+            "minQty": "1",
             "maxQty": "110000"
           },
           {
@@ -27523,10 +27572,10 @@
             "notional": "5"
           },
           {
-            "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.7500",
-            "multiplierDecimal": "4",
-            "multiplierUp": "1.2500"
+            "filterType": "PERCENT_PRICE",
+            "multiplierUp": "1.2500",
+            "multiplierDecimal": "4"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -27583,40 +27632,40 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000100",
+            "filterType": "PRICE_FILTER",
             "maxPrice": "200",
             "tickSize": "0.0000100",
-            "filterType": "PRICE_FILTER"
+            "minPrice": "0.0000100"
           },
           {
-            "filterType": "LOT_SIZE",
+            "maxQty": "50000000",
             "stepSize": "1",
             "minQty": "1",
-            "maxQty": "50000000"
+            "filterType": "LOT_SIZE"
           },
           {
-            "stepSize": "1",
-            "maxQty": "5000000",
             "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1"
+            "maxQty": "5000000",
+            "minQty": "1",
+            "stepSize": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "notional": "5",
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
-            "multiplierDown": "0.8500",
-            "multiplierDecimal": "4"
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
+            "multiplierDown": "0.8500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -27669,26 +27718,26 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000010",
             "tickSize": "0.0000001",
+            "maxPrice": "200",
             "filterType": "PRICE_FILTER",
-            "maxPrice": "200"
+            "minPrice": "0.0000010"
           },
           {
+            "stepSize": "1",
+            "minQty": "1",
             "maxQty": "700000000",
-            "minQty": "1",
-            "filterType": "LOT_SIZE",
-            "stepSize": "1"
+            "filterType": "LOT_SIZE"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1",
             "maxQty": "70000000",
-            "stepSize": "1"
+            "stepSize": "1",
+            "filterType": "MARKET_LOT_SIZE",
+            "minQty": "1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "filterType": "MIN_NOTIONAL",
@@ -27696,13 +27745,13 @@
           },
           {
             "multiplierDecimal": "4",
-            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500",
+            "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.8500"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -27755,22 +27804,22 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
+            "tickSize": "0.0000001",
             "filterType": "PRICE_FILTER",
-            "maxPrice": "200",
             "minPrice": "0.0000001",
-            "tickSize": "0.0000001"
+            "maxPrice": "200"
           },
           {
             "filterType": "LOT_SIZE",
             "maxQty": "2000000000",
-            "minQty": "1",
-            "stepSize": "1"
+            "stepSize": "1",
+            "minQty": "1"
           },
           {
-            "stepSize": "1",
-            "minQty": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "maxQty": "200000000"
+            "maxQty": "200000000",
+            "stepSize": "1",
+            "minQty": "1"
           },
           {
             "limit": 200,
@@ -27782,13 +27831,13 @@
           },
           {
             "multiplierUp": "1.1500",
-            "multiplierDecimal": "4",
+            "multiplierDown": "0.8500",
             "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.8500"
+            "multiplierDecimal": "4"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -27841,36 +27890,36 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "maxPrice": "200",
+            "filterType": "PRICE_FILTER",
             "tickSize": "0.0000100",
             "minPrice": "0.0000100",
-            "filterType": "PRICE_FILTER"
+            "maxPrice": "200"
           },
           {
+            "minQty": "1",
             "stepSize": "1",
-            "maxQty": "15000000",
             "filterType": "LOT_SIZE",
+            "maxQty": "15000000"
+          },
+          {
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1",
+            "maxQty": "1500000",
             "minQty": "1"
           },
           {
-            "maxQty": "1500000",
-            "stepSize": "1",
-            "minQty": "1",
-            "filterType": "MARKET_LOT_SIZE"
-          },
-          {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "notional": "5",
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "filterType": "PERCENT_PRICE",
-            "multiplierDown": "0.8500",
             "multiplierUp": "1.1500",
-            "multiplierDecimal": "4"
+            "multiplierDecimal": "4",
+            "multiplierDown": "0.8500",
+            "filterType": "PERCENT_PRICE"
           },
           {
             "filterType": "POSITION_RISK_CONTROL",
@@ -27940,23 +27989,23 @@
             "maxQty": "2000000"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
             "minQty": "1",
-            "stepSize": "1",
-            "maxQty": "600000"
+            "maxQty": "600000",
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1"
           },
           {
-            "limit": 200,
-            "filterType": "MAX_NUM_ORDERS"
+            "filterType": "MAX_NUM_ORDERS",
+            "limit": 200
           },
           {
             "filterType": "MIN_NOTIONAL",
             "notional": "5"
           },
           {
+            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1000",
             "multiplierDecimal": "4",
-            "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.9000"
           },
           {
@@ -28015,26 +28064,26 @@
         "maxMoveOrderLimit": 10000,
         "filters": [
           {
-            "minPrice": "0.0000010",
-            "filterType": "PRICE_FILTER",
+            "tickSize": "0.0000010",
             "maxPrice": "200",
-            "tickSize": "0.0000010"
+            "filterType": "PRICE_FILTER",
+            "minPrice": "0.0000010"
           },
           {
             "minQty": "1",
+            "stepSize": "1",
             "maxQty": "70000000",
-            "filterType": "LOT_SIZE",
-            "stepSize": "1"
+            "filterType": "LOT_SIZE"
           },
           {
-            "maxQty": "7000000",
+            "minQty": "1",
             "stepSize": "1",
             "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1"
+            "maxQty": "7000000"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "notional": "5",
@@ -28047,8 +28096,8 @@
             "filterType": "PERCENT_PRICE"
           },
           {
-            "positionControlSide": "NONE",
-            "filterType": "POSITION_RISK_CONTROL"
+            "filterType": "POSITION_RISK_CONTROL",
+            "positionControlSide": "NONE"
           }
         ],
         "orderTypes": [
@@ -28103,39 +28152,39 @@
         "filters": [
           {
             "filterType": "PRICE_FILTER",
+            "maxPrice": "200",
             "minPrice": "0.0000100",
-            "tickSize": "0.0000100",
-            "maxPrice": "200"
+            "tickSize": "0.0000100"
           },
           {
+            "maxQty": "10000000",
             "filterType": "LOT_SIZE",
             "stepSize": "1",
-            "minQty": "1",
-            "maxQty": "10000000"
+            "minQty": "1"
           },
           {
-            "filterType": "MARKET_LOT_SIZE",
-            "minQty": "1",
             "maxQty": "1000000",
-            "stepSize": "1"
+            "filterType": "MARKET_LOT_SIZE",
+            "stepSize": "1",
+            "minQty": "1"
           },
           {
-            "filterType": "MAX_NUM_ORDERS",
-            "limit": 200
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
           },
           {
             "filterType": "MIN_NOTIONAL",
             "notional": "5"
           },
           {
-            "multiplierDown": "0.8500",
             "filterType": "PERCENT_PRICE",
             "multiplierDecimal": "4",
-            "multiplierUp": "1.1500"
+            "multiplierUp": "1.1500",
+            "multiplierDown": "0.8500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -28190,39 +28239,39 @@
         "filters": [
           {
             "maxPrice": "200",
-            "minPrice": "0.0000100",
+            "tickSize": "0.0000100",
             "filterType": "PRICE_FILTER",
-            "tickSize": "0.0000100"
+            "minPrice": "0.0000100"
           },
           {
-            "stepSize": "1",
-            "maxQty": "10000000",
             "filterType": "LOT_SIZE",
-            "minQty": "1"
+            "minQty": "1",
+            "maxQty": "10000000",
+            "stepSize": "1"
           },
           {
-            "maxQty": "3000000",
+            "filterType": "MARKET_LOT_SIZE",
             "minQty": "1",
             "stepSize": "1",
-            "filterType": "MARKET_LOT_SIZE"
+            "maxQty": "3000000"
           },
           {
             "filterType": "MAX_NUM_ORDERS",
             "limit": 200
           },
           {
-            "notional": "5",
-            "filterType": "MIN_NOTIONAL"
+            "filterType": "MIN_NOTIONAL",
+            "notional": "5"
           },
           {
             "multiplierDecimal": "4",
-            "filterType": "PERCENT_PRICE",
             "multiplierDown": "0.8500",
+            "filterType": "PERCENT_PRICE",
             "multiplierUp": "1.1500"
           },
           {
-            "filterType": "POSITION_RISK_CONTROL",
-            "positionControlSide": "NONE"
+            "positionControlSide": "NONE",
+            "filterType": "POSITION_RISK_CONTROL"
           }
         ],
         "orderTypes": [
@@ -40217,8 +40266,8 @@
             "filterType": "MIN_NOTIONAL"
           },
           {
-            "multiplierDown": "0.9000",
-            "multiplierUp": "1.1000",
+            "multiplierDown": "0.8000",
+            "multiplierUp": "1.2000",
             "ltMultiplierDown": "0.9000",
             "multiplierDecimal": "4",
             "filterType": "PERCENT_PRICE",
@@ -40266,9 +40315,9 @@
         "imn": "1000.00",
         "tags": [],
         "settlePlan": 0,
-        "triggerProtect": "0.1000",
+        "triggerProtect": "0.2000",
         "liquidationFee": "0.025000",
-        "marketTakeBound": "0.10"
+        "marketTakeBound": "0.20"
       },
       "DUSKUSDT": {
         "symbol": "DUSKUSDT",
@@ -52090,7 +52139,7 @@
         "channel": "{}",
         "sequenceNo": 0,
         "twapMinNotional": "1000",
-        "imn": null,
+        "imn": "1000.00",
         "tags": [],
         "settlePlan": 0,
         "triggerProtect": "0.1000",
@@ -56806,6 +56855,93 @@
         "maintMarginPercent": "10.0000",
         "requiredMarginPercent": "20.0000",
         "baseAsset": "RIVER",
+        "quoteAsset": "USDT",
+        "marginAsset": "USDT",
+        "pricePrecision": 6,
+        "quantityPrecision": 1,
+        "baseAssetPrecision": 8,
+        "quotePrecision": 8,
+        "underlyingType": "COIN",
+        "underlyingSubType": [],
+        "symbolType": 0,
+        "tradingMode": 0,
+        "name": "",
+        "channel": "{}",
+        "sequenceNo": 0,
+        "twapMinNotional": "1000",
+        "imn": "1000.00",
+        "tags": [],
+        "settlePlan": 0,
+        "triggerProtect": "0.1000",
+        "liquidationFee": "0.025000",
+        "marketTakeBound": "0.10"
+      },
+      "RLCUSDT": {
+        "symbol": "RLCUSDT",
+        "filters": [
+          {
+            "minPrice": "0.000100",
+            "maxPrice": "432",
+            "filterType": "PRICE_FILTER",
+            "tickSize": "0.000100"
+          },
+          {
+            "stepSize": "0.1",
+            "filterType": "LOT_SIZE",
+            "maxQty": "2000000",
+            "minQty": "0.1"
+          },
+          {
+            "stepSize": "0.1",
+            "filterType": "MARKET_LOT_SIZE",
+            "maxQty": "200000",
+            "minQty": "0.1"
+          },
+          {
+            "limit": 200,
+            "filterType": "MAX_NUM_ORDERS"
+          },
+          {
+            "limit": 10,
+            "filterType": "MAX_NUM_ALGO_ORDERS"
+          },
+          {
+            "notional": "5",
+            "filterType": "MIN_NOTIONAL"
+          },
+          {
+            "multiplierDown": "0.9000",
+            "multiplierUp": "1.1000",
+            "ltMultiplierDown": "0",
+            "multiplierDecimal": "4",
+            "filterType": "PERCENT_PRICE",
+            "ltMultiplierUp": "0"
+          }
+        ],
+        "orderTypes": [
+          "LIMIT",
+          "MARKET",
+          "STOP",
+          "STOP_MARKET",
+          "TAKE_PROFIT",
+          "TAKE_PROFIT_MARKET",
+          "TRAILING_STOP_MARKET"
+        ],
+        "timeInForce": [
+          "GTC",
+          "IOC",
+          "GTX",
+          "HIDDEN"
+        ],
+        "createTime": 1709195448397,
+        "pair": "RLCUSDT",
+        "contractType": "PERPETUAL",
+        "deliveryDate": 4133404800000,
+        "onboardDate": 1791353700000,
+        "status": "TRADING",
+        "maintMarginPercent": "16.6600",
+        "requiredMarginPercent": "33.3300",
+        "baseAsset": "RLC",
         "quoteAsset": "USDT",
         "marginAsset": "USDT",
         "pricePrecision": 6,
@@ -184281,6 +184417,109 @@
           }
         ]
       }
+    },
+    {
+      "url": "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=RLCUSDT",
+      "status": 200,
+      "observedAt": "2026-10-07T12:19:10.408376+00:00",
+      "identity": {
+        "symbol": "RLCUSDT",
+        "components": [
+          {
+            "exchange": "binance",
+            "symbol": "RLCUSDT"
+          },
+          {
+            "exchange": "gateio",
+            "symbol": "RLC_USDT"
+          },
+          {
+            "exchange": "kucoin",
+            "symbol": "RLC-USDT"
+          },
+          {
+            "exchange": "mexc",
+            "symbol": "RLCUSDT"
+          },
+          {
+            "exchange": "bitget",
+            "symbol": "RLCUSDT"
+          }
+        ]
+      },
+      "responseSha256": "b4645dda4171779187ee8fe4db11b9e00f9f300967243c473def65603a09cd53"
+    },
+    {
+      "url": "https://api.bybit.com/v5/market/index-price-components?indexName=RLCUSDT",
+      "status": 200,
+      "observedAt": "2026-10-07T12:19:10.581969+00:00",
+      "identity": {
+        "symbol": "RLCUSDT",
+        "components": [
+          {
+            "exchange": "Mexc",
+            "spotPair": "RLCUSDT",
+            "multiplier": "1"
+          },
+          {
+            "exchange": "KuCoin",
+            "spotPair": "RLC-USDT",
+            "multiplier": "1"
+          },
+          {
+            "exchange": "Kraken",
+            "spotPair": "RLC/USD",
+            "multiplier": "1"
+          },
+          {
+            "exchange": "CoinBase",
+            "spotPair": "RLC-USD",
+            "multiplier": "1"
+          },
+          {
+            "exchange": "GateIO",
+            "spotPair": "RLC_USDT",
+            "multiplier": "1"
+          },
+          {
+            "exchange": "Binance",
+            "spotPair": "RLCUSDT",
+            "multiplier": "1"
+          }
+        ]
+      },
+      "responseSha256": "db07ccc332701f989bc61922e732cb78fa8d7ff1847db7800df119463d3a9fa3"
+    },
+    {
+      "url": "https://fapi.binance.com/fapi/v1/constituents?symbol=RLCUSDT",
+      "status": 200,
+      "observedAt": "2026-10-07T12:19:10.491383+00:00",
+      "identity": {
+        "symbol": "RLCUSDT",
+        "components": [
+          {
+            "exchange": "binance",
+            "symbol": "RLCUSDT"
+          },
+          {
+            "exchange": "gateio",
+            "symbol": "RLC_USDT"
+          },
+          {
+            "exchange": "kucoin",
+            "symbol": "RLC-USDT"
+          },
+          {
+            "exchange": "mexc",
+            "symbol": "RLCUSDT"
+          },
+          {
+            "exchange": "bitget",
+            "symbol": "RLCUSDT"
+          }
+        ]
+      },
+      "responseSha256": "a795d85f5b9f2cd95b30813c6efabf74f54ec5d4663b88ad9149585c422a2109"
     }
   ],
   "widgetMetadata": {
@@ -205216,6 +205455,27 @@
         "defi"
       ],
       "prefix": "BINANCE"
+    },
+    "BYBIT:RLCUSDT.P": {
+      "source_id": "BYBIT",
+      "source2": {
+        "country": "SG",
+        "description": "Bybit",
+        "exchange-type": "exchange",
+        "id": "BYBIT",
+        "name": "Bybit",
+        "url": "https://www.bybit.com/"
+      },
+      "symbol": "RLCUSDT.P",
+      "type": "swap",
+      "typespecs": [
+        "defi",
+        "crypto",
+        "perpetual"
+      ],
+      "currency_code": "USDT",
+      "description": "RLCUSDT Perpetual Contract",
+      "base-currency-logoid": "crypto/XTVCRLC"
     }
   },
   "widgetObservationSource": "Normal public TradingView Widget symbol-search interaction; captured 2026-09-12 JST",
@@ -371917,6 +372177,58 @@
         "status": "TRADING",
         "underlyingType": "COIN",
         "underlyingSubType": []
+      },
+      "USDEXUSDT": {
+        "symbol": "USDEXUSDT",
+        "baseAsset": "USDEX",
+        "quoteAsset": "USDT",
+        "marginAsset": "USDT",
+        "contractType": "TRADIFI_PERPETUAL",
+        "onboardDate": 1791277200000,
+        "status": "TRADING",
+        "underlyingType": "EQUITY",
+        "underlyingSubType": [
+          "TradFi"
+        ]
+      },
+      "VKTXUSDT": {
+        "symbol": "VKTXUSDT",
+        "baseAsset": "VKTX",
+        "quoteAsset": "USDT",
+        "marginAsset": "USDT",
+        "contractType": "TRADIFI_PERPETUAL",
+        "onboardDate": 1791277500000,
+        "status": "TRADING",
+        "underlyingType": "EQUITY",
+        "underlyingSubType": [
+          "TradFi"
+        ]
+      },
+      "MCDUSDT": {
+        "symbol": "MCDUSDT",
+        "baseAsset": "MCD",
+        "quoteAsset": "USDT",
+        "marginAsset": "USDT",
+        "contractType": "TRADIFI_PERPETUAL",
+        "onboardDate": 1791277800000,
+        "status": "TRADING",
+        "underlyingType": "EQUITY",
+        "underlyingSubType": [
+          "TradFi"
+        ]
+      },
+      "AKAMUSDT": {
+        "symbol": "AKAMUSDT",
+        "baseAsset": "AKAM",
+        "quoteAsset": "USDT",
+        "marginAsset": "USDT",
+        "contractType": "TRADIFI_PERPETUAL",
+        "onboardDate": 1791278100000,
+        "status": "TRADING",
+        "underlyingType": "EQUITY",
+        "underlyingSubType": [
+          "TradFi"
+        ]
       }
     },
     "aster": {
@@ -372805,6 +373117,17 @@
       "ARKMUSDT": {
         "symbol": "ARKMUSDT",
         "baseAsset": "ARKM",
+        "quoteAsset": "USDT",
+        "marginAsset": "USDT",
+        "contractType": "PERPETUAL",
+        "status": "TRADING",
+        "underlyingType": "COIN",
+        "underlyingSubType": [],
+        "symbolType": 0
+      },
+      "RLCUSDT": {
+        "symbol": "RLCUSDT",
+        "baseAsset": "RLC",
         "quoteAsset": "USDT",
         "marginAsset": "USDT",
         "contractType": "PERPETUAL",
@@ -379289,6 +379612,21 @@
         "underlyingType": "COIN",
         "underlyingSubType": [],
         "symbolType": 0
+      },
+      "SDEVUSD1": {
+        "symbol": "SDEVUSD1",
+        "baseAsset": "SDEV",
+        "quoteAsset": "USD1",
+        "marginAsset": "USD1",
+        "contractType": "PERPETUAL",
+        "status": "TRADING",
+        "underlyingType": "COIN",
+        "underlyingSubType": [
+          "STOCK",
+          "AOS2",
+          "USD1-RWA"
+        ],
+        "symbolType": 1
       }
     },
     "bitget": {
@@ -384982,6 +385320,34 @@
         "quoteCoin": "USDT",
         "symbolType": "perpetual",
         "symbolStatus": "normal"
+      },
+      "USDESTOCKUSDT": {
+        "symbol": "USDESTOCKUSDT",
+        "baseCoin": "USDESTOCK",
+        "quoteCoin": "USDT",
+        "symbolType": "perpetual",
+        "symbolStatus": "normal"
+      },
+      "VKTXUSDT": {
+        "symbol": "VKTXUSDT",
+        "baseCoin": "VKTX",
+        "quoteCoin": "USDT",
+        "symbolType": "perpetual",
+        "symbolStatus": "normal"
+      },
+      "PCVXUSDT": {
+        "symbol": "PCVXUSDT",
+        "baseCoin": "PCVX",
+        "quoteCoin": "USDT",
+        "symbolType": "perpetual",
+        "symbolStatus": "normal"
+      },
+      "XPUSDT": {
+        "symbol": "XPUSDT",
+        "baseCoin": "XP",
+        "quoteCoin": "USDT",
+        "symbolType": "perpetual",
+        "symbolStatus": "normal"
       }
     },
     "hyperliquid": {
@@ -385980,155 +386346,267 @@
     }
   },
   "catalogCapture": {
-    "observedAt": "2026-10-05T10:53:46.251714+00:00",
+    "observedAt": "2026-10-07T12:18:56.494722+00:00",
     "complete": true,
     "sources": {
-      "bybit": "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
-      "binance": "https://fapi.binance.com/fapi/v1/exchangeInfo",
-      "aster": "https://fapi.asterdex.com/fapi/v3/exchangeInfo",
-      "bitget": "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES",
-      "hyperliquid": "https://api.hyperliquid.xyz/info"
+      "bybit": {
+        "pages": [
+          {
+            "url": "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000",
+            "observedAt": "2026-10-07T12:18:53.864936+00:00",
+            "httpStatus": 200,
+            "sha256": "2e5f55969923e419d98bebe4cca44dc3a61575288d7e27fc67b213780c1b394c",
+            "requestBody": null,
+            "rawFile": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/raw/bybit-1.json"
+          }
+        ],
+        "complete": true,
+        "pagination": "exhausted nextPageCursor",
+        "count": 890
+      },
+      "binance": {
+        "pages": [
+          {
+            "url": "https://fapi.binance.com/fapi/v1/exchangeInfo",
+            "observedAt": "2026-10-07T12:18:56.493448+00:00",
+            "httpStatus": 200,
+            "sha256": "eb1e3708f146c2581b28e218332dab6b81815c570ce877c3b9607188debdac51",
+            "requestBody": null,
+            "rawFile": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/raw/binance-1.json"
+          }
+        ],
+        "complete": true,
+        "pagination": "single full catalog endpoint",
+        "count": 924
+      },
+      "aster": {
+        "pages": [
+          {
+            "url": "https://fapi.asterdex.com/fapi/v3/exchangeInfo",
+            "observedAt": "2026-10-07T12:18:55.114182+00:00",
+            "httpStatus": 200,
+            "sha256": "661c7c62c57207651563ec39c8a93ab80467156489c000f1b2e3264ca3101d66",
+            "requestBody": null,
+            "rawFile": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/raw/aster-1.json"
+          }
+        ],
+        "complete": true,
+        "pagination": "single full catalog endpoint",
+        "count": 619
+      },
+      "bitget": {
+        "pages": [
+          {
+            "url": "https://api.bitget.com/api/v2/mix/market/contracts?productType=USDT-FUTURES",
+            "observedAt": "2026-10-07T12:18:52.560880+00:00",
+            "httpStatus": 200,
+            "sha256": "125b8761a0e28fe40ee8bed739aba985505fd73131a09cb1b1e02725cc195090",
+            "requestBody": null,
+            "rawFile": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/raw/bitget-1.json"
+          }
+        ],
+        "complete": true,
+        "pagination": "single full catalog endpoint",
+        "count": 817
+      },
+      "hyperliquid": {
+        "pages": [
+          {
+            "url": "https://api.hyperliquid.xyz/info",
+            "observedAt": "2026-10-07T12:18:51.748658+00:00",
+            "httpStatus": 200,
+            "sha256": "aa725f96351e898c95ab7cbc4062208200ea4fa7346478a10f60748e928b82e5",
+            "requestBody": {
+              "type": "meta"
+            },
+            "rawFile": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/raw/hyperliquid-1.json"
+          }
+        ],
+        "complete": true,
+        "pagination": "single full catalog endpoint",
+        "count": 234
+      }
     },
     "fullCatalogHashes": {
-      "bybit": "79398092e64b31e850a5e888de76f211eb55991125d711b22e3ce779122bb13d",
-      "binance": "ea5ee36a87b6d8fed7a5d536b72c7127c625b9516159e03436630b4cb196be04",
-      "aster": "5793da94da912163e42a67c3b9961aac85c9e2262502d35d2167269de852fb48",
-      "bitget": "28ae665a4b95dbbbfa51043dc6c91eab5d18fe6204526ef22056989a448f70c1",
+      "bybit": "609fc6098dac75ce9603c509690eefae71226300acdfb5e3365c3006b19435c7",
+      "binance": "e66482859d22e1cb9443fad81690bc214bec1dd9e9acbaaefc11fe56eca958ac",
+      "aster": "555b1cade1bcaffa473e451c96bcd2b8bcdfad09f9f623e6dacc528007ee582c",
+      "bitget": "cdbf8e0804840d7f3dc2a17c13e0678149dbea55b3ab48a173469d950d734748",
       "hyperliquid": "39c9085060ba1d297b27bb3f98efa06a9c5c07b1e5bb2430d253254211139051"
     },
     "completeCounts": {
       "bybit": 890,
-      "binance": 920,
-      "aster": 617,
-      "bitget": 813,
+      "binance": 924,
+      "aster": 619,
+      "bitget": 817,
       "hyperliquid": 234
     },
     "retainedFullEntryCounts": {
-      "bybit": 483,
+      "bybit": 484,
       "binance": 52,
-      "aster": 451,
+      "aster": 452,
       "bitget": 466,
       "hyperliquid": 178
     },
-    "identityIndexDigest": "d693aadcef87b6ec8cbb8023db48851d21b9e725348b5c22e47c8a80b9ad09d7"
+    "identityIndexDigest": "6841e67b8fb265211c976ddcb6c94bfb03fcbc5795e3e4ff54cd2ba940475567"
   },
-  "widgetObservations": {},
+  "widgetObservations": {
+    "BYBIT:RLCUSDT.P": {
+      "url": "https://www.tradingview.com/symbols/RLCUSDT.P/?exchange=BYBIT",
+      "observedAt": "2026-10-07T12:20:25.829441+00:00",
+      "referenceKey": "bybit:RLCUSDT:17dc2f7214d9fb037f3a",
+      "finding": "Public TradingView symbol page explicitly resolves BYBIT:RLCUSDT.P with source BYBIT, type swap, perpetual, base RLC, currency USDT. Saved raw symbolInfo; normalized source_id=source2.id and symbol=short_name. No prices consumed.",
+      "sha256": "ec929839dba9bde64bab01a43f0ee6305a999b657d9feb54a61e4e754436c603"
+    }
+  },
   "rosterRefresh": {
-    "observedAt": "2026-10-05T10:58:48.342000+00:00",
-    "previousMapVersion": "d5bfc5975f303258223b3288",
-    "previousRosterFingerprint": "9c2f1c3817a5dc241024bda2b24c2d19cb7b7e88cd1e46c8194b7f190a7ded8d",
-    "officialCatalogObservedAt": "2026-10-05T10:53:46.251714+00:00",
-    "catalogDigest": "f69fddd8d052df9311bcce794604ee2799083a0f71c32d082daa413e92a0dc6c",
-    "definitionAuditDigest": "e99bc03a35b66326db4f62dcc50f4321a72d4f2c12a7d05b72d8c81239f6cb92",
+    "observedAt": "2026-10-07T12:28:52.384000+00:00",
+    "previousMapVersion": "6954e4c861aafd485f43b65c",
+    "previousRosterFingerprint": "f4b91a8e9cefcab333ae87308286d217822f289b4da70d3aec4ee8157afba7e7",
+    "officialCatalogObservedAt": "2026-10-07T12:18:56.494722+00:00",
+    "catalogDigest": "bb24d7db5bb73a469ad91ec7e783e90c41ba14852cd97a7709dd3d0d90503d41",
+    "definitionAuditDigest": "b573bfcf94bb43d010988fdaba52941f2edfe19d3c8ef2137404ed8be9652d3a",
     "addedInstrumentIds": [
-      "aster:NULLMASKUSDT",
-      "aster:PODUSDT",
-      "aster:SCRUSDT"
+      "aster:RLCUSDT"
     ],
-    "removedInstrumentIds": [
-      "aster:MEMESTOCKUSDT",
-      "aster:PROMPTUSDT",
-      "aster:PUMPBTCUSDT"
-    ],
+    "removedInstrumentIds": [],
     "versionChanges": [
       {
-        "instrumentId": "bitget:ONEUSDT",
-        "currentVersion": 9441,
+        "instrumentId": "aster:DRVUSDT",
+        "currentVersion": 9456,
         "currentDefinition": {
           "active": true,
           "asset_class": "crypto",
           "market_type": "linear_perpetual",
           "execution_model": "clob",
-          "base_asset": "ONE",
+          "base_asset": "DRV",
           "quote_asset": "USDT",
           "settle_asset": "USDT",
           "collateral_asset": "USDT",
           "quantity_unit": "base",
           "contract_multiplier": "1",
-          "price_tick": null,
+          "price_tick": "0.000100",
           "amount_step": "1",
-          "source_status": "normal",
-          "funding_interval_seconds": 14400
+          "source_status": "TRADING",
+          "funding_interval_seconds": null
         },
-        "previousVersion": 8033,
+        "currentDefinitionHash": "65874d793a30cc246533222f50df63eab688141b3bf7721603e4ffc9498fadc4",
+        "previousVersion": 6444,
         "previousDefinition": {
           "active": true,
           "asset_class": "crypto",
           "market_type": "linear_perpetual",
           "execution_model": "clob",
-          "base_asset": "ONE",
+          "base_asset": "DRV",
           "quote_asset": "USDT",
           "settle_asset": "USDT",
           "collateral_asset": "USDT",
           "quantity_unit": "base",
           "contract_multiplier": "1",
-          "price_tick": null,
+          "price_tick": "0.000100",
           "amount_step": "1",
-          "source_status": "normal",
-          "funding_interval_seconds": 3600
+          "source_status": "TRADING",
+          "funding_interval_seconds": null
         },
-        "normalizedDefinitionChanges": {
-          "funding_interval_seconds": [
-            3600,
-            14400
+        "previousDefinitionHash": "f67127c7ffd4634d0bb0b20955645e3d3d0ee3a51e07c06cc181ac28e8851f0b",
+        "normalizedDefinitionChanges": {},
+        "rawDefinitionChanges": {
+          "filters": [
+            [
+              {
+                "maxPrice": "200",
+                "minPrice": "0.000100",
+                "tickSize": "0.000100",
+                "filterType": "PRICE_FILTER"
+              },
+              {
+                "maxQty": "100000",
+                "minQty": "1",
+                "stepSize": "1",
+                "filterType": "LOT_SIZE"
+              },
+              {
+                "maxQty": "10000",
+                "minQty": "1",
+                "stepSize": "1",
+                "filterType": "MARKET_LOT_SIZE"
+              },
+              {
+                "limit": 200,
+                "filterType": "MAX_NUM_ORDERS"
+              },
+              {
+                "limit": 10,
+                "filterType": "MAX_NUM_ALGO_ORDERS"
+              },
+              {
+                "notional": "5",
+                "filterType": "MIN_NOTIONAL"
+              },
+              {
+                "filterType": "PERCENT_PRICE",
+                "multiplierUp": "1.1000",
+                "ltMultiplierUp": "1.1000",
+                "multiplierDown": "0.9000",
+                "ltMultiplierDown": "0.9000",
+                "multiplierDecimal": "4"
+              }
+            ],
+            [
+              {
+                "maxPrice": "200",
+                "minPrice": "0.000100",
+                "tickSize": "0.000100",
+                "filterType": "PRICE_FILTER"
+              },
+              {
+                "maxQty": "100000",
+                "minQty": "1",
+                "stepSize": "1",
+                "filterType": "LOT_SIZE"
+              },
+              {
+                "maxQty": "10000",
+                "minQty": "1",
+                "stepSize": "1",
+                "filterType": "MARKET_LOT_SIZE"
+              },
+              {
+                "limit": 200,
+                "filterType": "MAX_NUM_ORDERS"
+              },
+              {
+                "limit": 10,
+                "filterType": "MAX_NUM_ALGO_ORDERS"
+              },
+              {
+                "notional": "5",
+                "filterType": "MIN_NOTIONAL"
+              },
+              {
+                "filterType": "PERCENT_PRICE",
+                "multiplierUp": "1.2000",
+                "ltMultiplierUp": "1.1000",
+                "multiplierDown": "0.8000",
+                "ltMultiplierDown": "0.9000",
+                "multiplierDecimal": "4"
+              }
+            ]
+          ],
+          "triggerProtect": [
+            "0.1000",
+            "0.2000"
+          ],
+          "marketTakeBound": [
+            "0.10",
+            "0.20"
           ]
         }
       },
       {
-        "instrumentId": "bitget:SLPUSDT",
-        "currentVersion": 9450,
+        "instrumentId": "aster:NULLMASKUSDT",
+        "currentVersion": 9451,
         "currentDefinition": {
-          "active": true,
-          "asset_class": "crypto",
-          "market_type": "linear_perpetual",
-          "execution_model": "clob",
-          "base_asset": "SLP",
-          "quote_asset": "USDT",
-          "settle_asset": "USDT",
-          "collateral_asset": "USDT",
-          "quantity_unit": "base",
-          "contract_multiplier": "1",
-          "price_tick": null,
-          "amount_step": "1",
-          "source_status": "normal",
-          "funding_interval_seconds": 28800
-        },
-        "previousVersion": 123,
-        "previousDefinition": {
-          "active": true,
-          "asset_class": "crypto",
-          "market_type": "linear_perpetual",
-          "execution_model": "clob",
-          "base_asset": "SLP",
-          "quote_asset": "USDT",
-          "settle_asset": "USDT",
-          "collateral_asset": "USDT",
-          "quantity_unit": "base",
-          "contract_multiplier": "1",
-          "price_tick": null,
-          "amount_step": "1",
-          "source_status": "normal",
-          "funding_interval_seconds": 14400
-        },
-        "normalizedDefinitionChanges": {
-          "funding_interval_seconds": [
-            14400,
-            28800
-          ]
-        }
-      }
-    ],
-    "reviewedChanges": {
-      "aster:NULLMASKUSDT": {
-        "identityEvidence": [
-          "https://fapi.asterdex.com/fapi/v3/exchangeInfo # NULLMASKUSDT",
-          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=NULLMASKUSDT",
-          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=NULLMASK&lang=en"
-        ],
-        "quantityEvidence": [
-          "Market normalized official catalog definition: quantity_unit=base, contract_multiplier=1"
-        ],
-        "definition": {
           "active": true,
           "asset_class": "crypto",
           "market_type": "linear_perpetual",
@@ -386143,50 +386621,15 @@
           "amount_step": "1",
           "source_status": "TRADING",
           "funding_interval_seconds": null
-        }
-      },
-      "aster:PODUSDT": {
-        "identityEvidence": [
-          "https://fapi.asterdex.com/fapi/v3/exchangeInfo # PODUSDT",
-          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PODUSDT",
-          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=POD&lang=en"
-        ],
-        "quantityEvidence": [
-          "Market normalized official catalog definition: quantity_unit=base, contract_multiplier=1"
-        ],
-        "definition": {
+        },
+        "currentDefinitionHash": "662dc6a32e61899f16132a7e78986833f27808101f563e57ba8a98022ff276b2",
+        "previousVersion": 9449,
+        "previousDefinition": {
           "active": true,
           "asset_class": "crypto",
           "market_type": "linear_perpetual",
           "execution_model": "clob",
-          "base_asset": "POD",
-          "quote_asset": "USDT",
-          "settle_asset": "USDT",
-          "collateral_asset": "USDT",
-          "quantity_unit": "base",
-          "contract_multiplier": "1",
-          "price_tick": "0.000100",
-          "amount_step": "1",
-          "source_status": "TRADING",
-          "funding_interval_seconds": null
-        }
-      },
-      "aster:SCRUSDT": {
-        "identityEvidence": [
-          "https://fapi.asterdex.com/fapi/v3/exchangeInfo # SCRUSDT",
-          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=SCRUSDT",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo # SCRUSDT",
-          "https://fapi.binance.com/fapi/v1/constituents?symbol=SCRUSDT"
-        ],
-        "quantityEvidence": [
-          "Market normalized official catalog definition: quantity_unit=base, contract_multiplier=1"
-        ],
-        "definition": {
-          "active": true,
-          "asset_class": "crypto",
-          "market_type": "linear_perpetual",
-          "execution_model": "clob",
-          "base_asset": "SCR",
+          "base_asset": "NULLMASK",
           "quote_asset": "USDT",
           "settle_asset": "USDT",
           "collateral_asset": "USDT",
@@ -386196,116 +386639,230 @@
           "amount_step": "1",
           "source_status": "TRADING",
           "funding_interval_seconds": null
+        },
+        "previousDefinitionHash": "99d9cd0fce3a848a8728d1ce23fa866611a7ba8442f065a909b7b21de7b998ea",
+        "normalizedDefinitionChanges": {},
+        "rawDefinitionChanges": {
+          "imn": [
+            null,
+            "1000.00"
+          ]
         }
+      }
+    ],
+    "reviewedChanges": {
+      "aster:RLCUSDT": {
+        "identityEvidence": [
+          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=RLC&lang=en",
+          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=RLCUSDT",
+          "https://api.bybit.com/v5/market/index-price-components?indexName=RLCUSDT"
+        ],
+        "quantityEvidence": [
+          "Aster official perpetual catalog baseAsset=RLC, USDT quote/margin; read-only Market normalized definition quantity_unit=base, contract_multiplier=1. Aster index unscaled RLC pairs overlap Bybit index pairs whose multipliers are explicitly 1."
+        ],
+        "definition": {
+          "active": true,
+          "asset_class": "crypto",
+          "market_type": "linear_perpetual",
+          "execution_model": "clob",
+          "base_asset": "RLC",
+          "quote_asset": "USDT",
+          "settle_asset": "USDT",
+          "collateral_asset": "USDT",
+          "quantity_unit": "base",
+          "contract_multiplier": "1",
+          "price_tick": "0.000100",
+          "amount_step": "0.1",
+          "source_status": "TRADING",
+          "funding_interval_seconds": null
+        },
+        "assetIdentity": {
+          "project": "iExec RLC",
+          "chain": "Ethereum",
+          "contractAddress": "0x607f4c5bb672230e8672085532f7e901544a7375"
+        },
+        "commonNativeSpotComponents": [
+          {
+            "exchange": "binance",
+            "symbol": "RLCUSDT"
+          },
+          {
+            "exchange": "gateio",
+            "symbol": "RLC_USDT"
+          },
+          {
+            "exchange": "kucoin",
+            "symbol": "RLC-USDT"
+          },
+          {
+            "exchange": "mexc",
+            "symbol": "RLCUSDT"
+          }
+        ]
+      },
+      "aster:DRVUSDT": {
+        "identityEvidence": [
+          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=DRV&lang=en",
+          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=DRVUSDT"
+        ],
+        "definitionAudit": {
+          "previousVersion": 6444,
+          "currentVersion": 9456,
+          "previousDefinitionHash": "f67127c7ffd4634d0bb0b20955645e3d3d0ee3a51e07c06cc181ac28e8851f0b",
+          "currentDefinitionHash": "65874d793a30cc246533222f50df63eab688141b3bf7721603e4ffc9498fadc4",
+          "normalizedDefinitionChanges": {},
+          "rawDefinitionChanges": {
+            "filters": [
+              [
+                {
+                  "maxPrice": "200",
+                  "minPrice": "0.000100",
+                  "tickSize": "0.000100",
+                  "filterType": "PRICE_FILTER"
+                },
+                {
+                  "maxQty": "100000",
+                  "minQty": "1",
+                  "stepSize": "1",
+                  "filterType": "LOT_SIZE"
+                },
+                {
+                  "maxQty": "10000",
+                  "minQty": "1",
+                  "stepSize": "1",
+                  "filterType": "MARKET_LOT_SIZE"
+                },
+                {
+                  "limit": 200,
+                  "filterType": "MAX_NUM_ORDERS"
+                },
+                {
+                  "limit": 10,
+                  "filterType": "MAX_NUM_ALGO_ORDERS"
+                },
+                {
+                  "notional": "5",
+                  "filterType": "MIN_NOTIONAL"
+                },
+                {
+                  "filterType": "PERCENT_PRICE",
+                  "multiplierUp": "1.1000",
+                  "ltMultiplierUp": "1.1000",
+                  "multiplierDown": "0.9000",
+                  "ltMultiplierDown": "0.9000",
+                  "multiplierDecimal": "4"
+                }
+              ],
+              [
+                {
+                  "maxPrice": "200",
+                  "minPrice": "0.000100",
+                  "tickSize": "0.000100",
+                  "filterType": "PRICE_FILTER"
+                },
+                {
+                  "maxQty": "100000",
+                  "minQty": "1",
+                  "stepSize": "1",
+                  "filterType": "LOT_SIZE"
+                },
+                {
+                  "maxQty": "10000",
+                  "minQty": "1",
+                  "stepSize": "1",
+                  "filterType": "MARKET_LOT_SIZE"
+                },
+                {
+                  "limit": 200,
+                  "filterType": "MAX_NUM_ORDERS"
+                },
+                {
+                  "limit": 10,
+                  "filterType": "MAX_NUM_ALGO_ORDERS"
+                },
+                {
+                  "notional": "5",
+                  "filterType": "MIN_NOTIONAL"
+                },
+                {
+                  "filterType": "PERCENT_PRICE",
+                  "multiplierUp": "1.2000",
+                  "ltMultiplierUp": "1.1000",
+                  "multiplierDown": "0.8000",
+                  "ltMultiplierDown": "0.9000",
+                  "multiplierDecimal": "4"
+                }
+              ]
+            ],
+            "triggerProtect": [
+              "0.1000",
+              "0.2000"
+            ],
+            "marketTakeBound": [
+              "0.10",
+              "0.20"
+            ]
+          }
+        },
+        "finding": "Normalized asset identity and quantity contract unchanged; existing unsupported classification and quantity multiplier preserved. Raw metadata changes only."
+      },
+      "aster:NULLMASKUSDT": {
+        "identityEvidence": [
+          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=NULLMASK&lang=en",
+          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=NULLMASKUSDT"
+        ],
+        "definitionAudit": {
+          "previousVersion": 9449,
+          "currentVersion": 9451,
+          "previousDefinitionHash": "99d9cd0fce3a848a8728d1ce23fa866611a7ba8442f065a909b7b21de7b998ea",
+          "currentDefinitionHash": "662dc6a32e61899f16132a7e78986833f27808101f563e57ba8a98022ff276b2",
+          "normalizedDefinitionChanges": {},
+          "rawDefinitionChanges": {
+            "imn": [
+              null,
+              "1000.00"
+            ]
+          }
+        },
+        "finding": "Normalized asset identity and quantity contract unchanged; existing unsupported classification and quantity multiplier preserved. Raw metadata changes only."
       }
     },
     "rowQualifications": {
-      "crypto:NULLMASK": {
+      "crypto:RLC": {
         "identityEvidence": [
-          "https://fapi.asterdex.com/fapi/v3/exchangeInfo # NULLMASKUSDT",
-          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=NULLMASKUSDT",
-          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=NULLMASK&lang=en"
+          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=RLC&lang=en",
+          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=RLCUSDT",
+          "https://api.bybit.com/v5/market/index-price-components?indexName=RLCUSDT"
         ],
         "referenceEvidence": [
-          "Complete official Bybit and Binance linear catalogs captured with pagination at catalogs.json observedAt"
+          "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # RLCUSDT",
+          "https://api.bybit.com/v5/market/index-price-components?indexName=RLCUSDT"
         ],
-        "primaryIdentity": {
-          "source": "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=NULLMASK&lang=en",
-          "name": "Nullmask",
-          "symbol": "MASK",
-          "contractAddresses": [
-            {
-              "SOL": "HuAXPyDWDaMYFKuwQHpqL1oPnj93zdzWmtvFGzCeCUa7"
-            }
-          ],
-          "index": {
-            "symbol": "NULLMASKUSDT",
-            "components": [
-              {
-                "exchange": "raydiumCPMM",
-                "symbol": "uindex(ZECUSDT)/ZEC-MASK"
-              },
-              {
-                "exchange": "meteora_dlmm",
-                "symbol": "MASK-SOL*uindex(SOLUSDT)"
-              }
-            ]
+        "referenceKey": "bybit:RLCUSDT:17dc2f7214d9fb037f3a",
+        "assetIdentity": {
+          "project": "iExec RLC",
+          "chain": "Ethereum",
+          "contractAddress": "0x607f4c5bb672230e8672085532f7e901544a7375"
+        },
+        "commonNativeSpotComponents": [
+          {
+            "exchange": "binance",
+            "symbol": "RLCUSDT"
+          },
+          {
+            "exchange": "gateio",
+            "symbol": "RLC_USDT"
+          },
+          {
+            "exchange": "kucoin",
+            "symbol": "RLC-USDT"
+          },
+          {
+            "exchange": "mexc",
+            "symbol": "RLCUSDT"
           }
-        },
-        "candidates": {
-          "bybit": [
-            {
-              "symbol": "MASKUSDT",
-              "baseAsset": "MASK",
-              "name": "Mask Network"
-            }
-          ],
-          "binance": [
-            {
-              "symbol": "MASKUSDT",
-              "baseAsset": "MASK",
-              "name": null
-            }
-          ]
-        },
-        "conclusion": "The MASK candidates identify Mask Network; the original is Nullmask on Solana with the recorded contract address and ZEC-MASK/MASK-SOL DEX constituents. They are not merged.",
-        "scope": "Bounded current Bybit/Binance crypto USDT linear perpetual classification, not absence on other providers or all markets."
-      },
-      "crypto:POD": {
-        "identityEvidence": [
-          "https://fapi.asterdex.com/fapi/v3/exchangeInfo # PODUSDT",
-          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=PODUSDT",
-          "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=POD&lang=en"
         ],
-        "referenceEvidence": [
-          "Complete official Bybit and Binance linear catalogs captured with pagination at catalogs.json observedAt"
-        ],
-        "primaryIdentity": {
-          "source": "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=POD&lang=en",
-          "name": "Dolphin",
-          "symbol": "POD",
-          "contractAddresses": [
-            {
-              "Base": "0xed664536023d8e4b1640c394777d34abaff1df8f"
-            }
-          ],
-          "index": {
-            "symbol": "PODUSDT",
-            "components": [
-              {
-                "exchange": "mxc",
-                "symbol": "PODUSDT"
-              },
-              {
-                "exchange": "uniswap_v4",
-                "symbol": "uindex(ETHUSDT)/WETHPOD"
-              },
-              {
-                "exchange": "gateio_futures",
-                "symbol": "POD_USDT"
-              }
-            ]
-          }
-        },
-        "candidates": {
-          "bybit": [],
-          "binance": []
-        },
-        "conclusion": "The original is Dolphin/POD on Base with the recorded contract address. No POD or Dolphin candidate exists in the complete adopted reference catalogs.",
-        "scope": "Bounded current Bybit/Binance crypto USDT linear perpetual classification, not absence on other providers or all markets."
-      },
-      "crypto:SCR": {
-        "identityEvidence": [
-          "https://fapi.asterdex.com/fapi/v3/exchangeInfo # SCRUSDT",
-          "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=SCRUSDT",
-          "https://fapi.binance.com/fapi/v1/exchangeInfo # SCRUSDT",
-          "https://fapi.binance.com/fapi/v1/constituents?symbol=SCRUSDT"
-        ],
-        "referenceEvidence": [
-          "https://fapi.binance.com/fapi/v1/exchangeInfo # SCRUSDT",
-          "https://fapi.binance.com/fapi/v1/constituents?symbol=SCRUSDT"
-        ],
-        "conclusion": "Aster and Binance official indexes identify the same five spot constituent contracts; no alias or multiplier inference."
+        "finding": "Aster public detail binds RLC to iExec Ethereum token. Independent native Aster and Bybit index endpoints both bind RLCUSDT to the same Binance, GateIO, KuCoin, Mexc spot contracts; Bybit multipliers are 1. Complete current Bybit catalog confirms active linear USDT perpetual. Bybit chosen under Decision 0013 primary-provider policy."
       }
     },
     "fixedReferencesPreserved": true,

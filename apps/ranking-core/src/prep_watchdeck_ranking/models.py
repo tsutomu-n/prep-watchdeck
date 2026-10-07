@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from pydantic.alias_generators import to_camel
 
 MINUTE = 60_000
+CATALOG_MAX_AGE_MS = 30 * MINUTE
 HISTORY_MINUTES = 3 * 1440
 RETENTION_MINUTES = 4 * 1440 + 1
 METRIC_VERSION = "trade-close-quote-turnover-analysis-v4"
@@ -272,8 +273,48 @@ class Coverage(Contract):
     reasons: dict[str, int]
 
 
+RosterStatus = Literal[
+    "ready",
+    "review_required",
+    "source_unavailable",
+    "source_stale",
+    "source_incomplete",
+    "source_invalid",
+    "unconfigured",
+]
+
+
+class RosterHealth(Contract):
+    status: RosterStatus
+    catalog_observed_at: int | None = Field(default=None, ge=0)
+    source_instruments: int | None = Field(default=None, ge=0)
+    added_instrument_ids: tuple[str, ...] = ()
+    removed_instrument_ids: tuple[str, ...] = ()
+    changed_instrument_ids: tuple[str, ...] = ()
+    market_data_issue_ids: tuple[str, ...] | None = None
+
+    def at_time(self, now: int) -> Self:
+        if self.catalog_observed_at is not None and (
+            now - self.catalog_observed_at > CATALOG_MAX_AGE_MS
+        ):
+            return type(self)(status="source_stale", catalog_observed_at=self.catalog_observed_at)
+        return self
+
+    @model_validator(mode="after")
+    def complete_observation(self) -> Self:
+        if self.status in ("ready", "review_required") and (
+            self.catalog_observed_at is None or self.source_instruments is None
+        ):
+            raise ValueError("catalog observation requires time and instrument count")
+        if self.status == "ready" and (
+            self.added_instrument_ids or self.removed_instrument_ids or self.changed_instrument_ids
+        ):
+            raise ValueError("unreviewed roster changes cannot be ready")
+        return self
+
+
 class RankingResponse(Contract):
-    schema_version: Literal["ranking-v4"] = "ranking-v4"
+    schema_version: Literal["ranking-v5"] = "ranking-v5"
     generation_id: str
     map_version: str
     metric_version: Literal["trade-close-quote-turnover-analysis-v4"] = METRIC_VERSION
@@ -281,6 +322,7 @@ class RankingResponse(Contract):
     generated_at: int
     roster_generated_at: int
     roster_stale: bool
+    roster_health: RosterHealth
     stale: bool
     status: Literal["ready", "partial", "starting", "stale"]
     period: Literal["15m", "1h", "24h", "daily"]

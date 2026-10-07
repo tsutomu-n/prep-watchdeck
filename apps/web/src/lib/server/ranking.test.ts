@@ -18,6 +18,7 @@ describe("independent ranking read path", () => {
     for (const invalid of [
       { ...response, schemaVersion: "other" },
       { ...response, schemaVersion: "ranking-v1" },
+      { ...response, schemaVersion: "ranking-v4" },
       { ...response, period: "1h" },
       { ...response, rows: [response.rows[0], response.rows[0]] },
       { ...response, cutoff: response.cutoff + 1 },

@@ -10,7 +10,7 @@ import aiohttp
 from aiohttp import web
 
 from .mapping import reference_revision
-from .models import HISTORY_MINUTES, MINUTE, Provider, RankingMap, Reference
+from .models import HISTORY_MINUTES, MINUTE, Provider, RankingMap, Reference, RosterHealth
 from .providers import PublicClient, now_ms
 from .ranking import Generation, Order, Period
 from .roster import check_roster
@@ -31,7 +31,7 @@ class RankingService:
             original_state.expanduser().resolve() / "artifacts" if original_state else None
         )
         self.roster_checked_at: int | None = None
-        self.roster_error: str | None = None
+        self.roster_health = RosterHealth(status="unconfigured")
         self.generation: Generation | None = None
         self.queues: dict[Provider, asyncio.Queue[tuple[Reference, int]]] = {
             "bybit": asyncio.Queue(maxsize=2000),
@@ -185,11 +185,11 @@ class RankingService:
             started = time.monotonic()
             try:
                 if self.original_artifacts is not None:
-                    observed, self.roster_error = check_roster(
+                    self.roster_health = check_roster(
                         self.mapping, self.original_artifacts, now_ms()
                     )
-                    if observed is not None:
-                        self.roster_checked_at = observed
+                    if self.roster_health.status == "ready":
+                        self.roster_checked_at = self.roster_health.catalog_observed_at
                 candidate = Generation(
                     self.mapping,
                     cutoff,
@@ -197,7 +197,7 @@ class RankingService:
                     self.store,
                     previous=self.generation,
                     roster_checked_at=self.roster_checked_at,
-                    roster_error=self.roster_error is not None,
+                    roster_health=self.roster_health,
                     invalid_keys=self.invalid_contracts,
                     unavailable_keys={
                         ref.key
@@ -260,6 +260,7 @@ class RankingService:
                 )
 
     def health(self) -> dict[str, Any]:
+        roster_health = self.roster_health.at_time(now_ms())
         for provider, queue in self.queues.items():
             self.client.health[provider].backfill_pending = queue.qsize()
         return {
@@ -273,7 +274,10 @@ class RankingService:
             "invalidContracts": sorted(self.invalid_contracts),
             "roster": {
                 "checkedAt": self.roster_checked_at,
-                "error": self.roster_error,
+                "error": (
+                    None if roster_health.status == "ready" else f"roster_{roster_health.status}"
+                ),
+                "details": roster_health.model_dump(mode="json", by_alias=True),
             },
             "providers": {p: h.public() for p, h in self.client.health.items()},
         }

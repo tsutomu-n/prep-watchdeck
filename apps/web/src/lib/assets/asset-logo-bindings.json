@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "mapVersion": "6954e4c861aafd485f43b65c",
-  "sourceMapSha256": "121c13ce20b2aef732238b217a4dfe5303f0bfd495a0d970f18fcc4b40cf9319",
+  "mapVersion": "c1381b1848be8f107fcacfea",
+  "sourceMapSha256": "e0a03999f084ea3a0eca7bcbea27c2853edffc8b92594ef8f4078b7661fffc83",
   "bindings": [
     {
       "instrumentId": "aster:1000PEPEUSDT",

@@ -1,11 +1,11 @@
 {
   "schemaVersion": "ranking-map-v2",
-  "version": "6954e4c861aafd485f43b65c",
-  "verifiedAt": 1791197928342,
-  "rosterGeneratedAt": 1791197925102,
-  "rosterFingerprint": "f4b91a8e9cefcab333ae87308286d217822f289b4da70d3aec4ee8157afba7e7",
-  "rosterSource": "/home/tn/projects/prep-watchdeck/var/tmp/roster-freshness-20261005/universe-snapshot.json",
-  "sourceInstrumentCount": 1095,
+  "version": "c1381b1848be8f107fcacfea",
+  "verifiedAt": 1791376132384,
+  "rosterGeneratedAt": 1791375534176,
+  "rosterFingerprint": "05065343f5e4a994a9223caf1708b077d7ab35ee4236605e2ce31230e9ab44dd",
+  "rosterSource": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/universe-snapshot.json",
+  "sourceInstrumentCount": 1096,
   "rows": [
     {
       "id": "crypto:0G",
@@ -8552,7 +8552,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DRVUSDT",
-          "versionId": 6444,
+          "versionId": 9456,
           "symbol": "DRVUSDT",
           "baseAsset": "DRV",
           "multiplier": 1
@@ -17516,7 +17516,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NULLMASKUSDT",
-          "versionId": 9449,
+          "versionId": 9451,
           "symbol": "NULLMASKUSDT",
           "baseAsset": "NULLMASK",
           "multiplier": 1
@@ -20881,6 +20881,49 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # RIVERUSDT",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # RIVERUSDT",
         "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=RIVERUSDT"
+      ]
+    },
+    {
+      "id": "crypto:RLC",
+      "asset": "RLC",
+      "status": "verified",
+      "reason": null,
+      "originals": [
+        {
+          "venue": "aster",
+          "instrumentId": "aster:RLCUSDT",
+          "versionId": 9453,
+          "symbol": "RLCUSDT",
+          "baseAsset": "RLC",
+          "multiplier": 1
+        }
+      ],
+      "reference": {
+        "provider": "bybit",
+        "symbol": "RLCUSDT",
+        "baseAsset": "RLC",
+        "multiplier": 1,
+        "quoteAsset": "USDT",
+        "settleAsset": "USDT",
+        "contractType": "linear_perpetual",
+        "revision": "17dc2f7214d9fb037f3a"
+      },
+      "widget": {
+        "status": "supported",
+        "symbol": "BYBIT:RLCUSDT.P",
+        "reason": null,
+        "evidence": [
+          "https://www.tradingview.com/symbols/RLCUSDT.P/?exchange=BYBIT # public page window.initData.symbolInfo: exact BYBIT/RLCUSDT.P swap/perpetual/USDT/RLC"
+        ],
+        "referenceKey": "bybit:RLCUSDT:17dc2f7214d9fb037f3a"
+      },
+      "evidence": [
+        "https://fapi.asterdex.com/fapi/v3/exchangeInfo # RLCUSDT",
+        "https://www.asterdex.com/bapi/futures/v1/public/composite/market/symbol/detail?symbol=RLC&lang=en",
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=RLCUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=RLCUSDT",
+        "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # RLCUSDT",
+        "https://api.bybit.com/v5/market/index-price-components?indexName=RLCUSDT"
       ]
     },
     {

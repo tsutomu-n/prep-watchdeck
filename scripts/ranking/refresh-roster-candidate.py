@@ -14,6 +14,7 @@ from typing import Any
 
 from prep_watchdeck_ranking.mapping import IDENTITY_FIELDS, compile_map, extract_roster
 from prep_watchdeck_ranking.models import content_digest
+from prep_watchdeck_ranking.roster import check_catalog
 
 ROOT = Path(__file__).resolve().parents[2]
 IDENTITY_DEFINITION_FIELDS = (
@@ -99,30 +100,10 @@ def prepare(
         raise ValueError("previous approved map differs from its roster")
     if previous_evidence["mapVersion"] != previous.version:
         raise ValueError("previous approved evidence differs from its map")
-    if (
-        roster["sourceStatus"] != "ready"
-        or service["status"] != "ready"
-        or service.get("qualityReasons")
-    ):
-        raise ValueError("refresh requires complete ready universe and service snapshots")
+    check_catalog(roster, service, now)
     recent(roster["generatedAt"], now, maximum_age)
     recent(service["generatedAt"], now, maximum_age)
-    for component in ("catalog", "l1"):
-        if service[component]["status"] != "ready":
-            raise ValueError("refresh cannot adopt a partial or failed collector")
-        recent(
-            service[component]["latestAt"],
-            now,
-            min(maximum_age, service[component].get("maxAgeSeconds", maximum_age)),
-        )
-    counts = [r for r in service["collectors"] if r["runKind"] == "catalog"]
-    if (
-        len(counts) != 1
-        or counts[0]["status"] != "succeeded"
-        or counts[0]["recordsReceived"] != len(roster["items"])
-        or counts[0]["recordsWritten"] != len(roster["items"])
-    ):
-        raise ValueError("refresh requires complete successful catalog collection")
+    recent(service["catalog"]["latestAt"], now, maximum_age)
     recent(catalogs["observedAt"], now, maximum_age)
     recent(definitions["observedAt"], now, maximum_age)
     if definitions.get("sessionReadOnly") is not True or definitions.get("databaseTarget") != {
@@ -320,9 +301,6 @@ def main() -> None:
     result = output_directory(
         args.output_directory, [args.snapshot, *[getattr(args, n) for n in names]]
     )
-    snapshot = json.loads(args.snapshot.read_text())
-    if snapshot.get("qualityReasons"):
-        raise ValueError("universe quality warnings require review before refresh")
     inputs = {name: json.loads(getattr(args, name).read_text()) for name in names}
     mapping, roster, evidence = prepare(
         extract_roster(args.snapshot), **inputs, now=int(datetime.now(UTC).timestamp() * 1000)

@@ -53,7 +53,7 @@ def test_24h_needs_boundary_close_and_windows_share_one_generation(store: Store)
     generation = Generation(mapping("BTC"), CUTOFF, CUTOFF + 8000, store)
     result = generation.response("24h", "00:00", "gainers", 0, CUTOFF + 8000)
     row = result.rows[0]
-    assert result.schema_version == "ranking-v4"
+    assert result.schema_version == "ranking-v5"
     assert result.anchor == CUTOFF - DAY
     assert row.reference_close.value == 110
     assert row.windows["15m"].state == "ready"

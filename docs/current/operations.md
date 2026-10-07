@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-05(月)_20:00 JST"
+timestamp="2026-10-07(水)_21:38 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T20:00:19+09:00`
-- 検証: `2026-10-05T20:00:19+09:00`
+- 更新: `2026-10-07T21:38:32+09:00`
+- 検証: `2026-10-07T21:38:32+09:00`
 - 状態: `現行`
 
 ---
@@ -356,6 +356,15 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 足りない場合は拒否する。live mapやサービスを自動変更しない。引数は`--help`で確認し、
 出力候補へ上記のmap/evidence検査を適用する。日付だけの更新で名簿の古さを隠さない。
 
+candidate作成と通常照合は同じcatalog判定を使う。L1だけのpartialは許容するが、catalogの完全性・
+成功件数・鮮度・同じ取得世代の確認は省略しない。`/health`の`roster.details`とランキング応答の
+`rosterHealth`で、取得元の失敗、名簿変更の確認待ち、元取引所の価格欠測を区別する。
+確認待ちでは追加・削除・契約変更IDを根拠と照合し、固定参照先・数量換算を自動変更しない。
+Repositoryの採用mapは1,096契約・577行（verified 536、unsupported 41）で、
+RLC追加とDRV/NULLMASK契約版変更を反映している。元数量換算3件・Widget3件は未確認を維持する。
+これはsourceの採用状態であり、稼働processのmap採用は別途反映と確認を要する。
+
+
 削除した契約は新mapの参照対象から外れ、通常の専用stateの保存整理の対象になる。
 過去日比較の導入では表・保存形式を変えず、保存期間を4日と1分へ延長する。旧revisionの履歴を
 新revisionへつなぎ直さない。旧mapへ切り戻す場合に整理済み履歴が不足すれば、同じ旧契約の公開APIで補完する。
@@ -368,7 +377,7 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須fieldが異なる場合があるため、
 片側だけを戻すとWebは形式不一致として取得待ちになる。必要なsource/mapを別の場所に保全し、
 既存の未commit差分を上書きしない。切戻し時も専用collectorの停止・再開以外に元DBの操作を加えない。
-`ranking-v4`の過去日比較を読むWebは同じ契約のRanking Coreと組み合わせる。表のmigrationは不要。
+`ranking-v5`の名簿診断・過去日比較を読むWebは同じ契約のRanking Coreと組み合わせる。表のmigrationは不要。
 保持期間が短い旧版のcollectorへ戻すと、追加取得した古い足は旧版の通常pruneで削除される。
 
 ### 通常稼働への配置記録

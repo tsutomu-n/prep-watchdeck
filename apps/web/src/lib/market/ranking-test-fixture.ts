@@ -77,10 +77,12 @@ export function rankingFixture(
     : order === "losers" ? a.returnPct! - b.returnPct! : b.returnPct! - a.returnPct!);
   eligible.forEach((row, index) => row.rank = index + 1);
   rows.sort((a, b) => (a.rank ?? Infinity) - (b.rank ?? Infinity));
-  return { schemaVersion: "ranking-v4", metricVersion: "trade-close-quote-turnover-analysis-v4",
+  return { schemaVersion: "ranking-v5", metricVersion: "trade-close-quote-turnover-analysis-v4",
     generationId: `fixture:${cutoff}`, mapVersion: "fixture-v1", cutoff, generatedAt: cutoff + 8000,
     previousGenerationId: null, previousCutoff: null,
     rosterGeneratedAt: cutoff, rosterStale: false, stale: false, status: "partial", period,
+    rosterHealth: { status: "ready", catalogObservedAt: cutoff, sourceInstruments: rows.length,
+      addedInstrumentIds: [], removedInstrumentIds: [], changedInstrumentIds: [], marketDataIssueIds: [] },
     dailyReferenceJst: reference, anchor: period === "daily" ? dailyBaselineAt(cutoff, reference)
       : cutoff - (period === "15m" ? 15 : period === "1h" ? 60 : 1440) * 60_000, order, minTurnover: minimum,
     coverage: { sourceInstruments: rows.length, rows: rows.length, cryptoRows: rows.length,

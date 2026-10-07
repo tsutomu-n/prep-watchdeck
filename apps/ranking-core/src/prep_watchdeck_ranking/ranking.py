@@ -23,6 +23,7 @@ from .models import (
     RankingMap,
     RankingResponse,
     RankingWindow,
+    RosterHealth,
     RowState,
     TurnoverComparison,
     TurnoverWindow,
@@ -222,7 +223,7 @@ class Generation:
         invalid_keys: set[str] | None = None,
         previous: Generation | None = None,
         roster_checked_at: int | None = None,
-        roster_error: bool = False,
+        roster_health: RosterHealth | None = None,
     ) -> None:
         if cutoff % MINUTE or generated_at < cutoff:
             raise ValueError("invalid generation cutoff")
@@ -230,7 +231,7 @@ class Generation:
         self.roster_checked_at = (
             mapping.roster_generated_at if roster_checked_at is None else roster_checked_at
         )
-        self.roster_error = roster_error
+        self.roster_health = roster_health or RosterHealth(status="unconfigured")
         self.metric_version = METRIC_VERSION
         # Share immutable inputs and the bounded base cache, without retaining a chain.
         self.previous = copy(previous) if previous else None
@@ -368,6 +369,7 @@ class Generation:
                     status="compared", previous_rank=old.rank, delta=old.rank - row.rank
                 )
             rows.append(row.model_copy(update={"rank_change": change}))
+        roster_health = self.roster_health.at_time(now)
         return result.model_copy(
             update={
                 "rows": tuple(rows),
@@ -376,7 +378,10 @@ class Generation:
                 "stale": stale,
                 "status": "stale" if stale else result.status,
                 "roster_generated_at": self.roster_checked_at,
-                "roster_stale": self.roster_error or now - self.roster_checked_at > DAY,
+                "roster_stale": (
+                    roster_health.status != "ready" or now - self.roster_checked_at > DAY
+                ),
+                "roster_health": roster_health,
             }
         )
 
@@ -493,6 +498,7 @@ class Generation:
             generated_at=self.generated_at,
             roster_generated_at=self.mapping.roster_generated_at,
             roster_stale=False,
+            roster_health=self.roster_health,
             stale=False,
             status=status,
             period=period,

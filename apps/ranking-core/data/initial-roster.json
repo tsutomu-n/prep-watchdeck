@@ -1,7 +1,10 @@
 {
-  "sourcePath": "/home/tn/projects/prep-watchdeck/var/tmp/roster-freshness-20261005/universe-snapshot.json",
-  "generatedAt": "2026-10-05T10:58:45.102708Z",
-  "sourceStatus": "ready",
+  "sourcePath": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/universe-snapshot.json",
+  "generatedAt": "2026-10-07T12:18:54.176459Z",
+  "sourceStatus": "partial",
+  "sourceQualityReasons": [
+    "contains_non_ready_instruments"
+  ],
   "items": [
     {
       "venue": "aster",
@@ -1910,7 +1913,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DRVUSDT",
-      "venueInstrumentVersionId": 6444,
+      "venueInstrumentVersionId": 9456,
       "sourceSymbol": "DRVUSDT",
       "baseAsset": "DRV",
       "quoteAsset": "USDT",
@@ -3800,7 +3803,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NULLMASKUSDT",
-      "venueInstrumentVersionId": 9449,
+      "venueInstrumentVersionId": 9451,
       "sourceSymbol": "NULLMASKUSDT",
       "baseAsset": "NULLMASK",
       "quoteAsset": "USDT",
@@ -4565,6 +4568,20 @@
       "active": true,
       "marketType": "linear_perpetual",
       "groupId": "crypto:RIVER:linear-perp",
+      "mappingMethod": "exact_base_heuristic"
+    },
+    {
+      "venue": "aster",
+      "venueInstrumentId": "aster:RLCUSDT",
+      "venueInstrumentVersionId": 9453,
+      "sourceSymbol": "RLCUSDT",
+      "baseAsset": "RLC",
+      "quoteAsset": "USDT",
+      "settleAsset": "USDT",
+      "collateralAsset": "USDT",
+      "active": true,
+      "marketType": "linear_perpetual",
+      "groupId": "crypto:RLC:linear-perp",
       "mappingMethod": "exact_base_heuristic"
     },
     {
@@ -15334,5 +15351,8 @@
       "mappingMethod": "exact_base_heuristic"
     }
   ],
-  "catalogFingerprint": "f4b91a8e9cefcab333ae87308286d217822f289b4da70d3aec4ee8157afba7e7"
+  "catalogFingerprint": "05065343f5e4a994a9223caf1708b077d7ab35ee4236605e2ce31230e9ab44dd",
+  "marketDataIssueIds": [
+    "aster:RLCUSDT"
+  ]
 }

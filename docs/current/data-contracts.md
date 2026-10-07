@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-05(月)_20:00 JST"
+timestamp="2026-10-07(水)_21:38 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T20:00:19+09:00`
-- 検証: `2026-10-05T20:00:19+09:00`
+- 更新: `2026-10-07T21:38:32+09:00`
+- 検証: `2026-10-07T21:38:32+09:00`
 - 状態: `現行`
 
 ---
@@ -219,7 +219,7 @@ mapは元の全instrument ID・version、名簿fingerprint・確認時刻、共�
 原資産・数量倍率、固定参照のProvider・symbol・quote/settle・perpetual種別・revision、
 Widgetの別symbolと根拠を持つ。`verified / unsupported / review / out_of_scope`を区別する。
 `review`を対応済みとして価格取得せず、異なる原資産や数量を名前だけで結合しない。
-`ranking-map-v2`の行statusと`ranking-v4`応答の`mappingStatus`は、元の原資産同一性と
+`ranking-map-v2`の行statusと`ranking-v5`応答の`mappingStatus`は、元の原資産同一性と
 固定参照契約の採用資格を表す。元契約の`originals[].multiplier=null`は数量換算未確認であり、
 確認済み参照契約によるランキングを止めない。元数量を使う換算には利用できない。
 Widget symbolは独立に照合し、参照契約keyへ結び付ける。Widgetの`review`はChartだけを停止する。
@@ -252,11 +252,25 @@ T=Aは`starting`とし、順位を作らない。
 応答はgeneration ID、map/metric version、T・A・生成時刻、件数と除外理由、全行を含む。
 `history_missing / source_delayed / source_unavailable / reference_invalid / invalid_data` と、
 mapの要確認・未対応・対象外、下限未満・方向対象外を分ける。最新Tから150秒を超えた結果は`stale`、
-名簿確認から24時間を超えた状態、または最新名簿の照合が失敗した状態は`rosterStale`。
+名簿の照合が失敗した状態や確認期限を超えた状態は`rosterStale`。
 `rosterGeneratedAt`は審査済みsnapshotの時刻、または完全なcatalog取得と全identity/version一致を
-確認した最新Universe snapshotの観測時刻。後者はmapの`verifiedAt`や参照revisionを更新しない。
-照合時は元artifactとcatalog成功記録が30分以内かつcatalogのmaxAgeSeconds以内であることを確認する。
-新規・削除・version変更、部分取得、古い・不正な入力では警告を維持し、古い値の時刻を付け替えない。
+確認した最新catalogの観測時刻。後者はmapの`verifiedAt`や参照revisionを更新しない。
+必須の`rosterHealth`は`status`、`catalogObservedAt`、`sourceInstruments`、
+`addedInstrumentIds / removedInstrumentIds / changedInstrumentIds`、`marketDataIssueIds`を含む。
+`ready`は完全なcatalogと採用済み名簿の一致、`review_required`は名簿差分の確認待ちを示す。
+取得元の問題は`source_unavailable / source_stale / source_incomplete / source_invalid`、
+確認元の未設定は`unconfigured`。確認待ちでは新しいcatalog時刻と最後に一致した時刻を分ける。
+identity fingerprintだけが異なる場合も確認待ちとし、列挙したIDが全差分を表すとは限らない。
+
+元artifactとcatalog成功記録は30分以内、catalogはその`maxAgeSeconds`以内でなければならない。
+catalog成功件数はsnapshot全件数と一致し、成功記録の完了時刻はcatalog観測時刻と同じで、
+両artifactの生成時刻以前である必要がある。新しい成功記録を古いsnapshotへ流用しない。
+全体statusがpartialでも、品質警告が取引所L1だけであればcatalog照合を継続する。
+未知の警告、部分catalog、古い・不正な入力は拒否する。応答時にもcatalog観測から30分を超えれば
+`source_stale`へ変更し、現在の差分・価格品質を未確認へ戻す。最後の名簿一致から24時間も上限とする。
+`marketDataIssueIds`は同時に読んだ元Universeの価格品質がready以外のIDで、参照ランキングの価格品質とは別。
+空配列は確認対象なし、nullは未確認として画面に表示する。価格欠測を理由に採用済み名簿の一致判定を失敗させない。
+`/health`の名簿診断にも応答時の同じ期限切れ判定を適用する。
 専用API未起動・初回世代待ち・不正な応答はWebで503、問い合わせ不正は400にする。
 
 
@@ -308,7 +322,7 @@ anchorで終了する足の終値は要求しない。長さ0は`starting`、参
 
 ### Markets workspaceの追加契約
 
-Ranking応答`ranking-v4`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
+Ranking応答`ranking-v5`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
 
 `market-metrics.json`は既存4 artifactから独立した任意の読取laneで、`native-endpoints-v1`、`generationId`、`candleCutoff`、現行ID/version別の`oiChange`と`tradeChange`を保持する。数量OIは同一versionのL1 bucketの15分・1時間差。終値変化は全行共通cutoffの確定1分足の15分・1時間・24時間差であり、JST騰落率とは別の値である。180秒lagと300秒上限は設計初期値で、実データから測定した数値ではない。欠損や古い値を0へ置換しない。
 
