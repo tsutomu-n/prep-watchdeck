@@ -28,9 +28,26 @@ async function prepare(page: Page) {
   return errors;
 }
 const nav = (page: Page) => page.getByRole("navigation", { name: "メインメニュー" });
+const defaultLayout = (page: Page) => (page.viewportSize()?.width ?? 1440) <= 768 ? "ultra" : "normal";
+
+test("スマホの初期密度は超高密度で、保存済みのノーマルを優先する", async ({ page }) => {
+  const errors = await prepare(page);
+  await page.goto("/settings");
+  await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue(defaultLayout(page));
+  await expect(page.locator("html")).toHaveAttribute("data-layout", defaultLayout(page));
+  await page.getByLabel("レイアウト", { exact: true }).selectOption("normal");
+  await page.reload();
+  await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue("normal");
+  await expect(page.locator("html")).toHaveAttribute("data-layout", "normal");
+  expect(errors).toEqual([]);
+});
 
 test("超高密度は実際に一覧の行高と上部領域を縮め、設定と価格を保持する", async ({ page }, testInfo) => {
   const errors = await prepare(page);
+  await page.addInitScript(() => {
+    const key = "prep-watchdeck:workspace-preferences:v2";
+    if (localStorage.getItem(key) === null) localStorage.setItem(key, JSON.stringify({ layout: "normal" }));
+  });
   await page.goto("/");
   const row = page.getByTestId("ranking-row").filter({ has: page.locator("strong", { hasText: /^BTC$/ }) });
   await expect(row).toBeVisible();
@@ -115,15 +132,18 @@ test("別タブに設定が反映され、保存不可でもタブ内で維持�
   await page.goto("/settings");
   const other = await context.newPage();
   await other.goto("/settings");
-  await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
-  await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue("ultra");
+  const chosen = defaultLayout(page) === "ultra" ? "normal" : "ultra";
+  await page.getByLabel("レイアウト", { exact: true }).selectOption(chosen);
+  await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue(chosen);
   await page.getByRole("button", { name: "レイアウトと文字を初期値に戻す", exact: true }).click();
-  await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue("normal");
+  await expect(other.getByLabel("レイアウト", { exact: true })).toHaveValue(defaultLayout(page));
   await other.close();
   await page.addInitScript(() => {
     Object.defineProperty(window, "localStorage", { get() { throw new Error("denied"); } });
   });
   await page.reload();
+  await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue(defaultLayout(page));
+  await expect(page.locator("html")).toHaveAttribute("data-layout", defaultLayout(page));
   await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
   await expect(page.getByRole("status").filter({ hasText: "保存できないため" })).toBeVisible();
   await nav(page).getByRole("link", { name: "ランキング", exact: true }).click();
@@ -157,7 +177,7 @@ test("遅い初期保存表示は開始済みの操作を上書きせず、削�
 });
 
 
-test("旧レイアウトをノーマルへ移行し、他の設定と新しい超高密度を保持する", async ({ page }) => {
+test("旧レイアウトを端末の初期値へ移行し、他の設定と新しい超高密度を保持する", async ({ page }) => {
   await prepare(page);
   await page.goto("/settings");
   for (const layout of ["standard", "ultra"]) {
@@ -168,9 +188,9 @@ test("旧レイアウトをノーマルへ移行し、他の設定と新しい�
       }));
     }, layout);
     await page.reload();
-    await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue("normal");
+    await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue(defaultLayout(page));
     await expect(page.getByLabel("レイアウト", { exact: true }).locator("option")).toHaveText(["ノーマル", "超高密度"]);
-    await expect(page.locator("html")).toHaveAttribute("data-layout", "normal");
+    await expect(page.locator("html")).toHaveAttribute("data-layout", defaultLayout(page));
     await expect(page.getByLabel("騰落率・Fundingの小数桁", { exact: true })).toHaveValue("4");
     await expect(page.getByLabel("チャートの初期時間足", { exact: true })).toHaveValue("60");
     await expect(page.getByLabel("取引所別チャートの出来高を表示", { exact: true })).not.toBeChecked();

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { defaultPreferences, preferences, setPreferences, type WorkspacePreferences } from "$lib/theme/workspace-preferences";
+  import { getDefaultPreferences, preferences, setPreferences, type WorkspacePreferences } from "$lib/theme/workspace-preferences";
   import { readUserWorkspace } from "$lib/market/user-workspace";
   import type { SavedView } from "$lib/server/user-workspace-repository";
   import { displayNumber } from "$lib/market/number-display";
@@ -24,7 +24,8 @@
     update(key, Number(input.value));
   }
   function reset(keys: (keyof WorkspacePreferences)[]) {
-    const patch = Object.fromEntries(keys.map(key => [key, defaultPreferences[key]]));
+    const defaults = getDefaultPreferences();
+    const patch = Object.fromEntries(keys.map(key => [key, defaults[key]]));
     message = setPreferences(patch) ? null : "保存できないため、再読込するまでこのタブ内だけに適用しています";
   }
   const digits = [0, 1, 2, 3, 4, 5, 6];
@@ -48,6 +49,7 @@
     </select></label>
   </div>
   <p>ノーマルは従来の超高密度です。新しい超高密度では上部操作と一覧をさらに詰め、スマホの操作高さも24px以上に縮めます。文字サイズ・行間を個別に選ぶと、レイアウトの既定値より優先します。</p>
+  <p>初期値はスマホで超高密度、PCでノーマルです。保存済みの選択を優先します。</p>
   <button onclick={() => reset(["layout", "textSize", "rowSpacing"])}>レイアウトと文字を初期値に戻す</button>
 </section>
 

@@ -22,6 +22,10 @@ export const defaultPreferences = {
   chartVolume: true
 };
 export type WorkspacePreferences = typeof defaultPreferences;
+export function getDefaultPreferences(): WorkspacePreferences {
+  const mobile = typeof window !== "undefined" && window.matchMedia("(max-width: 48rem)").matches;
+  return { ...defaultPreferences, layout: mobile ? "ultra" : "normal" };
+}
 const options = {
   layout: ["normal", "ultra"], textSize: ["auto", "small", "standard", "large"],
   rowSpacing: ["auto", "compact", "standard", "comfortable"], turnoverNotation: ["compact", "full"],
@@ -32,7 +36,7 @@ const options = {
 
 /** Untrusted local storage is never allowed to turn missing data into a signal. */
 export function normalizePreferences(input: unknown): WorkspacePreferences {
-  const result = { ...defaultPreferences };
+  const result = getDefaultPreferences();
   if (!input || typeof input !== "object" || Array.isArray(input)) return result;
   const source = input as Record<string, unknown>;
   for (const key of Object.keys(options) as (keyof typeof options)[]) {
@@ -57,12 +61,12 @@ export function normalizePreferences(input: unknown): WorkspacePreferences {
 }
 export function parsePreferences(raw: string | null): WorkspacePreferences {
   try { return normalizePreferences(raw === null ? null : JSON.parse(raw)); }
-  catch { return { ...defaultPreferences }; }
+  catch { return getDefaultPreferences(); }
 }
-/** Both retired layouts migrate to normal; unrelated preferences survive. */
+/** Retired layouts use the device default; unrelated preferences survive. */
 export function readPreferences(current: string | null, legacy: string | null): WorkspacePreferences {
   if (current !== null) return parsePreferences(current);
-  return { ...parsePreferences(legacy), layout: "normal" };
+  return { ...parsePreferences(legacy), layout: getDefaultPreferences().layout };
 }
 const state = writable<WorkspacePreferences>({ ...defaultPreferences });
 export const preferences = readonly(state);
@@ -78,7 +82,7 @@ function apply(value: WorkspacePreferences) {
 export function currentPreferences(): WorkspacePreferences {
   if (typeof window === "undefined") return { ...defaultPreferences };
   if (!initialized) {
-    let value = { ...defaultPreferences };
+    let value = getDefaultPreferences();
     try { value = readPreferences(window.localStorage.getItem(WORKSPACE_PREFERENCES_KEY), window.localStorage.getItem(LEGACY_PREFERENCES_KEY)); } catch { /* Defaults remain usable. */ }
     apply(value); initialized = true;
   }
