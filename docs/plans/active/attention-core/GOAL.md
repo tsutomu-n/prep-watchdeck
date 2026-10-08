@@ -1,9 +1,12 @@
 # Attention Core 実装計画
 
-timestamp="2026-10-08(木)_23:47 JST"
+timestamp="2026-10-09(金)_00:50 JST"
 - 作成: `2026-10-08T23:47:49+09:00`
-- 更新: `2026-10-08T23:47:49+09:00`
+- 更新: `2026-10-09T00:50:44+09:00`
 - 状態: `実装計画`
+
+F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8は未実行で、承認と実データ受入を待つ。
+検証済みsource: `3ea11242423b9de0856da00c26e12c54a3d24ffc`。根拠は[受入台帳](acceptance.json)と[再開記録](RESUME.md)。
 
 ## Goal / Scope
 
@@ -13,14 +16,14 @@ timestamp="2026-10-08(木)_23:47 JST"
 
 ## Checkpoints
 
-- [ ] F0 package / strict contracts / state isolation
-- [ ] F1 stable Market bundle / canonical Ranking input
-- [ ] F2 exact identity / provenance / raw features
-- [ ] F3 deterministic components / current API
-- [ ] F4 SQLite prospective evidence
-- [ ] F5 outcomes / family evaluation
-- [ ] F6 Web / schema / accessible UI
-- [ ] F7 shadow hot-set / isolated runner / source acceptance
+- [x] F0 package / strict contracts / state isolation
+- [x] F1 stable Market bundle / canonical Ranking input
+- [x] F2 exact identity / provenance / raw features
+- [x] F3 deterministic components / current API
+- [x] F4 SQLite prospective evidence
+- [x] F5 outcomes / family evaluation
+- [x] F6 Web / schema / accessible UI
+- [x] F7 shadow hot-set / isolated runner / source acceptance
 - [ ] F8 capacity / live acceptance: separate authorization and evidence required
 
 ## Execution / validation
@@ -39,6 +42,7 @@ F8 and the 30-day evidence / candidate superiority checks remain not_run until s
 
 ## Open / interpretations
 
+- Outcome baseline is the first minute boundary at/after decisionAt; require that exact offline close and all later bars.
 - Store UTC millisecond times at Attention boundaries consistently with Ranking; reject future observations.
 - Cross-Venue mark comparison requires verified quantity normalization; unknown multiplier never guessed.
 - Outcome adapter consumes an explicit offline export/read-only copy, never active Ranking SQLite.
