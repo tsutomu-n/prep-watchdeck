@@ -1,16 +1,16 @@
 # Attention Core checkpoint
 
-timestamp="2026-10-09(金)_07:10 JST"
+timestamp="2026-10-09(金)_07:17 JST"
 - 作成: `2026-10-08T23:47:49+09:00`
-- 更新: `2026-10-09T07:10:30+09:00`
+- 更新: `2026-10-09T07:17:08+09:00`
 - 状態: `実装計画`
 
-F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8: **in_progress**（push完了、配置準備中）。
+F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8: **PARTIAL**（push・配置・初期入力確認は完了、長期受入は未完了）。
 検証済みsource commit: `3ea11242423b9de0856da00c26e12c54a3d24ffc`。branch: `ai/attention-core-20261008-2347`。
 
 ## 再開点
 
-今回のsource実装・ローカル受入は完了。次はF8のproduction配置、capacity/retention、30日prospective evidence、候補優位性、本人の日常利用受入である。今回の明示承認はAttention/Webの配置と必要なunit操作・push。live DB、Provider追加取得、actual captureは対象外。F9 actual captureは別Decisionを要する。
+source実装・ローカル受入、本番配置と初期の実市場入力受入は完了。残件はcapacity/retention、30日prospective evidence、候補優位性、本人の日常利用受入である。今回の明示承認はAttention/Webの配置と必要なunit操作・push。live DB、Provider追加取得、actual captureは対象外。F9 actual captureは別Decisionを要する。
 
 ## 実装と証拠
 
@@ -34,13 +34,15 @@ F0–F7 source受入時点ではMarket/Ranking writer、manual selection、Provi
 
 ## F8 rollout checkpoint
 
-2026-10-09のuser明示指示で、今回のAttention branchのpushと本番反映を開始した。地理空間のGISか実市場データかの確認は並行中。実データ受入の対象は回答に従う。
+2026-10-09のuser明示指示により、Attention branchのpushと本番配置を完了した。稼働releaseは`944f91bf810ab9e437ee4639407aea1b8be5c3e0`。WebとAttentionのみを切り替え、Market `5b82a7d`とRanking `d4aa5f9`のprocessは同じPIDで継続している。
 
-1. 現行source・unit・稼働版・healthとrollback設定をread-onlyで確認する。
-2. 同じsourceで、専用scratch Attention stateとportから現行Market artifacts / Ranking APIだけを読み、世代・欠測・容量・resource使用を観測する。
-3. 受入後にAttention専用unit templateと制限を用意し、tracked sourceだけを新releaseへ配置する。WebのWorkingDirectoryを切り替え、Attentionを専用state/8770で起動する。Market/Rankingの既存writer・manual selection・DBは変更しない。
-4. API・Browser・実際の世代更新とcgroup制限、既存process継続、Attention停止/復帰時の独立性を確認し、結果をcommit/pushする。
+- Attention unitはenabled/active。512 MiB、CPU 100%、32 tasks、128 file descriptorsの制限と、Market/Ranking input rootのread-only mountを実物で確認した。
+- 実市場入力の初期受入は **PASS WITH ISSUES**。577行、movement/activity 534行、positioning 470行、dislocation 466行、confluence 461行は07:15 JSTの標本値。41件の未対応、4 original versionのreview、3数量倍率未確認、native stale等を理由と欠損のまま保持する。
+- 隔離420秒で8世代・5分証拠2世代、本番でも複数世代と再起動後の更新を確認。SQLite/artifact一致、strict schema、finite/null、時刻、4成分が揃った場合だけconfluence、初回証拠より前の16 policy freezeを確認した。
+- Browserは1440/390幅で577行、成分切替、BTC検索、元時刻、方向、横overflowなし、JS errorなし、write要求なし。Tailscaleの画面/APIも200。実機での本人受入とは区別する。
+- Attention停止時はWeb APIが503/no-store、画面は最終577行と基準時刻を保持して更新停止を表示。元API/画面は200、manual selectionとuser workspaceのhashは不変。Attention復帰も確認した。
+- 初期容量はoutcome前約5.1 GiB/日、30日換算約153 GiB。容量保証ではなく、retention/archive・outcome増加・30日prospective evidence・候補優位性・本人の日常利用が残る。
 
-初期確認: Web/Marketはrelease 5b82a7d、Rankingはd4aa5f9。Rankingは4 original contract versionsのreview_requiredを返す。これを自動承認・補完しない。切戻しは旧Web drop-inの復元と新Attention unitの停止。状態は保持し、削除しない。CI、PR、main merge、actual capture、credential変更は依頼に含めない。30日間の証拠が未蓄積なら短時間の確認で代用しない。
+切戻し設定とraw evidenceは`/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212`。停止対象はAttentionのみ。Webも戻す場合は追加した`zzzz-attention-release.conf`を同directoryへ退避し、daemon-reload後にWebだけを再起動する。専用stateとreleaseは保持する。詳細と検証時刻は[受入台帳](acceptance.json)に記録した。
 
-進捗: `194d49c`をoriginの同名branchへpush済み。Linux隔離の実市場入力で毎分更新と577行を確認し、専用unit templateのsystemd構文検証を通過。短時間の実測はoutcome前約5.1 GiB/日で、長期capacity/retention受入は未完了。
+「GISデータ」が地理空間データを指すかは確認中。この記録は本番配置に必要な実市場入力の受入であり、地理空間GISのimportを完了したものではない。CI、PR、main merge、actual capture、live Market DB変更、credential変更は未実施。

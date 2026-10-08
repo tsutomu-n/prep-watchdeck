@@ -740,30 +740,36 @@
     {
       "id": "ATT-120",
       "requirement": "production unit install",
-      "status": "not_run",
-      "evidence": [],
-      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+      "status": "pass",
+      "evidence": [
+        "productionRollout",
+        "config/systemd/prep-watchdeck-attention.service.in"
+      ],
+      "reason": "Explicitly authorized; installed/enabled and active with the recorded release, read-only input mounts and verified cgroup limits."
     },
     {
       "id": "ATT-121",
       "requirement": "production capacity",
-      "status": "not_run",
-      "evidence": [],
-      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+      "status": "partial",
+      "evidence": [
+        "productionRollout.preflight",
+        "productionRollout.liveData.finalUnit"
+      ],
+      "reason": "Startup resource and disk growth measured; 30-day capacity including outcomes and retention/archive remains unverified."
     },
     {
       "id": "ATT-122",
       "requirement": "30日prospective evidence",
       "status": "not_run",
       "evidence": [],
-      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+      "reason": "Prospective production collection started; 30 UTC days have not elapsed and live outcome settlement is pending."
     },
     {
       "id": "ATT-123",
       "requirement": "family-adjusted candidate superiority",
       "status": "not_run",
       "evidence": [],
-      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+      "reason": "Needs the frozen family, 30-day prospective evidence and settled offline outcomes; no superiority claim is made."
     },
     {
       "id": "ATT-124",
@@ -784,7 +790,7 @@
       "requirement": "user daily-use acceptance",
       "status": "not_run",
       "evidence": [],
-      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+      "reason": "Desktop/mobile automation passed; acceptance by the user in daily operation has not been supplied."
     }
   ],
   "verifiedSourceCommit": "3ea11242423b9de0856da00c26e12c54a3d24ffc",
@@ -792,10 +798,13 @@
   "summary": {
     "sourceImplementation": "PASS",
     "productValidation": "PARTIAL",
-    "productionAttention": "not_run",
+    "productionAttention": "PASS",
     "actualCapture": "not_run",
     "sourcePassItems": 86,
-    "remainingItems": 7
+    "remainingItems": 6,
+    "liveInputAcceptance": "PASS_WITH_ISSUES",
+    "productionCapacity": "PARTIAL",
+    "productionPassItems": 1
   },
   "fullLocalGate": {
     "command": "bash scripts/verify-local.sh",
@@ -889,5 +898,287 @@
     "Outcome development adapter uses explicit offline export, no active Ranking SQLite connection.",
     "Linux runner fails closed without bubblewrap.",
     "AttentionWorkspace is colocated in lib/attention with its presentation/validation helpers."
-  ]
+  ],
+  "productionRollout": {
+    "authorizedAt": "2026-10-09T07:03:01+09:00",
+    "completedAt": "2026-10-09T07:17:08+09:00",
+    "deployedSourceCommit": "944f91bf810ab9e437ee4639407aea1b8be5c3e0",
+    "releaseDirectory": "/home/tn/releases/prep-watchdeck/944f91b",
+    "branch": "ai/attention-core-20261008-2347",
+    "pushedReleaseCommit": true,
+    "url": "https://ubuntu.narluga-gecko.ts.net:8444/attention",
+    "evidenceDirectory": "/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212",
+    "releaseBuild": {
+      "uvSyncFrozen": true,
+      "bunInstallFrozen": true,
+      "bunBuild": true,
+      "logSha256": "b24c878f2766c8bba2aaa6fd3fab820c8c8ee1facbcabc4563a4f4d80be25a01",
+      "trackedSourceOnly": true
+    },
+    "preflight": {
+      "sourceCommit": "194d49c",
+      "runtimeSourceSameAsRelease": true,
+      "generations": 8,
+      "evidenceGenerations": 2,
+      "firstDecisionAt": 1791497131838,
+      "lastDecisionAt": 1791497532015,
+      "durationSeconds": 420,
+      "sqliteQuickCheck": "ok",
+      "totalBytes": 35337370,
+      "estimatedGiBPerDayBeforeOutcomes": 5.113683622330427,
+      "estimatedGiBPer30DaysBeforeOutcomes": 153.41050866991282,
+      "note": "Short startup sample; no outcome rows or retention; not a long-term capacity guarantee.",
+      "apiLatencyMs": [
+        17.6,
+        12.8,
+        12.6,
+        11.9,
+        11.8
+      ],
+      "peakRssKiB": 252056
+    },
+    "liveData": {
+      "sampledAt": "2026-10-08T22:15:17.298073+00:00",
+      "status": "PASS WITH ISSUES",
+      "schemaValidated": true,
+      "storageMatchesArtifact": true,
+      "sqliteQuickCheck": "ok",
+      "generationId": "d742ba8ded4835afa681f11b02dd6e4f9223d9af228a9a2407efd05302d54871",
+      "inputs": {
+        "decisionAt": 1791497712031,
+        "featureVersion": "attention-features-v1",
+        "generationId": "d742ba8ded4835afa681f11b02dd6e4f9223d9af228a9a2407efd05302d54871",
+        "inputSkewSeconds": 191.588,
+        "marketMetricsCandleCutoff": 1791497520000,
+        "marketMetricsGeneratedAt": 1791497708456,
+        "marketMetricsGenerationId": "2026-10-08T22:12:00+00:00:d35ab7fbafe248f8997dbea9ef0af797",
+        "qualityReasons": [],
+        "rankingCutoff": 1791497700000,
+        "rankingGeneratedAt": 1791497708022,
+        "rankingGenerationId": "c1381b1848be8f107fcacfea:1791497700000:1791497708022",
+        "rankingMapVersion": "c1381b1848be8f107fcacfea",
+        "rankingMetricVersion": "trade-close-quote-turnover-analysis-v4",
+        "serviceGeneratedAt": 1791497711588,
+        "universeGeneratedAt": 1791497711588
+      },
+      "coverage": {
+        "componentReady": {
+          "activity": 534,
+          "dislocation": 466,
+          "movement": 534,
+          "positioning": 470
+        },
+        "confluenceReady": 461,
+        "eligible": 534,
+        "rows": 577
+      },
+      "identityCounts": {
+        "ready": 373,
+        "partial": 161,
+        "excluded": 41,
+        "invalid": 2
+      },
+      "qualityReasonCategories": {
+        "single_native_venue": 161,
+        "native_l1_stale": 360,
+        "original_multiplier_unknown": 3,
+        "mapping_unsupported": 41,
+        "original_version_mismatch": 4
+      },
+      "rowContracts": {
+        "nonReadyScoresNull": true,
+        "confluenceNeedsAllFour": true,
+        "dataAtOrBeforeDecision": true
+      },
+      "immutableGenerationCount": 5,
+      "evidenceGenerations": 1,
+      "frozenPolicies": 16,
+      "health": {
+        "status": "partial",
+        "reason": "incomplete_component_coverage",
+        "generationId": "d742ba8ded4835afa681f11b02dd6e4f9223d9af228a9a2407efd05302d54871",
+        "lastAttemptAt": 1791497712031,
+        "cycles": 2,
+        "databaseBytes": 24109776,
+        "providerRequests": 0,
+        "mode": "shadow_only"
+      },
+      "services": {
+        "attention": {
+          "MainPID": "180401",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-attention.service",
+          "MemoryCurrent": "228237312",
+          "MemoryPeak": "250949632",
+          "CPUUsageNSec": "2134836000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/944f91b",
+          "ActiveState": "active"
+        },
+        "web": {
+          "MainPID": "178946",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-web.service",
+          "MemoryCurrent": "450060288",
+          "MemoryPeak": "616075264",
+          "CPUUsageNSec": "7333662000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/944f91b/apps/web",
+          "ActiveState": "active"
+        },
+        "market": {
+          "MainPID": "3870006",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-market.service",
+          "MemoryCurrent": "213532672",
+          "MemoryPeak": "371023872",
+          "CPUUsageNSec": "4758027952000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/5b82a7d/apps/market-core",
+          "ActiveState": "active"
+        },
+        "ranking": {
+          "MainPID": "2917818",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-ranking.service",
+          "MemoryCurrent": "237789184",
+          "MemoryPeak": "243535872",
+          "CPUUsageNSec": "5801762135000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/d4aa5f9",
+          "ActiveState": "active"
+        }
+      },
+      "inputMounts": {
+        "/home/tn/.local/share/prep-watchdeck-market": "ro,nosuid,nodev,relatime",
+        "/home/tn/.local/share/prep-watchdeck-ranking": "ro,nosuid,nodev,relatime",
+        "/home/tn/.local/share/prep-watchdeck-attention": "rw,nosuid,nodev,relatime"
+      },
+      "limitations": [
+        "Unreviewed original version changes remain visible and excluded where necessary.",
+        "Unsupported mappings and unavailable native inputs remain unavailable.",
+        "30-day outcomes, candidate superiority, long-term retention and daily-use acceptance pending."
+      ],
+      "finalHealth": {
+        "status": "partial",
+        "reason": "incomplete_component_coverage",
+        "generationId": "6272a0311382cc7b744542ff317ec9b7060a357165ba471a61149da662473d2d",
+        "lastAttemptAt": 1791497772043,
+        "cycles": 3,
+        "databaseBytes": 24109776,
+        "providerRequests": 0,
+        "mode": "shadow_only"
+      },
+      "finalUnit": {
+        "MainPID": "180401",
+        "NRestarts": "0",
+        "MemoryCurrent": "235913216",
+        "MemoryPeak": "259133440",
+        "CPUQuotaPerSecUSec": "1s",
+        "MemoryMax": "536870912",
+        "TasksMax": "32",
+        "LimitNOFILE": "128",
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "finalCheckedAt": "2026-10-09T07:17:08+09:00",
+      "diskFreeGiB": 313.27,
+      "prospectiveFreezeBeforeFirstEvidence": true
+    },
+    "browser": {
+      "sampledAt": "2026-10-08T22:13:26.616Z",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 960
+          },
+          "total": 577,
+          "status": "一部の成分は未算出",
+          "cutoff": "一部の成分は未算出\n参照基準 10/09 07:13:00 JST",
+          "search": "BTC visible with source time and direction",
+          "overflow": false,
+          "errors": [],
+          "attemptedWrites": [],
+          "screenshot": "/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212/attention-1440.png"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "total": 577,
+          "status": "一部の成分は未算出",
+          "cutoff": "一部の成分は未算出\n参照基準 10/09 07:13:00 JST",
+          "search": "BTC visible with source time and direction",
+          "overflow": false,
+          "errors": [],
+          "attemptedWrites": [],
+          "screenshot": "/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212/attention-390.png"
+        }
+      ]
+    },
+    "tailscale": [
+      {
+        "url": "https://ubuntu.narluga-gecko.ts.net:8444/attention",
+        "status": 200,
+        "bytes": 31588,
+        "cacheControl": "no-store"
+      },
+      {
+        "url": "https://ubuntu.narluga-gecko.ts.net:8444/api/attention",
+        "status": 200,
+        "bytes": 1026162,
+        "cacheControl": "no-store"
+      }
+    ],
+    "stopRecovery": {
+      "startedAt": "2026-10-08T22:14:25.726Z",
+      "before": {
+        "/home/tn/.local/share/prep-watchdeck-market/control/selection.json": "0f8b5a2841cfcab37b647bcf9c60d29f99d8c4703b583c647bf051bdaae0ec76",
+        "/home/tn/.local/share/prep-watchdeck-market/user-workspace.json": "841f04309697d167442de9005bdde02c90f7752a029648a6ec2117817ea6bd39"
+      },
+      "stoppedAttentionApi": {
+        "status": 503,
+        "cacheControl": "no-store"
+      },
+      "retainedRows": 577,
+      "retainedCutoff": "参照基準 10/09 07:14:00 JST",
+      "existingEndpoints": [
+        {
+          "endpoint": "/api/health",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/market-data",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/rankings?period=15m&dailyReferenceJst=00:00&order=turnover&minTurnover=0",
+          "status": 200
+        },
+        {
+          "endpoint": "/rankings",
+          "status": 200
+        },
+        {
+          "endpoint": "/",
+          "status": 200
+        }
+      ],
+      "after": {
+        "/home/tn/.local/share/prep-watchdeck-market/control/selection.json": "0f8b5a2841cfcab37b647bcf9c60d29f99d8c4703b583c647bf051bdaae0ec76",
+        "/home/tn/.local/share/prep-watchdeck-market/user-workspace.json": "841f04309697d167442de9005bdde02c90f7752a029648a6ec2117817ea6bd39"
+      },
+      "status": "PASS",
+      "finishedAt": "2026-10-08T22:14:31.903Z"
+    },
+    "rollback": "Stop and disable only prep-watchdeck-attention.service; move zzzz-attention-release.conf back to this rollout directory; daemon-reload and restart only prep-watchdeck-web.service. Retain state and releases.",
+    "notPerformed": [
+      "CI",
+      "PR",
+      "main merge",
+      "Market/Ranking service restart",
+      "live Market DB migration",
+      "actual capture",
+      "credential changes"
+    ],
+    "gisMeaning": "unconfirmed: clarification pending; recorded data acceptance is for actual market inputs, not geographic GIS data"
+  }
 }
