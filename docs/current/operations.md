@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-09(金)_00:39 JST"
+timestamp="2026-10-09(金)_07:09 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T00:39:16+09:00`
+- 更新: `2026-10-09T07:09:43+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -536,9 +536,15 @@ Core用の固定証拠は`watchdeck-market export-fixture --instrument <ID> --ve
 run_idを特定した別の修復判断とする。本番でのbackup、exact sourceの配置、実ProviderとUIの確認は
 [作業計画](../plans/active/prep-quality-completion/GOAL.md)の受入台帳を通して行う。
 
-## Attention Coreの隔離開発と停止
+## Attention Coreの隔離実行と運用
 
 Repositoryには`watchdeck-attention` CLIがあるが、production unitのinstall/enable/startや既存releaseの更新は別の明示承認対象である。既定stateは`~/.local/share/prep-watchdeck-attention`、portは8770。Market/Rankingとは別のdirectory・portを指定する。既定portやrootは製品の永久制約ではない。
+
+承認された配置では[Attention専用unit template](../../config/systemd/prep-watchdeck-attention.service.in)をreleaseの絶対pathと専用state/portでrenderする。MemoryMaxは512 MiB、CPUQuotaは100%、TasksMaxは32、LimitNOFILEは128。Linux bubblewrapでrootとMarket/Ranking stateをread-onlyにし、Attention stateだけを書込み可能にする。Market/Ranking unitを新規起動する依存は持たず、既存の収集processを変更しない。Webには`PREP_WATCHDECK_ATTENTION_PORT`を設定する。広域の`install-user-services.sh`をAttention配置のために実行しない。
+
+配置前は旧WebのWorkingDirectory/drop-inとunitの有無を保存し、tracked sourceから独立releaseを作る。配置後は`/health`、`/attention`、Webの`/api/attention`と`/attention`、少なくとも2回の世代更新を確認する。`partial`は欠損を含む有効応答であり、全銘柄の全成分が有効という意味ではない。確認ではcoverageとquality reason、元の2 collectorのPID/更新継続も記録する。
+
+容量は専用stateのSQLite、WAL、immutable artifactsを合計する。2026-10-09の577銘柄の短時間観測では、outcome未保存で約5.1 GiB/日、30日換算約153 GiBと推定した。これは長期実測や容量保証ではない。自動削除は未実装であり、outcome・訂正版と他serviceの増加分を含むretention/archive受入は別checkpointに残す。空き容量50 GiB未満、または直近の実測増加から7日分を確保できない場合はAttentionの新規蓄積を停止し、保存済みstateを保持して容量方針を再判断する。停止はこの条件を確認した運用操作であり、自動監視機能ではない。
 
 Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`validate-state`は既存current artifactの形式だけを検証し、DB整合性・鮮度・稼働受入を代替しない。`serve`は専用stateを作成し、初回の実時刻で候補群を固定する。過去へfreeze時刻を遡らせない。
 
@@ -546,4 +552,4 @@ Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`va
 
 `freeze-family --family-id <新family>`、`settle-outcomes --fixture <offline export.json>`、`evaluate-family --family-id <固定family>`は専用SQLiteへ書くため、Attention serviceを停止した状態で実行する。共通の`--state-dir`等を指定できる。後二者はProvider取得やactive Ranking DB接続を行わない。評価結果はstdoutと`artifacts/evaluation.json`へ出る。訂正後のstale reportは再評価が必要。
 
-停止・rollbackは起動したAttention processだけを終了する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。
+停止・rollbackは起動したAttention process、または承認された`prep-watchdeck-attention.service`だけを停止する。Webも戻す場合は保存した旧drop-inを復元してWebだけを再起動する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。

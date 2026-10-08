@@ -1,16 +1,16 @@
 # Attention Core checkpoint
 
-timestamp="2026-10-09(金)_00:50 JST"
+timestamp="2026-10-09(金)_07:10 JST"
 - 作成: `2026-10-08T23:47:49+09:00`
-- 更新: `2026-10-09T00:50:44+09:00`
+- 更新: `2026-10-09T07:10:30+09:00`
 - 状態: `実装計画`
 
-F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8: **not_run**。
+F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8: **in_progress**（push完了、配置準備中）。
 検証済みsource commit: `3ea11242423b9de0856da00c26e12c54a3d24ffc`。branch: `ai/attention-core-20261008-2347`。
 
 ## 再開点
 
-今回のsource実装・ローカル受入は完了。次はF8のproduction配置、capacity/retention、30日prospective evidence、候補優位性、本人の日常利用受入である。明示承認なしにserviceのinstall/start/stop/restart、deploy、live DB、Provider取得、actual captureへ進めない。F9 actual captureは別Decisionを要する。
+今回のsource実装・ローカル受入は完了。次はF8のproduction配置、capacity/retention、30日prospective evidence、候補優位性、本人の日常利用受入である。今回の明示承認はAttention/Webの配置と必要なunit操作・push。live DB、Provider追加取得、actual captureは対象外。F9 actual captureは別Decisionを要する。
 
 ## 実装と証拠
 
@@ -30,4 +30,17 @@ Outcome cutoffは`ceil(decisionAt / minute)`で、Ranking input cutoffとは別�
 
 既定familyは3 baseline＋5 component × 2 horizonの16 policyを初回の実時刻にfreezeする。policyを変える場合は新familyを使う。stats methodはversioned approximationであり、powerはplanning-only。実データ上の有効性・利益・production capacityは未確認。
 
-Market/Ranking writer、manual selection、Provider、production stateへ書く操作は行っていない。push / merge / PR / deploy / systemd操作は未実施。Attention停止後も既存画面は独立して利用できる。専用stateの削除は不要。
+F0–F7 source受入時点ではMarket/Ranking writer、manual selection、Provider、production stateへの書込み、push / merge / PR / deploy / systemd操作は未実施だった。F8での実行状態は下記を参照する。Attention停止後も既存画面は独立して利用できる。専用stateの削除は不要。
+
+## F8 rollout checkpoint
+
+2026-10-09のuser明示指示で、今回のAttention branchのpushと本番反映を開始した。地理空間のGISか実市場データかの確認は並行中。実データ受入の対象は回答に従う。
+
+1. 現行source・unit・稼働版・healthとrollback設定をread-onlyで確認する。
+2. 同じsourceで、専用scratch Attention stateとportから現行Market artifacts / Ranking APIだけを読み、世代・欠測・容量・resource使用を観測する。
+3. 受入後にAttention専用unit templateと制限を用意し、tracked sourceだけを新releaseへ配置する。WebのWorkingDirectoryを切り替え、Attentionを専用state/8770で起動する。Market/Rankingの既存writer・manual selection・DBは変更しない。
+4. API・Browser・実際の世代更新とcgroup制限、既存process継続、Attention停止/復帰時の独立性を確認し、結果をcommit/pushする。
+
+初期確認: Web/Marketはrelease 5b82a7d、Rankingはd4aa5f9。Rankingは4 original contract versionsのreview_requiredを返す。これを自動承認・補完しない。切戻しは旧Web drop-inの復元と新Attention unitの停止。状態は保持し、削除しない。CI、PR、main merge、actual capture、credential変更は依頼に含めない。30日間の証拠が未蓄積なら短時間の確認で代用しない。
+
+進捗: `194d49c`をoriginの同名branchへpush済み。Linux隔離の実市場入力で毎分更新と577行を確認し、専用unit templateのsystemd構文検証を通過。短時間の実測はoutcome前約5.1 GiB/日で、長期capacity/retention受入は未完了。

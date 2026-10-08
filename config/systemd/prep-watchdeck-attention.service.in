@@ -1,0 +1,20 @@
+[Unit]
+Description=prep-watchdeck read-only attention and shadow allocation
+After=network-online.target prep-watchdeck-market.service prep-watchdeck-ranking.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO_ROOT@
+ExecStart=@PYTHON_BIN@ @REPO_ROOT@/scripts/attention/run-isolated.py --state-dir @ATTENTION_STATE_ROOT@ --market-state-dir @MARKET_STATE_ROOT@ --ranking-state-dir @RANKING_STATE_ROOT@ --ranking-port @RANKING_PORT@ --port @ATTENTION_PORT@
+Restart=on-failure
+RestartSec=10s
+TimeoutStopSec=30s
+UMask=0077
+MemoryMax=512M
+CPUQuota=100%
+TasksMax=32
+LimitNOFILE=128
+
+[Install]
+WantedBy=default.target
