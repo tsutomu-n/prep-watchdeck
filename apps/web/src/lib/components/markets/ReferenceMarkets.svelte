@@ -11,6 +11,8 @@
   import RelativeVolumeSignal from "$lib/components/ranking/RelativeVolumeSignal.svelte";
   import RelativeVolumeDetails from "$lib/components/ranking/RelativeVolumeDetails.svelte";
   import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
+  import type { UniverseSnapshotArtifact } from "$lib/generated/universe-snapshot";
+  import { bitgetTurnover, formatBitgetTurnover } from "$lib/market/bitget-turnover";
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
   import { filterSortRankingRows, type RankingSort } from "$lib/market/market-view";
   import { newlyIncreasedRows, relativeVolumeState } from "$lib/market/relative-volume";
@@ -73,6 +75,7 @@
   let error = $state<string | null>(null);
   let storageMessage = $state<string | null>(null);
   let now = $state(Date.now());
+  let bitgetUniverse = $state<UniverseSnapshotArtifact | null>(null);
   let tableScroll: HTMLDivElement;
   let listScroll = $state({ top: 0, left: 0 });
   let restoreList = $state(false);
@@ -85,6 +88,37 @@
   let mobileListScroll = { top: 0, left: 0 };
   let mobileListOrigin = false;
   let detailBack: HTMLButtonElement;
+
+  $effect(() => {
+    if (!mounted || venue !== "bitget") return;
+    bitgetUniverse = untrack(() => market?.universe ?? null);
+    let disposed = false;
+    let pending = false;
+    let request: AbortController | null = null;
+    const refreshBitget = async () => {
+      if (pending || document.hidden) return;
+      pending = true;
+      request = new AbortController();
+      const timeout = setTimeout(() => request?.abort(), 10_000);
+      try {
+        const response = await fetch("/api/market-data", { cache: "no-store", signal: request.signal });
+        if (!response.ok) throw new Error("Bitgetのデータを取得できません");
+        const payload: MarketArtifactBundle = await response.json();
+        if (!payload.universe || !Array.isArray(payload.universe.items)) throw new Error("invalid universe");
+        if (!disposed) { bitgetUniverse = payload.universe; now = Date.now(); }
+      } catch {
+        if (!disposed) bitgetUniverse = null;
+      } finally { clearTimeout(timeout); pending = false; }
+    };
+    const visible = () => { now = Date.now(); void refreshBitget(); };
+    void refreshBitget();
+    const timer = setInterval(refreshBitget, 15_000);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      disposed = true; request?.abort(); clearInterval(timer);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  });
 
   function hasViewQuery(params: URLSearchParams) {
     return [...params.keys()].some(key => key !== "mode");
@@ -634,6 +668,7 @@
     <div class="venue-switcher" role="group" aria-label="ランキングの取引所モード">
       <span>取扱い</span>
       <button type="button" aria-pressed={venue === "all"} onclick={() => venue = "all"}>すべて</button>
+      <button type="button" aria-pressed={venue === "bitget"} onclick={() => venue = "bitget"}>Bitget</button>
       <button type="button" aria-pressed={venue === "hyperliquid"} onclick={() => venue = "hyperliquid"}>Hyperliquid</button>
     </div>
 
@@ -644,6 +679,7 @@
     </div>
     <p class="purpose-description">{purposeDescription}
       {#if venue === "hyperliquid"}<span>価格・売買代金はBybit／Binanceの参照データです。</span>{/if}
+      {#if venue === "bitget"}<span>Bitgetの24時間売買代金を併記します。順位・騰落率・参照売買代金はBybit／Binanceのデータです。</span>{/if}
     </p>
 
     <section class="controls" aria-label="ランキングの表示">
@@ -789,6 +825,14 @@
                   {/each}</td>
                 {/if}
                 <td class="numeric turnover" class:ranking-basis={order === "turnover"}>{#if row.quoteTurnover !== null}<span title={`${formatTurnover(row.quoteTurnover, turnoverDecimals)} USDT`}>{turnoverLabel(row.quoteTurnover, turnoverDecimals, $preferences.turnoverNotation === "compact")}</span>{:else}<span class="missing">未取得</span>{/if}
+                  {#if venue === "bitget"}
+                    {@const native = bitgetTurnover(row, bitgetUniverse, now)}
+                    <div class="bitget-turnover" data-testid="bitget-turnover"
+                      title={native.reason ?? `${formatTurnover(native.value, turnoverDecimals)} USDT · 取得 ${rankingTimestamp(Date.parse(native.observedAt!))} JST`}>
+                      <small>Bitget 24h</small>
+                      <span class:missing={native.value === null}>{formatBitgetTurnover(native.value, turnoverDecimals)}{native.value !== null ? " USDT" : ""}</span>
+                    </div>
+                  {/if}
                   <span class="volume-signal-slot"><RelativeVolumeSignal {row} expired={stale} decimals={turnoverDecimals}
                     isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} /></span>
                   {#if row.rank === null && row.returnPct !== null}<small>{rankingStateLabel(row.state)}</small>{/if}
@@ -803,6 +847,7 @@
       <details class="metric-help"><summary>指標の読み方</summary>
         <p class="metric-note">取扱いはBitget / Hyperliquid / Asterの元契約です。参照取引所の契約で騰落率・売買代金を比較し、取扱い取引所の合計にはしません。</p>
         <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。3取引所や市場全体の合計ではありません。</p>
+        <p class="metric-note">Bitgetモードの「Bitget 24h」は、Bitgetが配信する直近24時間のUSDT建て売買代金です。比較期間を変えても24時間値です。kは千、mは百万を表します。取得できない値・古い値・契約版が一致しない値は「—」にします。</p>
         <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
         <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。スマホの順位変化の「—」は比較できない状態で、理由は銘柄詳細で確認できます。</p>
         <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
@@ -851,6 +896,11 @@
             <div><dt>参照終値 · USDT</dt><dd>{selected.referenceClose.status === "ready" ? formatPrice(selected.referenceClose.value) : "未取得"}</dd></div>
             <div><dt>騰落率 · {periodLabel === "15分" || periodLabel === "1時間" ? `直近${periodLabel}` : periodLabel}</dt><dd class:up={(selected.returnPct ?? 0) > 0} class:down={(selected.returnPct ?? 0) < 0}>{selected.returnPct !== null ? formatPriceChange(selected.returnPct) : rankingRowStateLabel(selected)}</dd></div>
             <div><dt>売買代金 · USDT</dt><dd>{selected.quoteTurnover !== null ? formatTurnover(selected.quoteTurnover, turnoverDecimals) : "未取得"}</dd></div>
+            {#if venue === "bitget"}
+              {@const native = bitgetTurnover(selected, bitgetUniverse, now)}
+              <div><dt>Bitget 24h · USDT</dt><dd>{formatBitgetTurnover(native.value, turnoverDecimals)}</dd></div>
+              <div class="native-turnover-status"><dt>Bitget取得状態</dt><dd>{native.reason ?? `${rankingTimestamp(Date.parse(native.observedAt!))} JST`}</dd></div>
+            {/if}
           </dl>
           <RelativeVolumeDetails row={selected} expired={stale} decimals={turnoverDecimals} />
         {/if}
@@ -981,6 +1031,8 @@
   .missing { color: var(--quality-risk); font-size: var(--type-label-caps-size); white-space: normal; }
   .turnover small { display: block; color: var(--muted); font-size: var(--type-label-caps-size); white-space: normal; }
   .volume-signal-slot { display: block; }
+  .bitget-turnover { margin-top: var(--space-xs); border-top: 1px solid var(--line); padding-top: var(--space-xxs); font-weight: 500; }
+  .native-turnover-status { color: var(--muted); font-size: var(--type-label-caps-size); }
   .volume-spotlight { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); gap: var(--space-xs); margin-top: var(--space-sm); }
   @media (max-width: 960px) {
     .volume-spotlight { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 148px; overflow-x: auto; overscroll-behavior-x: contain; }
