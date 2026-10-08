@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-08(木)_16:04 JST"
+timestamp="2026-10-09(金)_00:39 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-08T16:04:27+09:00`
+- 更新: `2026-10-09T00:39:16+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -231,3 +231,11 @@ Webの二つのGET routeは状態ファイルを検証して返すだけで、DB
 OpenMarketは手動CLIでのみexact mappingを確かめて取得し、nativeの保存足へ書き戻さない。
 Fixture Exportは1契約・1版・1窓をread-only repeatable-read DB transactionで固定し、任意の
 Recovery/Auditファイルをtransaction後に別時刻として添付する。Ranking Coreへ値を書き込まない。
+
+## 独立したAttention Core
+
+`watchdeck-attention`は別processと専用SQLite WALを持つ。Marketの`service-state.json`を前後で照合して`universe-snapshot.json`と任意の`market-metrics.json`を固定し、Ranking loopbackの`15m / 00:00 JST / turnover / minTurnover=0`を1回読む。共通cutoffを捏造せず、inputごとの作成時刻・観測時刻・generation・map/metric versionを保存する。Market/Ranking writerとProvider clientを呼ばない。
+
+毎分の計算結果を単一writerのtransactionとreadbackで確認してから、専用stateのimmutable JSONと`artifacts/current.json`へatomic公開する。全世代のcurrent responseとshadow allocationを保存し、特徴量・成分の評価用evidenceはRanking cutoffが5分境界の最初の1世代だけ保存する。失敗時は新しい世代を公開せず、APIで前世代の時刻を保ったstaleを返す。
+
+Webはloopbackの`GET /attention`を`/api/attention`経由で読む。GETから再計算・入力取得・監視対象変更を行わない。Outcome settlementは明示的なoffline exportを使い、候補群評価は固定済みの候補と確定後の将来結果だけを読む。自動captureは接続していない。設計判断は[Decision 0015](../decisions/0015-attention-core.md)を参照する。

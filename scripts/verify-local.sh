@@ -102,6 +102,17 @@ uv run --package prep-watchdeck-ranking python scripts/ranking/generate-schema.p
 uv run --package prep-watchdeck-ranking python scripts/ranking/verify-map-evidence.py
 uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-ranking-qualified
 
+echo "== attention-core: tests, lint, types and schemas =="
+cd "$ROOT_DIR/apps/attention-core"
+uv run python -m pytest -q
+uv run ruff check src tests
+uv run ruff format --check --diff src tests
+uv run pyrefly check
+cd "$ROOT_DIR"
+uv run ruff check scripts/attention
+uv run ruff format --check --diff scripts/attention
+uv run --package prep-watchdeck-attention python scripts/attention/generate-schema.py --check
+
 echo "== web: generated types =="
 cd "$ROOT_DIR/apps/web"
 bun run generate:types

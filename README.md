@@ -1,7 +1,8 @@
 # prep-watchdeck
 
+timestamp="2026-10-09(金)_00:39 JST"
 - 作成: `2026-06-18T04:43:28+09:00`
-- 更新: `2026-09-30T21:04:03+09:00`
+- 更新: `2026-10-09T00:39:16+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -202,3 +203,9 @@ P0移行時に使用した旧DuckDB baseline、固定15分/60分shadow harness�
 
 旧scanner/state/unit等はrollbackまたは履歴資産として残る場合がありますが、存在だけを現行機能や将来禁止の根拠に
 しません。
+
+## 独立した注目画面（source実装）
+
+`apps/attention-core`は既存のMarket artifactとRanking APIだけを読み、値動き・取引活性・建玉/資金調達・価格乖離と総合注目を計算します。Webの`/attention`から確認できます。Attention serviceの既定portは8770、stateは`~/.local/share/prep-watchdeck-attention`です。Market/Ranking state、手動selection、Provider取得は変更しません。
+
+このsource追加は稼働サービスへの配置を意味しません。起動・停止・隔離開発の手順は[運用](docs/current/operations.md#attention-coreの隔離開発と停止)、スコアの読み方は[利用者向け説明](docs/current/user-manual.md#注目画面の読み方)を参照してください。既存画面はAttentionなしでも利用できます。

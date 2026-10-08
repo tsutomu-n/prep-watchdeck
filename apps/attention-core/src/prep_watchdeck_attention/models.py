@@ -17,6 +17,11 @@ AttentionStatus = Literal["ready", "partial", "unavailable", "stale"]
 Direction = Literal["up", "down", "flat", "mixed", "unknown"]
 
 
+def outcome_cutoff(decision_at: int) -> int:
+    """First minute boundary at/after decision; outcomes use only subsequent full bars."""
+    return ((decision_at + MINUTE - 1) // MINUTE) * MINUTE
+
+
 class Contract(BaseModel):
     model_config = ConfigDict(
         alias_generator=to_camel,
@@ -40,6 +45,8 @@ def content_digest(value: object) -> str:
 
 class SourceObservation(Contract):
     source: str
+    value: float | None = None
+    payload_hash: str | None = None
     start_at: int | None = None
     end_at: int | None = None
     observed_at: int | None = None
@@ -115,6 +122,7 @@ class OriginalReference(Contract):
     venue: str
     group_id: str | None = None
     multiplier: int | None = Field(default=None, gt=0)
+    current: bool = True
 
 
 class FeatureSnapshotRow(Contract):
@@ -355,6 +363,7 @@ class CandidatePolicy(Contract):
     minimum_day_blocks: int = Field(default=30, ge=2)
     minimum_coverage: float = Field(default=0.8, ge=0, le=1)
     maximum_coverage_regression: float = Field(default=0.05, ge=0, le=1)
+    minimum_practical_delta: float = Field(default=0.1, ge=0)
 
     @model_validator(mode="after")
     def fixed_k(self) -> Self:

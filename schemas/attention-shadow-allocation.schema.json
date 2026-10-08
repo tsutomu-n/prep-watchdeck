@@ -1,0 +1,270 @@
+{
+  "$defs": {
+    "AllocationPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "top-k-v1",
+            "hysteresis-v1",
+            "cost-aware-greedy-v1"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "component": {
+          "default": "confluence",
+          "enum": [
+            "movement",
+            "activity",
+            "positioning",
+            "dislocation",
+            "confluence"
+          ],
+          "title": "Component",
+          "type": "string"
+        },
+        "k": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "title": "K",
+          "type": "integer"
+        },
+        "buffer": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Buffer",
+          "type": "integer"
+        },
+        "minimumHoldMinutes": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Minimumholdminutes",
+          "type": "integer"
+        },
+        "switchPenalty": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Switchpenalty",
+          "type": "number"
+        },
+        "warmUpCost": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Warmupcost",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "component",
+        "k",
+        "buffer",
+        "minimumHoldMinutes",
+        "switchPenalty",
+        "warmUpCost"
+      ],
+      "title": "AllocationPolicy",
+      "type": "object"
+    },
+    "ShadowSlot": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "groupIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Groupids",
+          "type": "array"
+        },
+        "enteredAt": {
+          "title": "Enteredat",
+          "type": "integer"
+        },
+        "score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "rank": {
+          "minimum": 1,
+          "title": "Rank",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "assetId",
+        "groupIds",
+        "enteredAt",
+        "score",
+        "rank"
+      ],
+      "title": "ShadowSlot",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "attention-shadow-allocation-v1",
+      "default": "attention-shadow-allocation-v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "generationId": {
+      "title": "Generationid",
+      "type": "string"
+    },
+    "decisionAt": {
+      "title": "Decisionat",
+      "type": "integer"
+    },
+    "mapVersion": {
+      "title": "Mapversion",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/AllocationPolicy"
+    },
+    "scorePolicyVersion": {
+      "title": "Scorepolicyversion",
+      "type": "string"
+    },
+    "mode": {
+      "const": "shadow_only",
+      "default": "shadow_only",
+      "title": "Mode",
+      "type": "string"
+    },
+    "manualSelectionId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Manualselectionid"
+    },
+    "manualSelectionMutated": {
+      "const": false,
+      "default": false,
+      "title": "Manualselectionmutated",
+      "type": "boolean"
+    },
+    "comparable": {
+      "title": "Comparable",
+      "type": "boolean"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "slots": {
+      "items": {
+        "$ref": "#/$defs/ShadowSlot"
+      },
+      "title": "Slots",
+      "type": "array"
+    },
+    "added": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Added",
+      "type": "array"
+    },
+    "removed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Removed",
+      "type": "array"
+    },
+    "retained": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Retained",
+      "type": "array"
+    },
+    "addedGroups": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Addedgroups",
+      "type": "array"
+    },
+    "removedGroups": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Removedgroups",
+      "type": "array"
+    },
+    "churn": {
+      "maximum": 1,
+      "minimum": 0,
+      "title": "Churn",
+      "type": "number"
+    },
+    "estimatedSwitchCost": {
+      "minimum": 0,
+      "title": "Estimatedswitchcost",
+      "type": "number"
+    },
+    "costStatus": {
+      "const": "estimated",
+      "default": "estimated",
+      "title": "Coststatus",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generationId",
+    "decisionAt",
+    "mapVersion",
+    "policy",
+    "scorePolicyVersion",
+    "mode",
+    "manualSelectionId",
+    "manualSelectionMutated",
+    "comparable",
+    "reason",
+    "slots",
+    "added",
+    "removed",
+    "retained",
+    "addedGroups",
+    "removedGroups",
+    "churn",
+    "estimatedSwitchCost",
+    "costStatus"
+  ],
+  "title": "ShadowAllocation",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-08(木)_16:04 JST"
+timestamp="2026-10-09(金)_00:39 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-08T16:04:27+09:00`
+- 更新: `2026-10-09T00:39:16+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -392,3 +392,17 @@ OpenMarketの手動mappingと取得receiptは`schemas/reference-mapping.schema.j
 Referenceは確認済みnative契約の別取得経路で、独立性は未確立。FixtureのDB datasetは同一
 read-only repeatable-read snapshot、後から読んだartifactは別時刻と記録する。空0行、未取得、
 失敗をmanifestで分ける。SHA256はファイル改変検出であり、市場の真実性署名ではない。
+
+## Attentionの契約
+
+正本は`apps/attention-core/src/prep_watchdeck_attention/models.py`。公開schemaは`attention-response-v1`、`attention-evaluation-v1`、`attention-shadow-allocation-v1`。Web型はresponse schemaから生成する。時刻はUTC milliseconds。`decisionAt`、Ranking cutoff/generatedAt、universe/service generatedAt、任意のmetrics generation/candleCutoffと`inputSkewSeconds`を分離する。未来、stale、異なるcontract versionを現在値で補完しない。
+
+AssetはRankingのoriginal instrument ID + versionと現行universeの完全一致で結合する。元の対応と現行membershipを`originals`へ残し、UIは`current=false`のnative linkを出さない。未レビュー対応・version違いは採点対象外。成分の`score`/`rank`、方向、quality reason、coverageは別の値で、算出不能はscore/rank=null。percentileのminimum peersは20、同値はmidrank、confluenceは4成分すべてreadyの場合だけ平均する。異なるmap/policy間でrank changeを計算しない。
+
+Stateは`PREP_WATCHDECK_ATTENTION_STATE_DIR`。Market/Rankingとの同一・包含・被包含、repo varとの重複、symlinkを拒否する。SQLiteはsingle writer / WAL / foreign keysで、generationの同一ID・異なる内容を拒否する。初版は自動削除を行わず、health/CLIがDB/WALサイズを報告する。
+
+将来outcomeの`cutoff`は`ceil(decisionAt / 60000) * 60000`の評価開始境界で、入力Ranking cutoffとは別である。参照契約のその境界の確定終値をexportに要求し、以後の完全な15本・60本だけから高安の最大絶対returnと終値returnを求める。判断時刻をまたぐ足は最大変動へ含めず、保存時の古い終値で代用しない。lead timeはdecisionAtから閾値へ初めて到達した足の終了時刻までの秒。欠損・revision/map違いはunscorable、未完了horizonはpending。訂正はeditionを増やし、既存評価と出力projectionをstale化する。
+
+Offline入力は`attention-outcome-input-v1`のJSON（`mapVersion`、Ranking `MinuteBar`の`bars`、任意の`native`）に限定する。native結果は現行のexact originalsが2 Venue以上あり、全分の観測が揃う場合だけ別familyへ保存する。
+
+既定候補群は3 baselineと5 componentを15分・60分の各horizonで固定した16 policy。K=10/20、実用差分しきい値はreturnのpercentage pointで0.1を初期値とし、freeze後に変更できない。全比較を同時にUTC day blockで再標本化するsingle-step max-Tと6h感度分析を用いる。世代なし・将来結果待ち・block不足はnot_estimable、感度矛盾はinconclusive、実測coverage悪化はrejected_coverage。power/MDEはplanning-onlyで、優位性判定を上書きしない。

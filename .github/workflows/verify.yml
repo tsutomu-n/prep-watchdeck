@@ -21,6 +21,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       core: ${{ steps.filter.outputs.core }}
       ranking: ${{ steps.filter.outputs.ranking }}
+      attention: ${{ steps.filter.outputs.attention }}
       web: ${{ steps.filter.outputs.web }}
       e2e: ${{ steps.filter.outputs.e2e }}
       ops: ${{ steps.filter.outputs.ops }}
@@ -51,7 +52,7 @@ jobs:
           git diff --check "$diff_base" "$HEAD_SHA" --
 
           if [[ "$EVENT_NAME" == "push" ]]; then
-            printf '%s\n' 'docs=true' 'core=true' 'ranking=true' 'web=true' 'e2e=true' 'ops=true' >> "$GITHUB_OUTPUT"
+            printf '%s\n' 'docs=true' 'core=true' 'ranking=true' 'attention=true' 'web=true' 'e2e=true' 'ops=true' >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
@@ -61,6 +62,7 @@ jobs:
           docs=false
           core=false
           ranking=false
+          attention=false
           web=false
           e2e=false
           ops=false
@@ -72,17 +74,21 @@ jobs:
               scripts/maintenance/check-document-*|scripts/maintenance/document-*|scripts/maintenance/update-document-timestamp.mjs|scripts/maintenance/product-boundary.test.mjs)
                 docs=true ;;
               .github/workflows/*|scripts/verify-local.sh)
-                docs=true; core=true; ranking=true; web=true; e2e=true; ops=true ;;
+                docs=true; core=true; ranking=true; attention=true; web=true; e2e=true; ops=true ;;
               apps/market-core/*)
-                core=true ;;
+                core=true; attention=true ;;
               scripts/market/*)
                 core=true ;;
               apps/ranking-core/*|scripts/ranking/*)
-                ranking=true ;;
+                ranking=true; attention=true ;;
+              apps/attention-core/*|scripts/attention/*)
+                attention=true ;;
+              schemas/attention-*)
+                attention=true; web=true; e2e=true ;;
               pyproject.toml|uv.lock|.python-version)
-                core=true; ranking=true ;;
+                core=true; ranking=true; attention=true ;;
               schemas/ranking-*)
-                ranking=true; web=true; e2e=true ;;
+                ranking=true; attention=true; web=true; e2e=true ;;
               schemas/*)
                 core=true; web=true; e2e=true ;;
               apps/web/*)
@@ -99,12 +105,12 @@ jobs:
                 ;;
               *)
                 # Unclassified future code must not silently bypass verification.
-                docs=true; core=true; ranking=true; web=true; e2e=true; ops=true ;;
+                docs=true; core=true; ranking=true; attention=true; web=true; e2e=true; ops=true ;;
             esac
           done < "$changed_paths"
 
-          printf 'docs=%s\ncore=%s\nranking=%s\nweb=%s\ne2e=%s\nops=%s\n' \
-            "$docs" "$core" "$ranking" "$web" "$e2e" "$ops" >> "$GITHUB_OUTPUT"
+          printf 'docs=%s\ncore=%s\nranking=%s\nattention=%s\nweb=%s\ne2e=%s\nops=%s\n' \
+            "$docs" "$core" "$ranking" "$attention" "$web" "$e2e" "$ops" >> "$GITHUB_OUTPUT"
 
   docs:
     needs: changes
@@ -207,6 +213,39 @@ jobs:
           uv run --package prep-watchdeck-ranking python scripts/ranking/verify-map-evidence.py
           uv run --package prep-watchdeck-ranking watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-ranking-qualified
 
+  attention:
+    needs: changes
+    if: needs.changes.outputs.attention == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v8.2.0
+
+      - name: Install attention-core dependencies
+        run: uv sync --frozen --package prep-watchdeck-attention --group dev
+
+      - name: Attention Core gate
+        run: |
+          uv lock --check
+          cd apps/attention-core
+          uv run python -m pytest -q
+          uv run ruff check src tests
+          uv run ruff format --check --diff src tests
+          uv run pyrefly check
+          cd ../..
+          uv run ruff check scripts/attention
+          uv run ruff format --check --diff scripts/attention
+          uv run --package prep-watchdeck-attention python scripts/attention/generate-schema.py --check
+
   web:
     needs: changes
     if: needs.changes.outputs.web == 'true'
@@ -268,7 +307,7 @@ jobs:
             scripts/ops/market-postgres-restore.test.mjs
 
   verify:
-    needs: [changes, docs, core, ranking, web, ops]
+    needs: [changes, docs, core, ranking, attention, web, ops]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -281,6 +320,7 @@ jobs:
             "docs:${{ needs.changes.outputs.docs }}:${{ needs.docs.result }}" \
             "core:${{ needs.changes.outputs.core }}:${{ needs.core.result }}" \
             "ranking:${{ needs.changes.outputs.ranking }}:${{ needs.ranking.result }}" \
+            "attention:${{ needs.changes.outputs.attention }}:${{ needs.attention.result }}" \
             "web:${{ needs.changes.outputs.web }}:${{ needs.web.result }}" \
             "ops:${{ needs.changes.outputs.ops }}:${{ needs.ops.result }}"; do
             IFS=: read -r surface selected result <<<"$gate"

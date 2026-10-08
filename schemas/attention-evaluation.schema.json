@@ -1,0 +1,372 @@
+{
+  "$defs": {
+    "CandidateEvaluation": {
+      "additionalProperties": false,
+      "properties": {
+        "policyId": {
+          "title": "Policyid",
+          "type": "string"
+        },
+        "baselinePolicyId": {
+          "title": "Baselinepolicyid",
+          "type": "string"
+        },
+        "k": {
+          "title": "K",
+          "type": "integer"
+        },
+        "horizonMinutes": {
+          "title": "Horizonminutes",
+          "type": "integer"
+        },
+        "metrics": {
+          "$ref": "#/$defs/EvaluationMetrics"
+        },
+        "baselineMetrics": {
+          "$ref": "#/$defs/EvaluationMetrics"
+        },
+        "meanDelta": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Meandelta"
+        },
+        "adjustedPValue": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Adjustedpvalue"
+        },
+        "sensitivityPValue": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sensitivitypvalue"
+        },
+        "blockCount": {
+          "title": "Blockcount",
+          "type": "integer"
+        },
+        "effectiveDays": {
+          "title": "Effectivedays",
+          "type": "integer"
+        },
+        "minimumPracticalDelta": {
+          "title": "Minimumpracticaldelta",
+          "type": "number"
+        },
+        "estimatedPower": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimatedpower"
+        },
+        "mde80": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mde80"
+        },
+        "planningOnly": {
+          "const": true,
+          "default": true,
+          "title": "Planningonly",
+          "type": "boolean"
+        },
+        "decision": {
+          "enum": [
+            "supported",
+            "not_supported",
+            "not_estimable",
+            "inconclusive",
+            "rejected_coverage"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Reasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "policyId",
+        "baselinePolicyId",
+        "k",
+        "horizonMinutes",
+        "metrics",
+        "baselineMetrics",
+        "meanDelta",
+        "adjustedPValue",
+        "sensitivityPValue",
+        "blockCount",
+        "effectiveDays",
+        "minimumPracticalDelta",
+        "estimatedPower",
+        "mde80",
+        "planningOnly",
+        "decision",
+        "reasons"
+      ],
+      "title": "CandidateEvaluation",
+      "type": "object"
+    },
+    "EvaluationMetrics": {
+      "additionalProperties": false,
+      "properties": {
+        "recall": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Recall"
+        },
+        "precision": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Precision"
+        },
+        "ndcg": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Ndcg"
+        },
+        "meanFutureMaxAbsReturn": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Meanfuturemaxabsreturn"
+        },
+        "medianLeadTime": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Medianleadtime"
+        },
+        "coverage": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Coverage",
+          "type": "number"
+        },
+        "unscorableRate": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Unscorablerate",
+          "type": "number"
+        },
+        "setChurn": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Setchurn"
+        },
+        "rankChurn": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rankchurn"
+        },
+        "generationCount": {
+          "minimum": 0,
+          "title": "Generationcount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "recall",
+        "precision",
+        "ndcg",
+        "meanFutureMaxAbsReturn",
+        "medianLeadTime",
+        "coverage",
+        "unscorableRate",
+        "setChurn",
+        "rankChurn",
+        "generationCount"
+      ],
+      "title": "EvaluationMetrics",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "attention-evaluation-v1",
+      "default": "attention-evaluation-v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "method": {
+      "const": "attention-family-max-t-v1",
+      "default": "attention-family-max-t-v1",
+      "title": "Method",
+      "type": "string"
+    },
+    "runId": {
+      "title": "Runid",
+      "type": "string"
+    },
+    "familyId": {
+      "title": "Familyid",
+      "type": "string"
+    },
+    "policyHashes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Policyhashes",
+      "type": "object"
+    },
+    "outcomeFingerprint": {
+      "title": "Outcomefingerprint",
+      "type": "string"
+    },
+    "createdAt": {
+      "title": "Createdat",
+      "type": "integer"
+    },
+    "bootstrapSamples": {
+      "title": "Bootstrapsamples",
+      "type": "integer"
+    },
+    "seed": {
+      "title": "Seed",
+      "type": "integer"
+    },
+    "primaryBlockHours": {
+      "const": 24,
+      "default": 24,
+      "title": "Primaryblockhours",
+      "type": "integer"
+    },
+    "sensitivityBlockHours": {
+      "const": 6,
+      "default": 6,
+      "title": "Sensitivityblockhours",
+      "type": "integer"
+    },
+    "planningOnly": {
+      "const": true,
+      "default": true,
+      "title": "Planningonly",
+      "type": "boolean"
+    },
+    "stale": {
+      "default": false,
+      "title": "Stale",
+      "type": "boolean"
+    },
+    "evaluations": {
+      "items": {
+        "$ref": "#/$defs/CandidateEvaluation"
+      },
+      "title": "Evaluations",
+      "type": "array"
+    },
+    "reasons": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "title": "Reasons",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "method",
+    "runId",
+    "familyId",
+    "policyHashes",
+    "outcomeFingerprint",
+    "createdAt",
+    "bootstrapSamples",
+    "seed",
+    "primaryBlockHours",
+    "sensitivityBlockHours",
+    "planningOnly",
+    "stale",
+    "evaluations",
+    "reasons"
+  ],
+  "title": "AttentionEvaluationReport",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

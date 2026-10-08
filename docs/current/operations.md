@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-08(木)_16:04 JST"
+timestamp="2026-10-09(金)_00:39 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-08T16:04:27+09:00`
+- 更新: `2026-10-09T00:39:16+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -535,3 +535,15 @@ Core用の固定証拠は`watchdeck-market export-fixture --instrument <ID> --ve
 監査run、Reference bundle、Fixture bundleを自動削除しない。Recoveryで追加した行の削除は
 run_idを特定した別の修復判断とする。本番でのbackup、exact sourceの配置、実ProviderとUIの確認は
 [作業計画](../plans/active/prep-quality-completion/GOAL.md)の受入台帳を通して行う。
+
+## Attention Coreの隔離開発と停止
+
+Repositoryには`watchdeck-attention` CLIがあるが、production unitのinstall/enable/startや既存releaseの更新は別の明示承認対象である。既定stateは`~/.local/share/prep-watchdeck-attention`、portは8770。Market/Rankingとは別のdirectory・portを指定する。既定portやrootは製品の永久制約ではない。
+
+Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`validate-state`は既存current artifactの形式だけを検証し、DB整合性・鮮度・稼働受入を代替しない。`serve`は専用stateを作成し、初回の実時刻で候補群を固定する。過去へfreeze時刻を遡らせない。
+
+隔離開発では`uv run --package prep-watchdeck-attention python scripts/attention/run-isolated.py --state-dir <専用Attention root> --market-state-dir <読取用Market copy> --ranking-state-dir <読取用Ranking root> --ranking-port <隔離Ranking API port> --port <隔離Attention port> --run-seconds 60`を使う。Linux bubblewrapを必須とし、Attention stateだけをwrite可能にする。入力rootは事前に存在するread-only copyを指定し、Ranking APIも隔離したfixture/APIを使用する。制限なしのfallbackやunit操作は行わない。
+
+`freeze-family --family-id <新family>`、`settle-outcomes --fixture <offline export.json>`、`evaluate-family --family-id <固定family>`は専用SQLiteへ書くため、Attention serviceを停止した状態で実行する。共通の`--state-dir`等を指定できる。後二者はProvider取得やactive Ranking DB接続を行わない。評価結果はstdoutと`artifacts/evaluation.json`へ出る。訂正後のstale reportは再評価が必要。
+
+停止・rollbackは起動したAttention processだけを終了する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。

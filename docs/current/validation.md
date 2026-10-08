@@ -1,7 +1,8 @@
 # prep-watchdeck 現行検証
 
+timestamp="2026-10-09(金)_00:39 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-30T21:04:03+09:00`
+- 更新: `2026-10-09T00:39:16+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -279,3 +280,11 @@ offline transportとAudit接続、Fixtureはread-only DB→CLI→再読→改変
 日本語IME実機、稼働releaseの切替、実市場dataの受入と同一視しない。
 項目別の実行statusと証拠は[受入台帳](../plans/active/prep-quality-completion/acceptance.json)と
 [Audit台帳](../plans/active/prep-quality-completion/audit-acceptance.json)に保持する。
+
+## Attention Coreの検証境界
+
+Repo rootのfull local gateにAttention package、schema checkとWebのDesktop/Mobile注目画面を含む。focused gateは`apps/attention-core`で`uv run pytest -q`、`uv run ruff check src tests`、`uv run ruff format --check src tests`、`uv run pyrefly check`。schemaはrootで`uv run --package prep-watchdeck-attention python scripts/attention/generate-schema.py --check`を使う。Webは既存のunit/check/buildと`tests/e2e/attention.e2e.ts`。
+
+受入にはexact identity/time、stable bundle、欠測と0、midrank、SQLite transaction/readback、future-only outcome、edition訂正、freeze済みfamilyのjoint day-block評価、shadow/manual分離、no-store/loopback、390px/keyboardを含む。隔離runnerの成功は実データ・production capacity受入ではない。
+
+Hosted CIは明示依頼時だけ実行する。workflowへのAttention gate追加とローカルcheckを、CI実行成功と読み替えない。候補の実運用での優位性は30日以上のprospective evidenceで別途評価し、synthetic planted-edge成功から推定しない。白色化・iidのminute sample推論は行わず、White/SPA/Romano-Wolfそのものの再現は主張しない。

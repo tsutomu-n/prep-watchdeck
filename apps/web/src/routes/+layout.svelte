@@ -40,6 +40,7 @@
 <nav class="workspace-navigation" aria-label="メインメニュー">
   <a href="/?mode=reference" aria-current={isMarketPage && !nativeMode ? "page" : undefined}>ランキング</a>
   <a href="/?mode=native" aria-current={nativeMode ? "page" : undefined}>取引所別</a>
+  <a href="/attention" aria-current={page.url.pathname === "/attention" ? "page" : undefined}>注目</a>
   <a href="/settings" aria-current={settingsPage ? "page" : undefined}>設定</a>
 </nav>
 {@render children()}

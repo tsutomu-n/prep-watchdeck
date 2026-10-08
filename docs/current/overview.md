@@ -1,7 +1,8 @@
 # prep-watchdeck 現行概要
 
+timestamp="2026-10-09(金)_00:39 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-09-16T21:23:15+09:00`
+- 更新: `2026-10-09T00:39:16+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -75,3 +76,7 @@ kill switch、audit、rollbackを扱う別Decisionを要求する。
 - `config/systemd`: 現行user unit template
 
 現在値は`watchdeck-market status`、artifact、service log、実画面で確認する。
+
+## Attention Coreのsource追加
+
+Market/Rankingの既存read modelを読む独立Attention Coreと`/attention`を実装している。4つの注目成分・総合注目をquality/coverageと分けて表示し、5分ごとのprospective evidence、offline将来結果、事前固定候補群の統計評価、shadow監視候補を専用stateに持つ。既存のProvider取得、manual selection、実captureは変更しない。source実装とproduction配置・30日実データ受入は別である。

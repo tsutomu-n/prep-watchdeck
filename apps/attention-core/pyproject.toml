@@ -34,4 +34,4 @@ testpaths = ["tests"]
 
 [tool.pyrefly]
 project-includes = ["src/**/*.py", "tests/**/*.py"]
-search-path = ["src", "."]
+search-path = ["src", ".", "tests"]
