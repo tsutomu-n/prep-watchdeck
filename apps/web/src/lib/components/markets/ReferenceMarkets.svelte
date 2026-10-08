@@ -9,6 +9,10 @@
   import ReferenceChart from "$lib/components/ranking/ReferenceChart.svelte";
   import RosterNotice from "$lib/components/ranking/RosterNotice.svelte";
   import RelativeVolumeSignal from "$lib/components/ranking/RelativeVolumeSignal.svelte";
+  import NativeActivitySignal from "$lib/components/ranking/NativeActivitySignal.svelte";
+  import NativeActivityDetails from "$lib/components/ranking/NativeActivityDetails.svelte";
+  import { nativeActivity, nativeActivityKind } from "$lib/market/native-activity";
+  import type { NativeActivityArtifact } from "$lib/generated/native-activity";
   import RelativeVolumeDetails from "$lib/components/ranking/RelativeVolumeDetails.svelte";
   import type { RankedRow, RankingResponse } from "$lib/generated/ranking-response";
   import type { UniverseSnapshotArtifact } from "$lib/generated/universe-snapshot";
@@ -75,6 +79,7 @@
   let error = $state<string | null>(null);
   let storageMessage = $state<string | null>(null);
   let now = $state(Date.now());
+  let activityData = $state<NativeActivityArtifact | null>(null);
   let nativeUniverse = $state<UniverseSnapshotArtifact | null>(null);
   let tableScroll: HTMLDivElement;
   let listScroll = $state({ top: 0, left: 0 });
@@ -120,6 +125,42 @@
     };
   });
 
+  $effect(() => {
+    if (!mounted || venue !== "bitget") return;
+    activityData = null;
+    let disposed = false;
+    let pending = false;
+    let request: AbortController | null = null;
+    const refreshActivity = async () => {
+      if (pending || document.hidden) return;
+      pending = true;
+      request = new AbortController();
+      const timeout = setTimeout(() => request?.abort(), 10_000);
+      try {
+        const response = await fetch("/api/native-activity", { cache: "no-store", signal: request.signal });
+        if (!response.ok) throw new Error("native activity unavailable");
+        const payload: NativeActivityArtifact = await response.json();
+        if (!Array.isArray(payload.rows)) throw new Error("invalid native activity");
+        if (!disposed) { activityData = payload; now = Date.now(); }
+      } catch {
+        if (!disposed) activityData = null;
+      } finally { clearTimeout(timeout); pending = false; }
+    };
+    const visible = () => { now = Date.now(); void refreshActivity(); };
+    void refreshActivity();
+    const timer = setInterval(refreshActivity, 15_000);
+    document.addEventListener("visibilitychange", visible);
+    return () => {
+      disposed = true; request?.abort(); clearInterval(timer);
+      document.removeEventListener("visibilitychange", visible);
+    };
+  });
+  $effect(() => {
+    if (mounted && venue !== "bitget" && (sort === "nativeRatio15m" || sort === "nativeRatio1h")) {
+      sort = sort === "nativeRatio15m" ? "ratio15m" : "ratio1h";
+    }
+  });
+
   function hasViewQuery(params: URLSearchParams) {
     return [...params.keys()].some(key => key !== "mode");
   }
@@ -152,11 +193,16 @@
   const stale = $derived(Boolean(data && (data.stale || now - data.cutoff > RANKING_MAX_AGE_MS)));
   const comparisonExpired = $derived(stale || Boolean(data?.previousCutoff && now - data.previousCutoff > RANKING_MAX_AGE_MS));
   const newVolumeVisible = $derived(Boolean(data && !stale && now - data.generatedAt < 60_000));
+  const nativeViews = $derived(new Map((data?.rows ?? []).map(row => [row.id, nativeActivity(row, activityData, now)])));
+  const nativeRatios = $derived(new Map([...nativeViews].map(([id, view]) => [id, {
+    "15m": view.row?.windows["15m"].relativeRatio.value ?? null,
+    "1h": view.row?.windows["1h"].relativeRatio.value ?? null
+  }])));
   const visibleRows = $derived.by(() => {
     const current = filterSortRankingRows(data?.rows ?? [], {
       search, venue, includeUnranked, minRatio, ratioPeriod, minDayPosition, maxDayPosition,
       sort, direction
-    }).filter((row) => !favoritesOnly || Boolean(
+    }, nativeRatios).filter((row) => !favoritesOnly || Boolean(
       workspace?.favorites.some((entry) => entry.kind === "reference" && entry.id === row.id)
     ));
     if (!lockedIds) return current;
@@ -170,7 +216,7 @@
     filterSortRankingRows(data?.rows ?? [], {
       search, venue, includeUnranked, minRatio, ratioPeriod, minDayPosition, maxDayPosition,
       sort, direction
-    }).length - visibleRows.length) : 0);
+    }, nativeRatios).length - visibleRows.length) : 0);
   const volumeSpotlight = $derived.by(() => {
     if (!data || stale) return [];
     // Direction ranking affects table ranks, not discovery of the opposite direction.
@@ -199,6 +245,7 @@
     server: "全体順位", asset: "銘柄名", referenceClose: "参照終値", returnPct: "騰落率",
     quoteTurnover: "売買代金", return15m: "15分騰落率", return1h: "1時間騰落率",
     return24h: "24時間騰落率", ratio15m: "15分平常比", ratio1h: "1時間平常比",
+    nativeRatio15m: "Bitget 15分普段比", nativeRatio1h: "Bitget 1時間普段比",
     dayPosition: "当日位置"
   };
   const activeConditions = $derived([
@@ -222,6 +269,10 @@
     }
     if (sort === "ratio15m" || sort === "ratio1h") {
       return `${viewSortLabels[sort]} ${indicatorLabel(row.turnoverRatios[sort === "ratio15m" ? "15m" : "1h"], "倍")}`;
+    }
+    if (sort === "nativeRatio15m" || sort === "nativeRatio1h") {
+      const value = nativeRatios.get(row.id)?.[sort === "nativeRatio15m" ? "15m" : "1h"];
+      return `${viewSortLabels[sort]} ${value === null || value === undefined ? "—" : `${value.toFixed($preferences.ratioDecimals)}倍`}`;
     }
     if (sort === "dayPosition") return `当日位置 ${indicatorLabel(row.dayRangePosition, "%")}`;
     return "";
@@ -325,7 +376,7 @@
       favoritesOnly = params.get("favoritesOnly") === "1";
       const requestedSort = params.get("sort");
       if (requestedSort && ["server", "asset", "referenceClose", "returnPct", "quoteTurnover",
-        "return15m", "return1h", "return24h", "ratio15m", "ratio1h", "dayPosition"].includes(requestedSort)) {
+        "return15m", "return1h", "return24h", "ratio15m", "ratio1h", "nativeRatio15m", "nativeRatio1h", "dayPosition"].includes(requestedSort)) {
         sort = requestedSort as RankingSort;
       }
       direction = params.get("direction") === "desc" ? "desc" : "asc";
@@ -455,7 +506,7 @@
     else {
       sort = column;
       direction = ["referenceClose", "returnPct", "quoteTurnover", "return15m", "return1h",
-        "return24h", "ratio15m", "ratio1h", "dayPosition"].includes(column) ? "desc" : "asc";
+        "return24h", "ratio15m", "ratio1h", "nativeRatio15m", "nativeRatio1h", "dayPosition"].includes(column) ? "desc" : "asc";
     }
   }
 
@@ -481,13 +532,14 @@
       direction === "asc" && preset === "standard") return favoritesOnly ? "favorites" : "market";
     if (!favoritesOnly && period === "15m" && preset === "movement") {
       if (order === "gainers" && sort === "server" && direction === "asc") return "movement";
-      if (order === "turnover" && sort === "ratio15m" && direction === "desc") return "activity";
+      if (order === "turnover" && sort === (venue === "bitget" ? "nativeRatio15m" : "ratio15m") && direction === "desc") return "activity";
     }
     return null;
   });
   const purposeDescription = $derived(activePurpose === "market"
     ? `直近24時間の売買代金順で、${venue === "all" ? "市場全体" : `${venueLabel(venue)}取扱い銘柄`}を確認。`
     : activePurpose === "movement" ? "直近15分の上昇率順。15分・1時間・24時間の変化を並べて確認。"
+    : activePurpose === "activity" && venue === "bitget" ? "Bitgetの15分売買代金を過去7日の同時刻と比べた普段比順。直前比と価格方向を併記。順位の数字は参照市場の全体順位です。"
     : activePurpose === "activity" ? "15分の売買代金の平常比順。過去24時間内の中央値と比較し、履歴不足は末尾に表示。順位は売買代金順です。"
     : activePurpose === "favorites" ? "お気に入りを直近24時間の売買代金順で確認。"
     : "表示条件を調整中。目的別の表示を選ぶと検索・追加条件・行順固定を解除します。");
@@ -501,7 +553,7 @@
     order = purpose === "movement" ? "gainers" : "turnover";
     favoritesOnly = purpose === "favorites";
     preset = purpose === "movement" || purpose === "activity" ? "movement" : "standard";
-    if (purpose === "activity") { sort = "ratio15m"; direction = "desc"; }
+    if (purpose === "activity") { sort = venue === "bitget" ? "nativeRatio15m" : "ratio15m"; direction = "desc"; }
   }
 
   function venueLabel(value: string) {
@@ -694,7 +746,7 @@
     </section>
 
     <div class="condition-summary" aria-label="適用中のランキング条件" aria-live="polite">
-      <p><strong>{periodLabel} · {orderLabel}</strong> <span class="signal-conditions" title={`強調条件：昨日・一昨日の両方に対して${$preferences.surgeRatio}倍以上。方向の境界±${$preferences.directionPct}%`}> · 強調 ≥{$preferences.surgeRatio}倍 / ±{$preferences.directionPct}%</span>{#if activeConditions.length}<span> · {activeConditions.join(" · ")}</span>{/if}</p>
+      <p><strong>{periodLabel} · {orderLabel}</strong> <span class="signal-conditions" title={venue === "bitget" ? `Bitgetの15分普段比${$preferences.surgeRatio}倍以上。価格方向の境界±${$preferences.directionPct}%` : `強調条件：昨日・一昨日の両方に対して${$preferences.surgeRatio}倍以上。方向の境界±${$preferences.directionPct}%`}> · 強調 ≥{$preferences.surgeRatio}倍 / ±{$preferences.directionPct}%</span>{#if activeConditions.length}<span> · {activeConditions.join(" · ")}</span>{/if}</p>
       {#if activeConditions.length}<button type="button" onclick={resetView}>条件をリセット</button>{/if}
     </div>
 
@@ -709,10 +761,10 @@
         <label>表示列<select aria-label="表示列プリセット" bind:value={preset}>
           <option value="standard">標準</option><option value="movement">値動き</option>
         </select></label>
-        <label>平常比期間<select aria-label="平常比期間" bind:value={ratioPeriod}>
+        <label>参照の平常比期間<select aria-label="平常比期間" bind:value={ratioPeriod}>
           <option value="15m">15分</option><option value="1h">1時間</option>
         </select></label>
-        <label>平常比下限<input aria-label="平常比下限" type="number" min="0" step="any"
+        <label>参照の平常比下限<input aria-label="平常比下限" type="number" min="0" step="any"
           value={minRatio ?? ""} oninput={(event) => minRatio = event.currentTarget.value === "" ? null : Number(event.currentTarget.value)} /></label>
         <label>当日位置の下限 %<input aria-label="当日位置の下限" type="number" min="0" max="100" step="any"
           value={minDayPosition ?? ""} oninput={(event) => minDayPosition = event.currentTarget.value === "" ? null : Number(event.currentTarget.value)} /></label>
@@ -756,7 +808,7 @@
     </div>
   </div>
 
-      {#if volumeSpotlight.length}
+      {#if venue !== "bitget" && volumeSpotlight.length}
         <div class="volume-spotlight" role="group" aria-label={`${periodLabel}・昨日と一昨日の両方に対して売買代金が${$preferences.surgeRatio}倍以上の銘柄`} data-testid="volume-spotlight">
           {#each volumeSpotlight as row (row.id)}
             <RelativeVolumeSignal {row} decimals={turnoverDecimals} showAsset isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} />
@@ -775,11 +827,14 @@
             <th scope="col" class="desktop-only" aria-sort={sort === "referenceClose" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("referenceClose")}>参照終値</button></th>
             <th scope="col" class:ranking-basis={order !== "turnover"} aria-sort={sort === "returnPct" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("returnPct")}>騰落率</button></th>
             {#if preset === "movement"}<th scope="col" class="desktop-only">15分 / 1時間 / 24時間</th>{/if}
-            <th scope="col" class:ranking-basis={order === "turnover"} aria-sort={sort === "quoteTurnover" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("quoteTurnover")}>売買代金<span class="turnover-unit"> · USDT</span></button></th>
+            <th scope="col" class:ranking-basis={order === "turnover"} aria-sort={sort === "quoteTurnover" || sort === "nativeRatio15m" || sort === "nativeRatio1h" ? direction === "asc" ? "ascending" : "descending" : undefined}><button type="button" onclick={() => chooseSort("quoteTurnover")}>売買代金<span class="turnover-unit"> · USDT</span></button>
+              {#if venue === "bitget"}<span class="native-sort-controls">普段比 <button type="button" aria-label="Bitget 15分普段比で並べ替え" aria-pressed={sort === "nativeRatio15m"} onclick={() => chooseSort("nativeRatio15m")}>15m</button><button type="button" aria-label="Bitget 1時間普段比で並べ替え" aria-pressed={sort === "nativeRatio1h"} onclick={() => chooseSort("nativeRatio1h")}>1h</button></span>{/if}
+            </th>
           </tr></thead>
           <tbody>
             {#each visibleRows.slice(0, limit) as row (row.id)}
-              {@const volumeSignal = relativeVolumeState(row, stale, $preferences)}
+              {@const activityView = nativeViews.get(row.id) ?? { row: null, reason: "短時間データなし" }}
+              {@const volumeSignal = venue === "bitget" ? { kind: nativeActivityKind(activityView.row, $preferences) } : relativeVolumeState(row, stale, $preferences)}
               <tr class:selected={selectedId === row.id} class:volume-surge={volumeSignal.kind !== null}
                 class:surge-up={volumeSignal.kind === "up"} class:surge-down={volumeSignal.kind === "down"}
                 data-testid="ranking-row" data-asset={row.asset} data-volume-surge={volumeSignal.kind ?? ""}>
@@ -832,8 +887,14 @@
                       <span class:missing={native.value === null}>{formatVenueTurnover(native.value, turnoverDecimals)}{native.value !== null ? ` ${native.unit}` : ""}</span>
                     </div>
                   {/if}
-                  <span class="volume-signal-slot"><RelativeVolumeSignal {row} expired={stale} decimals={turnoverDecimals}
-                    isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} /></span>
+                  <span class="volume-signal-slot">
+                    {#if venue === "bitget"}
+                      <NativeActivitySignal row={activityView.row} reason={activityView.reason} decimals={turnoverDecimals} onselect={() => select(row)} />
+                    {:else}
+                      <RelativeVolumeSignal {row} expired={stale} decimals={turnoverDecimals}
+                        isNew={newVolumeVisible && newVolumeRows.has(row.id)} onselect={() => select(row)} />
+                    {/if}
+                  </span>
                   {#if row.rank === null && row.returnPct !== null}<small>{rankingStateLabel(row.state)}</small>{/if}
                 </td>
               </tr>
@@ -847,10 +908,11 @@
         <p class="metric-note">取扱いはBitget / Hyperliquid / Asterの元契約です。参照取引所の契約で騰落率・売買代金を比較し、取扱い取引所の合計にはしません。</p>
         <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。3取引所や市場全体の合計ではありません。</p>
         <p class="metric-note">「Bitget 24h」「Hyperliquid 24h」は、各取引所が配信する直近24時間の売買代金です。単位は契約ごとのUSDT／USDCを表示します。比較期間を変えても24時間値です。kは千、mは百万を表します。取得できない値・古い値・契約版が一致しない値は「—」にします。</p>
+        <p class="metric-note">Bitgetの短時間表示は、15分・1時間の売買代金の普段比と直前比、15分の価格変化、直近4区間の推移です。約3分前までの確定1分足を1分ごとに集計します。普段比は過去7日の同時刻・同じ長さの窓の中央値が基準で、3日以上の完全な履歴が必要です。棒の欠測と実測ゼロは区別します。Hyperliquidの短時間指標は表示しません。</p>
         <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
         <p class="metric-note">順位変化は同じ条件での1分前の順位 − 現順位です。+は順位上昇、−は順位低下、0は同順位。「新規」は前回だけ順位外だった銘柄です。スマホの順位変化の「—」は比較できない状態で、理由は銘柄詳細で確認できます。</p>
         <p class="metric-note">売買代金の平常比は、直近24時間内の同期間中央値との比較です（最新窓を除く15分95窓・1時間23窓）。当日位置はJST 00:00からの高安に対する終値の位置で、0%が安値、100%が高値です。</p>
-        <p class="metric-note">売買代金の棒は左から一昨日・昨日・現在で、同じ銘柄・参照契約の同じ時間帯を比較します。両日比{$preferences.surgeRatio}倍以上は青く強調し、矢印は騰落率が+{$preferences.directionPct}%以上／−{$preferences.directionPct}%以下の方向、それ以外は横線です。小さな点は連続した世代で新しく条件を満たした銘柄です。履歴不足・比較元ゼロは「?」、更新停止は時計で示します。ホバーまたは選択で比較値と理由を確認できます。過去24時間の平常比は銘柄詳細にも表示します。</p>
+        <p class="metric-note">Bitget以外のモードの売買代金の棒は左から一昨日・昨日・現在で、同じ銘柄・参照契約の同じ時間帯を比較します。両日比{$preferences.surgeRatio}倍以上は青く強調し、矢印は騰落率が+{$preferences.directionPct}%以上／−{$preferences.directionPct}%以下の方向、それ以外は横線です。小さな点は連続した世代で新しく条件を満たした銘柄です。履歴不足・比較元ゼロは「?」、更新停止は時計で示します。ホバーまたは選択で比較値と理由を確認できます。過去24時間の平常比は銘柄詳細にも表示します。</p>
         <p class="metric-note">スマホでは参照終値・追加指標・出典を銘柄詳細で確認できます。騰落率の計算基準は設定の「騰落率の基準時刻（JST）」で変更します。</p>
       </details>
       {#if data}
@@ -901,7 +963,10 @@
               <div class="native-turnover-status"><dt>{venueLabel(venue)}取得状態</dt><dd>{native.reason ?? `${rankingTimestamp(Date.parse(native.observedAt!))} JST`}</dd></div>
             {/if}
           </dl>
-          <RelativeVolumeDetails row={selected} expired={stale} decimals={turnoverDecimals} />
+          {#if venue === "bitget"}
+            {@const activityView = nativeActivity(selected, activityData, now)}
+            <NativeActivityDetails row={activityView.row} reason={activityView.reason} decimals={turnoverDecimals} />
+          {:else}<RelativeVolumeDetails row={selected} expired={stale} decimals={turnoverDecimals} />{/if}
         {/if}
         {#if selected.state === "mapping_review"}<p class="selection-notice">{rankingRowStateLabel(selected)}。確認できるまで順位とチャートに含めません。</p>
         {:else if selected.state === "unsupported"}<p class="selection-notice">{rankingRowStateLabel(selected)}。順位とチャートの対象外です。</p>{/if}
@@ -1029,6 +1094,8 @@
   .up { color: var(--up); }.down { color: var(--down); }
   .missing { color: var(--quality-risk); font-size: var(--type-label-caps-size); white-space: normal; }
   .turnover small { display: block; color: var(--muted); font-size: var(--type-label-caps-size); white-space: normal; }
+  .native-sort-controls { display: flex; align-items: center; justify-content: flex-end; gap: 4px; color: var(--muted); font-size: var(--type-label-caps-size); white-space: nowrap; }
+  .native-sort-controls button { flex: 0 0 auto; width: auto; min-height: 24px; min-width: 24px; padding: 0 2px; }
   .volume-signal-slot { display: block; }
   .native-turnover { margin-top: var(--space-xs); border-top: 1px solid var(--line); padding-top: var(--space-xxs); font-weight: 500; }
   .native-turnover-status { color: var(--muted); font-size: var(--type-label-caps-size); }

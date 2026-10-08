@@ -1,0 +1,219 @@
+{
+  "$defs": {
+    "ActivitySample": {
+      "additionalProperties": false,
+      "properties": {
+        "startAt": {
+          "format": "date-time",
+          "title": "Startat",
+          "type": "string"
+        },
+        "endAt": {
+          "format": "date-time",
+          "title": "Endat",
+          "type": "string"
+        },
+        "turnover": {
+          "$ref": "#/$defs/ActivityValue"
+        },
+        "priceChangePct": {
+          "$ref": "#/$defs/ActivityValue"
+        }
+      },
+      "required": [
+        "startAt",
+        "endAt",
+        "turnover",
+        "priceChangePct"
+      ],
+      "title": "ActivitySample",
+      "type": "object"
+    },
+    "ActivityValue": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "history_missing",
+            "invalid_data",
+            "no_baseline",
+            "low_baseline"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "status"
+      ],
+      "title": "ActivityValue",
+      "type": "object"
+    },
+    "ActivityWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "minutes": {
+          "enum": [
+            15,
+            60
+          ],
+          "title": "Minutes",
+          "type": "integer"
+        },
+        "current": {
+          "$ref": "#/$defs/ActivitySample"
+        },
+        "history": {
+          "items": {
+            "$ref": "#/$defs/ActivitySample"
+          },
+          "maxItems": 4,
+          "minItems": 4,
+          "title": "History",
+          "type": "array"
+        },
+        "baselineTurnover": {
+          "$ref": "#/$defs/ActivityValue"
+        },
+        "baselineDays": {
+          "maximum": 7,
+          "minimum": 0,
+          "title": "Baselinedays",
+          "type": "integer"
+        },
+        "baselineEndTimes": {
+          "items": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxItems": 7,
+          "title": "Baselineendtimes",
+          "type": "array"
+        },
+        "relativeRatio": {
+          "$ref": "#/$defs/ActivityValue"
+        },
+        "previousChangePct": {
+          "$ref": "#/$defs/ActivityValue"
+        }
+      },
+      "required": [
+        "minutes",
+        "current",
+        "history",
+        "baselineTurnover",
+        "baselineDays",
+        "baselineEndTimes",
+        "relativeRatio",
+        "previousChangePct"
+      ],
+      "title": "ActivityWindow",
+      "type": "object"
+    },
+    "NativeActivityRow": {
+      "additionalProperties": false,
+      "properties": {
+        "venue": {
+          "const": "bitget",
+          "default": "bitget",
+          "title": "Venue",
+          "type": "string"
+        },
+        "venueInstrumentId": {
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "exclusiveMinimum": 0,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "sourceSymbol": {
+          "minLength": 1,
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "quoteAsset": {
+          "const": "USDT",
+          "default": "USDT",
+          "title": "Quoteasset",
+          "type": "string"
+        },
+        "windows": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ActivityWindow"
+          },
+          "title": "Windows",
+          "type": "object"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "sourceSymbol",
+        "windows"
+      ],
+      "title": "NativeActivityRow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "metricVersion": {
+      "const": "bitget-activity-v1",
+      "default": "bitget-activity-v1",
+      "title": "Metricversion",
+      "type": "string"
+    },
+    "generationId": {
+      "minLength": 1,
+      "title": "Generationid",
+      "type": "string"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "candleCutoff": {
+      "format": "date-time",
+      "title": "Candlecutoff",
+      "type": "string"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/NativeActivityRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "generationId",
+    "generatedAt",
+    "candleCutoff",
+    "rows"
+  ],
+  "title": "NativeActivityArtifact",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

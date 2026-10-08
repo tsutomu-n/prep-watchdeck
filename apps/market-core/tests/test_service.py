@@ -411,3 +411,24 @@ def test_recovery_service_stop_cancels_and_joins_active_run(
         assert joined.is_set()
 
     asyncio.run(scenario())
+
+
+def test_activity_worker_keeps_projection_failure_optional(monkeypatch, tmp_path):
+    async def scenario():
+        service = MarketService("unused", tmp_path)
+        stop = asyncio.Event()
+        loop = asyncio.get_running_loop()
+        calls = []
+
+        def publish(*args, **kwargs):
+            calls.append(1)
+            loop.call_soon_threadsafe(stop.set)
+            raise ValueError("isolated activity failure")
+
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.publish_native_activity", publish, raising=False
+        )
+        await asyncio.wait_for(service._activity_loop(stop), timeout=1)
+        assert calls == [1]
+
+    asyncio.run(scenario())

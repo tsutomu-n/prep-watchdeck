@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-07(水)_21:38 JST"
+timestamp="2026-10-08(木)_16:04 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-07T21:38:32+09:00`
-- 検証: `2026-10-07T21:38:32+09:00`
+- 更新: `2026-10-08T16:04:27+09:00`
+- 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
 ---
@@ -70,7 +70,7 @@ readback/digest/checksum確認前に対応するhistoryを削除しない。
 
 ## 現行JSON read model
 
-現在は次のschemaを使う。
+基幹4 artifactは次のschemaを使う。任意のnative metrics/activityは別契約として下記に記す。
 
 - `schemas/universe-snapshot.schema.json`
 - `schemas/market-chart.schema.json`
@@ -141,6 +141,7 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 | method | path | 現行contract |
 | --- | --- | --- |
 | GET | `/api/market-data` | 現行artifact bundle、`no-store` |
+| GET | `/api/native-activity` | Bitget短時間activityの任意artifact。schema・意味整合性を検証し、未生成・不正は503 |
 | GET | `/api/chart-history?instrument=<id>&timeframe=<tf>&before=<ISO UTC>` | 選択Venueのnative足。beforeは排他的 |
 | GET | `/api/price-change?instrument=<id>&referenceTime=<HH:mm>` | 指定JST時刻基準の約定騰落率 |
 | GET | `/api/rankings` | 固定参照の独立ランキング。下記の期間・方向・下限で問い合わせ |
@@ -329,6 +330,36 @@ Ranking応答`ranking-v5`は同じgenerationの15分、1時間、直近24時間�
 `GET /api/market-metrics`はartifactだけをschema検証して返す。未生成・不正は503、正常な古いartifactは元の時刻のまま返し、Browserで鮮度を判定する。`GET/POST /api/user-workspace`はfavoriteの望む状態と名前付きviewの条件付き更新を扱う。メモは読取bytesのSHA-256 tokenを条件に保存し、`context`を添付する保存ではNoteFile v2へ移る。旧v1項目も読み続ける。
 
 メモcontextは`ui-observation-v1`のnativeまたはreference観測。nativeは数量OI/確定終値15m、referenceはProvider・symbol・revision・cutoff・比較期間・JST設定・期限切れ状態と5個の数値を保存する。参照の保存先は現行UniverseとID/versionが一致する元契約だけ。自由形式metrics/raw/secret key、非有限数、長すぎる文字列を拒否し、最大16指標より小さい固定shapeと64KiBのPOST上限を維持する。過去の市場真実を再認証する署名ではない。
+
+## Bitget短時間activity
+
+任意artifact `native-activity.json`は`schemas/native-activity.schema.json`に従い、
+`schemaVersion=1`、`metricVersion=bitget-activity-v1`、`generationId`、`generatedAt`、
+`candleCutoff`、`rows`を持つ。対象はactiveなBitget crypto linear perpetualの現行契約版で、
+quote/settleはUSDT。同一`venueInstrumentId`・versionの保存`candle_1m.volume_notional`だけを使い、
+旧版、base数量の換算、reference市場、Hyperliquidの短時間値で補完しない。
+
+`candleCutoff`は生成時刻のUTC分境界−180秒。`windows`は`15m`と`1h`で、それぞれ
+`current`、現在を右端とする古い順の非重複4窓`history`、`baselineTurnover`、`baselineDays`、
+採用日の終了時刻`baselineEndTimes`、`relativeRatio`、`previousChangePct`を持つ。
+各sampleは`[startAt,endAt)`の全1分足のquote turnoverと、開始直前・終了直前の足の終値による
+`priceChangePct`を分けて返す。足は`confirmed`または`derived_final`で、分境界・全分の存在・
+非負有限のquote turnover・source/observed時刻が生成時刻より未来でないことを確認する。
+価格の開始endpointだけが欠ける場合は価格変化のみ欠測とし、完全な売買代金は保持する。
+
+普段比の分母は過去7日の同時刻・同長窓のうち、完全な3日以上の売買代金の中央値。
+前区間比は直前の同長窓からの百分率変化である。数値は`{value,status}`で、`ready`だけが有限値を持ち、
+`history_missing`、`invalid_data`、`no_baseline`、`low_baseline`では`value=null`とする。
+分母0は`no_baseline`、15分1,000 USDT未満／1時間4,000 USDT未満は`low_baseline`で、
+普段比・前区間比の両方へ適用する。元の区間値や中央値は失わず、baseline不足でも現在値・直近推移は
+独立して返す。実測0は0として保持し、有効な分母に対する現在値0は倍率0・前区間比−100%となる。
+
+`GET /api/native-activity`は`no-store`でartifactを返し、DB照会や取得を開始しない。
+schemaに加え、重複identity、窓の長さ・順序・共通cutoff、現在値とhistory末尾の一致、baseline日数・
+時刻、status/valueと分母条件の整合性を検証し、不正または未生成なら503を返す。
+正常な古いartifactは元時刻のまま返す。Browserは生成から120秒、cutoffから300秒を超える値を
+利用不可とし、生成時刻の未来許容は1秒まで、未来cutoffは拒否する。対象のBitget originalが1契約に
+定まり、ID・version・source symbolが一致する場合だけ表示する。参照ランキングのAPI・順位・Chart契約は維持する。
 
 ## 保存足の補助契約
 

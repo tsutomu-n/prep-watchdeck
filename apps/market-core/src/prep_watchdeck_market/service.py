@@ -40,6 +40,9 @@ from prep_watchdeck_market.market_store import (
     persist_market_cycle_url,
 )
 from prep_watchdeck_market.models import CatalogBatch, CatalogInstrument, Venue
+from prep_watchdeck_market.native_activity_publication import (
+    publish_native_activity_bounded as publish_native_activity,
+)
 from prep_watchdeck_market.runtime_lock import RuntimeLockUnavailable
 from prep_watchdeck_market.scheduler import L1Scheduler, VenueFetcher, next_grid_at
 from prep_watchdeck_market.selected_store import SelectedStoreError
@@ -131,6 +134,9 @@ class MarketService:
             metrics_task = asyncio.create_task(
                 self._metrics_loop(stop_event), name="market-metrics-loop"
             )
+            activity_task = asyncio.create_task(
+                self._activity_loop(stop_event), name="market-activity-loop"
+            )
             recovery_task = (
                 asyncio.create_task(
                     self._recovery_loop(stop_event), name="market-candle-recovery-loop"
@@ -155,6 +161,7 @@ class MarketService:
                     artifact_task,
                     selected_artifact_task,
                     metrics_task,
+                    activity_task,
                 )
                 + (() if recovery_task is None else (recovery_task,))
                 + (() if endpoint_recovery_task is None else (endpoint_recovery_task,))
@@ -479,6 +486,34 @@ class MarketService:
             await asyncio.gather(*pending, return_exceptions=True)
             if stop_task in done:
                 return
+
+    async def _activity_loop(self, stop_event: asyncio.Event) -> None:
+        """Aggregate saved Bitget candles once per minute, independently of live collection."""
+        loop = asyncio.get_running_loop()
+        while not stop_event.is_set():
+            started = loop.time()
+            task = asyncio.create_task(
+                asyncio.to_thread(
+                    publish_native_activity,
+                    self._database_url,
+                    self._state_dir / "artifacts",
+                    now=datetime.now(UTC),
+                ),
+                name="native-activity-publish",
+            )
+            try:
+                await asyncio.shield(task)
+            except asyncio.CancelledError:
+                await asyncio.gather(task, return_exceptions=True)
+                raise
+            except Exception as error:
+                logger.warning(
+                    "native activity unavailable errorType={error_type}",
+                    error_type=type(error).__name__,
+                )
+            delay = max(0.0, 60.0 - (loop.time() - started))
+            with suppress(TimeoutError):
+                await asyncio.wait_for(stop_event.wait(), timeout=delay)
 
     async def _artifact_loop(self, stop_event: asyncio.Event) -> None:
         while not stop_event.is_set():

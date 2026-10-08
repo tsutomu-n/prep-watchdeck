@@ -2,7 +2,7 @@ import type { RankedRow } from "$lib/generated/ranking-response";
 
 export type RankingSort =
   | "server" | "asset" | "referenceClose" | "returnPct" | "quoteTurnover"
-  | "return15m" | "return1h" | "return24h" | "ratio15m" | "ratio1h" | "dayPosition";
+  | "return15m" | "return1h" | "return24h" | "ratio15m" | "ratio1h" | "nativeRatio15m" | "nativeRatio1h" | "dayPosition";
 
 export type RankingView = {
   search: string;
@@ -16,7 +16,9 @@ export type RankingView = {
   direction: "asc" | "desc";
 };
 
-export function rankingSortValue(row: RankedRow, sort: RankingSort): number | string | null {
+export type NativeRatios = ReadonlyMap<string, { "15m": number | null; "1h": number | null }>;
+
+export function rankingSortValue(row: RankedRow, sort: RankingSort, native?: NativeRatios): number | string | null {
   switch (sort) {
     case "server": return row.rank;
     case "asset": return row.asset;
@@ -28,11 +30,13 @@ export function rankingSortValue(row: RankedRow, sort: RankingSort): number | st
     case "return24h": return row.windows["24h"].returnPct;
     case "ratio15m": return row.turnoverRatios["15m"].value;
     case "ratio1h": return row.turnoverRatios["1h"].value;
+    case "nativeRatio15m": return native?.get(row.id)?.["15m"] ?? null;
+    case "nativeRatio1h": return native?.get(row.id)?.["1h"] ?? null;
     case "dayPosition": return row.dayRangePosition.value;
   }
 }
 
-export function filterSortRankingRows(rows: RankedRow[], view: RankingView) {
+export function filterSortRankingRows(rows: RankedRow[], view: RankingView, native?: NativeRatios) {
   const search = view.search.trim().toLocaleLowerCase("en-US");
   return rows.filter((row) =>
     (view.includeUnranked || row.rank !== null) &&
@@ -50,8 +54,8 @@ export function filterSortRankingRows(rows: RankedRow[], view: RankingView) {
       (row.dayRangePosition.status === "ready" &&
         row.dayRangePosition.value !== null && row.dayRangePosition.value <= view.maxDayPosition))
   ).toSorted((left, right) => {
-    const a = rankingSortValue(left, view.sort);
-    const b = rankingSortValue(right, view.sort);
+    const a = rankingSortValue(left, view.sort, native);
+    const b = rankingSortValue(right, view.sort, native);
     if (a === null || b === null) return a === b ? left.id.localeCompare(right.id) : a === null ? 1 : -1;
     const compared = typeof a === "string" && typeof b === "string"
       ? a.localeCompare(b, "ja-JP") : Number(a) - Number(b);

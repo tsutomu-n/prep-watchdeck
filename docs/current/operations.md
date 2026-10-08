@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-07(水)_21:38 JST"
+timestamp="2026-10-08(木)_16:04 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-07T21:38:32+09:00`
-- 検証: `2026-10-07T21:38:32+09:00`
+- 更新: `2026-10-08T16:04:27+09:00`
+- 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
 ---
@@ -35,6 +35,18 @@ Markets workspaceを配置する場合はMarket Core、Ranking Core、Webの契�
 開発branchのmetrics投影は専用lockでwriterを排他し、JSON破損または既知schemaの検証破損に限って、正常なDB snapshotから再生成する。破損原本はartifact directoryの`market-metrics.json.corrupt-<id>`へbyte単位で退避・fsync・readbackし、元ファイルが変わっていないことを再確認してatomicに置き換える。未知schema/metricVersion、読取権限、保全失敗、並行変更、lock競合では更新を停止してworkerがerrorTypeを記録する。保全物は自動削除しない。これは派生metrics専用の復旧であり、メモの破損保護を緩めない。
 
 metrics workerは投影ごとに子processを1つだけ起動し、DB接続・投影・破損保全・発行の処理を10秒で打ち切る。timeoutでは子processをkill・回収してから次を処理し、停止時も進行中処理を待つ。DBのstatement上限5秒・transaction上限8秒・接続上限2秒も維持する。process起動時のDB資格は標準入力に渡し、command lineや例外logへ載せない。OS停止などを含む厳密な応答時間保証ではない。
+
+Bitget短時間activityの導入対象はMarket CoreとWebで、Ranking Coreの契約・配置は変更しない。
+本節はRepositoryのsource仕様を示し、稼働反映を証明するものではない。配置・service操作は別承認で行い、
+稼働版の採用と実データの履歴充足を別々に確認する。DB migrationや自動backfillは追加しない。
+切戻しは検証済みのMarket Core/Webの組へ戻し、保存足・旧state・保全artifactを自動削除しない。
+
+activity workerは起動時から独立した60秒周期で投影し、既存metricsの最短5秒周期へ連動させない。
+専用lockとread-only repeatable-read接続を使い、接続2秒・statement5秒・transaction8秒・
+子process全体10秒の上限、timeout時のkill/回収、標準入力での資格情報受渡しをmetricsと同様に守る。
+JSON破損または既知schemaの検証破損だけを`native-activity.json.corrupt-<id>`へ原文bytesで保全・fsync・readbackして
+atomicに再生成し、未知schema/metricVersion、権限・保全失敗、並行変更、lock競合では更新を停止する。
+保全物は自動削除しない。投影失敗はerrorTypeを記録し、他の収集・発行laneを停止させない。
 
 これらの具体的project名、port、pathは現行runtime値であり、将来の新app/sourceへ永久固定しない。
 
@@ -141,10 +153,16 @@ PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' uv run watchdeck-market hea
 
 ## Artifactとfreshness
 
-現在のWeb read modelは`$PREP_WATCHDECK_MARKET_STATE_DIR/artifacts/`に4 JSONを持つ。
+基幹Web read modelは`$PREP_WATCHDECK_MARKET_STATE_DIR/artifacts/`に4 JSONを持つ。
 missing、invalid、staleを前回値で上書きしない。
 
-4 artifactは現在の実装数であり、ranking/model/Stocks等の新artifactを追加できる。
+任意の`market-metrics.json`と`native-activity.json`は別発行・別検証で、欠測しても基幹4 artifactを失効させない。
+activityの`GET /api/native-activity`成功だけで履歴充足とは判断せず、ID/version、生成・cutoff時刻、
+各窓のstatusと`baselineDays`を確認する。生成120秒・cutoff300秒の表示上限と、過去7日中3日以上の
+完全な同時刻窓を別に確認する。履歴不足を0や他契約で埋めず、保存済みの同じ契約版を調べる。
+既存のendpoint回復が成功しても、activityが必要とする窓内の全分がそろった証拠にはならない。
+
+基幹4 artifactを永久固定せず、ranking/model/Stocks等の新artifactを追加できる。
 
 定期更新停止、freshness閾値超過、restart loop等は現在のruntime障害として扱う。
 

@@ -1,9 +1,9 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-05(月)_20:00 JST"
+timestamp="2026-10-08(木)_16:04 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-05T20:00:19+09:00`
-- 検証: `2026-10-05T20:00:19+09:00`
+- 更新: `2026-10-08T16:04:27+09:00`
+- 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
 ---
@@ -37,6 +37,9 @@ Bitget / Hyperliquid Core / Aster public API
 - `prep-watchdeck-market-db.service`は現在の専用Compose project/DBを所有する。
 - `prep-watchdeck-market.service`は現在catalog、L1、candle、selected stream、DB write、artifact発行を1 processで行う。
 - 任意のnative metrics投影は同時に1つの子processで実行する。子processがread-only snapshot用の接続と専用lockを所有し、10秒timeout時は回収してから次の投影へ進む。既存4 artifactと収集laneを停止させない。
+- Bitget短時間activityは別の60秒周期taskと子processで、保存1分足の必要な窓だけを
+  read-only repeatable-read Postgres transaction内で集約する。外部取得・DB writeを加えず、
+  既存metricsの最短5秒周期、基幹4 artifact、Ranking Coreの収集・応答契約から独立する。
 - 現行WebはJSON read modelを読み、Postgresへ直接接続しない。
 - maintenance timerはFunding sync、archive/readback/retentionを実行する。
 
@@ -100,12 +103,16 @@ idempotency、conflictを検証する。
 
 ## Artifact lane
 
-現在はstate rootの`artifacts/`へ4 JSONを同一filesystem内でatomic publishする。
+基幹read modelはstate rootの`artifacts/`へ次の4 JSONを同一filesystem内でatomic publishする。
 
 - `universe-snapshot.json`
 - `market-chart.json`
 - `selected-market.json`
 - `service-state.json`
+
+任意の`market-metrics.json`と`native-activity.json`は基幹4 artifactへ混ぜず、個別に発行する。
+後者はBitgetの現行契約版ごとの15分・1時間のquote turnover、直近4窓、同時刻の過去日比較を保持する。
+Webの`GET /api/native-activity`はこのartifactだけを読み、参照ランキングへnative値を書き戻さない。
 
 Webはschema validationに失敗したartifactを推測で補完しない。
 
