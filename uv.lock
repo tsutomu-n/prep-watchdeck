@@ -9,6 +9,7 @@ resolution-markers = [
 [manifest]
 members = [
     "prep-watchdeck",
+    "prep-watchdeck-attention",
     "prep-watchdeck-market",
     "prep-watchdeck-ranking",
 ]
@@ -360,6 +361,39 @@ wheels = [
 name = "prep-watchdeck"
 version = "0.1.0"
 source = { virtual = "." }
+
+[[package]]
+name = "prep-watchdeck-attention"
+version = "0.1.0"
+source = { editable = "apps/attention-core" }
+dependencies = [
+    { name = "aiohttp" },
+    { name = "prep-watchdeck-market" },
+    { name = "prep-watchdeck-ranking" },
+    { name = "pydantic" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pyrefly" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "aiohttp", specifier = "<3.13" },
+    { name = "prep-watchdeck-market", editable = "apps/market-core" },
+    { name = "prep-watchdeck-ranking", editable = "apps/ranking-core" },
+    { name = "pydantic", specifier = ">=2.13.4" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyrefly", specifier = ">=1.0.0" },
+    { name = "pytest", specifier = ">=9.1.0" },
+    { name = "ruff", specifier = ">=0.15.17" },
+]
 
 [[package]]
 name = "prep-watchdeck-market"

@@ -10,7 +10,7 @@ dependencies = []
 package = false
 
 [tool.uv.workspace]
-members = ["apps/market-core", "apps/ranking-core"]
+members = ["apps/market-core", "apps/ranking-core", "apps/attention-core"]
 
 [tool.ruff]
 line-length = 100
