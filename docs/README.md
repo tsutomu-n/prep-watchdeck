@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-08(木)_16:09 JST"
+timestamp="2026-10-08(木)_23:47 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-08T16:09:39+09:00`
+- 更新: `2026-10-08T23:47:49+09:00`
 - 検証: `2026-10-08T16:09:39+09:00`
 - 状態: `現行`
 
@@ -48,6 +48,9 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 現行product boundaryに反する部分を将来機能の禁止根拠にしない。
 
 ## 実装計画
+
+- [Attention Core](plans/active/attention-core/GOAL.md): 独立した注目度・証拠評価・shadow allocation。
+- [Decision 0015](decisions/0015-attention-core.md): read-only inputとmanual selection保全。
 
 ランキング・チャート統合とD05稼働受入は完了した。現行の運用・検証正本へ結果を反映し、
 完了planは削除した。過去の要求・試行・証拠台帳はPR #15のGit履歴で参照する。

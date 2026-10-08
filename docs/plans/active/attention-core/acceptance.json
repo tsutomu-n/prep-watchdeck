@@ -1,0 +1,564 @@
+{
+  "baseCommit": "5b82a7df4d9784b442bed068d41d8734737faf27",
+  "branch": "ai/attention-core-20261008-2347",
+  "items": [
+    {
+      "id": "ATT-001",
+      "requirement": "`apps/attention-core`がuv workspace packageとして独立",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-002",
+      "requirement": "Attention stateがMarket/Ranking stateと非重複",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-003",
+      "requirement": "Market/Ranking writerへ接続しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-004",
+      "requirement": "Providerへ直接接続しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-005",
+      "requirement": "manual `selection.json`を書かない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-006",
+      "requirement": "actual captureを実装しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-010",
+      "requirement": "service-state前後一致でMarket bundle固定",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-011",
+      "requirement": "bundle変更時1回再試行",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-012",
+      "requirement": "2回変化でgeneration拒否",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-013",
+      "requirement": "metrics missingをpartialとして保持",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-014",
+      "requirement": "Ranking canonical queryは1回だけ",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-015",
+      "requirement": "stale/future Rankingを拒否",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-016",
+      "requirement": "read APIでProvider取得なし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-020",
+      "requirement": "exact ID+version join",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-021",
+      "requirement": "symbol-only joinなし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-022",
+      "requirement": "wrong version補完なし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-023",
+      "requirement": "mapping reviewへ値を補完しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-024",
+      "requirement": "各input時刻を個別保持",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-025",
+      "requirement": "`decisionAt`後の値を拒否",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-026",
+      "requirement": "input skewを保存",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-030",
+      "requirement": "mark dispersion手計算一致",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-031",
+      "requirement": "spread bps手計算一致",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-032",
+      "requirement": "funding max/range一致",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-033",
+      "requirement": "OI median一致",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-034",
+      "requirement": "zeroとmissingを区別",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-035",
+      "requirement": "stale native値を除外",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-036",
+      "requirement": "`tradeChange`を売買代金と誤用しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-037",
+      "requirement": "volume unit不明を合成しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-040",
+      "requirement": "midrank percentileが順序不変",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-041",
+      "requirement": "tiesが同score",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-042",
+      "requirement": "minimum peers未達はunavailable",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-043",
+      "requirement": "movement direction保持",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-044",
+      "requirement": "activity欠測を0補完しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-045",
+      "requirement": "confluenceは4 component必須",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-046",
+      "requirement": "scoreとquality/coverage分離",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-047",
+      "requirement": "policy version変更時rank change無効",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-050",
+      "requirement": "SQLite WAL / foreign keys",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-051",
+      "requirement": "generation idempotency",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-052",
+      "requirement": "same ID/different content conflict",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-053",
+      "requirement": "transaction failureで部分保存なし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-054",
+      "requirement": "readback hash一致後publish",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-055",
+      "requirement": "currentと5分evidenceを分離",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-056",
+      "requirement": "state symlink/escape拒否",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-060",
+      "requirement": "input cutoff barをoutcomeへ含めない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-061",
+      "requirement": "horizon全bar不足はpending/unscorable",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-062",
+      "requirement": "interior gapを0-returnにしない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-063",
+      "requirement": "revision changeで履歴連結なし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-064",
+      "requirement": "max absolute/close return一致",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-065",
+      "requirement": "correctionはnew edition",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-070",
+      "requirement": "candidate family固定",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-071",
+      "requirement": "Recall/Precision/NDCG手計算一致",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-072",
+      "requirement": "minute rowsをiid扱いしない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-073",
+      "requirement": "exact duplicateで証拠強化なし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-074",
+      "requirement": "chance winnerをsupportしない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-075",
+      "requirement": "stable edgeを検出",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-076",
+      "requirement": "day/6h sensitivity矛盾はinconclusive",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-077",
+      "requirement": "block不足はnot_estimable",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-078",
+      "requirement": "coverage regressionを棄却",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-079",
+      "requirement": "MDE/powerはplanning only",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-080",
+      "requirement": "top-K deterministic",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-081",
+      "requirement": "hysteresis buffer/hold",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-082",
+      "requirement": "cost-aware switch抑制",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-083",
+      "requirement": "stale assetを選ばない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-084",
+      "requirement": "manual selectionを変更しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-085",
+      "requirement": "added/removed/retained/churn保存",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-086",
+      "requirement": "map/policy変更で比較不可",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-090",
+      "requirement": "loopback APIのみ",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-091",
+      "requirement": "unknown query拒否",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-092",
+      "requirement": "schema validation",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-093",
+      "requirement": "no-store",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-094",
+      "requirement": "unavailable reason表示",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-095",
+      "requirement": "scoreを利益確率と表示しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-096",
+      "requirement": "favoritesがmarket rankを変更しない",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-097",
+      "requirement": "keyboard/focus",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-098",
+      "requirement": "390px横overflowなし",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-099",
+      "requirement": "stale warning",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-100",
+      "requirement": "Market Core全pytest",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-101",
+      "requirement": "Ranking Core全pytest",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-102",
+      "requirement": "Attention Core全gate",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-103",
+      "requirement": "Web unit/check/build",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-104",
+      "requirement": "Desktop/Mobile E2E",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-105",
+      "requirement": "full `verify-local.sh`",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-106",
+      "requirement": "docs metadata/link",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-107",
+      "requirement": "no production state write",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-108",
+      "requirement": "no systemd/deploy operation",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-109",
+      "requirement": "rollback: Attention停止で既存画面継続",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-120",
+      "requirement": "production unit install",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-121",
+      "requirement": "production capacity",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-122",
+      "requirement": "30日prospective evidence",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-123",
+      "requirement": "family-adjusted candidate superiority",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-124",
+      "requirement": "actual multi-capture design",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-125",
+      "requirement": "actual multi-capture live acceptance",
+      "status": "not_run",
+      "evidence": []
+    },
+    {
+      "id": "ATT-126",
+      "requirement": "user daily-use acceptance",
+      "status": "not_run",
+      "evidence": []
+    }
+  ]
+}
