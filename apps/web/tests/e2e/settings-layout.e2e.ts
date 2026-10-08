@@ -42,7 +42,7 @@ test("Hyperliquidモードは取扱い銘柄を絞り、比較条件と参照チ
   await expect(rows).toHaveCount(4);
   const rank = await btc.locator(".rank").innerText();
   const change = await btc.locator(".change").innerText();
-  const turnover = await btc.locator(".turnover").innerText();
+  const turnover = await btc.locator(".turnover > span[title]").innerText();
   await expect(all).toHaveAttribute("aria-pressed", "true");
   await rows.filter({ hasText: "ETH" }).locator("button.select-row").click();
   const chart = page.getByTestId("ranking-chart");
@@ -61,13 +61,13 @@ test("Hyperliquidモードは取扱い銘柄を絞り、比較条件と参照チ
   await expect(btc).toBeVisible();
   await expect(btc.locator(".rank")).toHaveText(rank, { useInnerText: true });
   await expect(btc.locator(".change")).toHaveText(change, { useInnerText: true });
-  await expect(btc.locator(".turnover")).toHaveText(turnover, { useInnerText: true });
+  await expect(btc.locator(".turnover > span[title]")).toHaveText(turnover, { useInnerText: true });
   await expect(page.getByLabel("ランキングの比較期間")).toHaveValue("1h");
   await expect(page.getByLabel("ランキングの並び順")).toHaveValue("turnover");
   await expect(page.getByLabel("取扱い取引所")).toHaveValue("hyperliquid");
   await expect(page.getByTestId("volume-spotlight").getByTestId("relative-volume-signal")).toHaveCount(1);
   await expect(page.getByTestId("volume-spotlight")).toContainText("BTC");
-  await expect(page.getByText("価格・売買代金はBybit／Binanceの参照データです。", { exact: true })).toBeVisible();
+  await expect(page.getByText("Hyperliquidの24時間売買代金を併記します。順位・騰落率・参照売買代金はBybit／Binanceのデータです。", { exact: true })).toBeVisible();
   await expect(chart).toHaveAttribute("data-symbol", "BYBIT:ETHUSDT.P");
   await expect(page.getByLabel("ランキングチャートの時間足")).toHaveValue("60");
   expect(await frame!.evaluate(node => node.isConnected)).toBe(true);
