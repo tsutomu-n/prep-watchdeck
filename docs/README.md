@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-09(金)_17:53 JST"
+timestamp="2026-10-09(金)_18:37 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-09T17:53:00+09:00`
+- 更新: `2026-10-09T18:37:20+09:00`
 - 検証: `2026-10-08T16:09:39+09:00`
 - 状態: `現行`
 
@@ -52,7 +52,6 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 
 ## 実装計画
 
-- [Web読み込み改善](plans/active/web-loading/PLAN.md): 本番配信・圧縮、一覧復帰、遅延読み込みとWeb本番反映。
 - [Research remediation](plans/active/research-remediation/GOAL.md): 将来観測、時点再生、固定A/Bとデータ品質。[実装手順](plans/active/research-remediation/PLAN.md)。
 - [Attention Core](plans/active/attention-core/GOAL.md): F0–F7 source実装済み。未実行のF8 capacity・production/実データ受入を再開対象とする。
 - [Decision 0015](decisions/0015-attention-core.md): read-only inputとmanual selection保全。
