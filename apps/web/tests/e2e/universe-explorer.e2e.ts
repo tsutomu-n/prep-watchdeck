@@ -174,6 +174,10 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   await returnLink.focus();
   await returnLink.press("Enter");
   try {
+    // Cached data restores keyboard position before the revalidation request finishes.
+    await expect(selected).toHaveAttribute("aria-pressed", "true");
+    await expect(selected).toBeFocused();
+    await expect.poll(() => scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }))).toEqual(scroll);
     await openSection(page, "ランキング条件");
     await expect(page.getByLabel("平常比期間")).toHaveValue("1h");
     await expect(page.getByLabel("平常比下限")).toHaveValue("0.5");
@@ -182,7 +186,9 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
     await expect(page.getByLabel("表示列プリセット")).toHaveValue("movement");
   } finally { release(); }
   await expect(selected).toHaveAttribute("aria-pressed", "true");
-  await expect(selected).toBeFocused();
+  await expect(page.locator(".refresh-state")).toHaveText("毎分更新");
+  // Finishing revalidation must not steal focus from an interaction after restoration.
+  await expect(page.locator(".ranking-conditions > summary")).toBeFocused();
   await expect.poll(() => scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }))).toEqual(scroll);
   if (mobile) {
     await selected.press("Enter");

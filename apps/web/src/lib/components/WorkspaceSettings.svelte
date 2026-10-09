@@ -8,7 +8,8 @@
   let views = $state<SavedView[]>([]);
   let viewError = $state<string | null>(null);
   let message = $state<string | null>(null);
-  onMount(() => { void readUserWorkspace().then(value => views = value.savedViews)
+  let mounted = $state(false);
+  onMount(() => { mounted = true; void readUserWorkspace().then(value => views = value.savedViews)
     .catch(() => viewError = "保存した表示を読み込めません。ほかの設定は変更できます。"); });
 
   function update<K extends keyof WorkspacePreferences>(key: K, value: WorkspacePreferences[K]) {
@@ -32,6 +33,7 @@
 </script>
 
 {#if message}<p role="status" class="warning">{message}</p>{/if}
+<fieldset disabled={!mounted} aria-label="ワークスペースの設定">
 <section aria-labelledby="layout-settings-title">
   <h2 id="layout-settings-title">レイアウトと文字</h2>
   <p>超高密度は行・操作部・パネルの余白をまとめて詰めます。配色とフォントはそのまま使えます。</p>
@@ -126,7 +128,10 @@
   <button onclick={() => reset(["chartInterval", "chartVolume"])}>チャートを初期値に戻す</button>
 </section>
 
+</fieldset>
+
 <style>
+  fieldset { min-inline-size: 0; margin: 0; padding: 0; border: 0; }
   section { padding: var(--space-xl); border: 1px solid var(--line-strong); background: var(--panel); margin-bottom: var(--space-lg); border-radius: var(--radius-sm); }
   h2 { margin: 0 0 var(--space-lg); font-size: var(--type-heading-md-size); }
   .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }

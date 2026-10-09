@@ -3,6 +3,7 @@ declare global {
     interface PageState {
       referenceDetail?: boolean;
       nativeDetail?: boolean;
+      rankingSessionEntry?: string;
     }
     interface PageData {
       market?: import("$lib/server/market-artifact-repository").MarketArtifactBundle;

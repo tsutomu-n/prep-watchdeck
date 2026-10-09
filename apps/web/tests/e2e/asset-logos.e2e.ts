@@ -9,14 +9,40 @@ import type { FavoriteTarget, UserWorkspace } from "../../src/lib/server/user-wo
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
 type Original = RankedRow["originals"][number];
-type MapRow = { id: string; asset: string; originals: Original[] };
-const mapping = JSON.parse(readFileSync(resolve(process.cwd(), "../ranking-core/data/initial-map.json"), "utf8")) as { rows: MapRow[] };
+type LogoFixtureRow = { id: string; asset: string; originals: Original[] };
+// Contract snapshot reviewed for the logo bindings' map c1381b1848be8f107fcacfea.
+// Current ranking-map revisions are separate identities and may correctly have no reviewed logo.
+const reviewedLogoFixtures: LogoFixtureRow[] = [
+  { id: "crypto:BTC", asset: "BTC", originals: [
+    { venue: "aster", instrumentId: "aster:BTCUSDT", versionId: 640, symbol: "BTCUSDT", baseAsset: "BTC", multiplier: 1 },
+    { venue: "bitget", instrumentId: "bitget:BTCUSDT", versionId: 1, symbol: "BTCUSDT", baseAsset: "BTC", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:BTC", versionId: 463, symbol: "BTC", baseAsset: "BTC", multiplier: 1 }
+  ] },
+  { id: "crypto:ETH", asset: "ETH", originals: [
+    { venue: "aster", instrumentId: "aster:ETHUSDT", versionId: 641, symbol: "ETHUSDT", baseAsset: "ETH", multiplier: 1 },
+    { venue: "bitget", instrumentId: "bitget:ETHUSDT", versionId: 2, symbol: "ETHUSDT", baseAsset: "ETH", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:ETH", versionId: 464, symbol: "ETH", baseAsset: "ETH", multiplier: 1 }
+  ] },
+  { id: "crypto:SOL", asset: "SOL", originals: [
+    { venue: "aster", instrumentId: "aster:SOLUSDT", versionId: 643, symbol: "SOLUSDT", baseAsset: "SOL", multiplier: 1 },
+    { venue: "bitget", instrumentId: "bitget:SOLUSDT", versionId: 7643, symbol: "SOLUSDT", baseAsset: "SOL", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:SOL", versionId: 467, symbol: "SOL", baseAsset: "SOL", multiplier: 1 }
+  ] },
+  { id: "crypto:SHIB", asset: "SHIB", originals: [
+    { venue: "aster", instrumentId: "aster:1000SHIBUSDT", versionId: 650, symbol: "1000SHIBUSDT", baseAsset: "1000SHIB", multiplier: 1000 },
+    { venue: "bitget", instrumentId: "bitget:SHIBUSDT", versionId: 26, symbol: "SHIBUSDT", baseAsset: "SHIB", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:kSHIB", versionId: 493, symbol: "kSHIB", baseAsset: "kSHIB", multiplier: 1000 }
+  ] }
+];
+const unreviewedLogoOriginal: Original = {
+  venue: "aster", instrumentId: "aster:AIUSDT", versionId: 9538, symbol: "AIUSDT", baseAsset: "AI", multiplier: 1
+};
 const logoManifest = JSON.parse(readFileSync(resolve(process.cwd(), "src/lib/assets/asset-logos.json"), "utf8")) as { logos: { path: string }[] };
 const runtimeRoot = resolve(process.cwd(), "../../var/tmp/e2e/runtime");
 const errors = new WeakMap<Page, string[]>();
 
-function mapped(asset: string): MapRow {
-  const row = mapping.rows.find(entry => entry.asset === asset);
+function reviewedLogoFixture(asset: string): LogoFixtureRow {
+  const row = reviewedLogoFixtures.find(entry => entry.asset === asset);
   if (!row) throw new Error(`Missing reviewed fixture identity: ${asset}`);
   return row;
 }
@@ -60,11 +86,11 @@ async function prepare(page: Page, unknownVersion = false) {
       ? route.fallback() : route.abort();
   });
   const generatedAt = new Date().toISOString();
-  const btc = mapped("BTC");
+  const btc = reviewedLogoFixture("BTC");
   const originals = btc.originals.filter(entry => entry.venue === "bitget" || entry.venue === "hyperliquid")
     .map(entry => ({ ...entry, versionId: entry.versionId + (unknownVersion ? 900000 : 0) }));
-  const shib = mapped("SHIB").originals.find(entry => entry.venue === "aster")!;
-  const ai = mapped("AI").originals[0];
+  const shib = reviewedLogoFixture("SHIB").originals.find(entry => entry.venue === "aster")!;
+  const ai = unreviewedLogoOriginal;
   const bundle: MarketArtifactBundle = {
     universe: { schemaVersion: 1, generatedAt, status: "ready", qualityReasons: [],
       parityAssumption: { code: "usd_usdc_usdt_reference_only", appliedTo: "reference_mark_median_only",
@@ -104,7 +130,7 @@ async function prepare(page: Page, unknownVersion = false) {
   await page.route("**/api/rankings?*", async route => {
     const payload = rankingFixture(new URL(route.request().url()).searchParams);
     for (const row of payload.rows) {
-      const identity = mapping.rows.find(entry => entry.asset === row.asset);
+      const identity = reviewedLogoFixtures.find(entry => entry.asset === row.asset);
       if (identity) { row.id = identity.id; row.originals = identity.originals; }
       if (row.asset === "BTC" && unknownVersion) row.originals = originals;
     }

@@ -26,8 +26,10 @@ export default defineConfig({
   },
   projects: fullE2e ? [desktop, mobile] : [desktop],
   webServer: {
-    command: "bun run preview -- --port 4174 --strictPort",
+    command: "bun run start",
     env: {
+      HOST: "127.0.0.1",
+      PORT: "4174",
       PREP_WATCHDECK_MARKET_STATE_DIR: resolve(
         process.cwd(),
         "../../var/tmp/e2e/runtime"

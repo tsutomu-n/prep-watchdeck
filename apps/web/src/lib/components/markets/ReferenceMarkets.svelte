@@ -23,6 +23,10 @@
   import { formatPrice } from "$lib/market/universe-view";
   import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
+  import {
+    browserRankingSession, rankingPreferenceKey, rankingSnapshotExpired, type RankingSession
+  } from "$lib/market/ranking-session";
+  import { nativeUniverseFresh, referenceNativeCandidates } from "$lib/market/ranking-native";
   import AssetIcon from "$lib/components/AssetIcon.svelte";
   import type { FavoriteTarget, UserWorkspace } from "$lib/server/user-workspace-repository";
   import { DEFAULT_REFERENCE_TIME, formatPriceChange as baseFormatPriceChange } from "$lib/market/price-change";
@@ -77,10 +81,19 @@
   let mounted = $state(false);
   let loading = $state(true);
   let error = $state<string | null>(null);
+  let refreshFailed = $state(false);
   let storageMessage = $state<string | null>(null);
   let now = $state(Date.now());
   let activityData = $state<NativeActivityArtifact | null>(null);
   let nativeUniverse = $state<UniverseSnapshotArtifact | null>(null);
+  let nativeLoading = $state(false);
+  let nativeError = $state<string | null>(null);
+  let cachedSnapshot = $state(false);
+  let session: RankingSession | null = null;
+  let entryId = "";
+  let sessionPreferenceKey = "";
+  let restoredView = false;
+  let restoredPageTop: number | null = null;
   let tableScroll: HTMLDivElement;
   let listScroll = $state({ top: 0, left: 0 });
   let restoreList = $state(false);
@@ -94,8 +107,10 @@
   let mobileListOrigin = false;
   let detailBack: HTMLButtonElement;
 
+  const needsNativeUniverse = $derived(mounted &&
+    (venue === "bitget" || venue === "hyperliquid" || selectedId !== null));
   $effect(() => {
-    if (!mounted || (venue !== "bitget" && venue !== "hyperliquid")) return;
+    if (!needsNativeUniverse) return;
     nativeUniverse = untrack(() => market?.universe ?? null);
     let disposed = false;
     let pending = false;
@@ -103,6 +118,8 @@
     const refreshNative = async () => {
       if (pending || document.hidden) return;
       pending = true;
+      nativeLoading = true;
+      nativeError = null;
       request = new AbortController();
       const timeout = setTimeout(() => request?.abort(), 10_000);
       try {
@@ -112,8 +129,14 @@
         if (!payload.universe || !Array.isArray(payload.universe.items)) throw new Error("invalid universe");
         if (!disposed) { nativeUniverse = payload.universe; now = Date.now(); }
       } catch {
-        if (!disposed) nativeUniverse = null;
-      } finally { clearTimeout(timeout); pending = false; }
+        if (!disposed) {
+          nativeUniverse = null;
+          nativeError = "現在の取扱い情報を取得できません。更新後に再確認します。";
+        }
+      } finally {
+        clearTimeout(timeout); pending = false;
+        if (!disposed) nativeLoading = false;
+      }
     };
     const visible = () => { now = Date.now(); void refreshNative(); };
     void refreshNative();
@@ -181,16 +204,10 @@
     catch { return null; }
   });
   const selected = $derived(data?.rows.find((row) => row.id === selectedId) ?? lastSelected);
-  const nativeCandidates = $derived(selected?.originals.flatMap((original) =>
-    (market?.universe.items ?? []).filter((instrument) =>
-      instrument.active &&
-      instrument.venueInstrumentId === original.instrumentId &&
-      instrument.venueInstrumentVersionId === original.versionId
-    )
-  ) ?? []);
+  const nativeCandidates = $derived(referenceNativeCandidates(selected, nativeUniverse, now));
   let noteTarget = $derived(nativeCandidates.find(item => item.venueInstrumentId === noteTargetId) ?? nativeCandidates[0]);
   const symbol = $derived(selectedRemoved ? null : approvedWidgetSymbol(selected));
-  const stale = $derived(Boolean(data && (data.stale || now - data.cutoff > RANKING_MAX_AGE_MS)));
+  const stale = $derived(Boolean(data && (refreshFailed || rankingSnapshotExpired(data, now))));
   const comparisonExpired = $derived(stale || Boolean(data?.previousCutoff && now - data.previousCutoff > RANKING_MAX_AGE_MS));
   const newVolumeVisible = $derived(Boolean(data && !stale && now - data.generatedAt < 60_000));
   const nativeViews = $derived(new Map((data?.rows ?? []).map(row => [row.id, nativeActivity(row, activityData, now)])));
@@ -278,29 +295,38 @@
     return "";
   }
 
-  async function refresh(parameters: string, clear = false) {
-    controller?.abort(); controller = new AbortController();
+  async function refresh(parameters: string) {
+    if (!mounted || document.hidden) return;
+    controller?.abort();
+    const request = new AbortController();
+    controller = request;
     const current = ++requestId;
     loading = true; error = null;
-    if (clear) { data = null; newVolumeRows = new Set(); }
     try {
-      const response = await fetch(`/api/rankings?${parameters}`, { signal: controller.signal });
+      const response = await fetch(`/api/rankings?${parameters}`, { signal: request.signal });
       if (!response.ok) throw new Error("ランキングの更新を待っています。専用収集の起動・取得状況を確認してください。");
       const payload: RankingResponse = await response.json();
-      if (current !== requestId || !matchesRankingQuery(payload, new URLSearchParams(parameters))) return;
+      if (current !== requestId || !mounted || request.signal.aborted) return;
+      if (!matchesRankingQuery(payload, new URLSearchParams(parameters))) {
+        throw new Error("取得したランキングの条件が一致しません。再試行してください。");
+      }
       now = Date.now();
       if (payload.generationId !== data?.generationId) {
         newVolumeRows = newlyIncreasedRows(data, payload, now, $preferences);
       }
+      session?.rememberResult(parameters, payload);
       data = payload;
+      cachedSnapshot = false;
+      refreshFailed = false;
       if (selectedId) {
         const updated = payload.rows.find((row) => row.id === selectedId);
         selectedRemoved = !updated;
         if (updated) lastSelected = updated;
       }
     } catch (cause) {
-      if (current === requestId && !(cause instanceof DOMException && cause.name === "AbortError")) {
+      if (mounted && current === requestId && !(cause instanceof DOMException && cause.name === "AbortError")) {
         error = cause instanceof Error ? cause.message : "ランキングを取得できませんでした";
+        refreshFailed = true;
       }
     } finally { if (current === requestId) loading = false; }
   }
@@ -310,26 +336,29 @@
     let target = Math.floor(time / 60_000) * 60_000 + 12_000;
     if (target <= time) target += 60_000;
     refreshTimer = setTimeout(() => {
-      if (query) void refresh(query);
+      if (mounted && !document.hidden && query) void refresh(query);
       schedule();
     }, target - time);
   }
 
   onMount(() => {
     const initial = currentPreferences();
+    session = browserRankingSession();
+    const historyEntryId = page.state.rankingSessionEntry;
+    // The list and its shallow detail entry share an identity across component remounts.
+    entryId = historyEntryId ?? crypto.randomUUID();
     startupUrl = page.url.href;
     const cancelStartup = () => { startupCancelled = true; };
     const interactionEvents = ["pointerdown", "keydown", "input", "change"];
     for (const event of interactionEvents) document.addEventListener(event, cancelStartup, { once: true });
-    const stopReference = subscribeReferenceTime((value) => { reference = value; referenceReady = true; });
+    const stopReference = subscribeReferenceTime((value) => {
+      reference = value; referenceReady = true;
+      sessionPreferenceKey = rankingPreferenceKey(currentPreferences(), value);
+    });
     const stopTurnover = subscribeTurnoverDecimals(value => { turnoverDecimals = value; });
     const width = window.matchMedia("(max-width: 960px)");
     const updateWidth = () => mobile = width.matches;
     updateWidth(); width.addEventListener("change", updateWidth);
-    const selectedFromUrl = page.url.searchParams.get("selected");
-    if (selectedFromUrl && /^[A-Za-z0-9:._-]{1,160}$/.test(selectedFromUrl)) {
-      selectedId = selectedFromUrl;
-    }
     const loadWorkspace = () => {
       if (document.visibilityState !== "hidden") {
         void readUserWorkspace().then((value) => { workspace = value; workspaceError = null;
@@ -354,7 +383,25 @@
     if (initial.initialOrder !== "default") order = initial.initialOrder;
     preset = initial.initialColumns;
     const params = page.url.searchParams;
-    try {
+    const saved = session?.restoreView(sessionPreferenceKey, params, historyEntryId, legacyEntry);
+    if (saved) {
+      period = saved.period; order = saved.order; reference = saved.reference; minimum = saved.minimum;
+      search = saved.search; venue = saved.venue; includeUnranked = saved.includeUnranked;
+      favoritesOnly = saved.favoritesOnly; ratioPeriod = saved.ratioPeriod; minRatio = saved.minRatio;
+      minDayPosition = saved.minDayPosition; maxDayPosition = saved.maxDayPosition;
+      sort = saved.sort; direction = saved.direction; preset = saved.preset;
+      lockedIds = saved.lockedIds; selectedId = saved.selectedId; lastSelected = saved.lastSelected;
+      selectedRemoved = saved.selectedRemoved; noteTargetId = saved.noteTargetId;
+      selectedViewId = saved.selectedViewId; viewName = saved.viewName; workspace = saved.workspace;
+      limit = saved.limit; restoredScroll = saved.listScroll; listScroll = saved.listScroll;
+      restoredPageTop = saved.pageTop;
+      // Menu entry resumes the list; only Back to the same history entry resumes detail.
+      restoreList = !saved.detailOpen || historyEntryId !== saved.entryId;
+      mobileListScroll = saved.listScroll; listPageTop = saved.pageTop;
+      mobileListOrigin = true;
+      restoredView = true; startupViewPending = false;
+    }
+    try { if (!saved || (hasViewQuery(params) && historyEntryId !== saved.entryId)) {
       const requestedPeriod = params.get("period") as RankingPeriod | null;
       const requestedOrder = params.get("order") as RankingOrder | null;
       const requestedReference = params.get("dailyReferenceJst");
@@ -390,8 +437,13 @@
         left: boundedNumber(params.get("listLeft")) ?? 0
       };
       restoreList = params.get("restoreList") === "1";
-    } catch { /* Invalid legacy query leaves safe defaults visible. */ }
-    try { interval = readChartInterval(window.localStorage); } catch { interval = "15"; }
+    } } catch { /* Invalid legacy query leaves safe defaults visible. */ }
+    const selectedFromUrl = params.get("selected");
+    if (selectedFromUrl && /^[A-Za-z0-9:._-]{1,160}$/.test(selectedFromUrl)) {
+      selectedId = selectedFromUrl;
+    }
+    try { interval = saved?.interval ?? readChartInterval(window.localStorage); }
+    catch { interval = saved?.interval ?? "15"; }
     if (initial.chartInterval !== "last") interval = initial.chartInterval;
     let detailTimer: ReturnType<typeof setTimeout> | undefined;
     if (mobile && selectedId && !restoreList && !detailHistory) {
@@ -400,21 +452,41 @@
       detailTimer = setTimeout(() => {
         if (mounted && mobile && !restoreList && selectedId === initialSelected &&
           page.url.href === initialUrl && !detailHistory) {
-          replaceState("", { ...page.state, referenceDetail: false });
-          pushState("", { ...page.state, referenceDetail: true });
+          replaceState("", { ...page.state, rankingSessionEntry: entryId, referenceDetail: false });
+          pushState("", { ...page.state, rankingSessionEntry: entryId, referenceDetail: true });
         }
       }, 0);
     }
     mounted = true;
+    // Defer shallow routing until the router has finished hydration, as for mobile detail.
+    const entryTimer = setTimeout(() => {
+      if (mounted && page.url.href === startupUrl) {
+        replaceState("", { ...page.state, rankingSessionEntry: entryId });
+      }
+    }, 0);
     const clock = setInterval(() => now = Date.now(), 10_000);
-    const visible = () => { if (!document.hidden && query) void refresh(query); };
+    const visible = () => {
+      now = Date.now();
+      if (document.hidden) {
+        requestId += 1; controller?.abort(); loading = false;
+      } else if (query) void refresh(query);
+    };
     document.addEventListener("visibilitychange", visible);
     schedule();
     return () => {
-      mounted = false; clearTimeout(detailTimer);
+      session?.rememberView(sessionPreferenceKey, {
+        entryId, period, order, reference, minimum, search, venue, includeUnranked, favoritesOnly,
+        ratioPeriod, minRatio, minDayPosition, maxDayPosition, sort, direction, preset,
+        lockedIds: lockedIds?.slice() ?? null, selectedId, lastSelected: $state.snapshot(lastSelected),
+        selectedRemoved, noteTargetId, selectedViewId, viewName, interval, limit,
+        listScroll: mobile && wasDetail ? mobileListScroll : { ...listScroll },
+        pageTop: mobile && wasDetail ? listPageTop : window.scrollY,
+        detailOpen: mobile && wasDetail, workspace: $state.snapshot(workspace)
+      });
+      mounted = false; clearTimeout(detailTimer); clearTimeout(entryTimer);
       for (const event of interactionEvents) document.removeEventListener(event, cancelStartup);
       stopReference(); stopTurnover(); width.removeEventListener("change", updateWidth);
-      controller?.abort(); clearTimeout(refreshTimer); clearInterval(clock);
+      requestId += 1; controller?.abort(); clearTimeout(refreshTimer); clearInterval(clock);
       document.removeEventListener("visibilitychange", visible);
       document.removeEventListener("visibilitychange", loadWorkspace);
     };
@@ -446,7 +518,23 @@
   $effect(() => {
     if (!mounted || !referenceReady || !query) return;
     const parameters = query;
-    untrack(() => { limit = 50; void refresh(parameters, true); });
+    untrack(() => {
+      if (!restoredView) limit = 50;
+      restoredView = false;
+      now = Date.now();
+      const cached = session?.readResult(parameters, now);
+      data = cached?.data ?? null;
+      cachedSnapshot = Boolean(cached);
+      newVolumeRows = new Set();
+      error = null;
+      refreshFailed = false;
+      if (data && selectedId) {
+        const updated = data.rows.find(row => row.id === selectedId);
+        selectedRemoved = !updated;
+        if (updated) lastSelected = updated;
+      }
+      void refresh(parameters);
+    });
   });
 
   $effect(() => {
@@ -456,7 +544,7 @@
   });
 
   $effect(() => {
-    if (!restoreList || !data || loading || (favoritesOnly && !workspace)) return;
+    if (!restoreList || !data || (favoritesOnly && !workspace)) return;
     const index = visibleRows.findIndex(row => row.id === selectedId);
     untrack(() => {
       restoreList = false;
@@ -470,6 +558,10 @@
           tableScroll.scrollTop = restoredScroll.top;
           tableScroll.scrollLeft = restoredScroll.left;
         }
+        if (restoredPageTop !== null) {
+          window.scrollTo({ top: restoredPageTop, behavior: "instant" });
+          restoredPageTop = null;
+        }
       });
     });
   });
@@ -482,10 +574,10 @@
       mobileListOrigin = true;
       listPageTop = window.scrollY;
       mobileListScroll = { top: tableScroll?.scrollTop ?? 0, left: tableScroll?.scrollLeft ?? 0 };
-      replaceState(selectionUrl, { ...page.state, referenceDetail: false });
-      pushState(selectionUrl, { ...page.state, referenceDetail: true });
+      replaceState(selectionUrl, { ...page.state, rankingSessionEntry: entryId, referenceDetail: false });
+      pushState(selectionUrl, { ...page.state, rankingSessionEntry: entryId, referenceDetail: true });
     } else {
-      replaceState(selectionUrl, page.state);
+      replaceState(selectionUrl, { ...page.state, rankingSessionEntry: entryId });
     }
     selectedId = row.id; lastSelected = row; selectedRemoved = false;
     try {
@@ -705,6 +797,7 @@
 <main class="ranking-page">
   {#if !query}<p class="notice" role="alert">売買代金の下限は0以上の数値を指定してください。</p>{/if}
   {#if error}<p class="notice" role="status">{error} <button type="button" onclick={() => query && refresh(query)}>再試行</button></p>{/if}
+  {#if cachedSnapshot && loading}<p class="search-note" role="status">前回取得した一覧を表示しています。最新データを確認中です。</p>{/if}
   {#if stale}<p class="notice" role="status">更新が停止しています。表示値は {data ? rankingTimestamp(data.cutoff) : ""} JST 時点です。</p>{/if}
   {#if data}<RosterNotice {data} {now} />{/if}
   {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
@@ -941,9 +1034,14 @@
           <div class="native-source"><span>確認する取引所</span>
             <div class="native-candidates" aria-label="現在の取扱い契約">
               {#if !selectedRemoved}
+                {#if nativeLoading && !nativeUniverse}<p role="status">現在の取扱い契約を確認しています。</p>
+                {:else if nativeError}<p role="status">{nativeError}</p>
+                {:else if !nativeUniverseFresh(nativeUniverse, now)}<p role="status">取扱い情報が期限切れです。更新後に再確認します。</p>
+                {:else}
                 {#each nativeCandidates as instrument (instrument.venueInstrumentId)}
                   <a href={nativeHref(instrument.venueInstrumentId, instrument.venueInstrumentVersionId)}>{venueLabel(instrument.venue)} · {instrument.sourceSymbol} を確認</a>
                 {:else}<p>現在の取扱い情報で、同一契約として確認できる移動先がありません。</p>{/each}
+                {/if}
               {:else}<p>対応表から削除されたため、取引所別への移動を停止しています。</p>{/if}
             </div>
           </div>

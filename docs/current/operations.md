@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-09(金)_16:16 JST"
+timestamp="2026-10-09(金)_18:32 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T16:16:17+09:00`
+- 更新: `2026-10-09T18:32:09+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -62,6 +62,7 @@ Watchdeck v1 P0のRepository実装とproduction qualificationは完了済み。P
 [README](../../README.md)の専用stateと`postgres.env`を作る。実credentialをcommit、terminal log、issue、文書へ
 貼らない。
 
+Webはrelease directoryの`apps/web/`で`bun install --frozen-lockfile`、`bun run build`を実行してから配置する。
 unit renderだけ確認する。
 
 ```bash
@@ -76,6 +77,22 @@ bash scripts/ops/install-user-services.sh --repo-root /absolute/clean-release --
 ```
 
 installerは既存unitをbackupする。installとruntime start/restartを同一操作とみなさない。
+
+## Webの本番配信
+
+Web unitは`bun run start`でadapter-nodeのbuildを配信し、`HOST=127.0.0.1`、`PORT=5173`を使う。
+開発時の`bun run dev`とは別で、source更新後はbuildと承認済みrestartが必要。
+HTML/APIは`no-store`で配信し、clientの受容形式に合わせgzip/Brotli等で応答を圧縮する。
+ハッシュ付き静的assetはadapterの事前圧縮とimmutable cacheを使う。
+listenerはloopback hostnameと設定済みTailscale authority以外のHostを全routeで拒否する。
+APIの認証・Origin・socket接続元検証は維持し、forwarded addressをadapterのclient addressへ代入しない。
+`PREP_WATCHDECK_WEB_`接頭辞の`ORIGIN`、`ADDRESS_HEADER`、`HOST_HEADER`、`PORT_HEADER`設定による
+上書きは拒否する。
+
+Webだけの互換な変更は、検証済みcommitから別release directoryへ配置し、WebのWorkingDirectoryとExecStartだけを
+切り替える。旧releaseと既存drop-inを保持し、health・実際のHTTPS入口・認証・主要画面を確認する。
+失敗時は今回のWeb用drop-inだけを戻し、daemon-reloadとWeb restartを行う。
+Market/Ranking/Attentionの収集process、DB、stateの切替はこのWeb更新に含めない。
 
 ## 起動と停止
 
@@ -112,7 +129,7 @@ Webのlistenerは`127.0.0.1:5173`を維持し、既存Tailscale ServeのHTTPS pr
 `https://ubuntu.narluga-gecko.ts.net:8444/`。スマホ本人による接続確認はserver検証と別に行う。
 
 Web unitに`PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN=https://ubuntu.narluga-gecko.ts.net:8444`を
-指定する。Viteの既存allowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
+指定する。開発時はViteのallowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
 Serveの認証済みuser identity headerが揃った場合にlocal APIを利用できる。
 
 タグ付き端末にはuser identity headerが付かないため、このサーバー自身から同じHTTPS URLを開く場合は
@@ -125,7 +142,7 @@ socketが読めない、timeout、不正response、別端末、Funnel経由の�
 
 JSON更新には引き続き設定したHTTPS originとの一致が必要。検証時にidentity headerを手作業で付けて
 認証成功と扱わない。serverからのHTTP・ブラウザー検証と、スマホ実機での本人操作確認を分ける。
-URL変更時はこのoriginとVite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
+URL変更時はこのoriginと開発用Vite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
 
 ```bash
 systemctl --user show \

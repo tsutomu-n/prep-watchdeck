@@ -84,14 +84,14 @@ async function prepare(page: Page, options: { denyStorage?: boolean; stale?: boo
   const errors: string[] = [];
   const apiQueries: string[] = [];
   let widgets = 0;
-  let coreRequests = 0;
+  let selectionRequests = 0;
   page.on("pageerror", (error) => errors.push(error.message));
   await page.clock.install({ time: FIXTURE_NOW });
   if (options.denyStorage) await page.addInitScript(() => {
     Object.defineProperty(window, "localStorage", { get() { throw new DOMException("disabled", "SecurityError"); } });
   });
-  await page.route("**/api/market-data**", (route) => { coreRequests += 1; return route.abort(); });
-  await page.route("**/api/selection**", (route) => { coreRequests += 1; return route.abort(); });
+  await page.route("**/api/market-data**", (route) => route.abort());
+  await page.route("**/api/selection**", (route) => { selectionRequests += 1; return route.abort(); });
   await page.route("https://s3.tradingview.com/**", async (route) => {
     widgets += 1;
     await route.fulfill({ contentType: "application/javascript", body: widgetStub });
@@ -108,7 +108,7 @@ async function prepare(page: Page, options: { denyStorage?: boolean; stale?: boo
     }
     await route.fulfill({ json: payload });
   });
-  return { errors, apiQueries, widgets: () => widgets, coreRequests: () => coreRequests };
+  return { errors, apiQueries, widgets: () => widgets, selectionRequests: () => selectionRequests };
 }
 
 test("全対象の条件変更、選択維持、単一Widgetと時間足を扱う", async ({ page }) => {
@@ -139,7 +139,7 @@ test("全対象の条件変更、選択維持、単一Widgetと時間足を扱�
   expect(await element!.evaluate((node) => node.isConnected)).toBe(true);
   expect(probe.widgets()).toBe(widgetCount);
   await expect(frame.getByTestId("stub-contract")).toHaveText("BYBIT:BTCUSDT.P / 60");
-  expect(probe.coreRequests()).toBe(0);
+  expect(probe.selectionRequests()).toBe(0);
   expect(probe.errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

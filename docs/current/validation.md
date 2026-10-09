@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-09(金)_15:03 JST"
+timestamp="2026-10-09(金)_18:32 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T15:03:11+09:00`
+- 更新: `2026-10-09T18:32:09+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -95,6 +95,11 @@ PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e
 ```
 
 fullではdesktopとmobileを実行する。CSSのsemantic roleとcontrast/accessibility testは維持する。
+E2E serverはbuild済みの`bun run start`を隔離state・loopback port 4174で使う。
+Vitestには圧縮・cache header・socket接続元・adapter設定境界のHTTP検証を含める。
+読込回帰では遅い応答中の一覧復帰、古い値の警告、条件変更、必要時だけの画面コードとnativeデータ取得を確認する。
+本番切替後は実際のHTTPS入口の圧縮・API認証・画面表示を別に確認する。
+速度比較は同じ回線/CPU条件とデータで行い、実機の体感受入と区別する。
 
 ## Ops / runtime safety gate
 

@@ -1,8 +1,8 @@
 # Web読み込み改善と本番反映
 
-timestamp="2026-10-09(金)_17:53 JST"
+timestamp="2026-10-09(金)_18:32 JST"
 - 作成: `2026-10-09T17:53:00+09:00`
-- 更新: `2026-10-09T17:53:00+09:00`
+- 更新: `2026-10-09T18:32:09+09:00`
 - 状態: `実装計画`
 
 ## Goalと承認範囲
@@ -23,15 +23,15 @@ Git push、PR、Market/Ranking/Attention collectorの変更、DB migrationは含
   hidden/unmounted画面のpoll/heartbeatを残さない。
 - 初回: `MarketsWorkspace.svelte`、page loader、画面import helper。
   ReferenceではNative bundleを初期HTMLへ同梱しない。Native指定時は既存artifact contractを維持する。
-  非選択画面のcodeを分割し、idle/hover/focusでcodeだけ先読みする。
+  非選択画面のcodeを分割し、hover/focus/pointerdownでcodeだけ先読みする。
   Referenceの契約確認・取引所売買代金は必要時に既存APIから取得する。
 - 文書: current operations、UI workflowと必要なvalidationを現行behaviorに合わせて更新する。
 
 ## Checkpointと完了条件
 
-- [ ] 配信・読み込み・一覧復帰を実装し、意味のある局所testで検証する。
-- [ ] Web unit/check/build、Desktop/Mobileの関連E2E、production HTTP圧縮・認証を確認する。
-- [ ] releaseに必要な`bash scripts/verify-local.sh`を隔離DBで実行する。CIは使わない。
+- [x] 配信・読み込み・一覧復帰を実装し、意味のある局所testで検証する。
+- [x] Web unit/check/build、Desktop/Mobileの関連E2E、production HTTP圧縮・認証を確認する。
+- [x] releaseに必要な`bash scripts/verify-local.sh`を隔離DBで実行する。CIは使わない。
 - [ ] 統合diffをreviewし、今回の差分だけをcommitする。
 - [ ] tracked sourceの独立releaseをbuildし、専用state/portで起動確認する。
 - [ ] Web専用drop-inを追加してrestartし、HTTPS/loopback、圧縮、画面復帰を確認する。
@@ -56,7 +56,18 @@ schema、ランキング計算、全体検索・sortを変更しない。
 失敗時は今回追加したdrop-inだけを退避し、daemon-reloadとWeb restartで旧releaseへ戻す。
 旧release、runtime state、DB、既存collectorを削除しない。
 
+## 検証済みcheckpoint
+
+Python 279/156/56件、repository/ops 18件、Web unit 237件と追加Host拒否を含むHTTP 6件、check/buildを確認済み。
+全体gateは型エラーで中断後に修正してWeb以降を再開した。既存logo fixtureの契約版drift、
+高速化で顕在化した画像ready/hydration race、mobile履歴復帰を修正し、失敗・影響caseを再実行した。
+DB依存caseは専用一時PostgresでDesktop/Mobileとも通過。最終の画像/設定18件とmobile履歴1件も通過。
+独立reviewのHost境界と履歴IDの指摘は修正済み、最終source reviewはREADY。
+
+同じcapture/10Mbps/80ms/CPU4の2回平均は初回50行7.289秒→1.459秒、初期転送6.31MB→0.246MB。
+実際のbuilt handlerで圧縮、immutable/no-store、Originを確認済み。本番切替と実際のHTTPS受入は次段階。
+
 ## 未解決事項
 
-本番adapter起動時のOriginとsocket addressをHTTP testで確認してからcutoverする。
+検証済みsourceのcommit、独立release build、Web cutover、実HTTPS/collector継続確認を行う。
 本人端末の操作感は本番反映後の別受入である。
