@@ -1179,6 +1179,7 @@
       "actual capture",
       "credential changes"
     ],
-    "gisMeaning": "unconfirmed: clarification pending; recorded data acceptance is for actual market inputs, not geographic GIS data"
+    "dataAcceptanceScope": "confirmed by user: actual market data; initial live input acceptance completed with recorded issues; 30-day evaluation and long-term capacity acceptance remain pending",
+    "scopeClarifiedAt": "2026-10-09T12:56:21+09:00"
   }
 }

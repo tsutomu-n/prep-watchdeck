@@ -1,11 +1,11 @@
 # Attention Core 実装計画
 
-timestamp="2026-10-09(金)_07:17 JST"
+timestamp="2026-10-09(金)_12:56 JST"
 - 作成: `2026-10-08T23:47:49+09:00`
-- 更新: `2026-10-09T07:17:08+09:00`
+- 更新: `2026-10-09T12:56:21+09:00`
 - 状態: `実装計画`
 
-F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8のpush・本番配置は **PASS**。実市場入力の初期受入は **PASS WITH ISSUES**。「GISデータ」の意味は確認中。
+F0–F7 source implementation: **PASS**。Product validation: **PARTIAL**。F8のpush・本番配置は **PASS**。実市場入力の初期受入は **PASS WITH ISSUES**。受入対象はuser確認済みの実市場データ。
 検証済みsource: `3ea11242423b9de0856da00c26e12c54a3d24ffc`。根拠は[受入台帳](acceptance.json)と[再開記録](RESUME.md)。
 
 ## Goal / Scope
@@ -60,4 +60,4 @@ F8 deployment and initial input acceptance are complete. The 30-day evidence / c
 
 切戻し設定とraw evidenceは`/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212`。停止対象はAttentionのみ。Webも戻す場合は追加した`zzzz-attention-release.conf`を同directoryへ退避し、daemon-reload後にWebだけを再起動する。専用stateとreleaseは保持する。詳細と検証時刻は[受入台帳](acceptance.json)に記録した。
 
-「GISデータ」が地理空間データを指すかは確認中。この記録は本番配置に必要な実市場入力の受入であり、地理空間GISのimportを完了したものではない。CI、PR、main merge、actual capture、live Market DB変更、credential変更は未実施。
+user確認により、受入対象は「実データ」（現行Market/Rankingの実市場入力）と確定した。初期受入は上記のとおり完了し、30日評価と長期容量の受入は残件である。CI、PR、main merge、actual capture、live Market DB変更、credential変更は未実施。
