@@ -1,8 +1,8 @@
 # Research remediation implementation plan
 
-timestamp="2026-10-09(金)_16:01 JST"
+timestamp="2026-10-09(金)_16:16 JST"
 - 作成: `2026-10-09T14:28:00+09:00`
-- 更新: `2026-10-09T16:01:26+09:00`
+- 更新: `2026-10-09T16:16:17+09:00`
 - 状態: `実装計画`
 
 **Goal:** 研究入力を観測した版のまま保存し、因果時刻と費用を検査して固定A/Bを比較できる。
@@ -132,5 +132,13 @@ Repository実装とlocal gateは完了。gate・review・元データ保全は
 - 状態確認は`systemctl --user status prep-watchdeck-research-bitget-btc-20261009.service`。
   停止が必要な場合は同unitだけをstopし、既存journalを保全する。再開は新研究rootと登録を使う。
 - Rollback資料とDB dumpは`/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223`。
-  新readerを止め、今回追加したMarket/maintenance/monitor/Ranking drop-inを退避して旧unitへ戻す。
-  nullable migration列・原本・旧releaseを維持し、downgradeやrestoreを自動実行しない。
+  切戻し直前の専用DB backupを追加保全し、新readerを止めて保全してから、準備済みの`rollback-unit-candidates/zzzzz-research-schema5-rollback.conf`を
+  Market unitへ追加する。対象は`/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat`であり、
+  未修正5b82a7dを直接起動しない。schema5 health・後着更新・219 testsを隔離DBで確認済み。
+  現行35de6f2のmaintenance/monitorを維持し、旧Providerの未観測finalityはNULLとする。
+  実際の切戻し後にcatalog/native mapを再照合する。今回この切戻しreleaseは起動していない。
+  migration列・原本・旧releaseを維持し、downgradeやrestoreを自動実行しない。
+
+最終reviewで判明した終了判定は修正済み。process終了状態・sample数・品質を分け、OOM/signal・
+件数不足・終了情報欠落はPARTIALにする。正常完了と品質欠測を含む6ケースを隔離synthetic入力で確認した。
+観測中のunitは再起動せず、将来のExecStopPost helperだけをatomicに差し替えた。rule/evaluator hashは不変。

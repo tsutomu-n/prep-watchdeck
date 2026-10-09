@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-09(金)_15:03 JST"
+timestamp="2026-10-09(金)_16:16 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T15:03:11+09:00`
+- 更新: `2026-10-09T16:16:17+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -561,9 +561,22 @@ Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`va
 sourceを更新しただけで常駐観測やproduction適用は始まらない。
 新しいcandle writerを稼働させる前には、明示許可された本番DBでMigration 0005が必要。
 旧行の`finalized_at`はNULLのままで、過去の受信/公開時刻を書き換えない。
-rollbackは旧sourceへ戻し、追加済みnullable列と研究journalを保全する。
+Migration 0005後は未修正の旧sourceへそのまま戻さない。旧healthはmigration履歴5を認識できず、
+旧candle upsertは`finalized_at`を残して`observed_at`だけ更新するため、後着更新が新CHECKに違反する。
+切戻しにはMigration 0005とfinality対応のcandle model・通常writer・recovery writerを含む
+互換releaseを別directoryに用意し、schema5 healthと後着更新を隔離DBで検証する。
+旧Providerが確定時刻を持たない更新はNULLとし、古い確定時刻を新しい訂正版へ流用しない。
+切戻し直前の専用DB backupを追加保全し、研究観測を停止・保全する。
+finalityを保持する現行maintenanceを維持する。catalog版が変われば
+稼働mapも新しい全件根拠で再確認する。nullable列・原本・旧releaseは保全し、downgradeや
+backup restoreを自動で行わない。
 
 Aster catalogはexchangeInfoに加え公式fundingInfoを観測する。取得失敗はcatalog失敗を維持し、
 設定欠落はinterval unknownとする。新しいintervalは新versionとして扱い、過去fundingへ遡及しない。
 monitorのremoved/unmapped/versionMismatch/identity差分はsample付きで残る。
 mapの根拠review・validation・稼働採用・採用後monitor成功を別々に確認し、監視無効化を修復としない。
+
+管理unitで上限付きresearch観測を行う場合、終了処理はsample数、process終了、snapshot品質、
+統計的推定可否を分けて記録する。`SERVICE_RESULT`・`EXIT_CODE`・`EXIT_STATUS`が不明、
+強制終了、件数不足の場合は、残ったsnapshotの品質が良くてもcapture完了のPASSにしない。
+CLI終了3による品質不適格は、全sampleを保存したかどうかと別に残す。

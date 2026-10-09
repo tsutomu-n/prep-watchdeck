@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-09T16:01:26+09:00",
+  "generated_at": "2026-10-09T16:18:47+09:00",
   "source_status": "PASS",
   "overall_runtime_acceptance": "PARTIAL",
   "branch": "ai/research-remediation-20261009-1428",
@@ -72,6 +72,58 @@
       },
       "original_identity_or_quantity_changes": 0,
       "native_version_changes": 454
+    },
+    "rollout_review": {
+      "at": "2026-10-09T16:16:17.315474+09:00",
+      "review_status": "IMPORTANT_FINDINGS_FIXED",
+      "critical": 0,
+      "important": 2,
+      "open_important": 0,
+      "minor": 0,
+      "rollback": {
+        "before": "unpatched previous source is NOT schema5 compatible",
+        "prepared_release": "/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat",
+        "production_activated": false,
+        "manifest": "/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat/RELEASE_COMPAT.json",
+        "regression_red": "MigrationError health and CandleStoreError on late update",
+        "regression_green": "health ready, late update stored, absent new finalization remains NULL",
+        "validation": {
+          "schema5_health": "PASS",
+          "post_finalization_late_update": "PASS; unknown finalization stays NULL",
+          "market_pytest": {
+            "passed": 219,
+            "failed": 0,
+            "seconds": 19.03,
+            "isolated_postgres": true
+          },
+          "ruff_check": "PASS",
+          "ruff_format": "PASS",
+          "pyrefly": "0 errors; 18 suppressed; 6 warnings not shown"
+        },
+        "runtime_limits": [
+          "retain schema5-aware maintenance and monitor",
+          "stop research before fallback; old producers lack finalization evidence",
+          "catalog changes require current native map review after actual fallback"
+        ]
+      },
+      "finalizer": {
+        "installed_at": "2026-10-09T16:13:33.142632+09:00",
+        "finalizer_sha256": "8045f8df7014836401ec6e85e39b24fbbc7bfe750238141bc5c40433a2a995fa",
+        "regression": "short qualified capture + oom-kill formerly PASS; now PARTIAL",
+        "green_cases": 6,
+        "capture_service_restarted": false,
+        "frozen_evaluator_or_rules_changed": false,
+        "systemd_environment_check": "PASS: normal exit produces PASS; actual SIGKILL produces PARTIAL with killed/KILL",
+        "systemd_signal_evidence": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/finalizer-systemd-signal-validation.json"
+      },
+      "declined_judgements": [
+        "24h/30d and profitability remain outside start acceptance",
+        "Aster OI and hft engine need unavailable inputs",
+        "existing quantity3 and Widget3 unreviewed preserved",
+        "backup restore drill not claimed",
+        "review reused current source and saved Provider/test evidence",
+        "prior source reviews retained; this review emphasized integration/deployment"
+      ]
     }
   },
   "remediations": [
@@ -137,7 +189,8 @@
     "completed 24-hour observation",
     "30-day evidence",
     "hftbacktest engine/full-feed acceptance",
-    "actual execution/PnL acceptance"
+    "actual execution/PnL acceptance",
+    "production activation of compatibility rollback release"
   ],
   "commit_policy": "only rollout map/docs scope; push this explicit branch; no main merge or CI",
   "production_rollout": {
@@ -165,8 +218,7 @@
         "current_version": 5,
         "latest_version": 5,
         "pending": 0
-      },
-      "rollback": "retain nullable column; previous source remains compatible"
+      }
     },
     "backup": {
       "path": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/database/prep-watchdeck-market-20261009T064422Z.dump",
@@ -190,7 +242,38 @@
     },
     "protected_workspace_and_selection_hashes": "unchanged",
     "raw_evidence_root": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223",
-    "rollback": "prior units/dropins/releases preserved; nullable schema5 compatible with previous Market source"
+    "rollback": {
+      "prepared_release": "/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat",
+      "validation": {
+        "schema5_health": "PASS",
+        "post_finalization_late_update": "PASS; unknown finalization stays NULL",
+        "market_pytest": {
+          "passed": 219,
+          "failed": 0,
+          "seconds": 19.03,
+          "isolated_postgres": true
+        },
+        "ruff_check": "PASS",
+        "ruff_format": "PASS",
+        "pyrefly": "0 errors; 18 suppressed; 6 warnings not shown"
+      },
+      "activated": false,
+      "unpatched_previous_source_compatible": false,
+      "procedure": "stop research, explicitly use prepared compatible Market override, retain new maintenance/monitor, review any fresh catalog/map differences; preserve schema/data; no automatic restore",
+      "backup_before_activation_required": true
+    },
+    "maintenance": {
+      "status": "PASS",
+      "completed_at": "2026-10-09T16:08:17+09:00",
+      "funding_sync": {
+        "attempted": 178,
+        "succeeded": 178,
+        "written": 356,
+        "failures": 0
+      },
+      "policy": "existing scheduled retention ran; no manual purge added"
+    },
+    "delivery_receipt": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/delivery-receipt.json"
   },
   "initial_data_capture": {
     "status": "STARTED_WITH_QUALITY_GAPS",
@@ -222,6 +305,28 @@
     },
     "cost_basis": "explicit sensitivity scenario; not observed fee/slippage/funding",
     "finalization": "automatic immutable snapshot, quality, fixed trial/result and daily-outcome JSON after stop",
-    "long_term_acceptance": "pending"
+    "long_term_acceptance": "pending",
+    "finalizer": {
+      "installed_at": "2026-10-09T16:13:33.142632+09:00",
+      "finalizer_sha256": "8045f8df7014836401ec6e85e39b24fbbc7bfe750238141bc5c40433a2a995fa",
+      "regression": "short qualified capture + oom-kill formerly PASS; now PARTIAL",
+      "green_cases": 6,
+      "capture_service_restarted": false,
+      "frozen_evaluator_or_rules_changed": false,
+      "systemd_environment_check": "PASS: normal exit produces PASS; actual SIGKILL produces PARTIAL with killed/KILL",
+      "systemd_signal_evidence": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/finalizer-systemd-signal-validation.json"
+    },
+    "live_check": {
+      "at": "2026-10-09T16:18:47.155030+09:00",
+      "receipts": 25,
+      "first_available": "2026-10-09T06:54:04.788666Z",
+      "last_available": "2026-10-09T07:18:04.784629Z",
+      "recorded_gap_reasons": [
+        "research_candle_gap",
+        "research_state_gap"
+      ],
+      "research_state_bytes": 277280,
+      "service_restart_count": "0"
+    }
   }
 }

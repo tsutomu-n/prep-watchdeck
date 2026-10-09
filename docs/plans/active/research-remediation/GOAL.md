@@ -1,8 +1,8 @@
 # Research remediation implementation
 
-timestamp="2026-10-09(金)_16:01 JST"
+timestamp="2026-10-09(金)_16:16 JST"
 - 作成: `2026-10-09T14:28:00+09:00`
-- 更新: `2026-10-09T16:01:26+09:00`
+- 更新: `2026-10-09T16:16:17+09:00`
 - 状態: `実装計画`
 
 ## Goal and authority
@@ -41,7 +41,7 @@ source/local検証と本番配置、24時間/30日実データ受入を分ける
 ## Completion and rollback
 
 全項目についてcode、focused tests、CLI経路、エラー終了、使用法と制約を対応づける。
-新研究出力を破棄せず、旧read pathへ戻せる。provider source修正はcommit単位でrevert可能。
+新研究出力を破棄せず、schema5対応の切戻しreleaseを用意する。未修正の旧writerへの単純切戻しは行わない。
 未取得OI、長期データ不足、研究cohortの欠測は未達として残す。外部依存の条件を偽造してPASSにしない。
 
 ## Checkpoints
