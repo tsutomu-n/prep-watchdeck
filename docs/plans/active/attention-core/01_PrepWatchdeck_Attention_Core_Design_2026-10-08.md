@@ -1,16 +1,16 @@
 # Prep Watchdeck Attention Core 設計仕様 v1.0
 
-timestamp="2026-10-08(木)_23:47 JST"
+timestamp="2026-10-09(金)_17:56 JST"
 - 作成: `2026-10-08T23:47:49+09:00`
-- 更新: `2026-10-08T23:47:49+09:00`
+- 更新: `2026-10-09T17:56:58+09:00`
 - 状態: `実装計画`
 
 
-> 対象Repository: `tsutomu-n/prep-watchdeck`  
-> 読者: Codex / coding agent  
-> 作成日: `2026-10-08`  
-> 調査基準: `main@4278d8a690141a5118cc150b7f39f9f4d13822fd`  
-> 状態: 実装前設計  
+> 対象Repository: `tsutomu-n/prep-watchdeck`\
+> 読者: Codex / coding agent\
+> 作成日: `2026-10-08`\
+> 調査基準: `main@4278d8a690141a5118cc150b7f39f9f4d13822fd`\
+> 状態: 実装前設計\
 > 実装許可の意味: 本書は設計・計画であり、production service、live DB、systemd unit、外部Providerへの実通信、deploy、cutoverを自動的に許可しない。
 
 ---
