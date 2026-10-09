@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-09(金)_00:39 JST"
+timestamp="2026-10-09(金)_15:03 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T00:39:16+09:00`
+- 更新: `2026-10-09T15:03:11+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -406,3 +406,15 @@ Stateは`PREP_WATCHDECK_ATTENTION_STATE_DIR`。Market/Rankingとの同一・包�
 Offline入力は`attention-outcome-input-v1`のJSON（`mapVersion`、Ranking `MinuteBar`の`bars`、任意の`native`）に限定する。native結果は現行のexact originalsが2 Venue以上あり、全分の観測が揃う場合だけ別familyへ保存する。
 
 既定候補群は3 baselineと5 componentを15分・60分の各horizonで固定した16 policy。K=10/20、実用差分しきい値はreturnのpercentage pointで0.1を初期値とし、freeze後に変更できない。全比較を同時にUTC day blockで再標本化するsingle-step max-Tと6h感度分析を用いる。世代なし・将来結果待ち・block不足はnot_estimable、感度矛盾はinconclusive、実測coverage悪化はrejected_coverage。power/MDEはplanning-onlyで、優位性判定を上書きしない。
+
+## Candle receipt / finalizationと研究snapshot
+
+`candle_1m.finalized_at`はnullableなfinality decision時刻で、`observed_at`は候補/Provider応答の受信時刻。
+新しいdecision時刻はbucket endおよびreceipt以後である。Migration 0005は旧行をNULLのまま残す。
+Hyperliquidは足終了5秒後以降のdecisionを記録し、後続receiptの同bucket訂正も受理する。
+`derived_final`とProvider `confirmed`は別のまま。Candle Store、回収、archive、Fixture Export、Auditで
+optional/nullを保持し、旧Fixture bytesやfalse-PIT契約を変更しない。
+Aster fundingInfoはraw provenanceと観測されたintervalをcatalog versionへ保持する。
+
+新しい研究snapshotはpayload/receiptの別edition、chain/hash、local temporal contextを含む。
+Schemaとavailability、A/B資格は別判定。詳細と生成コマンドは[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)。

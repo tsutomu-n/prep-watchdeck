@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-09(金)_00:39 JST"
+timestamp="2026-10-09(金)_15:03 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T00:39:16+09:00`
+- 更新: `2026-10-09T15:03:11+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -239,3 +239,11 @@ Recovery/Auditファイルをtransaction後に別時刻として添付する。R
 毎分の計算結果を単一writerのtransactionとreadbackで確認してから、専用stateのimmutable JSONと`artifacts/current.json`へatomic公開する。全世代のcurrent responseとshadow allocationを保存し、特徴量・成分の評価用evidenceはRanking cutoffが5分境界の最初の1世代だけ保存する。失敗時は新しい世代を公開せず、APIで前世代の時刻を保ったstaleを返す。
 
 Webはloopbackの`GET /attention`を`/api/attention`経由で読む。GETから再計算・入力取得・監視対象変更を行わない。Outcome settlementは明示的なoffline exportを使い、候補群評価は固定済みの候補と確定後の将来結果だけを読む。自動captureは接続していない。設計判断は[Decision 0015](../decisions/0015-attention-core.md)を参照する。
+
+## 研究readerとoffline比較
+
+Market packageの独立`research` CLIは一契約/versionのread-only RR観測を別rootへ記録する。
+Market/Ranking/Attention writerとprocess/stateを共有せず、注文やmanual selectionへ接続しない。
+Payloadと公開後receiptを分け、固定rules/input/source hashでoffline比較する。
+保存・時刻・有限口座と任意tool境界は[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)、採用判断は
+[/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](../decisions/0016-reader-observed-research.md)を参照する。

@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-09T15:08:03+09:00",
+  "source_status": "PASS",
+  "overall_runtime_acceptance": "PARTIAL",
+  "branch": "ai/research-remediation-20261009-1428",
+  "scope": "all planned source remediations and optional tool boundaries; external data and production adoption remain separately gated",
+  "checks": {
+    "market_pytest": {
+      "status": "PASS",
+      "passed": 279,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 21.41,
+      "isolated_postgres": true,
+      "production_database_used": false
+    },
+    "ruff_check": "PASS",
+    "ruff_format": "PASS",
+    "pyrefly": {
+      "status": "PASS",
+      "errors": 0,
+      "suppressed": 18,
+      "warnings_not_shown": 7
+    },
+    "research_schema_check": "PASS",
+    "docs_metadata": "PASS",
+    "docs_links": "PASS",
+    "git_diff_check": "PASS",
+    "optional_tools": {
+      "numpy": "2.5.3",
+      "ccxt": "4.5.85",
+      "npz_roundtrip": "PASS",
+      "ccxt_capability_inspection": "PASS",
+      "provider_requests": 0,
+      "runtime_dependencies_added": false
+    },
+    "phase0_preservation": {
+      "verified_sha256_entries": 201,
+      "result": "PASS"
+    },
+    "reviews": {
+      "provider": "APPROVED",
+      "evaluator": "APPROVED",
+      "integration": "APPROVED",
+      "open_P0_P1_P2": 0
+    }
+  },
+  "remediations": [
+    {
+      "gap": "reader_observed_editions",
+      "source": "PASS",
+      "implementation": "immutable journal, post-publication receipt, causal as-of verifier",
+      "runtime": "not_run"
+    },
+    {
+      "gap": "self_contained_context",
+      "source": "PASS",
+      "implementation": "RR identity/local-validity/group/capability/native rows; offline context/hash/finality checks"
+    },
+    {
+      "gap": "hyperliquid_receipt_finality",
+      "source": "PASS",
+      "implementation": "nullable finalized_at, late corrections, store/archive/export/audit propagation",
+      "runtime": "not_deployed"
+    },
+    {
+      "gap": "aster_funding_interval",
+      "source": "PASS",
+      "implementation": "official config provenance and versioned interval; missing remains unknown",
+      "runtime": "not_deployed"
+    },
+    {
+      "gap": "aster_oi",
+      "source": "PASS_EXCLUSION",
+      "implementation": "missing/unknown-unit OI excluded from shared A/B cohort; no fabrication",
+      "acceptance": "unverified_provider_contract"
+    },
+    {
+      "gap": "archive_gaps",
+      "source": "PASS",
+      "implementation": "Polars gap/cohort, native OHLC/activity/trade/finality reconciliation; original-preserving candidate output",
+      "historical_backfill": "not_run"
+    },
+    {
+      "gap": "fixed_ab_evaluator",
+      "source": "PASS",
+      "implementation": "pre-registered rules/source/input, causal fills, finite cash, funding ordering/cadence, corrected mark, split/purge and cash control",
+      "real_data_comparison": "not_run"
+    },
+    {
+      "gap": "data_operations_monitor",
+      "source": "PASS",
+      "implementation": "detailed removed/unmapped/version/identity samples and matching map/port template placeholders",
+      "runtime_map_adoption": "not_run"
+    }
+  ],
+  "reuse": {
+    "attention": "immutable edition and freeze design adapted in separate state",
+    "classic_bitget": "funding lineage and quality concepts adapted without package dependency",
+    "polars": "existing runtime dependency used",
+    "ccxt": "optional offline capability and exact-input comparison",
+    "hftbacktest": "feed qualification and native event/NPZ preparation; engine acceptance remains conditional"
+  },
+  "not_run": [
+    "CI",
+    "git push",
+    "PR",
+    "production deploy",
+    "live migration",
+    "unit install/enable/start/stop/restart",
+    "production map adoption",
+    "new Provider market capture",
+    "24-hour observation",
+    "30-day evidence",
+    "hftbacktest engine/full-feed acceptance",
+    "actual execution/PnL acceptance"
+  ],
+  "commit_policy": "only this task scope; no push; final commit is identified by git history and completion response"
+}

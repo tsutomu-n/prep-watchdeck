@@ -246,3 +246,116 @@ def test_fixture_export_round_trip_and_tamper_detection(
                     "DELETE FROM raw_catalog_payloads WHERE raw_catalog_payload_id = %s",
                     (payload_id,),
                 )
+
+
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated TEST_DATABASE_URL")
+def test_hyperliquid_fixture_export_retains_finalization_for_audit_and_legacy_unknown(
+    tmp_path: Path,
+) -> None:
+    import json
+    from dataclasses import replace
+
+    from prep_watchdeck_market.candle_store import upsert_candles
+    from prep_watchdeck_market.sources.hyperliquid_candles import HyperliquidCandleFinalizer
+
+    assert TEST_DATABASE_URL is not None
+    since = datetime.now(UTC).replace(second=0, microsecond=0) - timedelta(minutes=10)
+    until = since + timedelta(minutes=3)
+    symbol = f"PWTEST{uuid4().hex[:8].upper()}"
+    digest = uuid4().hex * 2
+    finalizer = HyperliquidCandleFinalizer()
+    finalizer.ingest(
+        {
+            "channel": "candle",
+            "data": {
+                "s": symbol,
+                "i": "1m",
+                "t": int(since.timestamp() * 1000),
+                "T": int((since + timedelta(minutes=1)).timestamp() * 1000) - 1,
+                "o": "100",
+                "h": "102",
+                "l": "99",
+                "c": "101",
+                "v": "5",
+                "n": 3,
+            },
+        },
+        observed_at=since + timedelta(seconds=30),
+    )
+    early = finalizer.finalize(now=since + timedelta(minutes=1, seconds=9))[0]
+    late = replace(
+        early,
+        bucket_start=since + timedelta(minutes=1),
+        source_at=since + timedelta(minutes=2),
+        observed_at=since + timedelta(minutes=1, seconds=30),
+        finalized_at=until + timedelta(seconds=1),
+    )
+    unknown = replace(
+        early,
+        bucket_start=since + timedelta(minutes=2),
+        source_at=until,
+        observed_at=since + timedelta(minutes=2, seconds=30),
+        finalized_at=None,
+    )
+    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
+        payload_row = connection.execute(
+            """
+            INSERT INTO raw_catalog_payloads (
+                venue, endpoint, source_kind, documentation_url,
+                payload_hash, observed_at, last_observed_at, payload
+            ) VALUES ('hyperliquid', '/info', 'native_rest',
+                      'https://example.invalid/catalog', %s, %s, %s, '{}')
+            RETURNING raw_catalog_payload_id
+            """,
+            (digest, since, since),
+        ).fetchone()
+        assert payload_row is not None
+        version_row = connection.execute(
+            """
+            INSERT INTO venue_instrument_versions (
+                venue, source_symbol, definition_hash, valid_from, active,
+                asset_class, market_type, base_asset, quote_asset, settle_asset,
+                quantity_unit, contract_multiplier, raw_definition, raw_catalog_payload_id
+            ) VALUES ('hyperliquid', %s, %s, %s, true, 'crypto', 'linear_perpetual',
+                      'PWTEST', 'USDC', 'USDC', 'base', 1, '{}', %s)
+            RETURNING venue_instrument_version_id
+            """,
+            (symbol, digest, since - timedelta(minutes=1), payload_row[0]),
+        ).fetchone()
+        assert version_row is not None
+        assert upsert_candles(connection, (early, late, unknown)).stored == 3
+
+    path, manifest = export_fixture(
+        TEST_DATABASE_URL,
+        tmp_path / "state",
+        tmp_path / "exports",
+        instrument_id=f"hyperliquid:{symbol}",
+        version_id=version_row[0],
+        since=since,
+        until=until,
+        evidence_kind="synthetic",
+    )
+    assert manifest.capture.point_in_time_replay is False
+    assert verify_fixture(path) == manifest
+    snapshot_path = path / "candles-1m.snapshot.json"
+    payload = json.loads(snapshot_path.read_bytes())
+    assert early.finalized_at is not None
+    assert late.finalized_at is not None
+    assert payload["records"][0]["finalized_at"] == fixture_module._iso(early.finalized_at)
+    assert payload["records"][1]["finalized_at"] == fixture_module._iso(late.finalized_at)
+    assert payload["records"][2]["finalized_at"] is None
+    audited = load_snapshot(snapshot_path, start=since, end=until, as_of=until)
+    assert audited.rows[since].observed_at == early.observed_at
+    assert audited.rows[since].finalized_at == early.finalized_at
+    assert [finding["reason"] for finding in audited.findings] == [
+        "unavailable_at_as_of",
+        "observed_before_close",
+    ]
+    # Old fixture bytes stay untouched. An isolated old-format copy remains unknown.
+    payload["records"][0].pop("finalized_at")
+    legacy_path = tmp_path / "legacy-without-finalization.json"
+    legacy_path.write_text(json.dumps(payload))
+    legacy = load_snapshot(legacy_path, start=since, end=until, as_of=until)
+    assert since not in legacy.rows
+    assert legacy.findings[0]["reason"] == "observed_before_close"
+    assert verify_fixture(path) == manifest

@@ -29,6 +29,9 @@ class Candle1m:
     finality: CandleFinality
     source_at: datetime | None
     observed_at: datetime
+    # Local finality decision/receipt of confirmation; never database availability.
+    # Historical rows without retained evidence remain unknown.
+    finalized_at: datetime | None = None
 
     def __post_init__(self) -> None:
         if not self.source_symbol.strip():
@@ -37,6 +40,10 @@ class Candle1m:
         if self.bucket_start.second != 0 or self.bucket_start.microsecond != 0:
             raise CandleParseError("bucket_start must be aligned to one minute")
         require_utc_datetime(self.observed_at, field_name="observed_at")
+        if self.finalized_at is not None:
+            require_utc_datetime(self.finalized_at, field_name="finalized_at")
+            if self.finalized_at < max(self.observed_at, self.bucket_end):
+                raise CandleParseError("finalized_at precedes receipt or bucket close")
         if self.source_at is not None:
             require_utc_datetime(self.source_at, field_name="source_at")
         for field_name, value in (

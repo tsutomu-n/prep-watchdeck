@@ -1,0 +1,206 @@
+{
+  "$defs": {
+    "TrialRules": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "decision_start": {
+          "format": "date-time",
+          "title": "Decision Start",
+          "type": "string"
+        },
+        "train_end": {
+          "format": "date-time",
+          "title": "Train End",
+          "type": "string"
+        },
+        "validation_end": {
+          "format": "date-time",
+          "title": "Validation End",
+          "type": "string"
+        },
+        "study_end": {
+          "format": "date-time",
+          "title": "Study End",
+          "type": "string"
+        },
+        "minimum_price_return": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Minimum Price Return",
+          "type": "string"
+        },
+        "minimum_activity_ratio": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Minimum Activity Ratio",
+          "type": "string"
+        },
+        "minimum_oi_return": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Minimum Oi Return",
+          "type": "string"
+        },
+        "holding_minutes": {
+          "maximum": 1440,
+          "minimum": 1,
+          "title": "Holding Minutes",
+          "type": "integer"
+        },
+        "initial_capital": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Initial Capital",
+          "type": "string"
+        },
+        "trade_notional": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Trade Notional",
+          "type": "string"
+        },
+        "fee_rate": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Fee Rate",
+          "type": "string"
+        },
+        "slippage_rate": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Slippage Rate",
+          "type": "string"
+        },
+        "fee_basis": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Fee Basis",
+          "type": "string"
+        },
+        "slippage_basis": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Slippage Basis",
+          "type": "string"
+        },
+        "funding_policy": {
+          "enum": [
+            "explicit_zero_scenario",
+            "require_observed_events"
+          ],
+          "title": "Funding Policy",
+          "type": "string"
+        },
+        "funding_basis": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Funding Basis",
+          "type": "string"
+        },
+        "funding_interval_seconds": {
+          "anyOf": [
+            {
+              "maximum": 86400,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Funding Interval Seconds"
+        },
+        "funding_anchor_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Funding Anchor At"
+        },
+        "minimum_independent_episodes": {
+          "maximum": 10000,
+          "minimum": 1,
+          "title": "Minimum Independent Episodes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "decision_start",
+        "train_end",
+        "validation_end",
+        "study_end",
+        "minimum_price_return",
+        "minimum_activity_ratio",
+        "minimum_oi_return",
+        "holding_minutes",
+        "initial_capital",
+        "trade_notional",
+        "fee_rate",
+        "slippage_rate",
+        "fee_basis",
+        "slippage_basis",
+        "funding_policy",
+        "funding_basis",
+        "minimum_independent_episodes"
+      ],
+      "title": "TrialRules",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "kind": {
+      "const": "fixed_ab_preregistration",
+      "default": "fixed_ab_preregistration",
+      "title": "Kind",
+      "type": "string"
+    },
+    "registered_at": {
+      "format": "date-time",
+      "title": "Registered At",
+      "type": "string"
+    },
+    "rules": {
+      "$ref": "#/$defs/TrialRules"
+    },
+    "rule_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Rule Sha256",
+      "type": "string"
+    },
+    "evaluator_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Evaluator Sha256",
+      "type": "string"
+    },
+    "source_hashes": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Source Hashes",
+      "type": "object"
+    }
+  },
+  "required": [
+    "registered_at",
+    "rules",
+    "rule_sha256",
+    "evaluator_sha256",
+    "source_hashes"
+  ],
+  "title": "RegisteredTrial",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

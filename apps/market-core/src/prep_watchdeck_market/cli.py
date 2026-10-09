@@ -41,10 +41,12 @@ from prep_watchdeck_market.reference_openmarket import (
 from prep_watchdeck_market.reference_openmarket import (
     reference_snapshot as create_reference_snapshot,
 )
+from prep_watchdeck_market.research_cli import app as research_app
 from prep_watchdeck_market.runtime_lock import RuntimeLockUnavailable, exclusive_runtime_lock
 from prep_watchdeck_market.service import MarketServiceError, run_market_service
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
+app.add_typer(research_app, name="research")
 console = Console()
 
 

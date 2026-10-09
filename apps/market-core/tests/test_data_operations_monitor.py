@@ -203,3 +203,91 @@ def test_cli_rejects_duplicate_payload_and_unsafe_files_or_urls(
         "ranking_url_must_be_loopback_http"
     ]
     assert not calls
+
+
+def test_monitor_identifies_both_map_versions_and_each_identity_mismatch() -> None:
+    data = inputs()
+    data["ranking"]["mapVersion"] = "other-running-map"
+    data["mapping"]["rows"][0]["originals"][0]["versionId"] = 6
+    data["mapping"]["rows"][0]["originals"].append(
+        {"venue": "aster", "instrumentId": "aster:REMOVEDUSDT", "versionId": 8}
+    )
+    data["mapping"]["sourceInstrumentCount"] = 2
+    item = copy.deepcopy(data["universe"]["items"][0])
+    item["venueInstrumentId"] = "bitget:NEWUSDT"
+    data["universe"]["items"].append(item)
+    report = UTILITY["check"](**data, now=NOW)
+    mapping = report["rankingMap"]
+    assert mapping["version"] == "map-reviewed-v2"
+    assert mapping["runningVersion"] == "other-running-map"
+    assert mapping["versionMatches"] is False
+    assert mapping["identityDiagnostics"] == [
+        {
+            "instrumentId": "aster:REMOVEDUSDT",
+            "mappedVersionId": 8,
+            "currentVersionId": None,
+            "reason": "removed",
+        },
+        {
+            "instrumentId": "bitget:BTCUSDT",
+            "mappedVersionId": 6,
+            "currentVersionId": 7,
+            "reason": "versionMismatch",
+        },
+        {
+            "instrumentId": "bitget:NEWUSDT",
+            "mappedVersionId": None,
+            "currentVersionId": 7,
+            "reason": "unmapped",
+        },
+    ]
+    assert not mapping["identityDiagnosticsTruncated"]
+    assert {"ranking_map_version_mismatch", "ranking_original_identity_mismatch"} <= set(
+        report["operationalFailures"]
+    )
+    data["ranking"].pop("mapVersion")
+    missing = UTILITY["check"](**data, now=NOW)
+    assert missing["rankingMap"]["runningVersion"] is None
+    assert "ranking_map_version_mismatch" in missing["operationalFailures"]
+
+
+def test_monitor_identity_diagnostics_are_bounded_without_hiding_failure() -> None:
+    data = inputs()
+    original = data["universe"]["items"][0]
+    for index in range(25):
+        item = copy.deepcopy(original)
+        item["venueInstrumentId"] = f"bitget:NEW{index:02}USDT"
+        data["universe"]["items"].append(item)
+    report = UTILITY["check"](**data, now=NOW)
+    assert report["rankingMap"]["connections"]["unmapped"] == 25
+    assert len(report["rankingMap"]["identityDiagnostics"]) == 20
+    assert report["rankingMap"]["identityDiagnosticsTruncated"]
+    assert "ranking_original_identity_mismatch" in report["operationalFailures"]
+
+
+def test_monitor_missing_mapping_file_is_explicit_and_does_not_call_ranking(
+    tmp_path, monkeypatch, capsys
+) -> None:
+    data = inputs()
+    root = tmp_path / "market" / "artifacts"
+    root.mkdir(parents=True)
+    for name, key in (
+        ("universe-snapshot.json", "universe"),
+        ("service-state.json", "service"),
+        ("market-metrics.json", "metrics"),
+    ):
+        (root / name).write_text(json.dumps(data[key]))
+    calls = []
+    monkeypatch.setitem(UTILITY["main"].__globals__, "get_health", lambda url: calls.append(url))
+    result = UTILITY["main"](
+        [
+            "--market-state-dir",
+            str(root.parent),
+            "--mapping",
+            str(tmp_path / "missing-map.json"),
+            "--json",
+        ]
+    )
+    assert result == 2
+    assert json.loads(capsys.readouterr().out)["inputErrors"] == ["mapping_file_unavailable"]
+    assert not calls

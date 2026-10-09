@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-09(金)_00:39 JST"
+timestamp="2026-10-09(金)_15:03 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T00:39:16+09:00`
+- 更新: `2026-10-09T15:03:11+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -288,3 +288,15 @@ Repo rootのfull local gateにAttention package、schema checkとWebのDesktop/M
 受入にはexact identity/time、stable bundle、欠測と0、midrank、SQLite transaction/readback、future-only outcome、edition訂正、freeze済みfamilyのjoint day-block評価、shadow/manual分離、no-store/loopback、390px/keyboardを含む。隔離runnerの成功は実データ・production capacity受入ではない。
 
 Hosted CIは明示依頼時だけ実行する。workflowへのAttention gate追加とローカルcheckを、CI実行成功と読み替えない。候補の実運用での優位性は30日以上のprospective evidenceで別途評価し、synthetic planted-edge成功から推定しない。白色化・iidのminute sample推論は行わず、White/SPA/Romano-Wolfそのものの再現は主張しない。
+
+## Research remediation
+
+Market packageの関連pytestでjournal改変・中断・未来版、隔離DBのread-only/RR、
+固定A/Bのcash/funding/mark/purge、archive/fundingの矛盾、CLI safe errorを検証する。
+通常package gateに加え、Repository rootで
+`uv run --package prep-watchdeck-market python scripts/market/generate-research-schema.py --check`を使う。
+任意NumPyのNPZ出力はisolated `uv run --with numpy`環境で確認できる。
+CCXT capability inspectionはofflineでありProvider受入を代替しない。
+
+source/local検証、commit、live migration/deploy、24時間観測、30日evidence、OI取得契約、
+実約定・統計的独立性・優位性は別の証拠層。詳細は[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)を参照する。

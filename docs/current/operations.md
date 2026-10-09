@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-09(金)_07:09 JST"
+timestamp="2026-10-09(金)_15:03 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T07:09:43+09:00`
+- 更新: `2026-10-09T15:03:11+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -503,7 +503,8 @@ Asterの上場境界`onboardDate`を確認できる`PERPETUAL`では、`createTi
 価格・秘密情報・個人メモをlogへ出さない。
 
 `config/systemd/prep-watchdeck-data-operations.service.in`と対応timerはread-only確認の任意template。
-`@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用stateへ置換してuser unitへ
+`@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用state、`@RANKING_MAP@`と
+`@RANKING_PORT@`をRanking serviceと同じ実値へ置換してuser unitへ
 配置した場合だけ、timerを明示的にenable/startする。5分ごとに確認し、結果は
 `journalctl --user -u prep-watchdeck-data-operations.service`で読む。
 timer停止は監視だけを止める。回復を止める場合は上記の有効化設定をfalseへ戻す。
@@ -553,3 +554,16 @@ Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`va
 `freeze-family --family-id <新family>`、`settle-outcomes --fixture <offline export.json>`、`evaluate-family --family-id <固定family>`は専用SQLiteへ書くため、Attention serviceを停止した状態で実行する。共通の`--state-dir`等を指定できる。後二者はProvider取得やactive Ranking DB接続を行わない。評価結果はstdoutと`artifacts/evaluation.json`へ出る。訂正後のstale reportは再評価が必要。
 
 停止・rollbackは起動したAttention process、または承認された`prep-watchdeck-attention.service`だけを停止する。Webも戻す場合は保存した旧drop-inを復元してWebだけを再起動する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。
+
+## Researchと新しいcandle finalityの配置境界
+
+[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)は手動で上限付きの観測を行い、offline検証・固定比較へ出力する。
+sourceを更新しただけで常駐観測やproduction適用は始まらない。
+新しいcandle writerを稼働させる前には、明示許可された本番DBでMigration 0005が必要。
+旧行の`finalized_at`はNULLのままで、過去の受信/公開時刻を書き換えない。
+rollbackは旧sourceへ戻し、追加済みnullable列と研究journalを保全する。
+
+Aster catalogはexchangeInfoに加え公式fundingInfoを観測する。取得失敗はcatalog失敗を維持し、
+設定欠落はinterval unknownとする。新しいintervalは新versionとして扱い、過去fundingへ遡及しない。
+monitorのremoved/unmapped/versionMismatch/identity差分はsample付きで残る。
+mapの根拠review・validation・稼働採用・採用後monitor成功を別々に確認し、監視無効化を修復としない。

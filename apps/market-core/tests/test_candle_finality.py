@@ -80,3 +80,36 @@ def test_candle_finality_table(venue: str) -> None:
 
 def _fixture(name: str) -> object:
     return json.loads((FIXTURES / name).read_text(encoding="utf-8"))
+
+
+def test_hyperliquid_receipt_finalization_and_late_correction_are_separate() -> None:
+    from dataclasses import replace
+    from datetime import timedelta
+
+    payload = _fixture("hyperliquid.json")
+    assert isinstance(payload, list)
+    receipt = datetime(2026, 8, 14, 10, 0, 30, tzinfo=UTC)
+    decision = datetime(2026, 8, 14, 10, 1, 9, tzinfo=UTC)
+    finalizer = HyperliquidCandleFinalizer()
+    finalizer.ingest(payload[0], observed_at=receipt)
+    assert finalizer.finalize(now=decision - timedelta(seconds=5)) == ()
+    candle = finalizer.finalize(now=decision)[0]
+    assert candle.observed_at == receipt
+    assert candle.finalized_at == decision
+    assert not candle.source_confirmed
+    assert candle.volume_notional is None
+    assert replace(candle, finalized_at=None).finalized_at is None  # Legacy is unknown.
+    with pytest.raises(CandleParseError):
+        replace(candle, finalized_at=candle.bucket_end - timedelta(seconds=1))
+
+    correction_receipt = decision + timedelta(seconds=11)
+    finalizer.ingest(payload[1], observed_at=correction_receipt)
+    # A delayed/out-of-order pending receipt cannot overwrite the latest candidate.
+    finalizer.ingest(payload[0], observed_at=correction_receipt - timedelta(seconds=1))
+    correction = finalizer.finalize(now=correction_receipt + timedelta(seconds=2))[0]
+    assert correction.storage_key == candle.storage_key
+    assert correction.close_price == Decimal("106")
+    assert correction.observed_at == correction_receipt
+    assert correction.finalized_at == correction_receipt + timedelta(seconds=2)
+    assert correction.finality == "derived_final"
+    assert finalizer.finalize(now=correction_receipt + timedelta(minutes=1)) == ()

@@ -70,13 +70,13 @@ def upsert_candles(
                             venue_instrument_version_id, bucket_at,
                             open_price, high_price, low_price, close_price,
                             volume_base, volume_notional, trade_count, finality,
-                            source_at, observed_at, collector_run_id
+                            source_at, observed_at, finalized_at, collector_run_id
                         )
                         VALUES (
                             %s, %s,
                             %s, %s, %s, %s,
                             %s, %s, %s, %s,
-                            %s, %s, %s
+                            %s, %s, %s, %s
                         )
                         ON CONFLICT (venue_instrument_version_id, bucket_at) DO UPDATE SET
                             open_price = EXCLUDED.open_price,
@@ -89,6 +89,7 @@ def upsert_candles(
                             finality = EXCLUDED.finality,
                             source_at = EXCLUDED.source_at,
                             observed_at = EXCLUDED.observed_at,
+                            finalized_at = EXCLUDED.finalized_at,
                             collector_run_id = EXCLUDED.collector_run_id
                         WHERE
                             (
@@ -113,6 +114,7 @@ def upsert_candles(
                         candle.finality,
                         candle.source_at,
                         candle.observed_at,
+                        candle.finalized_at,
                         collector_run_id,
                     ),
                 )

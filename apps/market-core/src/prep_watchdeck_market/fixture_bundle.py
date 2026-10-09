@@ -175,7 +175,7 @@ def _read_database(
                 """
                     SELECT venue_instrument_version_id, bucket_at, open_price, high_price,
                            low_price, close_price, volume_base, volume_notional, trade_count,
-                           finality, source_at, observed_at, collector_run_id
+                           finality, source_at, observed_at, finalized_at, collector_run_id
                     FROM candle_1m WHERE venue_instrument_version_id = %s
                       AND bucket_at >= %s AND bucket_at < %s ORDER BY bucket_at
                     """,
@@ -251,6 +251,9 @@ def _native_candle_snapshot(
                 "finality": row["finality"],
                 "source_at": None if row["source_at"] is None else _iso(row["source_at"]),
                 "observed_at": _iso(row["observed_at"]),
+                "finalized_at": (
+                    None if row.get("finalized_at") is None else _iso(row["finalized_at"])
+                ),
             }
             for row in rows
         ],

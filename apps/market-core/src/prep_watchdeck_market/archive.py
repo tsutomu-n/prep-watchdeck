@@ -270,6 +270,7 @@ def _fetch_partition(
                 "finality",
                 "source_at",
                 "observed_at",
+                "finalized_at",
             )
             cursor.execute(
                 """
@@ -277,7 +278,8 @@ def _fetch_partition(
                            instrument.source_symbol, candle.bucket_at, candle.open_price,
                            candle.high_price, candle.low_price, candle.close_price,
                            candle.volume_base, candle.volume_notional, candle.trade_count,
-                           candle.finality, candle.source_at, candle.observed_at
+                           candle.finality, candle.source_at, candle.observed_at,
+                           candle.finalized_at
                     FROM candle_1m AS candle
                     JOIN venue_instrument_versions AS instrument
                       USING (venue_instrument_version_id)

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-09(金)_00:50 JST"
+timestamp="2026-10-09(金)_15:03 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-09T00:50:44+09:00`
+- 更新: `2026-10-09T15:03:11+09:00`
 - 検証: `2026-10-08T16:09:39+09:00`
 - 状態: `現行`
 
@@ -24,6 +24,7 @@ timestamp="2026-10-09(金)_00:50 JST"
 
 ## 現行runtime仕様
 
+- [/home/tn/projects/prep-watchdeck/docs/current/research.md](current/research.md): 独立研究reader、固定A/B、品質/外部入力検査
 - [data-contracts.md](current/data-contracts.md): 現在実装済みのidentity、保存単位、schema、API
 - [ui-workflow.md](current/ui-workflow.md): 現在実装済みのUniverse、selection、Chart、depth/trade、Past Note
 - [operations.md](current/operations.md): 専用Postgres、systemd、state、maintenance、backup、rollback
@@ -47,8 +48,11 @@ localhost配置等は現在実装を説明する。`product-boundary.md`に反�
 Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴として参照できるが、Decision 0012と
 現行product boundaryに反する部分を将来機能の禁止根拠にしない。
 
+- [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](decisions/0016-reader-observed-research.md): Reader観測版と固定比較の証拠境界。
+
 ## 実装計画
 
+- [Research remediation](plans/active/research-remediation/GOAL.md): 将来観測、時点再生、固定A/Bとデータ品質。[実装手順](plans/active/research-remediation/PLAN.md)。
 - [Attention Core](plans/active/attention-core/GOAL.md): F0–F7 source実装済み。未実行のF8 capacity・production/実データ受入を再開対象とする。
 - [Decision 0015](decisions/0015-attention-core.md): read-only inputとmanual selection保全。
 

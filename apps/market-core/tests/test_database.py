@@ -24,12 +24,13 @@ from prep_watchdeck_market.database import (
 def test_builtin_migration_has_required_tables_and_stable_hash() -> None:
     migrations = discover_migrations()
 
-    assert [migration.version for migration in migrations] == [1, 2, 3, 4]
+    assert [migration.version for migration in migrations] == [1, 2, 3, 4, 5]
     migration = migrations[0]
     assert migration.name == "initial_schema"
     assert migrations[1].name == "catalog_identity"
     assert migrations[2].name == "market_cycle_guards"
     assert migrations[3].name == "selected_market"
+    assert migrations[4].name == "candle_finalization_time"
     assert migration.checksum == hashlib.sha256(migration.path.read_bytes()).hexdigest()
     assert re.fullmatch(r"[0-9a-f]{64}", migration.checksum)
     assert re.fullmatch(r"[0-9a-f]{64}", migration_digest(migrations))
@@ -95,13 +96,13 @@ def test_migration_is_idempotent_and_enforces_catalog_scd2_contract() -> None:
             first = apply_migrations(connection)
             second = apply_migrations(connection)
 
-            assert first.applied == (1, 2, 3, 4)
-            assert first.current_version == 4
+            assert first.applied == (1, 2, 3, 4, 5)
+            assert first.current_version == 5
             assert first.pending == 0
             assert second.applied == ()
-            assert second.current_version == 4
+            assert second.current_version == 5
             assert second.pending == 0
-            assert connection.execute("SELECT count(*) FROM schema_migrations").fetchone() == (4,)
+            assert connection.execute("SELECT count(*) FROM schema_migrations").fetchone() == (5,)
 
             catalog_observed_at = datetime.now(UTC)
             payload_id = connection.execute(

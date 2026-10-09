@@ -19,6 +19,8 @@ from urllib.parse import urlsplit
 MAX_BYTES = 8 * 1024 * 1024
 ARTIFACT_MAX_AGE = 120
 RANKING_MAX_AGE = 150
+MAX_IDENTITY_DIAGNOSTICS = 20
+IDENTIFIER = re.compile(r"[A-Za-z0-9_:.-]{1,200}\Z")
 VENUES = {"aster", "bitget", "hyperliquid"}
 AVAILABILITIES = {"available", "missing", "unsupported", "invalid"}
 CODE = re.compile(r"[a-z][a-z0-9_]{0,99}\Z")
@@ -282,7 +284,7 @@ def check(
     if mapping.get("schemaVersion") != "ranking-map-v2":
         raise InvalidInput("unsupported_mapping_schema")
     map_version = mapping.get("version")
-    if not isinstance(map_version, str) or not 1 <= len(map_version) <= 200:
+    if not isinstance(map_version, str) or not IDENTIFIER.fullmatch(map_version):
         raise InvalidInput("invalid_mapping_version")
     originals = {}
     row_ids = set()
@@ -317,6 +319,24 @@ def check(
         for key, version in originals.items()
     )
     connections["unmapped"] = len(current.keys() - originals.keys())
+    identity_diagnostics = []
+    for key in sorted(current.keys() | originals.keys()):
+        mapped_version, current_version = originals.get(key), current.get(key)
+        if mapped_version == current_version:
+            continue
+        if len(identity_diagnostics) >= MAX_IDENTITY_DIAGNOSTICS:
+            break
+        identity_diagnostics.append(
+            {
+                # Never echo arbitrary input text, error strings or URLs.
+                "instrumentId": key if IDENTIFIER.fullmatch(key) else None,
+                "mappedVersionId": mapped_version,
+                "currentVersionId": current_version,
+                "reason": "unmapped"
+                if mapped_version is None
+                else ("removed" if current_version is None else "versionMismatch"),
+            }
+        )
     if any(connections[key] for key in ("versionMismatch", "removed", "unmapped")):
         failures.add("ranking_original_identity_mismatch")
     if statuses["review"]:
@@ -377,6 +397,7 @@ def check(
         failures.add("metric_identity_mismatch")
 
     ranking_state: dict[str, Any] = {"available": ranking is not None}
+    running_map_version = None
     if ranking is None:
         failures.add("ranking_unavailable")
     else:
@@ -388,7 +409,13 @@ def check(
             failures.add("ranking_preparing")
         else:
             ranking_state.update(freshness(ranking["cutoff"], RANKING_MAX_AGE, "ranking"))
-        if ranking.get("mapVersion") != map_version:
+        running_map_version = ranking.get("mapVersion")
+        if running_map_version is not None and (
+            not isinstance(running_map_version, str)
+            or not IDENTIFIER.fullmatch(running_map_version)
+        ):
+            raise InvalidInput("invalid_ranking_mapping_version")
+        if running_map_version != map_version:
             failures.add("ranking_map_version_mismatch")
         if ranking.get("lastError"):
             failures.add("ranking_generation_failed")
@@ -479,6 +506,13 @@ def check(
         },
         "rankingMap": {
             "version": map_version,
+            "runningVersion": running_map_version,
+            "versionMatches": None if ranking is None else running_map_version == map_version,
+            "identityDiagnostics": identity_diagnostics,
+            "identityDiagnosticsTruncated": sum(
+                connections[key] for key in ("versionMismatch", "removed", "unmapped")
+            )
+            > len(identity_diagnostics),
             "rosterAgeSeconds": round(roster_age, 3),
             "rosterStale": roster_age > 86400,
             "statuses": dict(statuses),
@@ -509,7 +543,12 @@ def main(argv: list[str] | None = None) -> int:
         universe = read_document(root / "universe-snapshot.json")
         service = read_document(root / "service-state.json")
         metrics = read_document(root / "market-metrics.json")
-        mapping = read_document(args.mapping)
+        try:
+            mapping = read_document(args.mapping)
+        except InvalidInput as error:
+            if str(error) == "file_unavailable":
+                raise InvalidInput("mapping_file_unavailable") from None
+            raise
         recovery = {}
         for name, filename in (
             ("candleRecovery", "candle-recovery-state.json"),

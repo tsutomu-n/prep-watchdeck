@@ -62,6 +62,17 @@ def test_candle_upsert_preserves_finality_and_fails_closed_for_unknown_instrumen
                 "SELECT finality, close_price, observed_at FROM candle_1m"
             ).fetchone() == ("confirmed", Decimal("104"), newer_confirmed.observed_at)
 
+            assert connection.execute("SELECT finalized_at FROM candle_1m").fetchone() == (None,)
+            newer_confirmed = replace(
+                newer_confirmed,
+                observed_at=newer_confirmed.observed_at + timedelta(seconds=1),
+                finalized_at=newer_confirmed.observed_at + timedelta(seconds=2),
+            )
+            assert upsert_candles(connection, (newer_confirmed,)).stored == 1
+            assert connection.execute("SELECT finalized_at FROM candle_1m").fetchone() == (
+                newer_confirmed.finalized_at,
+            )
+
             unknown = replace(newer_confirmed, source_symbol="UNKNOWNUSDT")
             with pytest.raises(UnknownCandleInstrumentError) as caught:
                 upsert_candles(
@@ -210,4 +221,115 @@ def _candle(bucket_at: datetime, *, finality: CandleFinality, close_price: str) 
         finality=finality,
         source_at=bucket_at + timedelta(minutes=1),
         observed_at=bucket_at + timedelta(minutes=1, seconds=5),
+    )
+
+
+@pytest.mark.parametrize("has_finalization", [False, True])
+def test_candle_store_passes_explicit_finalization_and_legacy_null_to_database(
+    has_finalization: bool,
+) -> None:
+    from contextlib import nullcontext
+    from typing import cast
+
+    candle = _candle(
+        datetime(2026, 8, 14, 10, 0, tzinfo=UTC), finality="derived_final", close_price="101"
+    )
+    if has_finalization:
+        candle = replace(candle, finalized_at=candle.observed_at + timedelta(seconds=3))
+
+    class Cursor:
+        rowcount = 1
+
+        def execute(self, query, params):
+            assert query.count("%s") == len(params), "SQL/parameter count mismatch"
+            if "INSERT INTO candle_1m" in query:
+                columns = query.split("INSERT INTO candle_1m (", 1)[1].split(")", 1)[0]
+                names = [name.strip() for name in columns.split(",")]
+                assert params[names.index("observed_at")] == candle.observed_at
+                assert params[names.index("finalized_at")] == candle.finalized_at
+            return self
+
+        def fetchall(self):
+            return [(candle.venue, candle.source_symbol, candle.bucket_start, 10)]
+
+    cursor = Cursor()
+
+    class Connection:
+        def transaction(self):
+            return nullcontext()
+
+        def cursor(self):
+            return nullcontext(cursor)
+
+    result = upsert_candles(cast(psycopg.Connection[Any], Connection()), (candle,))
+    assert result.stored == 1
+
+
+def test_recovery_store_retains_explicit_confirmation_timestamp() -> None:
+    from contextlib import nullcontext
+    from typing import cast
+    from uuid import uuid4
+
+    from prep_watchdeck_market.candle_recovery_store import RecoveryTarget, insert_missing_candles
+
+    candle = _candle(
+        datetime(2026, 8, 14, 10, 0, tzinfo=UTC), finality="confirmed", close_price="101"
+    )
+    candle = replace(candle, finalized_at=candle.observed_at)
+    target = RecoveryTarget(
+        version_id=10,
+        venue="bitget",
+        source_symbol="BTCUSDT",
+        definition_hash="a" * 64,
+        valid_from=candle.bucket_start,
+        base_asset="BTC",
+        quote_asset="USDT",
+        settle_asset="USDT",
+    )
+
+    class Cursor:
+        rowcount = 1
+        query = ""
+
+        def execute(self, query, params):
+            self.query = query
+            assert query.count("%s") == len(params), "SQL/parameter count mismatch"
+            if "INSERT INTO candle_1m" in query:
+                columns = query.split("INSERT INTO candle_1m (", 1)[1].split(")", 1)[0]
+                names = [name.strip() for name in columns.split(",")]
+                assert params[names.index("observed_at")] == candle.observed_at
+                assert params[names.index("finalized_at")] == candle.finalized_at
+            return self
+
+        def fetchone(self):
+            if "SELECT definition_hash" in self.query:
+                return (
+                    target.definition_hash,
+                    target.valid_from,
+                    True,
+                    None,
+                    "crypto",
+                    "linear_perpetual",
+                    target.venue,
+                    target.source_symbol,
+                    target.base_asset,
+                    target.quote_asset,
+                    target.settle_asset,
+                )
+            return None
+
+    cursor = Cursor()
+
+    class Connection:
+        def transaction(self):
+            return nullcontext()
+
+        def cursor(self):
+            return nullcontext(cursor)
+
+    assert (
+        insert_missing_candles(
+            cast(psycopg.Connection[Any], Connection()), target, (candle,), run_id=uuid4()
+        )
+        == 1
     )
