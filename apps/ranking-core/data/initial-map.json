@@ -1,10 +1,10 @@
 {
   "schemaVersion": "ranking-map-v2",
-  "version": "c1381b1848be8f107fcacfea",
-  "verifiedAt": 1791376132384,
-  "rosterGeneratedAt": 1791375534176,
-  "rosterFingerprint": "05065343f5e4a994a9223caf1708b077d7ab35ee4236605e2ce31230e9ab44dd",
-  "rosterSource": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/universe-snapshot.json",
+  "version": "c0b276f328e1ad423f448bfa",
+  "verifiedAt": 1791528979945,
+  "rosterGeneratedAt": 1791528936104,
+  "rosterFingerprint": "935e11344df80782132e2f1f9528d17381ee9afaaf5c322b2bd56be22403d03a",
+  "rosterSource": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/map-inputs/universe-snapshot.json",
   "sourceInstrumentCount": 1096,
   "rows": [
     {
@@ -16,7 +16,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:0GUSDT",
-          "versionId": 772,
+          "versionId": 9593,
           "symbol": "0GUSDT",
           "baseAsset": "0G",
           "multiplier": 1
@@ -119,7 +119,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:2ZUSDT",
-          "versionId": 780,
+          "versionId": 9601,
           "symbol": "2ZUSDT",
           "baseAsset": "2Z",
           "multiplier": 1
@@ -180,7 +180,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:4USDT",
-          "versionId": 785,
+          "versionId": 9606,
           "symbol": "4USDT",
           "baseAsset": "4",
           "multiplier": 1
@@ -222,7 +222,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:4STOCKUSDT",
-          "versionId": 6102,
+          "versionId": 9895,
           "symbol": "4STOCKUSDT",
           "baseAsset": "4STOCK",
           "multiplier": 1
@@ -305,7 +305,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AAVEUSDT",
-          "versionId": 663,
+          "versionId": 9488,
           "symbol": "AAVEUSDT",
           "baseAsset": "AAVE",
           "multiplier": 1
@@ -366,7 +366,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ACEUSDT",
-          "versionId": 1145,
+          "versionId": 9854,
           "symbol": "ACEUSDT",
           "baseAsset": "ACE",
           "multiplier": 1
@@ -511,7 +511,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ACUUSDT",
-          "versionId": 889,
+          "versionId": 9707,
           "symbol": "ACUUSDT",
           "baseAsset": "ACU",
           "multiplier": 1
@@ -563,7 +563,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ADAUSDT",
-          "versionId": 647,
+          "versionId": 9472,
           "symbol": "ADAUSDT",
           "baseAsset": "ADA",
           "multiplier": 1
@@ -624,7 +624,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AEONUSDT",
-          "versionId": 1150,
+          "versionId": 9858,
           "symbol": "AEONUSDT",
           "baseAsset": "AEON",
           "multiplier": 1
@@ -675,7 +675,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AEROUSDT",
-          "versionId": 988,
+          "versionId": 9785,
           "symbol": "AEROUSDT",
           "baseAsset": "AERO",
           "multiplier": 1
@@ -736,7 +736,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AEVOUSDT",
-          "versionId": 1001,
+          "versionId": 9797,
           "symbol": "AEVOUSDT",
           "baseAsset": "AEVO",
           "multiplier": 1
@@ -830,7 +830,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AGTUSDT",
-          "versionId": 1026,
+          "versionId": 9817,
           "symbol": "AGTUSDT",
           "baseAsset": "AGT",
           "multiplier": 1
@@ -870,7 +870,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AIUSDT",
-          "versionId": 2316,
+          "versionId": 9538,
           "symbol": "AIUSDT",
           "baseAsset": "AI",
           "multiplier": 1
@@ -910,7 +910,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AIAUSDT",
-          "versionId": 769,
+          "versionId": 9590,
           "symbol": "AIAUSDT",
           "baseAsset": "AIA",
           "multiplier": 1
@@ -950,7 +950,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AIGENSYNUSDT",
-          "versionId": 1010,
+          "versionId": 9806,
           "symbol": "AIGENSYNUSDT",
           "baseAsset": "AIGENSYN",
           "multiplier": 1
@@ -992,7 +992,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AINUSDT",
-          "versionId": 1159,
+          "versionId": 9865,
           "symbol": "AINUSDT",
           "baseAsset": "AIN",
           "multiplier": 1
@@ -1035,7 +1035,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AIOUSDT",
-          "versionId": 747,
+          "versionId": 9569,
           "symbol": "AIOUSDT",
           "baseAsset": "AIO",
           "multiplier": 1
@@ -1087,7 +1087,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AIOTUSDT",
-          "versionId": 972,
+          "versionId": 9772,
           "symbol": "AIOTUSDT",
           "baseAsset": "AIOT",
           "multiplier": 1
@@ -1127,7 +1127,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AIW3USDT",
-          "versionId": 2023,
+          "versionId": 9882,
           "symbol": "AIW3USDT",
           "baseAsset": "AIW3",
           "multiplier": 1
@@ -1211,7 +1211,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AKEUSDT",
-          "versionId": 6438,
+          "versionId": 9777,
           "symbol": "AKEUSDT",
           "baseAsset": "AKE",
           "multiplier": 1
@@ -1305,7 +1305,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ALCHUSDT",
-          "versionId": 921,
+          "versionId": 9730,
           "symbol": "ALCHUSDT",
           "baseAsset": "ALCH",
           "multiplier": 1
@@ -1357,7 +1357,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ALGOUSDT",
-          "versionId": 4409,
+          "versionId": 9505,
           "symbol": "ALGOUSDT",
           "baseAsset": "ALGO",
           "multiplier": 1
@@ -1418,7 +1418,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ALICEUSDT",
-          "versionId": 677,
+          "versionId": 9503,
           "symbol": "ALICEUSDT",
           "baseAsset": "ALICE",
           "multiplier": 1
@@ -1470,7 +1470,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ALLOUSDT",
-          "versionId": 822,
+          "versionId": 9642,
           "symbol": "ALLOUSDT",
           "baseAsset": "ALLO",
           "multiplier": 1
@@ -1573,7 +1573,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ANIMEUSDT",
-          "versionId": 850,
+          "versionId": 9669,
           "symbol": "ANIMEUSDT",
           "baseAsset": "ANIME",
           "multiplier": 1
@@ -1676,7 +1676,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ANSEMUSDT",
-          "versionId": 1475,
+          "versionId": 9842,
           "symbol": "ANSEMUSDT",
           "baseAsset": "ANSEM",
           "multiplier": 1
@@ -1709,7 +1709,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:APEUSDT",
-          "versionId": 659,
+          "versionId": 9484,
           "symbol": "APEUSDT",
           "baseAsset": "APE",
           "multiplier": 1
@@ -1811,7 +1811,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:API3USDT",
-          "versionId": 1013,
+          "versionId": 9809,
           "symbol": "API3USDT",
           "baseAsset": "API3",
           "multiplier": 1
@@ -1863,7 +1863,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:APMUSDT",
-          "versionId": 6421,
+          "versionId": 9903,
           "symbol": "APMUSDT",
           "baseAsset": "APM",
           "multiplier": 1
@@ -1896,7 +1896,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:APRUSDT",
-          "versionId": 802,
+          "versionId": 9623,
           "symbol": "APRUSDT",
           "baseAsset": "APR",
           "multiplier": 1
@@ -1948,7 +1948,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:APTUSDT",
-          "versionId": 685,
+          "versionId": 9511,
           "symbol": "APTUSDT",
           "baseAsset": "APT",
           "multiplier": 1
@@ -2009,7 +2009,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARUSDT",
-          "versionId": 817,
+          "versionId": 9638,
           "symbol": "ARUSDT",
           "baseAsset": "AR",
           "multiplier": 1
@@ -2070,7 +2070,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARBUSDT",
-          "versionId": 687,
+          "versionId": 9513,
           "symbol": "ARBUSDT",
           "baseAsset": "ARB",
           "multiplier": 1
@@ -2131,7 +2131,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARCUSDT",
-          "versionId": 915,
+          "versionId": 9724,
           "symbol": "ARCUSDT",
           "baseAsset": "ARC",
           "multiplier": 1
@@ -2183,7 +2183,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARGUSUSDT",
-          "versionId": 6117,
+          "versionId": 9900,
           "symbol": "ARGUSUSDT",
           "baseAsset": "ARGUS",
           "multiplier": 1
@@ -2216,7 +2216,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARIAUSDT",
-          "versionId": 758,
+          "versionId": 9580,
           "symbol": "ARIAUSDT",
           "baseAsset": "ARIA",
           "multiplier": 1
@@ -2268,7 +2268,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:ARKUSDT",
-          "versionId": 9055,
+          "versionId": 9463,
           "symbol": "ARKUSDT",
           "baseAsset": "ARK",
           "multiplier": 1
@@ -2310,7 +2310,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARKMUSDT",
-          "versionId": 712,
+          "versionId": 9539,
           "symbol": "ARKMUSDT",
           "baseAsset": "ARKM",
           "multiplier": 1
@@ -2362,7 +2362,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARPAUSDT",
-          "versionId": 693,
+          "versionId": 9519,
           "symbol": "ARPAUSDT",
           "baseAsset": "ARPA",
           "multiplier": 1
@@ -2414,7 +2414,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ARXUSDT",
-          "versionId": 1119,
+          "versionId": 9840,
           "symbol": "ARXUSDT",
           "baseAsset": "ARX",
           "multiplier": 1
@@ -2507,7 +2507,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ASTERUSDT",
-          "versionId": 639,
+          "versionId": 9464,
           "symbol": "ASTERUSDT",
           "baseAsset": "ASTER",
           "multiplier": 1
@@ -2568,7 +2568,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ASTEROIDUSDT",
-          "versionId": 1448,
+          "versionId": 9787,
           "symbol": "ASTEROIDUSDT",
           "baseAsset": "ASTEROID",
           "multiplier": 1
@@ -2643,7 +2643,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ATUSDT",
-          "versionId": 804,
+          "versionId": 9625,
           "symbol": "ATUSDT",
           "baseAsset": "AT",
           "multiplier": 1
@@ -2695,7 +2695,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ATHUSDT",
-          "versionId": 1175,
+          "versionId": 9875,
           "symbol": "ATHUSDT",
           "baseAsset": "ATH",
           "multiplier": 1
@@ -2747,7 +2747,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ATOMUSDT",
-          "versionId": 657,
+          "versionId": 9482,
           "symbol": "ATOMUSDT",
           "baseAsset": "ATOM",
           "multiplier": 1
@@ -2808,7 +2808,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AUCTIONUSDT",
-          "versionId": 911,
+          "versionId": 9722,
           "symbol": "AUCTIONUSDT",
           "baseAsset": "AUCTION",
           "multiplier": 1
@@ -2860,7 +2860,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AVAUSDT",
-          "versionId": 6420,
+          "versionId": 9902,
           "symbol": "AVAUSDT",
           "baseAsset": "AVA",
           "multiplier": 1
@@ -2912,7 +2912,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AVAAIUSDT",
-          "versionId": 983,
+          "versionId": 9780,
           "symbol": "AVAAIUSDT",
           "baseAsset": "AVAAI",
           "multiplier": 1
@@ -2954,7 +2954,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AVAXUSDT",
-          "versionId": 652,
+          "versionId": 9477,
           "symbol": "AVAXUSDT",
           "baseAsset": "AVAX",
           "multiplier": 1
@@ -3015,7 +3015,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AVLUSDT",
-          "versionId": 835,
+          "versionId": 9655,
           "symbol": "AVLUSDT",
           "baseAsset": "AVL",
           "multiplier": 1
@@ -3049,7 +3049,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AVNTUSDT",
-          "versionId": 760,
+          "versionId": 9582,
           "symbol": "AVNTUSDT",
           "baseAsset": "AVNT",
           "multiplier": 1
@@ -3110,7 +3110,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AWEUSDT",
-          "versionId": 935,
+          "versionId": 9744,
           "symbol": "AWEUSDT",
           "baseAsset": "AWE",
           "multiplier": 1
@@ -3162,7 +3162,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AXLUSDT",
-          "versionId": 900,
+          "versionId": 9716,
           "symbol": "AXLUSDT",
           "baseAsset": "AXL",
           "multiplier": 1
@@ -3214,7 +3214,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AXSUSDT",
-          "versionId": 651,
+          "versionId": 9476,
           "symbol": "AXSUSDT",
           "baseAsset": "AXS",
           "multiplier": 1
@@ -3275,7 +3275,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:AZTECUSDT",
-          "versionId": 923,
+          "versionId": 9732,
           "symbol": "AZTECUSDT",
           "baseAsset": "AZTEC",
           "multiplier": 1
@@ -3336,7 +3336,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BUSDT",
-          "versionId": 726,
+          "versionId": 9554,
           "symbol": "BUSDT",
           "baseAsset": "B",
           "multiplier": 1
@@ -3388,7 +3388,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:B-MONEYUSDT",
-          "versionId": 6069,
+          "versionId": 9889,
           "symbol": "B-MONEYUSDT",
           "baseAsset": "B-MONEY",
           "multiplier": 1
@@ -3424,7 +3424,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:B2USDT",
-          "versionId": 810,
+          "versionId": 9631,
           "symbol": "B2USDT",
           "baseAsset": "B2",
           "multiplier": 1
@@ -3476,7 +3476,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:B3USDT",
-          "versionId": 1028,
+          "versionId": 9818,
           "symbol": "B3USDT",
           "baseAsset": "B3",
           "multiplier": 1
@@ -3517,7 +3517,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BABYUSDT",
-          "versionId": 1014,
+          "versionId": 9810,
           "symbol": "BABYUSDT",
           "baseAsset": "BABY",
           "multiplier": 1
@@ -3620,7 +3620,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BANUSDT",
-          "versionId": 1002,
+          "versionId": 9798,
           "symbol": "BANUSDT",
           "baseAsset": "BAN",
           "multiplier": 1
@@ -3723,7 +3723,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BANANAS31USDT",
-          "versionId": 831,
+          "versionId": 9651,
           "symbol": "BANANAS31USDT",
           "baseAsset": "BANANAS31",
           "multiplier": 1
@@ -3817,7 +3817,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BANKUSDT",
-          "versionId": 787,
+          "versionId": 9608,
           "symbol": "BANKUSDT",
           "baseAsset": "BANK",
           "multiplier": 1
@@ -3869,7 +3869,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BARDUSDT",
-          "versionId": 773,
+          "versionId": 9594,
           "symbol": "BARDUSDT",
           "baseAsset": "BARD",
           "multiplier": 1
@@ -3921,7 +3921,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BASUSDT",
-          "versionId": 751,
+          "versionId": 9573,
           "symbol": "BASUSDT",
           "baseAsset": "BAS",
           "multiplier": 1
@@ -3961,7 +3961,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BASECATUSDT",
-          "versionId": 1174,
+          "versionId": 9874,
           "symbol": "BASECATUSDT",
           "baseAsset": "BASECAT",
           "multiplier": 1
@@ -3994,7 +3994,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BASEDUSDT",
-          "versionId": 971,
+          "versionId": 9771,
           "symbol": "BASEDUSDT",
           "baseAsset": "BASED",
           "multiplier": 1
@@ -4088,7 +4088,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BAYUSDT",
-          "versionId": 975,
+          "versionId": 9775,
           "symbol": "BAYUSDT",
           "baseAsset": "BAY",
           "multiplier": 1
@@ -4121,7 +4121,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BBUSDT",
-          "versionId": 999,
+          "versionId": 9795,
           "symbol": "BBUSDT",
           "baseAsset": "BB",
           "multiplier": 1
@@ -4173,7 +4173,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BCHUSDT",
-          "versionId": 672,
+          "versionId": 9498,
           "symbol": "BCHUSDT",
           "baseAsset": "BCH",
           "multiplier": 1
@@ -4276,7 +4276,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BEATUSDT",
-          "versionId": 824,
+          "versionId": 9644,
           "symbol": "BEATUSDT",
           "baseAsset": "BEAT",
           "multiplier": 1
@@ -4328,7 +4328,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BELUSDT",
-          "versionId": 684,
+          "versionId": 9510,
           "symbol": "BELUSDT",
           "baseAsset": "BEL",
           "multiplier": 1
@@ -4370,7 +4370,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BERAUSDT",
-          "versionId": 877,
+          "versionId": 9695,
           "symbol": "BERAUSDT",
           "baseAsset": "BERA",
           "multiplier": 1
@@ -4464,7 +4464,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BICOUSDT",
-          "versionId": 4415,
+          "versionId": 9862,
           "symbol": "BICOUSDT",
           "baseAsset": "BICO",
           "multiplier": 1
@@ -4567,7 +4567,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BILLUSDT",
-          "versionId": 1025,
+          "versionId": 9816,
           "symbol": "BILLUSDT",
           "baseAsset": "BILL",
           "multiplier": 1
@@ -4619,7 +4619,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BIOUSDT",
-          "versionId": 834,
+          "versionId": 9654,
           "symbol": "BIOUSDT",
           "baseAsset": "BIO",
           "multiplier": 1
@@ -4680,7 +4680,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BIRBUSDT",
-          "versionId": 901,
+          "versionId": 9717,
           "symbol": "BIRBUSDT",
           "baseAsset": "BIRB",
           "multiplier": 1
@@ -4732,7 +4732,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BLENDUSDT",
-          "versionId": 1008,
+          "versionId": 9804,
           "symbol": "BLENDUSDT",
           "baseAsset": "BLEND",
           "multiplier": 1
@@ -4773,7 +4773,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BLESSUSDT",
-          "versionId": 775,
+          "versionId": 9596,
           "symbol": "BLESSUSDT",
           "baseAsset": "BLESS",
           "multiplier": 1
@@ -4825,7 +4825,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BLUAIUSDT",
-          "versionId": 800,
+          "versionId": 9621,
           "symbol": "BLUAIUSDT",
           "baseAsset": "BLUAI",
           "multiplier": 1
@@ -4867,7 +4867,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BLURUSDT",
-          "versionId": 994,
+          "versionId": 9791,
           "symbol": "BLURUSDT",
           "baseAsset": "BLUR",
           "multiplier": 1
@@ -4928,7 +4928,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BMTUSDT",
-          "versionId": 905,
+          "versionId": 9718,
           "symbol": "BMTUSDT",
           "baseAsset": "BMT",
           "multiplier": 1
@@ -4970,7 +4970,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BNBUSDT",
-          "versionId": 642,
+          "versionId": 9467,
           "symbol": "BNBUSDT",
           "baseAsset": "BNB",
           "multiplier": 1
@@ -5073,7 +5073,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BOMEUSDT",
-          "versionId": 868,
+          "versionId": 9686,
           "symbol": "BOMEUSDT",
           "baseAsset": "BOME",
           "multiplier": 1
@@ -5134,7 +5134,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BONERUSDT",
-          "versionId": 3222,
+          "versionId": 9893,
           "symbol": "BONERUSDT",
           "baseAsset": "BONER",
           "multiplier": 1
@@ -5169,7 +5169,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000BONKUSDT",
-          "versionId": 714,
+          "versionId": 9542,
           "symbol": "1000BONKUSDT",
           "baseAsset": "1000BONK",
           "multiplier": 1000
@@ -5231,7 +5231,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BRUSDT",
-          "versionId": 965,
+          "versionId": 9766,
           "symbol": "BRUSDT",
           "baseAsset": "BR",
           "multiplier": 1
@@ -5334,7 +5334,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BREVUSDT",
-          "versionId": 856,
+          "versionId": 9674,
           "symbol": "BREVUSDT",
           "baseAsset": "BREV",
           "multiplier": 1
@@ -5386,7 +5386,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BREWUSDT",
-          "versionId": 4100,
+          "versionId": 9891,
           "symbol": "BREWUSDT",
           "baseAsset": "BREW",
           "multiplier": 1
@@ -5421,7 +5421,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BROCCOLI714USDT",
-          "versionId": 859,
+          "versionId": 9677,
           "symbol": "BROCCOLI714USDT",
           "baseAsset": "BROCCOLI714",
           "multiplier": 1
@@ -5474,7 +5474,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BSBUSDT",
-          "versionId": 968,
+          "versionId": 9768,
           "symbol": "BSBUSDT",
           "baseAsset": "BSB",
           "multiplier": 1
@@ -5577,7 +5577,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BTCUSDT",
-          "versionId": 640,
+          "versionId": 9465,
           "symbol": "BTCUSDT",
           "baseAsset": "BTC",
           "multiplier": 1
@@ -5638,7 +5638,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BTCDOMUSDT",
-          "versionId": 978,
+          "versionId": 9776,
           "symbol": "BTCDOMUSDT",
           "baseAsset": "BTCDOM",
           "multiplier": 1
@@ -5679,7 +5679,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BTRUSDT",
-          "versionId": 752,
+          "versionId": 9574,
           "symbol": "BTRUSDT",
           "baseAsset": "BTR",
           "multiplier": 1
@@ -5721,7 +5721,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BTWUSDT",
-          "versionId": 1029,
+          "versionId": 9819,
           "symbol": "BTWUSDT",
           "baseAsset": "BTW",
           "multiplier": 1
@@ -5773,7 +5773,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:BULLAUSDT",
-          "versionId": 907,
+          "versionId": 9720,
           "symbol": "BULLAUSDT",
           "baseAsset": "BULLA",
           "multiplier": 1
@@ -5813,7 +5813,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CUSDT",
-          "versionId": 742,
+          "versionId": 9564,
           "symbol": "CUSDT",
           "baseAsset": "C",
           "multiplier": 1
@@ -5907,7 +5907,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CAKEUSDT",
-          "versionId": 658,
+          "versionId": 9483,
           "symbol": "CAKEUSDT",
           "baseAsset": "CAKE",
           "multiplier": 1
@@ -5968,7 +5968,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CAPUSDT",
-          "versionId": 1128,
+          "versionId": 9841,
           "symbol": "CAPUSDT",
           "baseAsset": "CAP",
           "multiplier": 1
@@ -6020,7 +6020,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CARDSUSDT",
-          "versionId": 1016,
+          "versionId": 9812,
           "symbol": "CARDSUSDT",
           "baseAsset": "CARDS",
           "multiplier": 1
@@ -6095,7 +6095,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CASHCATUSDT",
-          "versionId": 1138,
+          "versionId": 9849,
           "symbol": "CASHCATUSDT",
           "baseAsset": "CASHCAT",
           "multiplier": 1
@@ -6145,7 +6145,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000CATUSDT",
-          "versionId": 1162,
+          "versionId": 9867,
           "symbol": "1000CATUSDT",
           "baseAsset": "1000CAT",
           "multiplier": 1000
@@ -6197,7 +6197,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CATEUSDT",
-          "versionId": 1173,
+          "versionId": 9873,
           "symbol": "CATEUSDT",
           "baseAsset": "CATE",
           "multiplier": 1
@@ -6272,7 +6272,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CCUSDT",
-          "versionId": 806,
+          "versionId": 9627,
           "symbol": "CCUSDT",
           "baseAsset": "CC",
           "multiplier": 1
@@ -6467,7 +6467,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CFGUSDT",
-          "versionId": 958,
+          "versionId": 9761,
           "symbol": "CFGUSDT",
           "baseAsset": "CFG",
           "multiplier": 1
@@ -6519,7 +6519,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CFXUSDT",
-          "versionId": 4410,
+          "versionId": 9516,
           "symbol": "CFXUSDT",
           "baseAsset": "CFX",
           "multiplier": 1
@@ -6622,7 +6622,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000CHEEMSUSDT",
-          "versionId": 792,
+          "versionId": 9613,
           "symbol": "1000CHEEMSUSDT",
           "baseAsset": "1000CHEEMS",
           "multiplier": 1000
@@ -6677,7 +6677,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CHILLGUYUSDT",
-          "versionId": 989,
+          "versionId": 9786,
           "symbol": "CHILLGUYUSDT",
           "baseAsset": "CHILLGUY",
           "multiplier": 1
@@ -6729,7 +6729,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CHIPUSDT",
-          "versionId": 984,
+          "versionId": 9781,
           "symbol": "CHIPUSDT",
           "baseAsset": "CHIP",
           "multiplier": 1
@@ -6832,7 +6832,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CHZUSDT",
-          "versionId": 678,
+          "versionId": 9504,
           "symbol": "CHZUSDT",
           "baseAsset": "CHZ",
           "multiplier": 1
@@ -6926,7 +6926,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CLANKERUSDT",
-          "versionId": 823,
+          "versionId": 9643,
           "symbol": "CLANKERUSDT",
           "baseAsset": "CLANKER",
           "multiplier": 1
@@ -6978,7 +6978,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CLOUSDT",
-          "versionId": 795,
+          "versionId": 9616,
           "symbol": "CLOUSDT",
           "baseAsset": "CLO",
           "multiplier": 1
@@ -7020,7 +7020,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:COAIUSDT",
-          "versionId": 783,
+          "versionId": 9604,
           "symbol": "COAIUSDT",
           "baseAsset": "COAI",
           "multiplier": 1
@@ -7072,7 +7072,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:COLLECTUSDT",
-          "versionId": 853,
+          "versionId": 9671,
           "symbol": "COLLECTUSDT",
           "baseAsset": "COLLECT",
           "multiplier": 1
@@ -7205,7 +7205,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:COTIUSDT",
-          "versionId": 1177,
+          "versionId": 9877,
           "symbol": "COTIUSDT",
           "baseAsset": "COTI",
           "multiplier": 1
@@ -7257,7 +7257,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:COWUSDT",
-          "versionId": 926,
+          "versionId": 9735,
           "symbol": "COWUSDT",
           "baseAsset": "COW",
           "multiplier": 1
@@ -7434,7 +7434,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CRVUSDT",
-          "versionId": 666,
+          "versionId": 9491,
           "symbol": "CRVUSDT",
           "baseAsset": "CRV",
           "multiplier": 1
@@ -7495,7 +7495,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CTUSDT",
-          "versionId": 9307,
+          "versionId": 9912,
           "symbol": "CTUSDT",
           "baseAsset": "CT",
           "multiplier": 1
@@ -7589,7 +7589,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CTRUSDT",
-          "versionId": 1072,
+          "versionId": 9833,
           "symbol": "CTRUSDT",
           "baseAsset": "CTR",
           "multiplier": 1
@@ -7765,7 +7765,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CYBERUSDT",
-          "versionId": 697,
+          "versionId": 9523,
           "symbol": "CYBERUSDT",
           "baseAsset": "CYBER",
           "multiplier": 1
@@ -7817,7 +7817,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:CYSUSDT",
-          "versionId": 844,
+          "versionId": 9664,
           "symbol": "CYSUSDT",
           "baseAsset": "CYS",
           "multiplier": 1
@@ -7869,7 +7869,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DASHUSDT",
-          "versionId": 808,
+          "versionId": 9629,
           "symbol": "DASHUSDT",
           "baseAsset": "DASH",
           "multiplier": 1
@@ -8013,7 +8013,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DELTAUSDT",
-          "versionId": 2022,
+          "versionId": 9881,
           "symbol": "DELTAUSDT",
           "baseAsset": "DELTA",
           "multiplier": 1
@@ -8047,7 +8047,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DEXEUSDT",
-          "versionId": 825,
+          "versionId": 9645,
           "symbol": "DEXEUSDT",
           "baseAsset": "DEXE",
           "multiplier": 1
@@ -8182,7 +8182,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DOGEUSDT",
-          "versionId": 645,
+          "versionId": 9470,
           "symbol": "DOGEUSDT",
           "baseAsset": "DOGE",
           "multiplier": 1
@@ -8243,7 +8243,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DOGSUSDT",
-          "versionId": 1017,
+          "versionId": 9813,
           "symbol": "DOGSUSDT",
           "baseAsset": "DOGS",
           "multiplier": 1
@@ -8294,7 +8294,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DOLOUSDT",
-          "versionId": 879,
+          "versionId": 9697,
           "symbol": "DOLOUSDT",
           "baseAsset": "DOLO",
           "multiplier": 1
@@ -8346,7 +8346,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DOODUSDT",
-          "versionId": 955,
+          "versionId": 9758,
           "symbol": "DOODUSDT",
           "baseAsset": "DOOD",
           "multiplier": 1
@@ -8398,7 +8398,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DOSUSDT",
-          "versionId": 1168,
+          "versionId": 9869,
           "symbol": "DOSUSDT",
           "baseAsset": "DOS",
           "multiplier": 1
@@ -8449,7 +8449,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DOTUSDT",
-          "versionId": 648,
+          "versionId": 9473,
           "symbol": "DOTUSDT",
           "baseAsset": "DOT",
           "multiplier": 1
@@ -8552,7 +8552,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DRVUSDT",
-          "versionId": 9456,
+          "versionId": 9905,
           "symbol": "DRVUSDT",
           "baseAsset": "DRV",
           "multiplier": 1
@@ -8585,7 +8585,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DUSKUSDT",
-          "versionId": 882,
+          "versionId": 9700,
           "symbol": "DUSKUSDT",
           "baseAsset": "DUSK",
           "multiplier": 1
@@ -8627,7 +8627,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DYDXUSDT",
-          "versionId": 665,
+          "versionId": 9490,
           "symbol": "DYDXUSDT",
           "baseAsset": "DYDX",
           "multiplier": 1
@@ -8688,7 +8688,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:DYMUSDT",
-          "versionId": 830,
+          "versionId": 9650,
           "symbol": "DYMUSDT",
           "baseAsset": "DYM",
           "multiplier": 1
@@ -8749,7 +8749,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:EDENUSDT",
-          "versionId": 778,
+          "versionId": 9599,
           "symbol": "EDENUSDT",
           "baseAsset": "EDEN",
           "multiplier": 1
@@ -8791,7 +8791,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:EDGEUSDT",
-          "versionId": 964,
+          "versionId": 9765,
           "symbol": "EDGEUSDT",
           "baseAsset": "EDGE",
           "multiplier": 1
@@ -8843,7 +8843,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:EDUUSDT",
-          "versionId": 694,
+          "versionId": 9520,
           "symbol": "EDUUSDT",
           "baseAsset": "EDU",
           "multiplier": 1
@@ -8927,7 +8927,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:EIGENUSDT",
-          "versionId": 719,
+          "versionId": 9547,
           "symbol": "EIGENUSDT",
           "baseAsset": "EIGEN",
           "multiplier": 1
@@ -8988,7 +8988,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ELSAUSDT",
-          "versionId": 884,
+          "versionId": 9702,
           "symbol": "ELSAUSDT",
           "baseAsset": "ELSA",
           "multiplier": 1
@@ -9040,7 +9040,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ENAUSDT",
-          "versionId": 722,
+          "versionId": 9550,
           "symbol": "ENAUSDT",
           "baseAsset": "ENA",
           "multiplier": 1
@@ -9101,7 +9101,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ENJUSDT",
-          "versionId": 962,
+          "versionId": 9764,
           "symbol": "ENJUSDT",
           "baseAsset": "ENJ",
           "multiplier": 1
@@ -9153,7 +9153,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ENSUSDT",
-          "versionId": 680,
+          "versionId": 9506,
           "symbol": "ENSUSDT",
           "baseAsset": "ENS",
           "multiplier": 1
@@ -9214,7 +9214,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ENSOUSDT",
-          "versionId": 794,
+          "versionId": 9615,
           "symbol": "ENSOUSDT",
           "baseAsset": "ENSO",
           "multiplier": 1
@@ -9308,7 +9308,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ERAUSDT",
-          "versionId": 1147,
+          "versionId": 9856,
           "symbol": "ERAUSDT",
           "baseAsset": "ERA",
           "multiplier": 1
@@ -9360,7 +9360,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ESPUSDT",
-          "versionId": 922,
+          "versionId": 9731,
           "symbol": "ESPUSDT",
           "baseAsset": "ESP",
           "multiplier": 1
@@ -9412,7 +9412,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ESPORTSUSDT",
-          "versionId": 739,
+          "versionId": 9561,
           "symbol": "ESPORTSUSDT",
           "baseAsset": "ESPORTS",
           "multiplier": 1
@@ -9454,7 +9454,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ETCUSDT",
-          "versionId": 660,
+          "versionId": 9485,
           "symbol": "ETCUSDT",
           "baseAsset": "ETC",
           "multiplier": 1
@@ -9515,7 +9515,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ETHUSDT",
-          "versionId": 641,
+          "versionId": 9466,
           "symbol": "ETHUSDT",
           "baseAsset": "ETH",
           "multiplier": 1
@@ -9576,7 +9576,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ETHFIUSDT",
-          "versionId": 871,
+          "versionId": 9689,
           "symbol": "ETHFIUSDT",
           "baseAsset": "ETHFI",
           "multiplier": 1
@@ -9678,7 +9678,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:EULUSDT",
-          "versionId": 793,
+          "versionId": 9614,
           "symbol": "EULUSDT",
           "baseAsset": "EUL",
           "multiplier": 1
@@ -9730,7 +9730,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:EVAAUSDT",
-          "versionId": 781,
+          "versionId": 9602,
           "symbol": "EVAAUSDT",
           "baseAsset": "EVAA",
           "multiplier": 1
@@ -9782,7 +9782,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FUSDT",
-          "versionId": 6443,
+          "versionId": 9904,
           "symbol": "FUSDT",
           "baseAsset": "F",
           "multiplier": 1
@@ -9834,7 +9834,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FARTCOINUSDT",
-          "versionId": 721,
+          "versionId": 9549,
           "symbol": "FARTCOINUSDT",
           "baseAsset": "FARTCOIN",
           "multiplier": 1
@@ -9895,7 +9895,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FETUSDT",
-          "versionId": 700,
+          "versionId": 9526,
           "symbol": "FETUSDT",
           "baseAsset": "FET",
           "multiplier": 1
@@ -9955,7 +9955,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FFUSDT",
-          "versionId": 777,
+          "versionId": 9598,
           "symbol": "FFUSDT",
           "baseAsset": "FF",
           "multiplier": 1
@@ -10007,7 +10007,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FHEUSDT",
-          "versionId": 878,
+          "versionId": 9696,
           "symbol": "FHEUSDT",
           "baseAsset": "FHE",
           "multiplier": 1
@@ -10049,7 +10049,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FIDAUSDT",
-          "versionId": 1038,
+          "versionId": 9826,
           "symbol": "FIDAUSDT",
           "baseAsset": "FIDA",
           "multiplier": 1
@@ -10101,7 +10101,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FIGHTUSDT",
-          "versionId": 891,
+          "versionId": 9709,
           "symbol": "FIGHTUSDT",
           "baseAsset": "FIGHT",
           "multiplier": 1
@@ -10153,7 +10153,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FILUSDT",
-          "versionId": 667,
+          "versionId": 9492,
           "symbol": "FILUSDT",
           "baseAsset": "FIL",
           "multiplier": 1
@@ -10214,7 +10214,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FLOCKUSDT",
-          "versionId": 762,
+          "versionId": 9584,
           "symbol": "FLOCKUSDT",
           "baseAsset": "FLOCK",
           "multiplier": 1
@@ -10266,7 +10266,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000FLOKIUSDT",
-          "versionId": 705,
+          "versionId": 9531,
           "symbol": "1000FLOKIUSDT",
           "baseAsset": "1000FLOKI",
           "multiplier": 1000
@@ -10327,7 +10327,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FLORKUSDT",
-          "versionId": 3214,
+          "versionId": 9883,
           "symbol": "FLORKUSDT",
           "baseAsset": "FLORK",
           "multiplier": 1
@@ -10360,7 +10360,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FLOWUSDT",
-          "versionId": 948,
+          "versionId": 9751,
           "symbol": "FLOWUSDT",
           "baseAsset": "FLOW",
           "multiplier": 1
@@ -10444,7 +10444,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FLUXUSDT",
-          "versionId": 819,
+          "versionId": 9639,
           "symbol": "FLUXUSDT",
           "baseAsset": "FLUX",
           "multiplier": 1
@@ -10496,7 +10496,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FOGOUSDT",
-          "versionId": 876,
+          "versionId": 9694,
           "symbol": "FOGOUSDT",
           "baseAsset": "FOGO",
           "multiplier": 1
@@ -10557,7 +10557,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FOLKSUSDT",
-          "versionId": 814,
+          "versionId": 9635,
           "symbol": "FOLKSUSDT",
           "baseAsset": "FOLKS",
           "multiplier": 1
@@ -10609,7 +10609,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FONEUSDT",
-          "versionId": 1714,
+          "versionId": 9879,
           "symbol": "FONEUSDT",
           "baseAsset": "FONE",
           "multiplier": 1
@@ -10642,7 +10642,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FORMUSDT",
-          "versionId": 788,
+          "versionId": 9609,
           "symbol": "FORMUSDT",
           "baseAsset": "FORM",
           "multiplier": 1
@@ -10694,7 +10694,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FRAXUSDT",
-          "versionId": 880,
+          "versionId": 9698,
           "symbol": "FRAXUSDT",
           "baseAsset": "FRAX",
           "multiplier": 1
@@ -10745,7 +10745,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:FUNUSDT",
-          "versionId": 881,
+          "versionId": 9699,
           "symbol": "FUNUSDT",
           "baseAsset": "FUN",
           "multiplier": 1
@@ -10779,7 +10779,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GUSDT",
-          "versionId": 6446,
+          "versionId": 9762,
           "symbol": "GUSDT",
           "baseAsset": "G",
           "multiplier": 1
@@ -10830,7 +10830,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GALAUSDT",
-          "versionId": 654,
+          "versionId": 9479,
           "symbol": "GALAUSDT",
           "baseAsset": "GALA",
           "multiplier": 1
@@ -10942,7 +10942,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GENIUSUSDT",
-          "versionId": 981,
+          "versionId": 9778,
           "symbol": "GENIUSUSDT",
           "baseAsset": "GENIUS",
           "multiplier": 1
@@ -10994,7 +10994,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GIGGLEUSDT",
-          "versionId": 786,
+          "versionId": 9607,
           "symbol": "GIGGLEUSDT",
           "baseAsset": "GIGGLE",
           "multiplier": 1
@@ -11088,7 +11088,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GMTUSDT",
-          "versionId": 661,
+          "versionId": 9486,
           "symbol": "GMTUSDT",
           "baseAsset": "GMT",
           "multiplier": 1
@@ -11241,7 +11241,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GPSUSDT",
-          "versionId": 919,
+          "versionId": 9728,
           "symbol": "GPSUSDT",
           "baseAsset": "GPS",
           "multiplier": 1
@@ -11293,7 +11293,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GRAMUSDT",
-          "versionId": 1135,
+          "versionId": 9846,
           "symbol": "GRAMUSDT",
           "baseAsset": "GRAM",
           "multiplier": 1
@@ -11354,7 +11354,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GRASSUSDT",
-          "versionId": 829,
+          "versionId": 9649,
           "symbol": "GRASSUSDT",
           "baseAsset": "GRASS",
           "multiplier": 1
@@ -11415,7 +11415,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GRIFFAINUSDT",
-          "versionId": 937,
+          "versionId": 9745,
           "symbol": "GRIFFAINUSDT",
           "baseAsset": "GRIFFAIN",
           "multiplier": 1
@@ -11518,7 +11518,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GRVTUSDT",
-          "versionId": 1152,
+          "versionId": 9860,
           "symbol": "GRVTUSDT",
           "baseAsset": "GRVT",
           "multiplier": 1
@@ -11569,7 +11569,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GSTOCKUSDT",
-          "versionId": 6500,
+          "versionId": 9906,
           "symbol": "GSTOCKUSDT",
           "baseAsset": "GSTOCK",
           "multiplier": 1
@@ -11602,7 +11602,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GTCUSDT",
-          "versionId": 4412,
+          "versionId": 9824,
           "symbol": "GTCUSDT",
           "baseAsset": "GTC",
           "multiplier": 1
@@ -11642,7 +11642,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GUAUSDT",
-          "versionId": 837,
+          "versionId": 9657,
           "symbol": "GUAUSDT",
           "baseAsset": "GUA",
           "multiplier": 1
@@ -11682,7 +11682,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GUNUSDT",
-          "versionId": 862,
+          "versionId": 9680,
           "symbol": "GUNUSDT",
           "baseAsset": "GUN",
           "multiplier": 1
@@ -11734,7 +11734,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:GWEIUSDT",
-          "versionId": 888,
+          "versionId": 9706,
           "symbol": "GWEIUSDT",
           "baseAsset": "GWEI",
           "multiplier": 1
@@ -11786,7 +11786,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HUSDT",
-          "versionId": 849,
+          "versionId": 9668,
           "symbol": "HUSDT",
           "baseAsset": "H",
           "multiplier": 1
@@ -11880,7 +11880,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HANAUSDT",
-          "versionId": 886,
+          "versionId": 9704,
           "symbol": "HANAUSDT",
           "baseAsset": "HANA",
           "multiplier": 1
@@ -11922,7 +11922,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HBARUSDT",
-          "versionId": 866,
+          "versionId": 9684,
           "symbol": "HBARUSDT",
           "baseAsset": "HBAR",
           "multiplier": 1
@@ -11983,7 +11983,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HEIUSDT",
-          "versionId": 1139,
+          "versionId": 9850,
           "symbol": "HEIUSDT",
           "baseAsset": "HEI",
           "multiplier": 1
@@ -12025,7 +12025,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HEMIUSDT",
-          "versionId": 754,
+          "versionId": 9576,
           "symbol": "HEMIUSDT",
           "baseAsset": "HEMI",
           "multiplier": 1
@@ -12118,7 +12118,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HMSTRUSDT",
-          "versionId": 1060,
+          "versionId": 9831,
           "symbol": "HMSTRUSDT",
           "baseAsset": "HMSTR",
           "multiplier": 1
@@ -12169,7 +12169,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HOLOUSDT",
-          "versionId": 765,
+          "versionId": 9586,
           "symbol": "HOLOUSDT",
           "baseAsset": "HOLO",
           "multiplier": 1
@@ -12221,7 +12221,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HOMEUSDT",
-          "versionId": 1052,
+          "versionId": 9829,
           "symbol": "HOMEUSDT",
           "baseAsset": "HOME",
           "multiplier": 1
@@ -12314,7 +12314,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HUMAUSDT",
-          "versionId": 1000,
+          "versionId": 9796,
           "symbol": "HUMAUSDT",
           "baseAsset": "HUMA",
           "multiplier": 1
@@ -12366,7 +12366,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HYPEUSDT",
-          "versionId": 646,
+          "versionId": 9471,
           "symbol": "HYPEUSDT",
           "baseAsset": "HYPE",
           "multiplier": 1
@@ -12427,7 +12427,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:HYPERUSDT",
-          "versionId": 960,
+          "versionId": 9763,
           "symbol": "HYPERUSDT",
           "baseAsset": "HYPER",
           "multiplier": 1
@@ -12530,7 +12530,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ICPUSDT",
-          "versionId": 816,
+          "versionId": 9637,
           "symbol": "ICPUSDT",
           "baseAsset": "ICP",
           "multiplier": 1
@@ -12591,7 +12591,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:IDUSDT",
-          "versionId": 686,
+          "versionId": 9512,
           "symbol": "IDUSDT",
           "baseAsset": "ID",
           "multiplier": 1
@@ -12643,7 +12643,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:IDOLUSDT",
-          "versionId": 1136,
+          "versionId": 9847,
           "symbol": "IDOLUSDT",
           "baseAsset": "IDOL",
           "multiplier": 1
@@ -12787,7 +12787,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:INUSDT",
-          "versionId": 743,
+          "versionId": 9565,
           "symbol": "INUSDT",
           "baseAsset": "IN",
           "multiplier": 1
@@ -12839,7 +12839,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:INITUSDT",
-          "versionId": 928,
+          "versionId": 9737,
           "symbol": "INITUSDT",
           "baseAsset": "INIT",
           "multiplier": 1
@@ -12900,7 +12900,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:INJUSDT",
-          "versionId": 688,
+          "versionId": 9514,
           "symbol": "INJUSDT",
           "baseAsset": "INJ",
           "multiplier": 1
@@ -12961,7 +12961,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:INXUSDT",
-          "versionId": 910,
+          "versionId": 9721,
           "symbol": "INXUSDT",
           "baseAsset": "INX",
           "multiplier": 1
@@ -13013,7 +13013,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:IOUSDT",
-          "versionId": 717,
+          "versionId": 9545,
           "symbol": "IOUSDT",
           "baseAsset": "IO",
           "multiplier": 1
@@ -13167,7 +13167,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:IOTXUSDT",
-          "versionId": 1161,
+          "versionId": 9866,
           "symbol": "IOTXUSDT",
           "baseAsset": "IOTX",
           "multiplier": 1
@@ -13219,7 +13219,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:IRYSUSDT",
-          "versionId": 833,
+          "versionId": 9653,
           "symbol": "IRYSUSDT",
           "baseAsset": "IRYS",
           "multiplier": 1
@@ -13271,7 +13271,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:JASMYUSDT",
-          "versionId": 676,
+          "versionId": 9502,
           "symbol": "JASMYUSDT",
           "baseAsset": "JASMY",
           "multiplier": 1
@@ -13323,7 +13323,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:JCTUSDT",
-          "versionId": 821,
+          "versionId": 9641,
           "symbol": "JCTUSDT",
           "baseAsset": "JCT",
           "multiplier": 1
@@ -13375,7 +13375,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:JELLYJELLYUSDT",
-          "versionId": 809,
+          "versionId": 9630,
           "symbol": "JELLYJELLYUSDT",
           "baseAsset": "JELLYJELLY",
           "multiplier": 1
@@ -13500,7 +13500,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:JTOUSDT",
-          "versionId": 929,
+          "versionId": 9738,
           "symbol": "JTOUSDT",
           "baseAsset": "JTO",
           "multiplier": 1
@@ -13561,7 +13561,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:JUPUSDT",
-          "versionId": 874,
+          "versionId": 9692,
           "symbol": "JUPUSDT",
           "baseAsset": "JUP",
           "multiplier": 1
@@ -13664,7 +13664,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KAITOUSDT",
-          "versionId": 1012,
+          "versionId": 9808,
           "symbol": "KAITOUSDT",
           "baseAsset": "KAITO",
           "multiplier": 1
@@ -13725,7 +13725,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KASUSDT",
-          "versionId": 912,
+          "versionId": 9723,
           "symbol": "KASUSDT",
           "baseAsset": "KAS",
           "multiplier": 1
@@ -13786,7 +13786,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KATUSDT",
-          "versionId": 942,
+          "versionId": 9747,
           "symbol": "KATUSDT",
           "baseAsset": "KAT",
           "multiplier": 1
@@ -13922,7 +13922,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KGENUSDT",
-          "versionId": 784,
+          "versionId": 9605,
           "symbol": "KGENUSDT",
           "baseAsset": "KGEN",
           "multiplier": 1
@@ -13974,7 +13974,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KITEUSDT",
-          "versionId": 805,
+          "versionId": 9626,
           "symbol": "KITEUSDT",
           "baseAsset": "KITE",
           "multiplier": 1
@@ -14068,7 +14068,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KNCUSDT",
-          "versionId": 669,
+          "versionId": 9494,
           "symbol": "KNCUSDT",
           "baseAsset": "KNC",
           "multiplier": 1
@@ -14120,7 +14120,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:KOMAUSDT",
-          "versionId": 982,
+          "versionId": 9779,
           "symbol": "KOMAUSDT",
           "baseAsset": "KOMA",
           "multiplier": 1
@@ -14202,7 +14202,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LAUSDT",
-          "versionId": 916,
+          "versionId": 9725,
           "symbol": "LAUSDT",
           "baseAsset": "LA",
           "multiplier": 1
@@ -14254,7 +14254,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LABUSDT",
-          "versionId": 798,
+          "versionId": 9619,
           "symbol": "LABUSDT",
           "baseAsset": "LAB",
           "multiplier": 1
@@ -14306,7 +14306,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LAPTOPUSDT",
-          "versionId": 6103,
+          "versionId": 9896,
           "symbol": "LAPTOPUSDT",
           "baseAsset": "LAPTOP",
           "multiplier": 1
@@ -14339,7 +14339,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LAYERUSDT",
-          "versionId": 1032,
+          "versionId": 9822,
           "symbol": "LAYERUSDT",
           "baseAsset": "LAYER",
           "multiplier": 1
@@ -14399,7 +14399,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LDOUSDT",
-          "versionId": 692,
+          "versionId": 9518,
           "symbol": "LDOUSDT",
           "baseAsset": "LDO",
           "multiplier": 1
@@ -14460,7 +14460,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LIGHTUSDT",
-          "versionId": 846,
+          "versionId": 9666,
           "symbol": "LIGHTUSDT",
           "baseAsset": "LIGHT",
           "multiplier": 1
@@ -14502,7 +14502,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LINEAUSDT",
-          "versionId": 755,
+          "versionId": 9577,
           "symbol": "LINEAUSDT",
           "baseAsset": "LINEA",
           "multiplier": 1
@@ -14563,7 +14563,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LINKUSDT",
-          "versionId": 671,
+          "versionId": 9496,
           "symbol": "LINKUSDT",
           "baseAsset": "LINK",
           "multiplier": 1
@@ -14624,7 +14624,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LISTAUSDT",
-          "versionId": 715,
+          "versionId": 9543,
           "symbol": "LISTAUSDT",
           "baseAsset": "LISTA",
           "multiplier": 1
@@ -14675,7 +14675,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LITUSDT",
-          "versionId": 851,
+          "versionId": 9670,
           "symbol": "LITUSDT",
           "baseAsset": "LIT",
           "multiplier": 1
@@ -14736,7 +14736,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LPTUSDT",
-          "versionId": 1149,
+          "versionId": 9857,
           "symbol": "LPTUSDT",
           "baseAsset": "LPT",
           "multiplier": 1
@@ -14830,7 +14830,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LSKUSDT",
-          "versionId": 6105,
+          "versionId": 9898,
           "symbol": "LSKUSDT",
           "baseAsset": "LSK",
           "multiplier": 1
@@ -14882,7 +14882,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LTCUSDT",
-          "versionId": 653,
+          "versionId": 9478,
           "symbol": "LTCUSDT",
           "baseAsset": "LTC",
           "multiplier": 1
@@ -14943,7 +14943,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LUMIAUSDT",
-          "versionId": 1004,
+          "versionId": 9800,
           "symbol": "LUMIAUSDT",
           "baseAsset": "LUMIA",
           "multiplier": 1
@@ -14995,7 +14995,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LUNA2USDT",
-          "versionId": 682,
+          "versionId": 9508,
           "symbol": "LUNA2USDT",
           "baseAsset": "LUNA2",
           "multiplier": 1
@@ -15047,7 +15047,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000LUNCUSDT",
-          "versionId": 840,
+          "versionId": 9660,
           "symbol": "1000LUNCUSDT",
           "baseAsset": "1000LUNC",
           "multiplier": 1000
@@ -15108,7 +15108,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:LYNUSDT",
-          "versionId": 782,
+          "versionId": 9603,
           "symbol": "LYNUSDT",
           "baseAsset": "LYN",
           "multiplier": 1
@@ -15160,7 +15160,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MUSDT",
-          "versionId": 1454,
+          "versionId": 9770,
           "symbol": "MUSDT",
           "baseAsset": "M",
           "multiplier": 1
@@ -15254,7 +15254,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MAGMAUSDT",
-          "versionId": 854,
+          "versionId": 9672,
           "symbol": "MAGMAUSDT",
           "baseAsset": "MAGMA",
           "multiplier": 1
@@ -15306,7 +15306,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MANAUSDT",
-          "versionId": 4407,
+          "versionId": 9487,
           "symbol": "MANAUSDT",
           "baseAsset": "MANA",
           "multiplier": 1
@@ -15358,7 +15358,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MANTAUSDT",
-          "versionId": 707,
+          "versionId": 9533,
           "symbol": "MANTAUSDT",
           "baseAsset": "MANTA",
           "multiplier": 1
@@ -15419,7 +15419,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MANTRAUSDT",
-          "versionId": 946,
+          "versionId": 9749,
           "symbol": "MANTRAUSDT",
           "baseAsset": "MANTRA",
           "multiplier": 1
@@ -15470,7 +15470,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MARSCOINUSDT",
-          "versionId": 2064,
+          "versionId": 9863,
           "symbol": "MARSCOINUSDT",
           "baseAsset": "MARSCOIN",
           "multiplier": 1
@@ -15605,7 +15605,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MAXUSDT",
-          "versionId": 3223,
+          "versionId": 9894,
           "symbol": "MAXUSDT",
           "baseAsset": "MAX",
           "multiplier": 1
@@ -15641,7 +15641,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MEUSDT",
-          "versionId": 883,
+          "versionId": 9701,
           "symbol": "MEUSDT",
           "baseAsset": "ME",
           "multiplier": 1
@@ -15702,7 +15702,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MEGAUSDT",
-          "versionId": 906,
+          "versionId": 9719,
           "symbol": "MEGAUSDT",
           "baseAsset": "MEGA",
           "multiplier": 1
@@ -15763,7 +15763,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MELANIAUSDT",
-          "versionId": 954,
+          "versionId": 9757,
           "symbol": "MELANIAUSDT",
           "baseAsset": "MELANIA",
           "multiplier": 1
@@ -15876,7 +15876,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MEMEUSDT",
-          "versionId": 3188,
+          "versionId": 9884,
           "symbol": "MEMEUSDT",
           "baseAsset": "MEME",
           "multiplier": 1
@@ -15914,7 +15914,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MERLUSDT",
-          "versionId": 716,
+          "versionId": 9544,
           "symbol": "MERLUSDT",
           "baseAsset": "MERL",
           "multiplier": 1
@@ -15975,7 +15975,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:METUSDT",
-          "versionId": 791,
+          "versionId": 9612,
           "symbol": "METUSDT",
           "baseAsset": "MET",
           "multiplier": 1
@@ -16036,7 +16036,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:METISUSDT",
-          "versionId": 987,
+          "versionId": 9784,
           "symbol": "METISUSDT",
           "baseAsset": "METIS",
           "multiplier": 1
@@ -16223,7 +16223,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MITOUSDT",
-          "versionId": 753,
+          "versionId": 9575,
           "symbol": "MITOUSDT",
           "baseAsset": "MITO",
           "multiplier": 1
@@ -16265,7 +16265,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MMTUSDT",
-          "versionId": 811,
+          "versionId": 9632,
           "symbol": "MMTUSDT",
           "baseAsset": "MMT",
           "multiplier": 1
@@ -16442,7 +16442,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MONUSDT",
-          "versionId": 789,
+          "versionId": 9610,
           "symbol": "MONUSDT",
           "baseAsset": "MON",
           "multiplier": 1
@@ -16503,7 +16503,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MOODENGUSDT",
-          "versionId": 723,
+          "versionId": 9551,
           "symbol": "MOODENGUSDT",
           "baseAsset": "MOODENG",
           "multiplier": 1
@@ -16564,7 +16564,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MORPHOUSDT",
-          "versionId": 1011,
+          "versionId": 9807,
           "symbol": "MORPHOUSDT",
           "baseAsset": "MORPHO",
           "multiplier": 1
@@ -16625,7 +16625,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MOVEUSDT",
-          "versionId": 924,
+          "versionId": 9733,
           "symbol": "MOVEUSDT",
           "baseAsset": "MOVE",
           "multiplier": 1
@@ -16686,7 +16686,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MOVRUSDT",
-          "versionId": 986,
+          "versionId": 9783,
           "symbol": "MOVRUSDT",
           "baseAsset": "MOVR",
           "multiplier": 1
@@ -16738,7 +16738,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MTLUSDT",
-          "versionId": 5024,
+          "versionId": 9497,
           "symbol": "MTLUSDT",
           "baseAsset": "MTL",
           "multiplier": 1
@@ -16790,7 +16790,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MUBARAKUSDT",
-          "versionId": 1163,
+          "versionId": 9868,
           "symbol": "MUBARAKUSDT",
           "baseAsset": "MUBARAK",
           "multiplier": 1
@@ -16842,7 +16842,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:MYXUSDT",
-          "versionId": 855,
+          "versionId": 9673,
           "symbol": "MYXUSDT",
           "baseAsset": "MYX",
           "multiplier": 1
@@ -16894,7 +16894,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NAORISUSDT",
-          "versionId": 932,
+          "versionId": 9741,
           "symbol": "NAORISUSDT",
           "baseAsset": "NAORIS",
           "multiplier": 1
@@ -16946,7 +16946,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NEARUSDT",
-          "versionId": 655,
+          "versionId": 9480,
           "symbol": "NEARUSDT",
           "baseAsset": "NEAR",
           "multiplier": 1
@@ -17007,7 +17007,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NEIROUSDT",
-          "versionId": 725,
+          "versionId": 9553,
           "symbol": "NEIROUSDT",
           "baseAsset": "NEIRO",
           "multiplier": 1
@@ -17121,7 +17121,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NESUSDT",
-          "versionId": 1146,
+          "versionId": 9855,
           "symbol": "NESUSDT",
           "baseAsset": "NES",
           "multiplier": 1
@@ -17204,7 +17204,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000NEXUSDT",
-          "versionId": 1045,
+          "versionId": 9828,
           "symbol": "1000NEXUSDT",
           "baseAsset": "1000NEX",
           "multiplier": 1000
@@ -17258,7 +17258,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NIGHTUSDT",
-          "versionId": 842,
+          "versionId": 9662,
           "symbol": "NIGHTUSDT",
           "baseAsset": "NIGHT",
           "multiplier": 1
@@ -17310,7 +17310,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NILUSDT",
-          "versionId": 1061,
+          "versionId": 9832,
           "symbol": "NILUSDT",
           "baseAsset": "NIL",
           "multiplier": 1
@@ -17413,7 +17413,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NOMUSDT",
-          "versionId": 898,
+          "versionId": 9714,
           "symbol": "NOMUSDT",
           "baseAsset": "NOM",
           "multiplier": 1
@@ -17455,7 +17455,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NOTUSDT",
-          "versionId": 1024,
+          "versionId": 9815,
           "symbol": "NOTUSDT",
           "baseAsset": "NOT",
           "multiplier": 1
@@ -17516,7 +17516,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:NULLMASKUSDT",
-          "versionId": 9451,
+          "versionId": 9915,
           "symbol": "NULLMASKUSDT",
           "baseAsset": "NULLMASK",
           "multiplier": 1
@@ -17598,7 +17598,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OUSDT",
-          "versionId": 1112,
+          "versionId": 9837,
           "symbol": "OUSDT",
           "baseAsset": "O",
           "multiplier": 1
@@ -17691,7 +17691,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OGNUSDT",
-          "versionId": 670,
+          "versionId": 9495,
           "symbol": "OGNUSDT",
           "baseAsset": "OGN",
           "multiplier": 1
@@ -17743,7 +17743,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OKBUSDT",
-          "versionId": 681,
+          "versionId": 9507,
           "symbol": "OKBUSDT",
           "baseAsset": "OKB",
           "multiplier": 1
@@ -17784,7 +17784,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ONUSDT",
-          "versionId": 803,
+          "versionId": 9624,
           "symbol": "ONUSDT",
           "baseAsset": "ON",
           "multiplier": 1
@@ -17824,7 +17824,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ONDOUSDT",
-          "versionId": 709,
+          "versionId": 9535,
           "symbol": "ONDOUSDT",
           "baseAsset": "ONDO",
           "multiplier": 1
@@ -17885,7 +17885,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ONEUSDT",
-          "versionId": 6107,
+          "versionId": 9901,
           "symbol": "ONEUSDT",
           "baseAsset": "ONE",
           "multiplier": 1
@@ -17936,7 +17936,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ONGUSDT",
-          "versionId": 9159,
+          "versionId": 9872,
           "symbol": "ONGUSDT",
           "baseAsset": "ONG",
           "multiplier": 1
@@ -17988,7 +17988,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ONTUSDT",
-          "versionId": 966,
+          "versionId": 9767,
           "symbol": "ONTUSDT",
           "baseAsset": "ONT",
           "multiplier": 1
@@ -18040,7 +18040,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OPUSDT",
-          "versionId": 683,
+          "versionId": 9509,
           "symbol": "OPUSDT",
           "baseAsset": "OP",
           "multiplier": 1
@@ -18101,7 +18101,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OPENUSDT",
-          "versionId": 761,
+          "versionId": 9583,
           "symbol": "OPENUSDT",
           "baseAsset": "OPEN",
           "multiplier": 1
@@ -18153,7 +18153,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OPGUSDT",
-          "versionId": 995,
+          "versionId": 9792,
           "symbol": "OPGUSDT",
           "baseAsset": "OPG",
           "multiplier": 1
@@ -18205,7 +18205,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:OPNUSDT",
-          "versionId": 934,
+          "versionId": 9743,
           "symbol": "OPNUSDT",
           "baseAsset": "OPN",
           "multiplier": 1
@@ -18257,7 +18257,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ORCAUSDT",
-          "versionId": 930,
+          "versionId": 9739,
           "symbol": "ORCAUSDT",
           "baseAsset": "ORCA",
           "multiplier": 1
@@ -18351,7 +18351,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ORDIUSDT",
-          "versionId": 1453,
+          "versionId": 9532,
           "symbol": "ORDIUSDT",
           "baseAsset": "ORDI",
           "multiplier": 1
@@ -18412,7 +18412,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PAIDUSDT",
-          "versionId": 8310,
+          "versionId": 9908,
           "symbol": "PAIDUSDT",
           "baseAsset": "PAID",
           "multiplier": 1
@@ -18445,7 +18445,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PAIRUSDT",
-          "versionId": 3216,
+          "versionId": 9887,
           "symbol": "PAIRUSDT",
           "baseAsset": "PAIR",
           "multiplier": 1
@@ -18480,7 +18480,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PARTIUSDT",
-          "versionId": 832,
+          "versionId": 9652,
           "symbol": "PARTIUSDT",
           "baseAsset": "PARTI",
           "multiplier": 1
@@ -18573,7 +18573,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PENDLEUSDT",
-          "versionId": 701,
+          "versionId": 9527,
           "symbol": "PENDLEUSDT",
           "baseAsset": "PENDLE",
           "multiplier": 1
@@ -18634,7 +18634,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PENGUUSDT",
-          "versionId": 736,
+          "versionId": 9558,
           "symbol": "PENGUUSDT",
           "baseAsset": "PENGU",
           "multiplier": 1
@@ -18695,7 +18695,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PEOPLEUSDT",
-          "versionId": 4408,
+          "versionId": 9493,
           "symbol": "PEOPLEUSDT",
           "baseAsset": "PEOPLE",
           "multiplier": 1
@@ -18756,7 +18756,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000PEPEUSDT",
-          "versionId": 691,
+          "versionId": 9517,
           "symbol": "1000PEPEUSDT",
           "baseAsset": "1000PEPE",
           "multiplier": 1000
@@ -18818,7 +18818,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PHAUSDT",
-          "versionId": 945,
+          "versionId": 9748,
           "symbol": "PHAUSDT",
           "baseAsset": "PHA",
           "multiplier": 1
@@ -18870,7 +18870,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PROSUSDT",
-          "versionId": 1007,
+          "versionId": 9803,
           "symbol": "PROSUSDT",
           "baseAsset": "PROS",
           "multiplier": 1
@@ -18958,7 +18958,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PIEVERSEUSDT",
-          "versionId": 826,
+          "versionId": 9646,
           "symbol": "PIEVERSEUSDT",
           "baseAsset": "PIEVERSE",
           "multiplier": 1
@@ -19010,7 +19010,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PIPPINUSDT",
-          "versionId": 836,
+          "versionId": 9656,
           "symbol": "PIPPINUSDT",
           "baseAsset": "PIPPIN",
           "multiplier": 1
@@ -19062,7 +19062,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PIXELUSDT",
-          "versionId": 711,
+          "versionId": 9537,
           "symbol": "PIXELUSDT",
           "baseAsset": "PIXEL",
           "multiplier": 1
@@ -19114,7 +19114,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PLAYUSDT",
-          "versionId": 951,
+          "versionId": 9754,
           "symbol": "PLAYUSDT",
           "baseAsset": "PLAY",
           "multiplier": 1
@@ -19156,7 +19156,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PLUMEUSDT",
-          "versionId": 1031,
+          "versionId": 9821,
           "symbol": "PLUMEUSDT",
           "baseAsset": "PLUME",
           "multiplier": 1
@@ -19208,7 +19208,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PNUTUSDT",
-          "versionId": 867,
+          "versionId": 9685,
           "symbol": "PNUTUSDT",
           "baseAsset": "PNUT",
           "multiplier": 1
@@ -19269,7 +19269,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PODUSDT",
-          "versionId": 9446,
+          "versionId": 9914,
           "symbol": "PODUSDT",
           "baseAsset": "POD",
           "multiplier": 1
@@ -19300,7 +19300,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:POLUSDT",
-          "versionId": 869,
+          "versionId": 9687,
           "symbol": "POLUSDT",
           "baseAsset": "POL",
           "multiplier": 1
@@ -19361,7 +19361,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:POLYXUSDT",
-          "versionId": 873,
+          "versionId": 9691,
           "symbol": "POLYXUSDT",
           "baseAsset": "POLYX",
           "multiplier": 1
@@ -19422,7 +19422,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PONSUSDT",
-          "versionId": 1713,
+          "versionId": 9878,
           "symbol": "PONSUSDT",
           "baseAsset": "PONS",
           "multiplier": 1
@@ -19534,7 +19534,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PORTALUSDT",
-          "versionId": 991,
+          "versionId": 9788,
           "symbol": "PORTALUSDT",
           "baseAsset": "PORTAL",
           "multiplier": 1
@@ -19576,7 +19576,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:POWERUSDT",
-          "versionId": 839,
+          "versionId": 9659,
           "symbol": "POWERUSDT",
           "baseAsset": "POWER",
           "multiplier": 1
@@ -19628,7 +19628,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:POWRUSDT",
-          "versionId": 6106,
+          "versionId": 9899,
           "symbol": "POWRUSDT",
           "baseAsset": "POWR",
           "multiplier": 1
@@ -19680,7 +19680,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PRLUSDT",
-          "versionId": 969,
+          "versionId": 9769,
           "symbol": "PRLUSDT",
           "baseAsset": "PRL",
           "multiplier": 1
@@ -19732,7 +19732,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PROMUSDT",
-          "versionId": 993,
+          "versionId": 9790,
           "symbol": "PROMUSDT",
           "baseAsset": "PROM",
           "multiplier": 1
@@ -19783,7 +19783,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PROVEUSDT",
-          "versionId": 745,
+          "versionId": 9567,
           "symbol": "PROVEUSDT",
           "baseAsset": "PROVE",
           "multiplier": 1
@@ -19844,7 +19844,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PTBUSDT",
-          "versionId": 757,
+          "versionId": 9579,
           "symbol": "PTBUSDT",
           "baseAsset": "PTB",
           "multiplier": 1
@@ -19886,7 +19886,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PUMPUSDT",
-          "versionId": 729,
+          "versionId": 9557,
           "symbol": "PUMPUSDT",
           "baseAsset": "PUMP",
           "multiplier": 1
@@ -19946,7 +19946,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PUNDIAIUSDT",
-          "versionId": 1009,
+          "versionId": 9805,
           "symbol": "PUNDIAIUSDT",
           "baseAsset": "PUNDIAI",
           "multiplier": 1
@@ -20056,7 +20056,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:PYTHUSDT",
-          "versionId": 710,
+          "versionId": 9536,
           "symbol": "PYTHUSDT",
           "baseAsset": "PYTH",
           "multiplier": 1
@@ -20117,7 +20117,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:QUSDT",
-          "versionId": 756,
+          "versionId": 9578,
           "symbol": "QUSDT",
           "baseAsset": "Q",
           "multiplier": 1
@@ -20169,7 +20169,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:QNTUSDT",
-          "versionId": 8582,
+          "versionId": 9909,
           "symbol": "QNTUSDT",
           "baseAsset": "QNT",
           "multiplier": 1
@@ -20263,7 +20263,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RAREUSDT",
-          "versionId": 1169,
+          "versionId": 9870,
           "symbol": "RAREUSDT",
           "baseAsset": "RARE",
           "multiplier": 1
@@ -20315,7 +20315,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000RATSUSDT",
-          "versionId": 1457,
+          "versionId": 9861,
           "symbol": "1000RATSUSDT",
           "baseAsset": "1000RATS",
           "multiplier": 1000
@@ -20368,7 +20368,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RAVEUSDT",
-          "versionId": 845,
+          "versionId": 9665,
           "symbol": "RAVEUSDT",
           "baseAsset": "RAVE",
           "multiplier": 1
@@ -20462,7 +20462,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:REUSDT",
-          "versionId": 1116,
+          "versionId": 9838,
           "symbol": "REUSDT",
           "baseAsset": "RE",
           "multiplier": 1
@@ -20513,7 +20513,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RECALLUSDT",
-          "versionId": 796,
+          "versionId": 9617,
           "symbol": "RECALLUSDT",
           "baseAsset": "RECALL",
           "multiplier": 1
@@ -20565,7 +20565,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:REDUSDT",
-          "versionId": 973,
+          "versionId": 9773,
           "symbol": "REDUSDT",
           "baseAsset": "RED",
           "multiplier": 1
@@ -20617,7 +20617,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RENDERUSDT",
-          "versionId": 858,
+          "versionId": 9676,
           "symbol": "RENDERUSDT",
           "baseAsset": "RENDER",
           "multiplier": 1
@@ -20678,7 +20678,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RESOLVUSDT",
-          "versionId": 899,
+          "versionId": 9715,
           "symbol": "RESOLVUSDT",
           "baseAsset": "RESOLV",
           "multiplier": 1
@@ -20739,7 +20739,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:REZUSDT",
-          "versionId": 1151,
+          "versionId": 9859,
           "symbol": "REZUSDT",
           "baseAsset": "REZ",
           "multiplier": 1
@@ -20800,7 +20800,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RIFUSDT",
-          "versionId": 704,
+          "versionId": 9530,
           "symbol": "RIFUSDT",
           "baseAsset": "RIF",
           "multiplier": 1
@@ -20840,7 +20840,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RIVERUSDT",
-          "versionId": 799,
+          "versionId": 9620,
           "symbol": "RIVERUSDT",
           "baseAsset": "RIVER",
           "multiplier": 1
@@ -20892,7 +20892,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RLCUSDT",
-          "versionId": 9453,
+          "versionId": 9540,
           "symbol": "RLCUSDT",
           "baseAsset": "RLC",
           "multiplier": 1
@@ -20935,7 +20935,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ROBOUSDT",
-          "versionId": 939,
+          "versionId": 9746,
           "symbol": "ROBOUSDT",
           "baseAsset": "ROBO",
           "multiplier": 1
@@ -20987,7 +20987,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RONINUSDT",
-          "versionId": 992,
+          "versionId": 9789,
           "symbol": "RONINUSDT",
           "baseAsset": "RONIN",
           "multiplier": 1
@@ -21029,7 +21029,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ROSEUSDT",
-          "versionId": 885,
+          "versionId": 9703,
           "symbol": "ROSEUSDT",
           "baseAsset": "ROSE",
           "multiplier": 1
@@ -21081,7 +21081,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RPLUSDT",
-          "versionId": 931,
+          "versionId": 9740,
           "symbol": "RPLUSDT",
           "baseAsset": "RPL",
           "multiplier": 1
@@ -21184,7 +21184,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:RTXUSDT",
-          "versionId": 1108,
+          "versionId": 9836,
           "symbol": "RTXUSDT",
           "baseAsset": "RTX",
           "multiplier": 1
@@ -21310,7 +21310,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SUSDT",
-          "versionId": 925,
+          "versionId": 9734,
           "symbol": "SUSDT",
           "baseAsset": "S",
           "multiplier": 1
@@ -21413,7 +21413,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SAGAUSDT",
-          "versionId": 1033,
+          "versionId": 9823,
           "symbol": "SAGAUSDT",
           "baseAsset": "SAGA",
           "multiplier": 1
@@ -21464,7 +21464,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SAHARAUSDT",
-          "versionId": 728,
+          "versionId": 9556,
           "symbol": "SAHARAUSDT",
           "baseAsset": "SAHARA",
           "multiplier": 1
@@ -21516,7 +21516,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SANDUSDT",
-          "versionId": 649,
+          "versionId": 9474,
           "symbol": "SANDUSDT",
           "baseAsset": "SAND",
           "multiplier": 1
@@ -21618,7 +21618,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SAPIENUSDT",
-          "versionId": 748,
+          "versionId": 9570,
           "symbol": "SAPIENUSDT",
           "baseAsset": "SAPIEN",
           "multiplier": 1
@@ -21712,7 +21712,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SCRUSDT",
-          "versionId": 9442,
+          "versionId": 9913,
           "symbol": "SCRUSDT",
           "baseAsset": "SCR",
           "multiplier": 1
@@ -21753,7 +21753,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SEIUSDT",
-          "versionId": 702,
+          "versionId": 9528,
           "symbol": "SEIUSDT",
           "baseAsset": "SEI",
           "multiplier": 1
@@ -21814,7 +21814,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SENTUSDT",
-          "versionId": 827,
+          "versionId": 9647,
           "symbol": "SENTUSDT",
           "baseAsset": "SENT",
           "multiplier": 1
@@ -21907,7 +21907,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SHELLUSDT",
-          "versionId": 897,
+          "versionId": 9713,
           "symbol": "SHELLUSDT",
           "baseAsset": "SHELL",
           "multiplier": 1
@@ -21959,7 +21959,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000SHIBUSDT",
-          "versionId": 650,
+          "versionId": 9475,
           "symbol": "1000SHIBUSDT",
           "baseAsset": "1000SHIB",
           "multiplier": 1000
@@ -22020,7 +22020,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SHROOMUSDT",
-          "versionId": 3189,
+          "versionId": 9885,
           "symbol": "SHROOMUSDT",
           "baseAsset": "SHROOM",
           "multiplier": 1
@@ -22053,7 +22053,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SIUSDT",
-          "versionId": 9438,
+          "versionId": 9911,
           "symbol": "SIUSDT",
           "baseAsset": "SI",
           "multiplier": 1
@@ -22086,7 +22086,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SIGNUSDT",
-          "versionId": 947,
+          "versionId": 9750,
           "symbol": "SIGNUSDT",
           "baseAsset": "SIGN",
           "multiplier": 1
@@ -22138,7 +22138,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SIRENUSDT",
-          "versionId": 917,
+          "versionId": 9726,
           "symbol": "SIRENUSDT",
           "baseAsset": "SIREN",
           "multiplier": 1
@@ -22232,7 +22232,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SKRUSDT",
-          "versionId": 1881,
+          "versionId": 9708,
           "symbol": "SKRUSDT",
           "baseAsset": "SKR",
           "multiplier": 1
@@ -22293,7 +22293,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SKYUSDT",
-          "versionId": 763,
+          "versionId": 9585,
           "symbol": "SKYUSDT",
           "baseAsset": "SKY",
           "multiplier": 1
@@ -22354,7 +22354,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SKYAIUSDT",
-          "versionId": 838,
+          "versionId": 9658,
           "symbol": "SKYAIUSDT",
           "baseAsset": "SKYAI",
           "multiplier": 1
@@ -22405,7 +22405,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SLPUSDT",
-          "versionId": 4214,
+          "versionId": 9844,
           "symbol": "SLPUSDT",
           "baseAsset": "SLP",
           "multiplier": 1
@@ -22413,7 +22413,7 @@
         {
           "venue": "bitget",
           "instrumentId": "bitget:SLPUSDT",
-          "versionId": 9450,
+          "versionId": 9460,
           "symbol": "SLPUSDT",
           "baseAsset": "SLP",
           "multiplier": 1
@@ -22457,7 +22457,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SLXUSDT",
-          "versionId": 1076,
+          "versionId": 9834,
           "symbol": "SLXUSDT",
           "baseAsset": "SLX",
           "multiplier": 1
@@ -22508,7 +22508,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SNXUSDT",
-          "versionId": 673,
+          "versionId": 9499,
           "symbol": "SNXUSDT",
           "baseAsset": "SNX",
           "multiplier": 1
@@ -22569,7 +22569,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SOLUSDT",
-          "versionId": 643,
+          "versionId": 9468,
           "symbol": "SOLUSDT",
           "baseAsset": "SOL",
           "multiplier": 1
@@ -22630,7 +22630,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SOLVUSDT",
-          "versionId": 953,
+          "versionId": 9756,
           "symbol": "SOLVUSDT",
           "baseAsset": "SOLV",
           "multiplier": 1
@@ -22670,7 +22670,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SOMIUSDT",
-          "versionId": 896,
+          "versionId": 9712,
           "symbol": "SOMIUSDT",
           "baseAsset": "SOMI",
           "multiplier": 1
@@ -22764,7 +22764,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SOONUSDT",
-          "versionId": 860,
+          "versionId": 9678,
           "symbol": "SOONUSDT",
           "baseAsset": "SOON",
           "multiplier": 1
@@ -22867,7 +22867,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SPACEUSDT",
-          "versionId": 894,
+          "versionId": 9711,
           "symbol": "SPACEUSDT",
           "baseAsset": "SPACE",
           "multiplier": 1
@@ -22960,7 +22960,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SPKUSDT",
-          "versionId": 737,
+          "versionId": 9559,
           "symbol": "SPKUSDT",
           "baseAsset": "SPK",
           "multiplier": 1
@@ -23012,7 +23012,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SPXUSDT",
-          "versionId": 870,
+          "versionId": 9688,
           "symbol": "SPXUSDT",
           "baseAsset": "SPX",
           "multiplier": 1
@@ -23073,7 +23073,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SQDUSDT",
-          "versionId": 776,
+          "versionId": 9597,
           "symbol": "SQDUSDT",
           "baseAsset": "SQD",
           "multiplier": 1
@@ -23167,7 +23167,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STABLEUSDT",
-          "versionId": 815,
+          "versionId": 9636,
           "symbol": "STABLEUSDT",
           "baseAsset": "STABLE",
           "multiplier": 1
@@ -23228,7 +23228,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STARUSDT",
-          "versionId": 1036,
+          "versionId": 9825,
           "symbol": "STARUSDT",
           "baseAsset": "STAR",
           "multiplier": 1
@@ -23268,7 +23268,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STBLUSDT",
-          "versionId": 8577,
+          "versionId": 9592,
           "symbol": "STBLUSDT",
           "baseAsset": "STBL",
           "multiplier": 1
@@ -23319,7 +23319,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STEEMUSDT",
-          "versionId": 1019,
+          "versionId": 9814,
           "symbol": "STEEMUSDT",
           "baseAsset": "STEEM",
           "multiplier": 1
@@ -23371,7 +23371,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STOUSDT",
-          "versionId": 957,
+          "versionId": 9760,
           "symbol": "STOUSDT",
           "baseAsset": "STO",
           "multiplier": 1
@@ -23423,7 +23423,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STONKUSDT",
-          "versionId": 3220,
+          "versionId": 9892,
           "symbol": "STONKUSDT",
           "baseAsset": "STONK",
           "multiplier": 1
@@ -23477,7 +23477,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STONKBROKERUSDT",
-          "versionId": 2021,
+          "versionId": 9880,
           "symbol": "STONKBROKERUSDT",
           "baseAsset": "STONKBROKER",
           "multiplier": 1
@@ -23512,7 +23512,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STONKSUSDT",
-          "versionId": 8196,
+          "versionId": 9886,
           "symbol": "STONKSUSDT",
           "baseAsset": "STONKS",
           "multiplier": 1
@@ -23546,7 +23546,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STRKUSDT",
-          "versionId": 713,
+          "versionId": 9541,
           "symbol": "STRKUSDT",
           "baseAsset": "STRK",
           "multiplier": 1
@@ -23607,7 +23607,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:STXUSDT",
-          "versionId": 703,
+          "versionId": 9529,
           "symbol": "STXUSDT",
           "baseAsset": "STX",
           "multiplier": 1
@@ -23668,7 +23668,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SUIUSDT",
-          "versionId": 689,
+          "versionId": 9515,
           "symbol": "SUIUSDT",
           "baseAsset": "SUI",
           "multiplier": 1
@@ -23822,7 +23822,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SUSHIUSDT",
-          "versionId": 4413,
+          "versionId": 9835,
           "symbol": "SUSHIUSDT",
           "baseAsset": "SUSHI",
           "multiplier": 1
@@ -23883,7 +23883,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SWARMSUSDT",
-          "versionId": 1451,
+          "versionId": 9774,
           "symbol": "SWARMSUSDT",
           "baseAsset": "SWARMS",
           "multiplier": 1
@@ -23923,7 +23923,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SXTUSDT",
-          "versionId": 1143,
+          "versionId": 9852,
           "symbol": "SXTUSDT",
           "baseAsset": "SXT",
           "multiplier": 1
@@ -23975,7 +23975,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SYNUSDT",
-          "versionId": 1118,
+          "versionId": 9839,
           "symbol": "SYNUSDT",
           "baseAsset": "SYN",
           "multiplier": 1
@@ -24026,7 +24026,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:SYRUPUSDT",
-          "versionId": 1005,
+          "versionId": 9801,
           "symbol": "SYRUPUSDT",
           "baseAsset": "SYRUP",
           "multiplier": 1
@@ -24129,7 +24129,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TAUSDT",
-          "versionId": 1006,
+          "versionId": 9802,
           "symbol": "TAUSDT",
           "baseAsset": "TA",
           "multiplier": 1
@@ -24171,7 +24171,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TACUSDT",
-          "versionId": 997,
+          "versionId": 9793,
           "symbol": "TACUSDT",
           "baseAsset": "TAC",
           "multiplier": 1
@@ -24213,7 +24213,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TAGUSDT",
-          "versionId": 741,
+          "versionId": 9563,
           "symbol": "TAGUSDT",
           "baseAsset": "TAG",
           "multiplier": 1
@@ -24264,7 +24264,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TAIKOUSDT",
-          "versionId": 1132,
+          "versionId": 9843,
           "symbol": "TAIKOUSDT",
           "baseAsset": "TAIKO",
           "multiplier": 1
@@ -24316,7 +24316,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TAKEUSDT",
-          "versionId": 759,
+          "versionId": 9581,
           "symbol": "TAKEUSDT",
           "baseAsset": "TAKE",
           "multiplier": 1
@@ -24356,7 +24356,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TAOUSDT",
-          "versionId": 865,
+          "versionId": 9683,
           "symbol": "TAOUSDT",
           "baseAsset": "TAO",
           "multiplier": 1
@@ -24417,7 +24417,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:THEUSDT",
-          "versionId": 1140,
+          "versionId": 9851,
           "symbol": "THEUSDT",
           "baseAsset": "THE",
           "multiplier": 1
@@ -24469,7 +24469,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:THETAUSDT",
-          "versionId": 4411,
+          "versionId": 9811,
           "symbol": "THETAUSDT",
           "baseAsset": "THETA",
           "multiplier": 1
@@ -24521,7 +24521,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TIAUSDT",
-          "versionId": 708,
+          "versionId": 9534,
           "symbol": "TIAUSDT",
           "baseAsset": "TIA",
           "multiplier": 1
@@ -24582,7 +24582,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TLMUSDT",
-          "versionId": 1134,
+          "versionId": 9845,
           "symbol": "TLMUSDT",
           "baseAsset": "TLM",
           "multiplier": 1
@@ -24634,7 +24634,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TMXUSDT",
-          "versionId": 1176,
+          "versionId": 9876,
           "symbol": "TMXUSDT",
           "baseAsset": "TMX",
           "multiplier": 1
@@ -24675,7 +24675,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TNSRUSDT",
-          "versionId": 828,
+          "versionId": 9648,
           "symbol": "TNSRUSDT",
           "baseAsset": "TNSR",
           "multiplier": 1
@@ -24736,7 +24736,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TOSHIUSDT",
-          "versionId": 770,
+          "versionId": 9591,
           "symbol": "TOSHIUSDT",
           "baseAsset": "TOSHI",
           "multiplier": 1
@@ -24787,7 +24787,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TOWNSUSDT",
-          "versionId": 744,
+          "versionId": 9566,
           "symbol": "TOWNSUSDT",
           "baseAsset": "TOWNS",
           "multiplier": 1
@@ -24839,7 +24839,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRADOORUSDT",
-          "versionId": 774,
+          "versionId": 9595,
           "symbol": "TRADOORUSDT",
           "baseAsset": "TRADOOR",
           "multiplier": 1
@@ -24879,7 +24879,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRBUSDT",
-          "versionId": 695,
+          "versionId": 9521,
           "symbol": "TRBUSDT",
           "baseAsset": "TRB",
           "multiplier": 1
@@ -24940,7 +24940,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TREEUSDT",
-          "versionId": 738,
+          "versionId": 9560,
           "symbol": "TREEUSDT",
           "baseAsset": "TREE",
           "multiplier": 1
@@ -24992,7 +24992,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRIAUSDT",
-          "versionId": 918,
+          "versionId": 9727,
           "symbol": "TRIAUSDT",
           "baseAsset": "TRIA",
           "multiplier": 1
@@ -25044,7 +25044,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TROLLUSDT",
-          "versionId": 1030,
+          "versionId": 9820,
           "symbol": "TROLLUSDT",
           "baseAsset": "TROLL",
           "multiplier": 1
@@ -25077,7 +25077,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRUMPUSDT",
-          "versionId": 720,
+          "versionId": 9548,
           "symbol": "TRUMPUSDT",
           "baseAsset": "TRUMP",
           "multiplier": 1
@@ -25138,7 +25138,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRUSTUSDT",
-          "versionId": 812,
+          "versionId": 9633,
           "symbol": "TRUSTUSDT",
           "baseAsset": "TRUST",
           "multiplier": 1
@@ -25190,7 +25190,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRUTHUSDT",
-          "versionId": 820,
+          "versionId": 9640,
           "symbol": "TRUTHUSDT",
           "baseAsset": "TRUTH",
           "multiplier": 1
@@ -25232,7 +25232,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TRXUSDT",
-          "versionId": 656,
+          "versionId": 9481,
           "symbol": "TRXUSDT",
           "baseAsset": "TRX",
           "multiplier": 1
@@ -25293,7 +25293,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TSTUSDT",
-          "versionId": 1455,
+          "versionId": 9782,
           "symbol": "TSTUSDT",
           "baseAsset": "TST",
           "multiplier": 1
@@ -25333,7 +25333,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TURBOUSDT",
-          "versionId": 872,
+          "versionId": 9690,
           "symbol": "TURBOUSDT",
           "baseAsset": "TURBO",
           "multiplier": 1
@@ -25393,7 +25393,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TURTLEUSDT",
-          "versionId": 801,
+          "versionId": 9622,
           "symbol": "TURTLEUSDT",
           "baseAsset": "TURTLE",
           "multiplier": 1
@@ -25435,7 +25435,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:TUTUSDT",
-          "versionId": 1458,
+          "versionId": 9864,
           "symbol": "TUTUSDT",
           "baseAsset": "TUT",
           "multiplier": 1
@@ -25487,7 +25487,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:UAIUSDT",
-          "versionId": 813,
+          "versionId": 9634,
           "symbol": "UAIUSDT",
           "baseAsset": "UAI",
           "multiplier": 1
@@ -25539,7 +25539,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:UBUSDT",
-          "versionId": 766,
+          "versionId": 9587,
           "symbol": "UBUSDT",
           "baseAsset": "UB",
           "multiplier": 1
@@ -25591,7 +25591,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:UMAUSDT",
-          "versionId": 933,
+          "versionId": 9742,
           "symbol": "UMAUSDT",
           "baseAsset": "UMA",
           "multiplier": 1
@@ -25652,7 +25652,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:UNIUSDT",
-          "versionId": 674,
+          "versionId": 9500,
           "symbol": "UNIUSDT",
           "baseAsset": "UNI",
           "multiplier": 1
@@ -25713,7 +25713,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:UPUSDT",
-          "versionId": 1059,
+          "versionId": 9830,
           "symbol": "UPUSDT",
           "baseAsset": "UP",
           "multiplier": 1
@@ -25758,7 +25758,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:USUSDT",
-          "versionId": 843,
+          "versionId": 9663,
           "symbol": "USUSDT",
           "baseAsset": "US",
           "multiplier": 1
@@ -25810,7 +25810,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:USD1USDT",
-          "versionId": 727,
+          "versionId": 9555,
           "symbol": "USD1USDT",
           "baseAsset": "USD1",
           "multiplier": 1
@@ -25893,7 +25893,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:USELESSUSDT",
-          "versionId": 927,
+          "versionId": 9736,
           "symbol": "USELESSUSDT",
           "baseAsset": "USELESS",
           "multiplier": 1
@@ -26047,7 +26047,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:VANAUSDT",
-          "versionId": 920,
+          "versionId": 9729,
           "symbol": "VANAUSDT",
           "baseAsset": "VANA",
           "multiplier": 1
@@ -26099,7 +26099,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:VELOUSDT",
-          "versionId": 887,
+          "versionId": 9705,
           "symbol": "VELOUSDT",
           "baseAsset": "VELO",
           "multiplier": 1
@@ -26182,7 +26182,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:VELVETUSDT",
-          "versionId": 998,
+          "versionId": 9794,
           "symbol": "VELVETUSDT",
           "baseAsset": "VELVET",
           "multiplier": 1
@@ -26234,7 +26234,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:VERONAUSDT",
-          "versionId": 8309,
+          "versionId": 9907,
           "symbol": "VERONAUSDT",
           "baseAsset": "VERONA",
           "multiplier": 1
@@ -26309,7 +26309,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:VIRTUALUSDT",
-          "versionId": 857,
+          "versionId": 9675,
           "symbol": "VIRTUALUSDT",
           "baseAsset": "VIRTUAL",
           "multiplier": 1
@@ -26411,7 +26411,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:VVVUSDT",
-          "versionId": 861,
+          "versionId": 9679,
           "symbol": "VVVUSDT",
           "baseAsset": "VVV",
           "multiplier": 1
@@ -26658,7 +26658,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:WETUSDT",
-          "versionId": 841,
+          "versionId": 9661,
           "symbol": "WETUSDT",
           "baseAsset": "WET",
           "multiplier": 1
@@ -26710,7 +26710,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:WIFUSDT",
-          "versionId": 1450,
+          "versionId": 9552,
           "symbol": "WIFUSDT",
           "baseAsset": "WIF",
           "multiplier": 1
@@ -26771,7 +26771,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:WLDUSDT",
-          "versionId": 696,
+          "versionId": 9522,
           "symbol": "WLDUSDT",
           "baseAsset": "WLD",
           "multiplier": 1
@@ -26832,7 +26832,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:WLFIUSDT",
-          "versionId": 749,
+          "versionId": 9571,
           "symbol": "WLFIUSDT",
           "baseAsset": "WLFI",
           "multiplier": 1
@@ -26935,7 +26935,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XAIUSDT",
-          "versionId": 950,
+          "versionId": 9753,
           "symbol": "XAIUSDT",
           "baseAsset": "XAI",
           "multiplier": 1
@@ -26996,7 +26996,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XANUSDT",
-          "versionId": 956,
+          "versionId": 9759,
           "symbol": "XANUSDT",
           "baseAsset": "XAN",
           "multiplier": 1
@@ -27048,7 +27048,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XCNUSDT",
-          "versionId": 1003,
+          "versionId": 9799,
           "symbol": "XCNUSDT",
           "baseAsset": "XCN",
           "multiplier": 1
@@ -27089,7 +27089,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XDPUSDT",
-          "versionId": 8626,
+          "versionId": 9910,
           "symbol": "XDPUSDT",
           "baseAsset": "XDP",
           "multiplier": 1
@@ -27132,7 +27132,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:1000XECUSDT",
-          "versionId": 1144,
+          "versionId": 9853,
           "symbol": "1000XECUSDT",
           "baseAsset": "1000XEC",
           "multiplier": 1000
@@ -27184,7 +27184,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XLMUSDT",
-          "versionId": 698,
+          "versionId": 9524,
           "symbol": "XLMUSDT",
           "baseAsset": "XLM",
           "multiplier": 1
@@ -27245,7 +27245,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XMRUSDT",
-          "versionId": 675,
+          "versionId": 9501,
           "symbol": "XMRUSDT",
           "baseAsset": "XMR",
           "multiplier": 1
@@ -27306,7 +27306,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XNYUSDT",
-          "versionId": 746,
+          "versionId": 9568,
           "symbol": "XNYUSDT",
           "baseAsset": "XNY",
           "multiplier": 1
@@ -27347,7 +27347,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XPINUSDT",
-          "versionId": 767,
+          "versionId": 9588,
           "symbol": "XPINUSDT",
           "baseAsset": "XPIN",
           "multiplier": 1
@@ -27399,7 +27399,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XPLUSDT",
-          "versionId": 750,
+          "versionId": 9572,
           "symbol": "XPLUSDT",
           "baseAsset": "XPL",
           "multiplier": 1
@@ -27460,7 +27460,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:XRPUSDT",
-          "versionId": 644,
+          "versionId": 9469,
           "symbol": "XRPUSDT",
           "baseAsset": "XRP",
           "multiplier": 1
@@ -27647,7 +27647,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:YBUSDT",
-          "versionId": 790,
+          "versionId": 9611,
           "symbol": "YBUSDT",
           "baseAsset": "YB",
           "multiplier": 1
@@ -27699,7 +27699,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:YFIUSDT",
-          "versionId": 4414,
+          "versionId": 9848,
           "symbol": "YFIUSDT",
           "baseAsset": "YFI",
           "multiplier": 1
@@ -27741,7 +27741,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:YGGUSDT",
-          "versionId": 699,
+          "versionId": 9525,
           "symbol": "YGGUSDT",
           "baseAsset": "YGG",
           "multiplier": 1
@@ -27802,7 +27802,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZAMAUSDT",
-          "versionId": 864,
+          "versionId": 9682,
           "symbol": "ZAMAUSDT",
           "baseAsset": "ZAMA",
           "multiplier": 1
@@ -27854,7 +27854,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZBTUSDT",
-          "versionId": 797,
+          "versionId": 9618,
           "symbol": "ZBTUSDT",
           "baseAsset": "ZBT",
           "multiplier": 1
@@ -27906,7 +27906,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZCATUSDT",
-          "versionId": 3218,
+          "versionId": 9890,
           "symbol": "ZCATUSDT",
           "baseAsset": "ZCAT",
           "multiplier": 1
@@ -27940,7 +27940,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZECUSDT",
-          "versionId": 6745,
+          "versionId": 9600,
           "symbol": "ZECUSDT",
           "baseAsset": "ZEC",
           "multiplier": 1
@@ -28001,7 +28001,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZENUSDT",
-          "versionId": 807,
+          "versionId": 9628,
           "symbol": "ZENUSDT",
           "baseAsset": "ZEN",
           "multiplier": 1
@@ -28062,7 +28062,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZEREBROUSDT",
-          "versionId": 952,
+          "versionId": 9755,
           "symbol": "ZEREBROUSDT",
           "baseAsset": "ZEREBRO",
           "multiplier": 1
@@ -28104,7 +28104,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZESTUSDT",
-          "versionId": 1039,
+          "versionId": 9827,
           "symbol": "ZESTUSDT",
           "baseAsset": "ZEST",
           "multiplier": 1
@@ -28207,7 +28207,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZILUSDT",
-          "versionId": 664,
+          "versionId": 9489,
           "symbol": "ZILUSDT",
           "baseAsset": "ZIL",
           "multiplier": 1
@@ -28259,7 +28259,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZKUSDT",
-          "versionId": 718,
+          "versionId": 9546,
           "symbol": "ZKUSDT",
           "baseAsset": "ZK",
           "multiplier": 1
@@ -28320,7 +28320,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZKCUSDT",
-          "versionId": 1718,
+          "versionId": 9589,
           "symbol": "ZKCUSDT",
           "baseAsset": "ZKC",
           "multiplier": 1
@@ -28372,7 +28372,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZKPUSDT",
-          "versionId": 847,
+          "versionId": 9667,
           "symbol": "ZKPUSDT",
           "baseAsset": "ZKP",
           "multiplier": 1
@@ -28424,7 +28424,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZORAUSDT",
-          "versionId": 4378,
+          "versionId": 9562,
           "symbol": "ZORAUSDT",
           "baseAsset": "ZORA",
           "multiplier": 1
@@ -28485,7 +28485,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZROUSDT",
-          "versionId": 893,
+          "versionId": 9710,
           "symbol": "ZROUSDT",
           "baseAsset": "ZRO",
           "multiplier": 1
@@ -28588,7 +28588,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:ZZZUSDT",
-          "versionId": 6104,
+          "versionId": 9897,
           "symbol": "ZZZUSDT",
           "baseAsset": "ZZZ",
           "multiplier": 1
@@ -28621,7 +28621,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:哈基米USDT",
-          "versionId": 4228,
+          "versionId": 9888,
           "symbol": "哈基米USDT",
           "baseAsset": "哈基米",
           "multiplier": 1
@@ -28670,7 +28670,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:币安人生USDT",
-          "versionId": 4226,
+          "versionId": 9681,
           "symbol": "币安人生USDT",
           "baseAsset": "币安人生",
           "multiplier": 1
@@ -28710,7 +28710,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:我踏马来了USDT",
-          "versionId": 4227,
+          "versionId": 9693,
           "symbol": "我踏马来了USDT",
           "baseAsset": "我踏马来了",
           "multiplier": 1
@@ -28750,7 +28750,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:牛来USDT",
-          "versionId": 4225,
+          "versionId": 9871,
           "symbol": "牛来USDT",
           "baseAsset": "牛来",
           "multiplier": 1
@@ -28799,7 +28799,7 @@
         {
           "venue": "aster",
           "instrumentId": "aster:龙虾USDT",
-          "versionId": 4224,
+          "versionId": 9752,
           "symbol": "龙虾USDT",
           "baseAsset": "龙虾",
           "multiplier": 1

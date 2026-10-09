@@ -1,15 +1,13 @@
 {
-  "sourcePath": "/home/tn/watchdeck-local-archive/roster-health-evidence-20261007/capture-01/universe-snapshot.json",
-  "generatedAt": "2026-10-07T12:18:54.176459Z",
-  "sourceStatus": "partial",
-  "sourceQualityReasons": [
-    "contains_non_ready_instruments"
-  ],
+  "sourcePath": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/map-inputs/universe-snapshot.json",
+  "generatedAt": "2026-10-09T06:55:36.104934Z",
+  "sourceStatus": "ready",
+  "sourceQualityReasons": [],
   "items": [
     {
       "venue": "aster",
       "venueInstrumentId": "aster:0GUSDT",
-      "venueInstrumentVersionId": 772,
+      "venueInstrumentVersionId": 9593,
       "sourceSymbol": "0GUSDT",
       "baseAsset": "0G",
       "quoteAsset": "USDT",
@@ -23,7 +21,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000BONKUSDT",
-      "venueInstrumentVersionId": 714,
+      "venueInstrumentVersionId": 9542,
       "sourceSymbol": "1000BONKUSDT",
       "baseAsset": "1000BONK",
       "quoteAsset": "USDT",
@@ -37,7 +35,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000CATUSDT",
-      "venueInstrumentVersionId": 1162,
+      "venueInstrumentVersionId": 9867,
       "sourceSymbol": "1000CATUSDT",
       "baseAsset": "1000CAT",
       "quoteAsset": "USDT",
@@ -51,7 +49,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000CHEEMSUSDT",
-      "venueInstrumentVersionId": 792,
+      "venueInstrumentVersionId": 9613,
       "sourceSymbol": "1000CHEEMSUSDT",
       "baseAsset": "1000CHEEMS",
       "quoteAsset": "USDT",
@@ -65,7 +63,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000FLOKIUSDT",
-      "venueInstrumentVersionId": 705,
+      "venueInstrumentVersionId": 9531,
       "sourceSymbol": "1000FLOKIUSDT",
       "baseAsset": "1000FLOKI",
       "quoteAsset": "USDT",
@@ -79,7 +77,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000LUNCUSDT",
-      "venueInstrumentVersionId": 840,
+      "venueInstrumentVersionId": 9660,
       "sourceSymbol": "1000LUNCUSDT",
       "baseAsset": "1000LUNC",
       "quoteAsset": "USDT",
@@ -93,7 +91,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000NEXUSDT",
-      "venueInstrumentVersionId": 1045,
+      "venueInstrumentVersionId": 9828,
       "sourceSymbol": "1000NEXUSDT",
       "baseAsset": "1000NEX",
       "quoteAsset": "USDT",
@@ -107,7 +105,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000PEPEUSDT",
-      "venueInstrumentVersionId": 691,
+      "venueInstrumentVersionId": 9517,
       "sourceSymbol": "1000PEPEUSDT",
       "baseAsset": "1000PEPE",
       "quoteAsset": "USDT",
@@ -121,7 +119,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000RATSUSDT",
-      "venueInstrumentVersionId": 1457,
+      "venueInstrumentVersionId": 9861,
       "sourceSymbol": "1000RATSUSDT",
       "baseAsset": "1000RATS",
       "quoteAsset": "USDT",
@@ -135,7 +133,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000SHIBUSDT",
-      "venueInstrumentVersionId": 650,
+      "venueInstrumentVersionId": 9475,
       "sourceSymbol": "1000SHIBUSDT",
       "baseAsset": "1000SHIB",
       "quoteAsset": "USDT",
@@ -149,7 +147,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:1000XECUSDT",
-      "venueInstrumentVersionId": 1144,
+      "venueInstrumentVersionId": 9853,
       "sourceSymbol": "1000XECUSDT",
       "baseAsset": "1000XEC",
       "quoteAsset": "USDT",
@@ -163,7 +161,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:2ZUSDT",
-      "venueInstrumentVersionId": 780,
+      "venueInstrumentVersionId": 9601,
       "sourceSymbol": "2ZUSDT",
       "baseAsset": "2Z",
       "quoteAsset": "USDT",
@@ -177,7 +175,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:4STOCKUSDT",
-      "venueInstrumentVersionId": 6102,
+      "venueInstrumentVersionId": 9895,
       "sourceSymbol": "4STOCKUSDT",
       "baseAsset": "4STOCK",
       "quoteAsset": "USDT",
@@ -191,7 +189,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:4USDT",
-      "venueInstrumentVersionId": 785,
+      "venueInstrumentVersionId": 9606,
       "sourceSymbol": "4USDT",
       "baseAsset": "4",
       "quoteAsset": "USDT",
@@ -205,7 +203,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AAVEUSDT",
-      "venueInstrumentVersionId": 663,
+      "venueInstrumentVersionId": 9488,
       "sourceSymbol": "AAVEUSDT",
       "baseAsset": "AAVE",
       "quoteAsset": "USDT",
@@ -219,7 +217,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ACEUSDT",
-      "venueInstrumentVersionId": 1145,
+      "venueInstrumentVersionId": 9854,
       "sourceSymbol": "ACEUSDT",
       "baseAsset": "ACE",
       "quoteAsset": "USDT",
@@ -233,7 +231,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ACUUSDT",
-      "venueInstrumentVersionId": 889,
+      "venueInstrumentVersionId": 9707,
       "sourceSymbol": "ACUUSDT",
       "baseAsset": "ACU",
       "quoteAsset": "USDT",
@@ -247,7 +245,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ADAUSDT",
-      "venueInstrumentVersionId": 647,
+      "venueInstrumentVersionId": 9472,
       "sourceSymbol": "ADAUSDT",
       "baseAsset": "ADA",
       "quoteAsset": "USDT",
@@ -261,7 +259,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AEONUSDT",
-      "venueInstrumentVersionId": 1150,
+      "venueInstrumentVersionId": 9858,
       "sourceSymbol": "AEONUSDT",
       "baseAsset": "AEON",
       "quoteAsset": "USDT",
@@ -275,7 +273,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AEROUSDT",
-      "venueInstrumentVersionId": 988,
+      "venueInstrumentVersionId": 9785,
       "sourceSymbol": "AEROUSDT",
       "baseAsset": "AERO",
       "quoteAsset": "USDT",
@@ -289,7 +287,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AEVOUSDT",
-      "venueInstrumentVersionId": 1001,
+      "venueInstrumentVersionId": 9797,
       "sourceSymbol": "AEVOUSDT",
       "baseAsset": "AEVO",
       "quoteAsset": "USDT",
@@ -303,7 +301,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AGTUSDT",
-      "venueInstrumentVersionId": 1026,
+      "venueInstrumentVersionId": 9817,
       "sourceSymbol": "AGTUSDT",
       "baseAsset": "AGT",
       "quoteAsset": "USDT",
@@ -317,7 +315,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AIAUSDT",
-      "venueInstrumentVersionId": 769,
+      "venueInstrumentVersionId": 9590,
       "sourceSymbol": "AIAUSDT",
       "baseAsset": "AIA",
       "quoteAsset": "USDT",
@@ -331,7 +329,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AIGENSYNUSDT",
-      "venueInstrumentVersionId": 1010,
+      "venueInstrumentVersionId": 9806,
       "sourceSymbol": "AIGENSYNUSDT",
       "baseAsset": "AIGENSYN",
       "quoteAsset": "USDT",
@@ -345,7 +343,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AINUSDT",
-      "venueInstrumentVersionId": 1159,
+      "venueInstrumentVersionId": 9865,
       "sourceSymbol": "AINUSDT",
       "baseAsset": "AIN",
       "quoteAsset": "USDT",
@@ -359,7 +357,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AIOTUSDT",
-      "venueInstrumentVersionId": 972,
+      "venueInstrumentVersionId": 9772,
       "sourceSymbol": "AIOTUSDT",
       "baseAsset": "AIOT",
       "quoteAsset": "USDT",
@@ -373,7 +371,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AIOUSDT",
-      "venueInstrumentVersionId": 747,
+      "venueInstrumentVersionId": 9569,
       "sourceSymbol": "AIOUSDT",
       "baseAsset": "AIO",
       "quoteAsset": "USDT",
@@ -387,7 +385,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AIUSDT",
-      "venueInstrumentVersionId": 2316,
+      "venueInstrumentVersionId": 9538,
       "sourceSymbol": "AIUSDT",
       "baseAsset": "AI",
       "quoteAsset": "USDT",
@@ -401,7 +399,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AIW3USDT",
-      "venueInstrumentVersionId": 2023,
+      "venueInstrumentVersionId": 9882,
       "sourceSymbol": "AIW3USDT",
       "baseAsset": "AIW3",
       "quoteAsset": "USDT",
@@ -415,7 +413,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AKEUSDT",
-      "venueInstrumentVersionId": 6438,
+      "venueInstrumentVersionId": 9777,
       "sourceSymbol": "AKEUSDT",
       "baseAsset": "AKE",
       "quoteAsset": "USDT",
@@ -429,7 +427,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ALCHUSDT",
-      "venueInstrumentVersionId": 921,
+      "venueInstrumentVersionId": 9730,
       "sourceSymbol": "ALCHUSDT",
       "baseAsset": "ALCH",
       "quoteAsset": "USDT",
@@ -443,7 +441,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ALGOUSDT",
-      "venueInstrumentVersionId": 4409,
+      "venueInstrumentVersionId": 9505,
       "sourceSymbol": "ALGOUSDT",
       "baseAsset": "ALGO",
       "quoteAsset": "USDT",
@@ -457,7 +455,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ALICEUSDT",
-      "venueInstrumentVersionId": 677,
+      "venueInstrumentVersionId": 9503,
       "sourceSymbol": "ALICEUSDT",
       "baseAsset": "ALICE",
       "quoteAsset": "USDT",
@@ -471,7 +469,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ALLOUSDT",
-      "venueInstrumentVersionId": 822,
+      "venueInstrumentVersionId": 9642,
       "sourceSymbol": "ALLOUSDT",
       "baseAsset": "ALLO",
       "quoteAsset": "USDT",
@@ -485,7 +483,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ANIMEUSDT",
-      "venueInstrumentVersionId": 850,
+      "venueInstrumentVersionId": 9669,
       "sourceSymbol": "ANIMEUSDT",
       "baseAsset": "ANIME",
       "quoteAsset": "USDT",
@@ -499,7 +497,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ANSEMUSDT",
-      "venueInstrumentVersionId": 1475,
+      "venueInstrumentVersionId": 9842,
       "sourceSymbol": "ANSEMUSDT",
       "baseAsset": "ANSEM",
       "quoteAsset": "USDT",
@@ -513,7 +511,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:APEUSDT",
-      "venueInstrumentVersionId": 659,
+      "venueInstrumentVersionId": 9484,
       "sourceSymbol": "APEUSDT",
       "baseAsset": "APE",
       "quoteAsset": "USDT",
@@ -527,7 +525,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:API3USDT",
-      "venueInstrumentVersionId": 1013,
+      "venueInstrumentVersionId": 9809,
       "sourceSymbol": "API3USDT",
       "baseAsset": "API3",
       "quoteAsset": "USDT",
@@ -541,7 +539,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:APMUSDT",
-      "venueInstrumentVersionId": 6421,
+      "venueInstrumentVersionId": 9903,
       "sourceSymbol": "APMUSDT",
       "baseAsset": "APM",
       "quoteAsset": "USDT",
@@ -555,7 +553,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:APRUSDT",
-      "venueInstrumentVersionId": 802,
+      "venueInstrumentVersionId": 9623,
       "sourceSymbol": "APRUSDT",
       "baseAsset": "APR",
       "quoteAsset": "USDT",
@@ -569,7 +567,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:APTUSDT",
-      "venueInstrumentVersionId": 685,
+      "venueInstrumentVersionId": 9511,
       "sourceSymbol": "APTUSDT",
       "baseAsset": "APT",
       "quoteAsset": "USDT",
@@ -583,7 +581,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARBUSDT",
-      "venueInstrumentVersionId": 687,
+      "venueInstrumentVersionId": 9513,
       "sourceSymbol": "ARBUSDT",
       "baseAsset": "ARB",
       "quoteAsset": "USDT",
@@ -597,7 +595,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARCUSDT",
-      "venueInstrumentVersionId": 915,
+      "venueInstrumentVersionId": 9724,
       "sourceSymbol": "ARCUSDT",
       "baseAsset": "ARC",
       "quoteAsset": "USDT",
@@ -611,7 +609,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARGUSUSDT",
-      "venueInstrumentVersionId": 6117,
+      "venueInstrumentVersionId": 9900,
       "sourceSymbol": "ARGUSUSDT",
       "baseAsset": "ARGUS",
       "quoteAsset": "USDT",
@@ -625,7 +623,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARIAUSDT",
-      "venueInstrumentVersionId": 758,
+      "venueInstrumentVersionId": 9580,
       "sourceSymbol": "ARIAUSDT",
       "baseAsset": "ARIA",
       "quoteAsset": "USDT",
@@ -639,7 +637,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARKMUSDT",
-      "venueInstrumentVersionId": 712,
+      "venueInstrumentVersionId": 9539,
       "sourceSymbol": "ARKMUSDT",
       "baseAsset": "ARKM",
       "quoteAsset": "USDT",
@@ -653,7 +651,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARPAUSDT",
-      "venueInstrumentVersionId": 693,
+      "venueInstrumentVersionId": 9519,
       "sourceSymbol": "ARPAUSDT",
       "baseAsset": "ARPA",
       "quoteAsset": "USDT",
@@ -667,7 +665,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARUSDT",
-      "venueInstrumentVersionId": 817,
+      "venueInstrumentVersionId": 9638,
       "sourceSymbol": "ARUSDT",
       "baseAsset": "AR",
       "quoteAsset": "USDT",
@@ -681,7 +679,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ARXUSDT",
-      "venueInstrumentVersionId": 1119,
+      "venueInstrumentVersionId": 9840,
       "sourceSymbol": "ARXUSDT",
       "baseAsset": "ARX",
       "quoteAsset": "USDT",
@@ -695,7 +693,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ASTEROIDUSDT",
-      "venueInstrumentVersionId": 1448,
+      "venueInstrumentVersionId": 9787,
       "sourceSymbol": "ASTEROIDUSDT",
       "baseAsset": "ASTEROID",
       "quoteAsset": "USDT",
@@ -709,7 +707,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ASTERUSDT",
-      "venueInstrumentVersionId": 639,
+      "venueInstrumentVersionId": 9464,
       "sourceSymbol": "ASTERUSDT",
       "baseAsset": "ASTER",
       "quoteAsset": "USDT",
@@ -723,7 +721,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ATHUSDT",
-      "venueInstrumentVersionId": 1175,
+      "venueInstrumentVersionId": 9875,
       "sourceSymbol": "ATHUSDT",
       "baseAsset": "ATH",
       "quoteAsset": "USDT",
@@ -737,7 +735,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ATOMUSDT",
-      "venueInstrumentVersionId": 657,
+      "venueInstrumentVersionId": 9482,
       "sourceSymbol": "ATOMUSDT",
       "baseAsset": "ATOM",
       "quoteAsset": "USDT",
@@ -751,7 +749,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ATUSDT",
-      "venueInstrumentVersionId": 804,
+      "venueInstrumentVersionId": 9625,
       "sourceSymbol": "ATUSDT",
       "baseAsset": "AT",
       "quoteAsset": "USDT",
@@ -765,7 +763,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AUCTIONUSDT",
-      "venueInstrumentVersionId": 911,
+      "venueInstrumentVersionId": 9722,
       "sourceSymbol": "AUCTIONUSDT",
       "baseAsset": "AUCTION",
       "quoteAsset": "USDT",
@@ -779,7 +777,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AVAAIUSDT",
-      "venueInstrumentVersionId": 983,
+      "venueInstrumentVersionId": 9780,
       "sourceSymbol": "AVAAIUSDT",
       "baseAsset": "AVAAI",
       "quoteAsset": "USDT",
@@ -793,7 +791,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AVAUSDT",
-      "venueInstrumentVersionId": 6420,
+      "venueInstrumentVersionId": 9902,
       "sourceSymbol": "AVAUSDT",
       "baseAsset": "AVA",
       "quoteAsset": "USDT",
@@ -807,7 +805,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AVAXUSDT",
-      "venueInstrumentVersionId": 652,
+      "venueInstrumentVersionId": 9477,
       "sourceSymbol": "AVAXUSDT",
       "baseAsset": "AVAX",
       "quoteAsset": "USDT",
@@ -821,7 +819,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AVLUSDT",
-      "venueInstrumentVersionId": 835,
+      "venueInstrumentVersionId": 9655,
       "sourceSymbol": "AVLUSDT",
       "baseAsset": "AVL",
       "quoteAsset": "USDT",
@@ -835,7 +833,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AVNTUSDT",
-      "venueInstrumentVersionId": 760,
+      "venueInstrumentVersionId": 9582,
       "sourceSymbol": "AVNTUSDT",
       "baseAsset": "AVNT",
       "quoteAsset": "USDT",
@@ -849,7 +847,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AWEUSDT",
-      "venueInstrumentVersionId": 935,
+      "venueInstrumentVersionId": 9744,
       "sourceSymbol": "AWEUSDT",
       "baseAsset": "AWE",
       "quoteAsset": "USDT",
@@ -863,7 +861,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AXLUSDT",
-      "venueInstrumentVersionId": 900,
+      "venueInstrumentVersionId": 9716,
       "sourceSymbol": "AXLUSDT",
       "baseAsset": "AXL",
       "quoteAsset": "USDT",
@@ -877,7 +875,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AXSUSDT",
-      "venueInstrumentVersionId": 651,
+      "venueInstrumentVersionId": 9476,
       "sourceSymbol": "AXSUSDT",
       "baseAsset": "AXS",
       "quoteAsset": "USDT",
@@ -891,7 +889,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:AZTECUSDT",
-      "venueInstrumentVersionId": 923,
+      "venueInstrumentVersionId": 9732,
       "sourceSymbol": "AZTECUSDT",
       "baseAsset": "AZTEC",
       "quoteAsset": "USDT",
@@ -905,7 +903,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:B-MONEYUSDT",
-      "venueInstrumentVersionId": 6069,
+      "venueInstrumentVersionId": 9889,
       "sourceSymbol": "B-MONEYUSDT",
       "baseAsset": "B-MONEY",
       "quoteAsset": "USDT",
@@ -919,7 +917,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:B2USDT",
-      "venueInstrumentVersionId": 810,
+      "venueInstrumentVersionId": 9631,
       "sourceSymbol": "B2USDT",
       "baseAsset": "B2",
       "quoteAsset": "USDT",
@@ -933,7 +931,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:B3USDT",
-      "venueInstrumentVersionId": 1028,
+      "venueInstrumentVersionId": 9818,
       "sourceSymbol": "B3USDT",
       "baseAsset": "B3",
       "quoteAsset": "USDT",
@@ -947,7 +945,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BABYUSDT",
-      "venueInstrumentVersionId": 1014,
+      "venueInstrumentVersionId": 9810,
       "sourceSymbol": "BABYUSDT",
       "baseAsset": "BABY",
       "quoteAsset": "USDT",
@@ -961,7 +959,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BANANAS31USDT",
-      "venueInstrumentVersionId": 831,
+      "venueInstrumentVersionId": 9651,
       "sourceSymbol": "BANANAS31USDT",
       "baseAsset": "BANANAS31",
       "quoteAsset": "USDT",
@@ -975,7 +973,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BANKUSDT",
-      "venueInstrumentVersionId": 787,
+      "venueInstrumentVersionId": 9608,
       "sourceSymbol": "BANKUSDT",
       "baseAsset": "BANK",
       "quoteAsset": "USDT",
@@ -989,7 +987,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BANUSDT",
-      "venueInstrumentVersionId": 1002,
+      "venueInstrumentVersionId": 9798,
       "sourceSymbol": "BANUSDT",
       "baseAsset": "BAN",
       "quoteAsset": "USDT",
@@ -1003,7 +1001,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BARDUSDT",
-      "venueInstrumentVersionId": 773,
+      "venueInstrumentVersionId": 9594,
       "sourceSymbol": "BARDUSDT",
       "baseAsset": "BARD",
       "quoteAsset": "USDT",
@@ -1017,7 +1015,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BASECATUSDT",
-      "venueInstrumentVersionId": 1174,
+      "venueInstrumentVersionId": 9874,
       "sourceSymbol": "BASECATUSDT",
       "baseAsset": "BASECAT",
       "quoteAsset": "USDT",
@@ -1031,7 +1029,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BASEDUSDT",
-      "venueInstrumentVersionId": 971,
+      "venueInstrumentVersionId": 9771,
       "sourceSymbol": "BASEDUSDT",
       "baseAsset": "BASED",
       "quoteAsset": "USDT",
@@ -1045,7 +1043,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BASUSDT",
-      "venueInstrumentVersionId": 751,
+      "venueInstrumentVersionId": 9573,
       "sourceSymbol": "BASUSDT",
       "baseAsset": "BAS",
       "quoteAsset": "USDT",
@@ -1059,7 +1057,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BAYUSDT",
-      "venueInstrumentVersionId": 975,
+      "venueInstrumentVersionId": 9775,
       "sourceSymbol": "BAYUSDT",
       "baseAsset": "BAY",
       "quoteAsset": "USDT",
@@ -1073,7 +1071,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BBUSDT",
-      "venueInstrumentVersionId": 999,
+      "venueInstrumentVersionId": 9795,
       "sourceSymbol": "BBUSDT",
       "baseAsset": "BB",
       "quoteAsset": "USDT",
@@ -1087,7 +1085,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BCHUSDT",
-      "venueInstrumentVersionId": 672,
+      "venueInstrumentVersionId": 9498,
       "sourceSymbol": "BCHUSDT",
       "baseAsset": "BCH",
       "quoteAsset": "USDT",
@@ -1101,7 +1099,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BEATUSDT",
-      "venueInstrumentVersionId": 824,
+      "venueInstrumentVersionId": 9644,
       "sourceSymbol": "BEATUSDT",
       "baseAsset": "BEAT",
       "quoteAsset": "USDT",
@@ -1115,7 +1113,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BELUSDT",
-      "venueInstrumentVersionId": 684,
+      "venueInstrumentVersionId": 9510,
       "sourceSymbol": "BELUSDT",
       "baseAsset": "BEL",
       "quoteAsset": "USDT",
@@ -1129,7 +1127,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BERAUSDT",
-      "venueInstrumentVersionId": 877,
+      "venueInstrumentVersionId": 9695,
       "sourceSymbol": "BERAUSDT",
       "baseAsset": "BERA",
       "quoteAsset": "USDT",
@@ -1143,7 +1141,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BICOUSDT",
-      "venueInstrumentVersionId": 4415,
+      "venueInstrumentVersionId": 9862,
       "sourceSymbol": "BICOUSDT",
       "baseAsset": "BICO",
       "quoteAsset": "USDT",
@@ -1157,7 +1155,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BILLUSDT",
-      "venueInstrumentVersionId": 1025,
+      "venueInstrumentVersionId": 9816,
       "sourceSymbol": "BILLUSDT",
       "baseAsset": "BILL",
       "quoteAsset": "USDT",
@@ -1171,7 +1169,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BIOUSDT",
-      "venueInstrumentVersionId": 834,
+      "venueInstrumentVersionId": 9654,
       "sourceSymbol": "BIOUSDT",
       "baseAsset": "BIO",
       "quoteAsset": "USDT",
@@ -1185,7 +1183,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BIRBUSDT",
-      "venueInstrumentVersionId": 901,
+      "venueInstrumentVersionId": 9717,
       "sourceSymbol": "BIRBUSDT",
       "baseAsset": "BIRB",
       "quoteAsset": "USDT",
@@ -1199,7 +1197,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BLENDUSDT",
-      "venueInstrumentVersionId": 1008,
+      "venueInstrumentVersionId": 9804,
       "sourceSymbol": "BLENDUSDT",
       "baseAsset": "BLEND",
       "quoteAsset": "USDT",
@@ -1213,7 +1211,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BLESSUSDT",
-      "venueInstrumentVersionId": 775,
+      "venueInstrumentVersionId": 9596,
       "sourceSymbol": "BLESSUSDT",
       "baseAsset": "BLESS",
       "quoteAsset": "USDT",
@@ -1227,7 +1225,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BLUAIUSDT",
-      "venueInstrumentVersionId": 800,
+      "venueInstrumentVersionId": 9621,
       "sourceSymbol": "BLUAIUSDT",
       "baseAsset": "BLUAI",
       "quoteAsset": "USDT",
@@ -1241,7 +1239,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BLURUSDT",
-      "venueInstrumentVersionId": 994,
+      "venueInstrumentVersionId": 9791,
       "sourceSymbol": "BLURUSDT",
       "baseAsset": "BLUR",
       "quoteAsset": "USDT",
@@ -1255,7 +1253,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BMTUSDT",
-      "venueInstrumentVersionId": 905,
+      "venueInstrumentVersionId": 9718,
       "sourceSymbol": "BMTUSDT",
       "baseAsset": "BMT",
       "quoteAsset": "USDT",
@@ -1269,7 +1267,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BNBUSDT",
-      "venueInstrumentVersionId": 642,
+      "venueInstrumentVersionId": 9467,
       "sourceSymbol": "BNBUSDT",
       "baseAsset": "BNB",
       "quoteAsset": "USDT",
@@ -1283,7 +1281,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BOMEUSDT",
-      "venueInstrumentVersionId": 868,
+      "venueInstrumentVersionId": 9686,
       "sourceSymbol": "BOMEUSDT",
       "baseAsset": "BOME",
       "quoteAsset": "USDT",
@@ -1297,7 +1295,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BONERUSDT",
-      "venueInstrumentVersionId": 3222,
+      "venueInstrumentVersionId": 9893,
       "sourceSymbol": "BONERUSDT",
       "baseAsset": "BONER",
       "quoteAsset": "USDT",
@@ -1311,7 +1309,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BREVUSDT",
-      "venueInstrumentVersionId": 856,
+      "venueInstrumentVersionId": 9674,
       "sourceSymbol": "BREVUSDT",
       "baseAsset": "BREV",
       "quoteAsset": "USDT",
@@ -1325,7 +1323,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BREWUSDT",
-      "venueInstrumentVersionId": 4100,
+      "venueInstrumentVersionId": 9891,
       "sourceSymbol": "BREWUSDT",
       "baseAsset": "BREW",
       "quoteAsset": "USDT",
@@ -1339,7 +1337,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BROCCOLI714USDT",
-      "venueInstrumentVersionId": 859,
+      "venueInstrumentVersionId": 9677,
       "sourceSymbol": "BROCCOLI714USDT",
       "baseAsset": "BROCCOLI714",
       "quoteAsset": "USDT",
@@ -1353,7 +1351,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BRUSDT",
-      "venueInstrumentVersionId": 965,
+      "venueInstrumentVersionId": 9766,
       "sourceSymbol": "BRUSDT",
       "baseAsset": "BR",
       "quoteAsset": "USDT",
@@ -1367,7 +1365,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BSBUSDT",
-      "venueInstrumentVersionId": 968,
+      "venueInstrumentVersionId": 9768,
       "sourceSymbol": "BSBUSDT",
       "baseAsset": "BSB",
       "quoteAsset": "USDT",
@@ -1381,7 +1379,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BTCDOMUSDT",
-      "venueInstrumentVersionId": 978,
+      "venueInstrumentVersionId": 9776,
       "sourceSymbol": "BTCDOMUSDT",
       "baseAsset": "BTCDOM",
       "quoteAsset": "USDT",
@@ -1395,7 +1393,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BTCUSDT",
-      "venueInstrumentVersionId": 640,
+      "venueInstrumentVersionId": 9465,
       "sourceSymbol": "BTCUSDT",
       "baseAsset": "BTC",
       "quoteAsset": "USDT",
@@ -1409,7 +1407,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BTRUSDT",
-      "venueInstrumentVersionId": 752,
+      "venueInstrumentVersionId": 9574,
       "sourceSymbol": "BTRUSDT",
       "baseAsset": "BTR",
       "quoteAsset": "USDT",
@@ -1423,7 +1421,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BTWUSDT",
-      "venueInstrumentVersionId": 1029,
+      "venueInstrumentVersionId": 9819,
       "sourceSymbol": "BTWUSDT",
       "baseAsset": "BTW",
       "quoteAsset": "USDT",
@@ -1437,7 +1435,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BULLAUSDT",
-      "venueInstrumentVersionId": 907,
+      "venueInstrumentVersionId": 9720,
       "sourceSymbol": "BULLAUSDT",
       "baseAsset": "BULLA",
       "quoteAsset": "USDT",
@@ -1451,7 +1449,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:BUSDT",
-      "venueInstrumentVersionId": 726,
+      "venueInstrumentVersionId": 9554,
       "sourceSymbol": "BUSDT",
       "baseAsset": "B",
       "quoteAsset": "USDT",
@@ -1465,7 +1463,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CAKEUSDT",
-      "venueInstrumentVersionId": 658,
+      "venueInstrumentVersionId": 9483,
       "sourceSymbol": "CAKEUSDT",
       "baseAsset": "CAKE",
       "quoteAsset": "USDT",
@@ -1479,7 +1477,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CAPUSDT",
-      "venueInstrumentVersionId": 1128,
+      "venueInstrumentVersionId": 9841,
       "sourceSymbol": "CAPUSDT",
       "baseAsset": "CAP",
       "quoteAsset": "USDT",
@@ -1493,7 +1491,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CARDSUSDT",
-      "venueInstrumentVersionId": 1016,
+      "venueInstrumentVersionId": 9812,
       "sourceSymbol": "CARDSUSDT",
       "baseAsset": "CARDS",
       "quoteAsset": "USDT",
@@ -1507,7 +1505,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CASHCATUSDT",
-      "venueInstrumentVersionId": 1138,
+      "venueInstrumentVersionId": 9849,
       "sourceSymbol": "CASHCATUSDT",
       "baseAsset": "CASHCAT",
       "quoteAsset": "USDT",
@@ -1521,7 +1519,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CATEUSDT",
-      "venueInstrumentVersionId": 1173,
+      "venueInstrumentVersionId": 9873,
       "sourceSymbol": "CATEUSDT",
       "baseAsset": "CATE",
       "quoteAsset": "USDT",
@@ -1535,7 +1533,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CCUSDT",
-      "venueInstrumentVersionId": 806,
+      "venueInstrumentVersionId": 9627,
       "sourceSymbol": "CCUSDT",
       "baseAsset": "CC",
       "quoteAsset": "USDT",
@@ -1549,7 +1547,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CFGUSDT",
-      "venueInstrumentVersionId": 958,
+      "venueInstrumentVersionId": 9761,
       "sourceSymbol": "CFGUSDT",
       "baseAsset": "CFG",
       "quoteAsset": "USDT",
@@ -1563,7 +1561,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CFXUSDT",
-      "venueInstrumentVersionId": 4410,
+      "venueInstrumentVersionId": 9516,
       "sourceSymbol": "CFXUSDT",
       "baseAsset": "CFX",
       "quoteAsset": "USDT",
@@ -1577,7 +1575,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CHILLGUYUSDT",
-      "venueInstrumentVersionId": 989,
+      "venueInstrumentVersionId": 9786,
       "sourceSymbol": "CHILLGUYUSDT",
       "baseAsset": "CHILLGUY",
       "quoteAsset": "USDT",
@@ -1591,7 +1589,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CHIPUSDT",
-      "venueInstrumentVersionId": 984,
+      "venueInstrumentVersionId": 9781,
       "sourceSymbol": "CHIPUSDT",
       "baseAsset": "CHIP",
       "quoteAsset": "USDT",
@@ -1605,7 +1603,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CHZUSDT",
-      "venueInstrumentVersionId": 678,
+      "venueInstrumentVersionId": 9504,
       "sourceSymbol": "CHZUSDT",
       "baseAsset": "CHZ",
       "quoteAsset": "USDT",
@@ -1619,7 +1617,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CLANKERUSDT",
-      "venueInstrumentVersionId": 823,
+      "venueInstrumentVersionId": 9643,
       "sourceSymbol": "CLANKERUSDT",
       "baseAsset": "CLANKER",
       "quoteAsset": "USDT",
@@ -1633,7 +1631,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CLOUSDT",
-      "venueInstrumentVersionId": 795,
+      "venueInstrumentVersionId": 9616,
       "sourceSymbol": "CLOUSDT",
       "baseAsset": "CLO",
       "quoteAsset": "USDT",
@@ -1647,7 +1645,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:COAIUSDT",
-      "venueInstrumentVersionId": 783,
+      "venueInstrumentVersionId": 9604,
       "sourceSymbol": "COAIUSDT",
       "baseAsset": "COAI",
       "quoteAsset": "USDT",
@@ -1661,7 +1659,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:COLLECTUSDT",
-      "venueInstrumentVersionId": 853,
+      "venueInstrumentVersionId": 9671,
       "sourceSymbol": "COLLECTUSDT",
       "baseAsset": "COLLECT",
       "quoteAsset": "USDT",
@@ -1675,7 +1673,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:COTIUSDT",
-      "venueInstrumentVersionId": 1177,
+      "venueInstrumentVersionId": 9877,
       "sourceSymbol": "COTIUSDT",
       "baseAsset": "COTI",
       "quoteAsset": "USDT",
@@ -1689,7 +1687,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:COWUSDT",
-      "venueInstrumentVersionId": 926,
+      "venueInstrumentVersionId": 9735,
       "sourceSymbol": "COWUSDT",
       "baseAsset": "COW",
       "quoteAsset": "USDT",
@@ -1703,7 +1701,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CRVUSDT",
-      "venueInstrumentVersionId": 666,
+      "venueInstrumentVersionId": 9491,
       "sourceSymbol": "CRVUSDT",
       "baseAsset": "CRV",
       "quoteAsset": "USDT",
@@ -1717,7 +1715,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CTRUSDT",
-      "venueInstrumentVersionId": 1072,
+      "venueInstrumentVersionId": 9833,
       "sourceSymbol": "CTRUSDT",
       "baseAsset": "CTR",
       "quoteAsset": "USDT",
@@ -1731,7 +1729,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CTUSDT",
-      "venueInstrumentVersionId": 9307,
+      "venueInstrumentVersionId": 9912,
       "sourceSymbol": "CTUSDT",
       "baseAsset": "CT",
       "quoteAsset": "USDT",
@@ -1745,7 +1743,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CUSDT",
-      "venueInstrumentVersionId": 742,
+      "venueInstrumentVersionId": 9564,
       "sourceSymbol": "CUSDT",
       "baseAsset": "C",
       "quoteAsset": "USDT",
@@ -1759,7 +1757,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CYBERUSDT",
-      "venueInstrumentVersionId": 697,
+      "venueInstrumentVersionId": 9523,
       "sourceSymbol": "CYBERUSDT",
       "baseAsset": "CYBER",
       "quoteAsset": "USDT",
@@ -1773,7 +1771,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:CYSUSDT",
-      "venueInstrumentVersionId": 844,
+      "venueInstrumentVersionId": 9664,
       "sourceSymbol": "CYSUSDT",
       "baseAsset": "CYS",
       "quoteAsset": "USDT",
@@ -1787,7 +1785,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DASHUSDT",
-      "venueInstrumentVersionId": 808,
+      "venueInstrumentVersionId": 9629,
       "sourceSymbol": "DASHUSDT",
       "baseAsset": "DASH",
       "quoteAsset": "USDT",
@@ -1801,7 +1799,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DELTAUSDT",
-      "venueInstrumentVersionId": 2022,
+      "venueInstrumentVersionId": 9881,
       "sourceSymbol": "DELTAUSDT",
       "baseAsset": "DELTA",
       "quoteAsset": "USDT",
@@ -1815,7 +1813,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DEXEUSDT",
-      "venueInstrumentVersionId": 825,
+      "venueInstrumentVersionId": 9645,
       "sourceSymbol": "DEXEUSDT",
       "baseAsset": "DEXE",
       "quoteAsset": "USDT",
@@ -1829,7 +1827,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DOGEUSDT",
-      "venueInstrumentVersionId": 645,
+      "venueInstrumentVersionId": 9470,
       "sourceSymbol": "DOGEUSDT",
       "baseAsset": "DOGE",
       "quoteAsset": "USDT",
@@ -1843,7 +1841,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DOGSUSDT",
-      "venueInstrumentVersionId": 1017,
+      "venueInstrumentVersionId": 9813,
       "sourceSymbol": "DOGSUSDT",
       "baseAsset": "DOGS",
       "quoteAsset": "USDT",
@@ -1857,7 +1855,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DOLOUSDT",
-      "venueInstrumentVersionId": 879,
+      "venueInstrumentVersionId": 9697,
       "sourceSymbol": "DOLOUSDT",
       "baseAsset": "DOLO",
       "quoteAsset": "USDT",
@@ -1871,7 +1869,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DOODUSDT",
-      "venueInstrumentVersionId": 955,
+      "venueInstrumentVersionId": 9758,
       "sourceSymbol": "DOODUSDT",
       "baseAsset": "DOOD",
       "quoteAsset": "USDT",
@@ -1885,7 +1883,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DOSUSDT",
-      "venueInstrumentVersionId": 1168,
+      "venueInstrumentVersionId": 9869,
       "sourceSymbol": "DOSUSDT",
       "baseAsset": "DOS",
       "quoteAsset": "USDT",
@@ -1899,7 +1897,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DOTUSDT",
-      "venueInstrumentVersionId": 648,
+      "venueInstrumentVersionId": 9473,
       "sourceSymbol": "DOTUSDT",
       "baseAsset": "DOT",
       "quoteAsset": "USDT",
@@ -1913,7 +1911,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DRVUSDT",
-      "venueInstrumentVersionId": 9456,
+      "venueInstrumentVersionId": 9905,
       "sourceSymbol": "DRVUSDT",
       "baseAsset": "DRV",
       "quoteAsset": "USDT",
@@ -1927,7 +1925,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DUSKUSDT",
-      "venueInstrumentVersionId": 882,
+      "venueInstrumentVersionId": 9700,
       "sourceSymbol": "DUSKUSDT",
       "baseAsset": "DUSK",
       "quoteAsset": "USDT",
@@ -1941,7 +1939,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DYDXUSDT",
-      "venueInstrumentVersionId": 665,
+      "venueInstrumentVersionId": 9490,
       "sourceSymbol": "DYDXUSDT",
       "baseAsset": "DYDX",
       "quoteAsset": "USDT",
@@ -1955,7 +1953,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:DYMUSDT",
-      "venueInstrumentVersionId": 830,
+      "venueInstrumentVersionId": 9650,
       "sourceSymbol": "DYMUSDT",
       "baseAsset": "DYM",
       "quoteAsset": "USDT",
@@ -1969,7 +1967,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:EDENUSDT",
-      "venueInstrumentVersionId": 778,
+      "venueInstrumentVersionId": 9599,
       "sourceSymbol": "EDENUSDT",
       "baseAsset": "EDEN",
       "quoteAsset": "USDT",
@@ -1983,7 +1981,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:EDGEUSDT",
-      "venueInstrumentVersionId": 964,
+      "venueInstrumentVersionId": 9765,
       "sourceSymbol": "EDGEUSDT",
       "baseAsset": "EDGE",
       "quoteAsset": "USDT",
@@ -1997,7 +1995,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:EDUUSDT",
-      "venueInstrumentVersionId": 694,
+      "venueInstrumentVersionId": 9520,
       "sourceSymbol": "EDUUSDT",
       "baseAsset": "EDU",
       "quoteAsset": "USDT",
@@ -2011,7 +2009,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:EIGENUSDT",
-      "venueInstrumentVersionId": 719,
+      "venueInstrumentVersionId": 9547,
       "sourceSymbol": "EIGENUSDT",
       "baseAsset": "EIGEN",
       "quoteAsset": "USDT",
@@ -2025,7 +2023,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ELSAUSDT",
-      "venueInstrumentVersionId": 884,
+      "venueInstrumentVersionId": 9702,
       "sourceSymbol": "ELSAUSDT",
       "baseAsset": "ELSA",
       "quoteAsset": "USDT",
@@ -2039,7 +2037,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ENAUSDT",
-      "venueInstrumentVersionId": 722,
+      "venueInstrumentVersionId": 9550,
       "sourceSymbol": "ENAUSDT",
       "baseAsset": "ENA",
       "quoteAsset": "USDT",
@@ -2053,7 +2051,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ENJUSDT",
-      "venueInstrumentVersionId": 962,
+      "venueInstrumentVersionId": 9764,
       "sourceSymbol": "ENJUSDT",
       "baseAsset": "ENJ",
       "quoteAsset": "USDT",
@@ -2067,7 +2065,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ENSOUSDT",
-      "venueInstrumentVersionId": 794,
+      "venueInstrumentVersionId": 9615,
       "sourceSymbol": "ENSOUSDT",
       "baseAsset": "ENSO",
       "quoteAsset": "USDT",
@@ -2081,7 +2079,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ENSUSDT",
-      "venueInstrumentVersionId": 680,
+      "venueInstrumentVersionId": 9506,
       "sourceSymbol": "ENSUSDT",
       "baseAsset": "ENS",
       "quoteAsset": "USDT",
@@ -2095,7 +2093,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ERAUSDT",
-      "venueInstrumentVersionId": 1147,
+      "venueInstrumentVersionId": 9856,
       "sourceSymbol": "ERAUSDT",
       "baseAsset": "ERA",
       "quoteAsset": "USDT",
@@ -2109,7 +2107,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ESPORTSUSDT",
-      "venueInstrumentVersionId": 739,
+      "venueInstrumentVersionId": 9561,
       "sourceSymbol": "ESPORTSUSDT",
       "baseAsset": "ESPORTS",
       "quoteAsset": "USDT",
@@ -2123,7 +2121,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ESPUSDT",
-      "venueInstrumentVersionId": 922,
+      "venueInstrumentVersionId": 9731,
       "sourceSymbol": "ESPUSDT",
       "baseAsset": "ESP",
       "quoteAsset": "USDT",
@@ -2137,7 +2135,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ETCUSDT",
-      "venueInstrumentVersionId": 660,
+      "venueInstrumentVersionId": 9485,
       "sourceSymbol": "ETCUSDT",
       "baseAsset": "ETC",
       "quoteAsset": "USDT",
@@ -2151,7 +2149,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ETHFIUSDT",
-      "venueInstrumentVersionId": 871,
+      "venueInstrumentVersionId": 9689,
       "sourceSymbol": "ETHFIUSDT",
       "baseAsset": "ETHFI",
       "quoteAsset": "USDT",
@@ -2165,7 +2163,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ETHUSDT",
-      "venueInstrumentVersionId": 641,
+      "venueInstrumentVersionId": 9466,
       "sourceSymbol": "ETHUSDT",
       "baseAsset": "ETH",
       "quoteAsset": "USDT",
@@ -2179,7 +2177,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:EULUSDT",
-      "venueInstrumentVersionId": 793,
+      "venueInstrumentVersionId": 9614,
       "sourceSymbol": "EULUSDT",
       "baseAsset": "EUL",
       "quoteAsset": "USDT",
@@ -2193,7 +2191,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:EVAAUSDT",
-      "venueInstrumentVersionId": 781,
+      "venueInstrumentVersionId": 9602,
       "sourceSymbol": "EVAAUSDT",
       "baseAsset": "EVAA",
       "quoteAsset": "USDT",
@@ -2207,7 +2205,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FARTCOINUSDT",
-      "venueInstrumentVersionId": 721,
+      "venueInstrumentVersionId": 9549,
       "sourceSymbol": "FARTCOINUSDT",
       "baseAsset": "FARTCOIN",
       "quoteAsset": "USDT",
@@ -2221,7 +2219,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FETUSDT",
-      "venueInstrumentVersionId": 700,
+      "venueInstrumentVersionId": 9526,
       "sourceSymbol": "FETUSDT",
       "baseAsset": "FET",
       "quoteAsset": "USDT",
@@ -2235,7 +2233,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FFUSDT",
-      "venueInstrumentVersionId": 777,
+      "venueInstrumentVersionId": 9598,
       "sourceSymbol": "FFUSDT",
       "baseAsset": "FF",
       "quoteAsset": "USDT",
@@ -2249,7 +2247,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FHEUSDT",
-      "venueInstrumentVersionId": 878,
+      "venueInstrumentVersionId": 9696,
       "sourceSymbol": "FHEUSDT",
       "baseAsset": "FHE",
       "quoteAsset": "USDT",
@@ -2263,7 +2261,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FIDAUSDT",
-      "venueInstrumentVersionId": 1038,
+      "venueInstrumentVersionId": 9826,
       "sourceSymbol": "FIDAUSDT",
       "baseAsset": "FIDA",
       "quoteAsset": "USDT",
@@ -2277,7 +2275,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FIGHTUSDT",
-      "venueInstrumentVersionId": 891,
+      "venueInstrumentVersionId": 9709,
       "sourceSymbol": "FIGHTUSDT",
       "baseAsset": "FIGHT",
       "quoteAsset": "USDT",
@@ -2291,7 +2289,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FILUSDT",
-      "venueInstrumentVersionId": 667,
+      "venueInstrumentVersionId": 9492,
       "sourceSymbol": "FILUSDT",
       "baseAsset": "FIL",
       "quoteAsset": "USDT",
@@ -2305,7 +2303,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FLOCKUSDT",
-      "venueInstrumentVersionId": 762,
+      "venueInstrumentVersionId": 9584,
       "sourceSymbol": "FLOCKUSDT",
       "baseAsset": "FLOCK",
       "quoteAsset": "USDT",
@@ -2319,7 +2317,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FLORKUSDT",
-      "venueInstrumentVersionId": 3214,
+      "venueInstrumentVersionId": 9883,
       "sourceSymbol": "FLORKUSDT",
       "baseAsset": "FLORK",
       "quoteAsset": "USDT",
@@ -2333,7 +2331,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FLOWUSDT",
-      "venueInstrumentVersionId": 948,
+      "venueInstrumentVersionId": 9751,
       "sourceSymbol": "FLOWUSDT",
       "baseAsset": "FLOW",
       "quoteAsset": "USDT",
@@ -2347,7 +2345,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FLUXUSDT",
-      "venueInstrumentVersionId": 819,
+      "venueInstrumentVersionId": 9639,
       "sourceSymbol": "FLUXUSDT",
       "baseAsset": "FLUX",
       "quoteAsset": "USDT",
@@ -2361,7 +2359,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FOGOUSDT",
-      "venueInstrumentVersionId": 876,
+      "venueInstrumentVersionId": 9694,
       "sourceSymbol": "FOGOUSDT",
       "baseAsset": "FOGO",
       "quoteAsset": "USDT",
@@ -2375,7 +2373,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FOLKSUSDT",
-      "venueInstrumentVersionId": 814,
+      "venueInstrumentVersionId": 9635,
       "sourceSymbol": "FOLKSUSDT",
       "baseAsset": "FOLKS",
       "quoteAsset": "USDT",
@@ -2389,7 +2387,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FONEUSDT",
-      "venueInstrumentVersionId": 1714,
+      "venueInstrumentVersionId": 9879,
       "sourceSymbol": "FONEUSDT",
       "baseAsset": "FONE",
       "quoteAsset": "USDT",
@@ -2403,7 +2401,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FORMUSDT",
-      "venueInstrumentVersionId": 788,
+      "venueInstrumentVersionId": 9609,
       "sourceSymbol": "FORMUSDT",
       "baseAsset": "FORM",
       "quoteAsset": "USDT",
@@ -2417,7 +2415,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FRAXUSDT",
-      "venueInstrumentVersionId": 880,
+      "venueInstrumentVersionId": 9698,
       "sourceSymbol": "FRAXUSDT",
       "baseAsset": "FRAX",
       "quoteAsset": "USDT",
@@ -2431,7 +2429,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FUNUSDT",
-      "venueInstrumentVersionId": 881,
+      "venueInstrumentVersionId": 9699,
       "sourceSymbol": "FUNUSDT",
       "baseAsset": "FUN",
       "quoteAsset": "USDT",
@@ -2445,7 +2443,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:FUSDT",
-      "venueInstrumentVersionId": 6443,
+      "venueInstrumentVersionId": 9904,
       "sourceSymbol": "FUSDT",
       "baseAsset": "F",
       "quoteAsset": "USDT",
@@ -2459,7 +2457,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GALAUSDT",
-      "venueInstrumentVersionId": 654,
+      "venueInstrumentVersionId": 9479,
       "sourceSymbol": "GALAUSDT",
       "baseAsset": "GALA",
       "quoteAsset": "USDT",
@@ -2473,7 +2471,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GENIUSUSDT",
-      "venueInstrumentVersionId": 981,
+      "venueInstrumentVersionId": 9778,
       "sourceSymbol": "GENIUSUSDT",
       "baseAsset": "GENIUS",
       "quoteAsset": "USDT",
@@ -2487,7 +2485,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GIGGLEUSDT",
-      "venueInstrumentVersionId": 786,
+      "venueInstrumentVersionId": 9607,
       "sourceSymbol": "GIGGLEUSDT",
       "baseAsset": "GIGGLE",
       "quoteAsset": "USDT",
@@ -2501,7 +2499,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GMTUSDT",
-      "venueInstrumentVersionId": 661,
+      "venueInstrumentVersionId": 9486,
       "sourceSymbol": "GMTUSDT",
       "baseAsset": "GMT",
       "quoteAsset": "USDT",
@@ -2515,7 +2513,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GPSUSDT",
-      "venueInstrumentVersionId": 919,
+      "venueInstrumentVersionId": 9728,
       "sourceSymbol": "GPSUSDT",
       "baseAsset": "GPS",
       "quoteAsset": "USDT",
@@ -2529,7 +2527,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GRAMUSDT",
-      "venueInstrumentVersionId": 1135,
+      "venueInstrumentVersionId": 9846,
       "sourceSymbol": "GRAMUSDT",
       "baseAsset": "GRAM",
       "quoteAsset": "USDT",
@@ -2543,7 +2541,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GRASSUSDT",
-      "venueInstrumentVersionId": 829,
+      "venueInstrumentVersionId": 9649,
       "sourceSymbol": "GRASSUSDT",
       "baseAsset": "GRASS",
       "quoteAsset": "USDT",
@@ -2557,7 +2555,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GRIFFAINUSDT",
-      "venueInstrumentVersionId": 937,
+      "venueInstrumentVersionId": 9745,
       "sourceSymbol": "GRIFFAINUSDT",
       "baseAsset": "GRIFFAIN",
       "quoteAsset": "USDT",
@@ -2571,7 +2569,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GRVTUSDT",
-      "venueInstrumentVersionId": 1152,
+      "venueInstrumentVersionId": 9860,
       "sourceSymbol": "GRVTUSDT",
       "baseAsset": "GRVT",
       "quoteAsset": "USDT",
@@ -2585,7 +2583,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GSTOCKUSDT",
-      "venueInstrumentVersionId": 6500,
+      "venueInstrumentVersionId": 9906,
       "sourceSymbol": "GSTOCKUSDT",
       "baseAsset": "GSTOCK",
       "quoteAsset": "USDT",
@@ -2599,7 +2597,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GTCUSDT",
-      "venueInstrumentVersionId": 4412,
+      "venueInstrumentVersionId": 9824,
       "sourceSymbol": "GTCUSDT",
       "baseAsset": "GTC",
       "quoteAsset": "USDT",
@@ -2613,7 +2611,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GUAUSDT",
-      "venueInstrumentVersionId": 837,
+      "venueInstrumentVersionId": 9657,
       "sourceSymbol": "GUAUSDT",
       "baseAsset": "GUA",
       "quoteAsset": "USDT",
@@ -2627,7 +2625,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GUNUSDT",
-      "venueInstrumentVersionId": 862,
+      "venueInstrumentVersionId": 9680,
       "sourceSymbol": "GUNUSDT",
       "baseAsset": "GUN",
       "quoteAsset": "USDT",
@@ -2641,7 +2639,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GUSDT",
-      "venueInstrumentVersionId": 6446,
+      "venueInstrumentVersionId": 9762,
       "sourceSymbol": "GUSDT",
       "baseAsset": "G",
       "quoteAsset": "USDT",
@@ -2655,7 +2653,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:GWEIUSDT",
-      "venueInstrumentVersionId": 888,
+      "venueInstrumentVersionId": 9706,
       "sourceSymbol": "GWEIUSDT",
       "baseAsset": "GWEI",
       "quoteAsset": "USDT",
@@ -2669,7 +2667,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HANAUSDT",
-      "venueInstrumentVersionId": 886,
+      "venueInstrumentVersionId": 9704,
       "sourceSymbol": "HANAUSDT",
       "baseAsset": "HANA",
       "quoteAsset": "USDT",
@@ -2683,7 +2681,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HBARUSDT",
-      "venueInstrumentVersionId": 866,
+      "venueInstrumentVersionId": 9684,
       "sourceSymbol": "HBARUSDT",
       "baseAsset": "HBAR",
       "quoteAsset": "USDT",
@@ -2697,7 +2695,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HEIUSDT",
-      "venueInstrumentVersionId": 1139,
+      "venueInstrumentVersionId": 9850,
       "sourceSymbol": "HEIUSDT",
       "baseAsset": "HEI",
       "quoteAsset": "USDT",
@@ -2711,7 +2709,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HEMIUSDT",
-      "venueInstrumentVersionId": 754,
+      "venueInstrumentVersionId": 9576,
       "sourceSymbol": "HEMIUSDT",
       "baseAsset": "HEMI",
       "quoteAsset": "USDT",
@@ -2725,7 +2723,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HMSTRUSDT",
-      "venueInstrumentVersionId": 1060,
+      "venueInstrumentVersionId": 9831,
       "sourceSymbol": "HMSTRUSDT",
       "baseAsset": "HMSTR",
       "quoteAsset": "USDT",
@@ -2739,7 +2737,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HOLOUSDT",
-      "venueInstrumentVersionId": 765,
+      "venueInstrumentVersionId": 9586,
       "sourceSymbol": "HOLOUSDT",
       "baseAsset": "HOLO",
       "quoteAsset": "USDT",
@@ -2753,7 +2751,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HOMEUSDT",
-      "venueInstrumentVersionId": 1052,
+      "venueInstrumentVersionId": 9829,
       "sourceSymbol": "HOMEUSDT",
       "baseAsset": "HOME",
       "quoteAsset": "USDT",
@@ -2767,7 +2765,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HUMAUSDT",
-      "venueInstrumentVersionId": 1000,
+      "venueInstrumentVersionId": 9796,
       "sourceSymbol": "HUMAUSDT",
       "baseAsset": "HUMA",
       "quoteAsset": "USDT",
@@ -2781,7 +2779,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HUSDT",
-      "venueInstrumentVersionId": 849,
+      "venueInstrumentVersionId": 9668,
       "sourceSymbol": "HUSDT",
       "baseAsset": "H",
       "quoteAsset": "USDT",
@@ -2795,7 +2793,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HYPERUSDT",
-      "venueInstrumentVersionId": 960,
+      "venueInstrumentVersionId": 9763,
       "sourceSymbol": "HYPERUSDT",
       "baseAsset": "HYPER",
       "quoteAsset": "USDT",
@@ -2809,7 +2807,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:HYPEUSDT",
-      "venueInstrumentVersionId": 646,
+      "venueInstrumentVersionId": 9471,
       "sourceSymbol": "HYPEUSDT",
       "baseAsset": "HYPE",
       "quoteAsset": "USDT",
@@ -2823,7 +2821,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ICPUSDT",
-      "venueInstrumentVersionId": 816,
+      "venueInstrumentVersionId": 9637,
       "sourceSymbol": "ICPUSDT",
       "baseAsset": "ICP",
       "quoteAsset": "USDT",
@@ -2837,7 +2835,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:IDOLUSDT",
-      "venueInstrumentVersionId": 1136,
+      "venueInstrumentVersionId": 9847,
       "sourceSymbol": "IDOLUSDT",
       "baseAsset": "IDOL",
       "quoteAsset": "USDT",
@@ -2851,7 +2849,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:IDUSDT",
-      "venueInstrumentVersionId": 686,
+      "venueInstrumentVersionId": 9512,
       "sourceSymbol": "IDUSDT",
       "baseAsset": "ID",
       "quoteAsset": "USDT",
@@ -2865,7 +2863,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:INITUSDT",
-      "venueInstrumentVersionId": 928,
+      "venueInstrumentVersionId": 9737,
       "sourceSymbol": "INITUSDT",
       "baseAsset": "INIT",
       "quoteAsset": "USDT",
@@ -2879,7 +2877,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:INJUSDT",
-      "venueInstrumentVersionId": 688,
+      "venueInstrumentVersionId": 9514,
       "sourceSymbol": "INJUSDT",
       "baseAsset": "INJ",
       "quoteAsset": "USDT",
@@ -2893,7 +2891,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:INUSDT",
-      "venueInstrumentVersionId": 743,
+      "venueInstrumentVersionId": 9565,
       "sourceSymbol": "INUSDT",
       "baseAsset": "IN",
       "quoteAsset": "USDT",
@@ -2907,7 +2905,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:INXUSDT",
-      "venueInstrumentVersionId": 910,
+      "venueInstrumentVersionId": 9721,
       "sourceSymbol": "INXUSDT",
       "baseAsset": "INX",
       "quoteAsset": "USDT",
@@ -2921,7 +2919,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:IOTXUSDT",
-      "venueInstrumentVersionId": 1161,
+      "venueInstrumentVersionId": 9866,
       "sourceSymbol": "IOTXUSDT",
       "baseAsset": "IOTX",
       "quoteAsset": "USDT",
@@ -2935,7 +2933,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:IOUSDT",
-      "venueInstrumentVersionId": 717,
+      "venueInstrumentVersionId": 9545,
       "sourceSymbol": "IOUSDT",
       "baseAsset": "IO",
       "quoteAsset": "USDT",
@@ -2949,7 +2947,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:IRYSUSDT",
-      "venueInstrumentVersionId": 833,
+      "venueInstrumentVersionId": 9653,
       "sourceSymbol": "IRYSUSDT",
       "baseAsset": "IRYS",
       "quoteAsset": "USDT",
@@ -2963,7 +2961,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:JASMYUSDT",
-      "venueInstrumentVersionId": 676,
+      "venueInstrumentVersionId": 9502,
       "sourceSymbol": "JASMYUSDT",
       "baseAsset": "JASMY",
       "quoteAsset": "USDT",
@@ -2977,7 +2975,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:JCTUSDT",
-      "venueInstrumentVersionId": 821,
+      "venueInstrumentVersionId": 9641,
       "sourceSymbol": "JCTUSDT",
       "baseAsset": "JCT",
       "quoteAsset": "USDT",
@@ -2991,7 +2989,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:JELLYJELLYUSDT",
-      "venueInstrumentVersionId": 809,
+      "venueInstrumentVersionId": 9630,
       "sourceSymbol": "JELLYJELLYUSDT",
       "baseAsset": "JELLYJELLY",
       "quoteAsset": "USDT",
@@ -3005,7 +3003,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:JTOUSDT",
-      "venueInstrumentVersionId": 929,
+      "venueInstrumentVersionId": 9738,
       "sourceSymbol": "JTOUSDT",
       "baseAsset": "JTO",
       "quoteAsset": "USDT",
@@ -3019,7 +3017,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:JUPUSDT",
-      "venueInstrumentVersionId": 874,
+      "venueInstrumentVersionId": 9692,
       "sourceSymbol": "JUPUSDT",
       "baseAsset": "JUP",
       "quoteAsset": "USDT",
@@ -3033,7 +3031,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KAITOUSDT",
-      "venueInstrumentVersionId": 1012,
+      "venueInstrumentVersionId": 9808,
       "sourceSymbol": "KAITOUSDT",
       "baseAsset": "KAITO",
       "quoteAsset": "USDT",
@@ -3047,7 +3045,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KASUSDT",
-      "venueInstrumentVersionId": 912,
+      "venueInstrumentVersionId": 9723,
       "sourceSymbol": "KASUSDT",
       "baseAsset": "KAS",
       "quoteAsset": "USDT",
@@ -3061,7 +3059,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KATUSDT",
-      "venueInstrumentVersionId": 942,
+      "venueInstrumentVersionId": 9747,
       "sourceSymbol": "KATUSDT",
       "baseAsset": "KAT",
       "quoteAsset": "USDT",
@@ -3075,7 +3073,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KGENUSDT",
-      "venueInstrumentVersionId": 784,
+      "venueInstrumentVersionId": 9605,
       "sourceSymbol": "KGENUSDT",
       "baseAsset": "KGEN",
       "quoteAsset": "USDT",
@@ -3089,7 +3087,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KITEUSDT",
-      "venueInstrumentVersionId": 805,
+      "venueInstrumentVersionId": 9626,
       "sourceSymbol": "KITEUSDT",
       "baseAsset": "KITE",
       "quoteAsset": "USDT",
@@ -3103,7 +3101,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KNCUSDT",
-      "venueInstrumentVersionId": 669,
+      "venueInstrumentVersionId": 9494,
       "sourceSymbol": "KNCUSDT",
       "baseAsset": "KNC",
       "quoteAsset": "USDT",
@@ -3117,7 +3115,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:KOMAUSDT",
-      "venueInstrumentVersionId": 982,
+      "venueInstrumentVersionId": 9779,
       "sourceSymbol": "KOMAUSDT",
       "baseAsset": "KOMA",
       "quoteAsset": "USDT",
@@ -3131,7 +3129,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LABUSDT",
-      "venueInstrumentVersionId": 798,
+      "venueInstrumentVersionId": 9619,
       "sourceSymbol": "LABUSDT",
       "baseAsset": "LAB",
       "quoteAsset": "USDT",
@@ -3145,7 +3143,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LAPTOPUSDT",
-      "venueInstrumentVersionId": 6103,
+      "venueInstrumentVersionId": 9896,
       "sourceSymbol": "LAPTOPUSDT",
       "baseAsset": "LAPTOP",
       "quoteAsset": "USDT",
@@ -3159,7 +3157,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LAUSDT",
-      "venueInstrumentVersionId": 916,
+      "venueInstrumentVersionId": 9725,
       "sourceSymbol": "LAUSDT",
       "baseAsset": "LA",
       "quoteAsset": "USDT",
@@ -3173,7 +3171,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LAYERUSDT",
-      "venueInstrumentVersionId": 1032,
+      "venueInstrumentVersionId": 9822,
       "sourceSymbol": "LAYERUSDT",
       "baseAsset": "LAYER",
       "quoteAsset": "USDT",
@@ -3187,7 +3185,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LDOUSDT",
-      "venueInstrumentVersionId": 692,
+      "venueInstrumentVersionId": 9518,
       "sourceSymbol": "LDOUSDT",
       "baseAsset": "LDO",
       "quoteAsset": "USDT",
@@ -3201,7 +3199,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LIGHTUSDT",
-      "venueInstrumentVersionId": 846,
+      "venueInstrumentVersionId": 9666,
       "sourceSymbol": "LIGHTUSDT",
       "baseAsset": "LIGHT",
       "quoteAsset": "USDT",
@@ -3215,7 +3213,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LINEAUSDT",
-      "venueInstrumentVersionId": 755,
+      "venueInstrumentVersionId": 9577,
       "sourceSymbol": "LINEAUSDT",
       "baseAsset": "LINEA",
       "quoteAsset": "USDT",
@@ -3229,7 +3227,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LINKUSDT",
-      "venueInstrumentVersionId": 671,
+      "venueInstrumentVersionId": 9496,
       "sourceSymbol": "LINKUSDT",
       "baseAsset": "LINK",
       "quoteAsset": "USDT",
@@ -3243,7 +3241,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LISTAUSDT",
-      "venueInstrumentVersionId": 715,
+      "venueInstrumentVersionId": 9543,
       "sourceSymbol": "LISTAUSDT",
       "baseAsset": "LISTA",
       "quoteAsset": "USDT",
@@ -3257,7 +3255,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LITUSDT",
-      "venueInstrumentVersionId": 851,
+      "venueInstrumentVersionId": 9670,
       "sourceSymbol": "LITUSDT",
       "baseAsset": "LIT",
       "quoteAsset": "USDT",
@@ -3271,7 +3269,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LPTUSDT",
-      "venueInstrumentVersionId": 1149,
+      "venueInstrumentVersionId": 9857,
       "sourceSymbol": "LPTUSDT",
       "baseAsset": "LPT",
       "quoteAsset": "USDT",
@@ -3285,7 +3283,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LSKUSDT",
-      "venueInstrumentVersionId": 6105,
+      "venueInstrumentVersionId": 9898,
       "sourceSymbol": "LSKUSDT",
       "baseAsset": "LSK",
       "quoteAsset": "USDT",
@@ -3299,7 +3297,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LTCUSDT",
-      "venueInstrumentVersionId": 653,
+      "venueInstrumentVersionId": 9478,
       "sourceSymbol": "LTCUSDT",
       "baseAsset": "LTC",
       "quoteAsset": "USDT",
@@ -3313,7 +3311,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LUMIAUSDT",
-      "venueInstrumentVersionId": 1004,
+      "venueInstrumentVersionId": 9800,
       "sourceSymbol": "LUMIAUSDT",
       "baseAsset": "LUMIA",
       "quoteAsset": "USDT",
@@ -3327,7 +3325,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LUNA2USDT",
-      "venueInstrumentVersionId": 682,
+      "venueInstrumentVersionId": 9508,
       "sourceSymbol": "LUNA2USDT",
       "baseAsset": "LUNA2",
       "quoteAsset": "USDT",
@@ -3341,7 +3339,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:LYNUSDT",
-      "venueInstrumentVersionId": 782,
+      "venueInstrumentVersionId": 9603,
       "sourceSymbol": "LYNUSDT",
       "baseAsset": "LYN",
       "quoteAsset": "USDT",
@@ -3355,7 +3353,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MAGMAUSDT",
-      "venueInstrumentVersionId": 854,
+      "venueInstrumentVersionId": 9672,
       "sourceSymbol": "MAGMAUSDT",
       "baseAsset": "MAGMA",
       "quoteAsset": "USDT",
@@ -3369,7 +3367,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MANAUSDT",
-      "venueInstrumentVersionId": 4407,
+      "venueInstrumentVersionId": 9487,
       "sourceSymbol": "MANAUSDT",
       "baseAsset": "MANA",
       "quoteAsset": "USDT",
@@ -3383,7 +3381,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MANTAUSDT",
-      "venueInstrumentVersionId": 707,
+      "venueInstrumentVersionId": 9533,
       "sourceSymbol": "MANTAUSDT",
       "baseAsset": "MANTA",
       "quoteAsset": "USDT",
@@ -3397,7 +3395,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MANTRAUSDT",
-      "venueInstrumentVersionId": 946,
+      "venueInstrumentVersionId": 9749,
       "sourceSymbol": "MANTRAUSDT",
       "baseAsset": "MANTRA",
       "quoteAsset": "USDT",
@@ -3411,7 +3409,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MARSCOINUSDT",
-      "venueInstrumentVersionId": 2064,
+      "venueInstrumentVersionId": 9863,
       "sourceSymbol": "MARSCOINUSDT",
       "baseAsset": "MARSCOIN",
       "quoteAsset": "USDT",
@@ -3425,7 +3423,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MAXUSDT",
-      "venueInstrumentVersionId": 3223,
+      "venueInstrumentVersionId": 9894,
       "sourceSymbol": "MAXUSDT",
       "baseAsset": "MAX",
       "quoteAsset": "USDT",
@@ -3439,7 +3437,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MEGAUSDT",
-      "venueInstrumentVersionId": 906,
+      "venueInstrumentVersionId": 9719,
       "sourceSymbol": "MEGAUSDT",
       "baseAsset": "MEGA",
       "quoteAsset": "USDT",
@@ -3453,7 +3451,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MELANIAUSDT",
-      "venueInstrumentVersionId": 954,
+      "venueInstrumentVersionId": 9757,
       "sourceSymbol": "MELANIAUSDT",
       "baseAsset": "MELANIA",
       "quoteAsset": "USDT",
@@ -3467,7 +3465,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MEMEUSDT",
-      "venueInstrumentVersionId": 3188,
+      "venueInstrumentVersionId": 9884,
       "sourceSymbol": "MEMEUSDT",
       "baseAsset": "MEME",
       "quoteAsset": "USDT",
@@ -3481,7 +3479,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MERLUSDT",
-      "venueInstrumentVersionId": 716,
+      "venueInstrumentVersionId": 9544,
       "sourceSymbol": "MERLUSDT",
       "baseAsset": "MERL",
       "quoteAsset": "USDT",
@@ -3495,7 +3493,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:METISUSDT",
-      "venueInstrumentVersionId": 987,
+      "venueInstrumentVersionId": 9784,
       "sourceSymbol": "METISUSDT",
       "baseAsset": "METIS",
       "quoteAsset": "USDT",
@@ -3509,7 +3507,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:METUSDT",
-      "venueInstrumentVersionId": 791,
+      "venueInstrumentVersionId": 9612,
       "sourceSymbol": "METUSDT",
       "baseAsset": "MET",
       "quoteAsset": "USDT",
@@ -3523,7 +3521,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MEUSDT",
-      "venueInstrumentVersionId": 883,
+      "venueInstrumentVersionId": 9701,
       "sourceSymbol": "MEUSDT",
       "baseAsset": "ME",
       "quoteAsset": "USDT",
@@ -3537,7 +3535,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MITOUSDT",
-      "venueInstrumentVersionId": 753,
+      "venueInstrumentVersionId": 9575,
       "sourceSymbol": "MITOUSDT",
       "baseAsset": "MITO",
       "quoteAsset": "USDT",
@@ -3551,7 +3549,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MMTUSDT",
-      "venueInstrumentVersionId": 811,
+      "venueInstrumentVersionId": 9632,
       "sourceSymbol": "MMTUSDT",
       "baseAsset": "MMT",
       "quoteAsset": "USDT",
@@ -3565,7 +3563,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MONUSDT",
-      "venueInstrumentVersionId": 789,
+      "venueInstrumentVersionId": 9610,
       "sourceSymbol": "MONUSDT",
       "baseAsset": "MON",
       "quoteAsset": "USDT",
@@ -3579,7 +3577,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MOODENGUSDT",
-      "venueInstrumentVersionId": 723,
+      "venueInstrumentVersionId": 9551,
       "sourceSymbol": "MOODENGUSDT",
       "baseAsset": "MOODENG",
       "quoteAsset": "USDT",
@@ -3593,7 +3591,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MORPHOUSDT",
-      "venueInstrumentVersionId": 1011,
+      "venueInstrumentVersionId": 9807,
       "sourceSymbol": "MORPHOUSDT",
       "baseAsset": "MORPHO",
       "quoteAsset": "USDT",
@@ -3607,7 +3605,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MOVEUSDT",
-      "venueInstrumentVersionId": 924,
+      "venueInstrumentVersionId": 9733,
       "sourceSymbol": "MOVEUSDT",
       "baseAsset": "MOVE",
       "quoteAsset": "USDT",
@@ -3621,7 +3619,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MOVRUSDT",
-      "venueInstrumentVersionId": 986,
+      "venueInstrumentVersionId": 9783,
       "sourceSymbol": "MOVRUSDT",
       "baseAsset": "MOVR",
       "quoteAsset": "USDT",
@@ -3635,7 +3633,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MTLUSDT",
-      "venueInstrumentVersionId": 5024,
+      "venueInstrumentVersionId": 9497,
       "sourceSymbol": "MTLUSDT",
       "baseAsset": "MTL",
       "quoteAsset": "USDT",
@@ -3649,7 +3647,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MUBARAKUSDT",
-      "venueInstrumentVersionId": 1163,
+      "venueInstrumentVersionId": 9868,
       "sourceSymbol": "MUBARAKUSDT",
       "baseAsset": "MUBARAK",
       "quoteAsset": "USDT",
@@ -3663,7 +3661,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MUSDT",
-      "venueInstrumentVersionId": 1454,
+      "venueInstrumentVersionId": 9770,
       "sourceSymbol": "MUSDT",
       "baseAsset": "M",
       "quoteAsset": "USDT",
@@ -3677,7 +3675,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:MYXUSDT",
-      "venueInstrumentVersionId": 855,
+      "venueInstrumentVersionId": 9673,
       "sourceSymbol": "MYXUSDT",
       "baseAsset": "MYX",
       "quoteAsset": "USDT",
@@ -3691,7 +3689,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NAORISUSDT",
-      "venueInstrumentVersionId": 932,
+      "venueInstrumentVersionId": 9741,
       "sourceSymbol": "NAORISUSDT",
       "baseAsset": "NAORIS",
       "quoteAsset": "USDT",
@@ -3705,7 +3703,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NEARUSDT",
-      "venueInstrumentVersionId": 655,
+      "venueInstrumentVersionId": 9480,
       "sourceSymbol": "NEARUSDT",
       "baseAsset": "NEAR",
       "quoteAsset": "USDT",
@@ -3719,7 +3717,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NEIROUSDT",
-      "venueInstrumentVersionId": 725,
+      "venueInstrumentVersionId": 9553,
       "sourceSymbol": "NEIROUSDT",
       "baseAsset": "NEIRO",
       "quoteAsset": "USDT",
@@ -3733,7 +3731,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NESUSDT",
-      "venueInstrumentVersionId": 1146,
+      "venueInstrumentVersionId": 9855,
       "sourceSymbol": "NESUSDT",
       "baseAsset": "NES",
       "quoteAsset": "USDT",
@@ -3747,7 +3745,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NIGHTUSDT",
-      "venueInstrumentVersionId": 842,
+      "venueInstrumentVersionId": 9662,
       "sourceSymbol": "NIGHTUSDT",
       "baseAsset": "NIGHT",
       "quoteAsset": "USDT",
@@ -3761,7 +3759,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NILUSDT",
-      "venueInstrumentVersionId": 1061,
+      "venueInstrumentVersionId": 9832,
       "sourceSymbol": "NILUSDT",
       "baseAsset": "NIL",
       "quoteAsset": "USDT",
@@ -3775,7 +3773,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NOMUSDT",
-      "venueInstrumentVersionId": 898,
+      "venueInstrumentVersionId": 9714,
       "sourceSymbol": "NOMUSDT",
       "baseAsset": "NOM",
       "quoteAsset": "USDT",
@@ -3789,7 +3787,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NOTUSDT",
-      "venueInstrumentVersionId": 1024,
+      "venueInstrumentVersionId": 9815,
       "sourceSymbol": "NOTUSDT",
       "baseAsset": "NOT",
       "quoteAsset": "USDT",
@@ -3803,7 +3801,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:NULLMASKUSDT",
-      "venueInstrumentVersionId": 9451,
+      "venueInstrumentVersionId": 9915,
       "sourceSymbol": "NULLMASKUSDT",
       "baseAsset": "NULLMASK",
       "quoteAsset": "USDT",
@@ -3817,7 +3815,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OGNUSDT",
-      "venueInstrumentVersionId": 670,
+      "venueInstrumentVersionId": 9495,
       "sourceSymbol": "OGNUSDT",
       "baseAsset": "OGN",
       "quoteAsset": "USDT",
@@ -3831,7 +3829,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OKBUSDT",
-      "venueInstrumentVersionId": 681,
+      "venueInstrumentVersionId": 9507,
       "sourceSymbol": "OKBUSDT",
       "baseAsset": "OKB",
       "quoteAsset": "USDT",
@@ -3845,7 +3843,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ONDOUSDT",
-      "venueInstrumentVersionId": 709,
+      "venueInstrumentVersionId": 9535,
       "sourceSymbol": "ONDOUSDT",
       "baseAsset": "ONDO",
       "quoteAsset": "USDT",
@@ -3859,7 +3857,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ONEUSDT",
-      "venueInstrumentVersionId": 6107,
+      "venueInstrumentVersionId": 9901,
       "sourceSymbol": "ONEUSDT",
       "baseAsset": "ONE",
       "quoteAsset": "USDT",
@@ -3873,7 +3871,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ONGUSDT",
-      "venueInstrumentVersionId": 9159,
+      "venueInstrumentVersionId": 9872,
       "sourceSymbol": "ONGUSDT",
       "baseAsset": "ONG",
       "quoteAsset": "USDT",
@@ -3887,7 +3885,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ONTUSDT",
-      "venueInstrumentVersionId": 966,
+      "venueInstrumentVersionId": 9767,
       "sourceSymbol": "ONTUSDT",
       "baseAsset": "ONT",
       "quoteAsset": "USDT",
@@ -3901,7 +3899,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ONUSDT",
-      "venueInstrumentVersionId": 803,
+      "venueInstrumentVersionId": 9624,
       "sourceSymbol": "ONUSDT",
       "baseAsset": "ON",
       "quoteAsset": "USDT",
@@ -3915,7 +3913,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OPENUSDT",
-      "venueInstrumentVersionId": 761,
+      "venueInstrumentVersionId": 9583,
       "sourceSymbol": "OPENUSDT",
       "baseAsset": "OPEN",
       "quoteAsset": "USDT",
@@ -3929,7 +3927,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OPGUSDT",
-      "venueInstrumentVersionId": 995,
+      "venueInstrumentVersionId": 9792,
       "sourceSymbol": "OPGUSDT",
       "baseAsset": "OPG",
       "quoteAsset": "USDT",
@@ -3943,7 +3941,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OPNUSDT",
-      "venueInstrumentVersionId": 934,
+      "venueInstrumentVersionId": 9743,
       "sourceSymbol": "OPNUSDT",
       "baseAsset": "OPN",
       "quoteAsset": "USDT",
@@ -3957,7 +3955,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OPUSDT",
-      "venueInstrumentVersionId": 683,
+      "venueInstrumentVersionId": 9509,
       "sourceSymbol": "OPUSDT",
       "baseAsset": "OP",
       "quoteAsset": "USDT",
@@ -3971,7 +3969,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ORCAUSDT",
-      "venueInstrumentVersionId": 930,
+      "venueInstrumentVersionId": 9739,
       "sourceSymbol": "ORCAUSDT",
       "baseAsset": "ORCA",
       "quoteAsset": "USDT",
@@ -3985,7 +3983,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ORDIUSDT",
-      "venueInstrumentVersionId": 1453,
+      "venueInstrumentVersionId": 9532,
       "sourceSymbol": "ORDIUSDT",
       "baseAsset": "ORDI",
       "quoteAsset": "USDT",
@@ -3999,7 +3997,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:OUSDT",
-      "venueInstrumentVersionId": 1112,
+      "venueInstrumentVersionId": 9837,
       "sourceSymbol": "OUSDT",
       "baseAsset": "O",
       "quoteAsset": "USDT",
@@ -4013,7 +4011,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PAIDUSDT",
-      "venueInstrumentVersionId": 8310,
+      "venueInstrumentVersionId": 9908,
       "sourceSymbol": "PAIDUSDT",
       "baseAsset": "PAID",
       "quoteAsset": "USDT",
@@ -4027,7 +4025,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PAIRUSDT",
-      "venueInstrumentVersionId": 3216,
+      "venueInstrumentVersionId": 9887,
       "sourceSymbol": "PAIRUSDT",
       "baseAsset": "PAIR",
       "quoteAsset": "USDT",
@@ -4041,7 +4039,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PARTIUSDT",
-      "venueInstrumentVersionId": 832,
+      "venueInstrumentVersionId": 9652,
       "sourceSymbol": "PARTIUSDT",
       "baseAsset": "PARTI",
       "quoteAsset": "USDT",
@@ -4055,7 +4053,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PENDLEUSDT",
-      "venueInstrumentVersionId": 701,
+      "venueInstrumentVersionId": 9527,
       "sourceSymbol": "PENDLEUSDT",
       "baseAsset": "PENDLE",
       "quoteAsset": "USDT",
@@ -4069,7 +4067,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PENGUUSDT",
-      "venueInstrumentVersionId": 736,
+      "venueInstrumentVersionId": 9558,
       "sourceSymbol": "PENGUUSDT",
       "baseAsset": "PENGU",
       "quoteAsset": "USDT",
@@ -4083,7 +4081,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PEOPLEUSDT",
-      "venueInstrumentVersionId": 4408,
+      "venueInstrumentVersionId": 9493,
       "sourceSymbol": "PEOPLEUSDT",
       "baseAsset": "PEOPLE",
       "quoteAsset": "USDT",
@@ -4097,7 +4095,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PHAUSDT",
-      "venueInstrumentVersionId": 945,
+      "venueInstrumentVersionId": 9748,
       "sourceSymbol": "PHAUSDT",
       "baseAsset": "PHA",
       "quoteAsset": "USDT",
@@ -4111,7 +4109,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PIEVERSEUSDT",
-      "venueInstrumentVersionId": 826,
+      "venueInstrumentVersionId": 9646,
       "sourceSymbol": "PIEVERSEUSDT",
       "baseAsset": "PIEVERSE",
       "quoteAsset": "USDT",
@@ -4125,7 +4123,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PIPPINUSDT",
-      "venueInstrumentVersionId": 836,
+      "venueInstrumentVersionId": 9656,
       "sourceSymbol": "PIPPINUSDT",
       "baseAsset": "PIPPIN",
       "quoteAsset": "USDT",
@@ -4139,7 +4137,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PIXELUSDT",
-      "venueInstrumentVersionId": 711,
+      "venueInstrumentVersionId": 9537,
       "sourceSymbol": "PIXELUSDT",
       "baseAsset": "PIXEL",
       "quoteAsset": "USDT",
@@ -4153,7 +4151,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PLAYUSDT",
-      "venueInstrumentVersionId": 951,
+      "venueInstrumentVersionId": 9754,
       "sourceSymbol": "PLAYUSDT",
       "baseAsset": "PLAY",
       "quoteAsset": "USDT",
@@ -4167,7 +4165,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PLUMEUSDT",
-      "venueInstrumentVersionId": 1031,
+      "venueInstrumentVersionId": 9821,
       "sourceSymbol": "PLUMEUSDT",
       "baseAsset": "PLUME",
       "quoteAsset": "USDT",
@@ -4181,7 +4179,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PNUTUSDT",
-      "venueInstrumentVersionId": 867,
+      "venueInstrumentVersionId": 9685,
       "sourceSymbol": "PNUTUSDT",
       "baseAsset": "PNUT",
       "quoteAsset": "USDT",
@@ -4195,7 +4193,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PODUSDT",
-      "venueInstrumentVersionId": 9446,
+      "venueInstrumentVersionId": 9914,
       "sourceSymbol": "PODUSDT",
       "baseAsset": "POD",
       "quoteAsset": "USDT",
@@ -4209,7 +4207,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:POLUSDT",
-      "venueInstrumentVersionId": 869,
+      "venueInstrumentVersionId": 9687,
       "sourceSymbol": "POLUSDT",
       "baseAsset": "POL",
       "quoteAsset": "USDT",
@@ -4223,7 +4221,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:POLYXUSDT",
-      "venueInstrumentVersionId": 873,
+      "venueInstrumentVersionId": 9691,
       "sourceSymbol": "POLYXUSDT",
       "baseAsset": "POLYX",
       "quoteAsset": "USDT",
@@ -4237,7 +4235,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PONSUSDT",
-      "venueInstrumentVersionId": 1713,
+      "venueInstrumentVersionId": 9878,
       "sourceSymbol": "PONSUSDT",
       "baseAsset": "PONS",
       "quoteAsset": "USDT",
@@ -4251,7 +4249,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PORTALUSDT",
-      "venueInstrumentVersionId": 991,
+      "venueInstrumentVersionId": 9788,
       "sourceSymbol": "PORTALUSDT",
       "baseAsset": "PORTAL",
       "quoteAsset": "USDT",
@@ -4265,7 +4263,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:POWERUSDT",
-      "venueInstrumentVersionId": 839,
+      "venueInstrumentVersionId": 9659,
       "sourceSymbol": "POWERUSDT",
       "baseAsset": "POWER",
       "quoteAsset": "USDT",
@@ -4279,7 +4277,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:POWRUSDT",
-      "venueInstrumentVersionId": 6106,
+      "venueInstrumentVersionId": 9899,
       "sourceSymbol": "POWRUSDT",
       "baseAsset": "POWR",
       "quoteAsset": "USDT",
@@ -4293,7 +4291,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PRLUSDT",
-      "venueInstrumentVersionId": 969,
+      "venueInstrumentVersionId": 9769,
       "sourceSymbol": "PRLUSDT",
       "baseAsset": "PRL",
       "quoteAsset": "USDT",
@@ -4307,7 +4305,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PROMUSDT",
-      "venueInstrumentVersionId": 993,
+      "venueInstrumentVersionId": 9790,
       "sourceSymbol": "PROMUSDT",
       "baseAsset": "PROM",
       "quoteAsset": "USDT",
@@ -4321,7 +4319,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PROSUSDT",
-      "venueInstrumentVersionId": 1007,
+      "venueInstrumentVersionId": 9803,
       "sourceSymbol": "PROSUSDT",
       "baseAsset": "PROS",
       "quoteAsset": "USDT",
@@ -4335,7 +4333,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PROVEUSDT",
-      "venueInstrumentVersionId": 745,
+      "venueInstrumentVersionId": 9567,
       "sourceSymbol": "PROVEUSDT",
       "baseAsset": "PROVE",
       "quoteAsset": "USDT",
@@ -4349,7 +4347,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PTBUSDT",
-      "venueInstrumentVersionId": 757,
+      "venueInstrumentVersionId": 9579,
       "sourceSymbol": "PTBUSDT",
       "baseAsset": "PTB",
       "quoteAsset": "USDT",
@@ -4363,7 +4361,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PUMPUSDT",
-      "venueInstrumentVersionId": 729,
+      "venueInstrumentVersionId": 9557,
       "sourceSymbol": "PUMPUSDT",
       "baseAsset": "PUMP",
       "quoteAsset": "USDT",
@@ -4377,7 +4375,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PUNDIAIUSDT",
-      "venueInstrumentVersionId": 1009,
+      "venueInstrumentVersionId": 9805,
       "sourceSymbol": "PUNDIAIUSDT",
       "baseAsset": "PUNDIAI",
       "quoteAsset": "USDT",
@@ -4391,7 +4389,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:PYTHUSDT",
-      "venueInstrumentVersionId": 710,
+      "venueInstrumentVersionId": 9536,
       "sourceSymbol": "PYTHUSDT",
       "baseAsset": "PYTH",
       "quoteAsset": "USDT",
@@ -4405,7 +4403,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:QNTUSDT",
-      "venueInstrumentVersionId": 8582,
+      "venueInstrumentVersionId": 9909,
       "sourceSymbol": "QNTUSDT",
       "baseAsset": "QNT",
       "quoteAsset": "USDT",
@@ -4419,7 +4417,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:QUSDT",
-      "venueInstrumentVersionId": 756,
+      "venueInstrumentVersionId": 9578,
       "sourceSymbol": "QUSDT",
       "baseAsset": "Q",
       "quoteAsset": "USDT",
@@ -4433,7 +4431,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RAREUSDT",
-      "venueInstrumentVersionId": 1169,
+      "venueInstrumentVersionId": 9870,
       "sourceSymbol": "RAREUSDT",
       "baseAsset": "RARE",
       "quoteAsset": "USDT",
@@ -4447,7 +4445,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RAVEUSDT",
-      "venueInstrumentVersionId": 845,
+      "venueInstrumentVersionId": 9665,
       "sourceSymbol": "RAVEUSDT",
       "baseAsset": "RAVE",
       "quoteAsset": "USDT",
@@ -4461,7 +4459,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RECALLUSDT",
-      "venueInstrumentVersionId": 796,
+      "venueInstrumentVersionId": 9617,
       "sourceSymbol": "RECALLUSDT",
       "baseAsset": "RECALL",
       "quoteAsset": "USDT",
@@ -4475,7 +4473,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:REDUSDT",
-      "venueInstrumentVersionId": 973,
+      "venueInstrumentVersionId": 9773,
       "sourceSymbol": "REDUSDT",
       "baseAsset": "RED",
       "quoteAsset": "USDT",
@@ -4489,7 +4487,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RENDERUSDT",
-      "venueInstrumentVersionId": 858,
+      "venueInstrumentVersionId": 9676,
       "sourceSymbol": "RENDERUSDT",
       "baseAsset": "RENDER",
       "quoteAsset": "USDT",
@@ -4503,7 +4501,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RESOLVUSDT",
-      "venueInstrumentVersionId": 899,
+      "venueInstrumentVersionId": 9715,
       "sourceSymbol": "RESOLVUSDT",
       "baseAsset": "RESOLV",
       "quoteAsset": "USDT",
@@ -4517,7 +4515,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:REUSDT",
-      "venueInstrumentVersionId": 1116,
+      "venueInstrumentVersionId": 9838,
       "sourceSymbol": "REUSDT",
       "baseAsset": "RE",
       "quoteAsset": "USDT",
@@ -4531,7 +4529,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:REZUSDT",
-      "venueInstrumentVersionId": 1151,
+      "venueInstrumentVersionId": 9859,
       "sourceSymbol": "REZUSDT",
       "baseAsset": "REZ",
       "quoteAsset": "USDT",
@@ -4545,7 +4543,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RIFUSDT",
-      "venueInstrumentVersionId": 704,
+      "venueInstrumentVersionId": 9530,
       "sourceSymbol": "RIFUSDT",
       "baseAsset": "RIF",
       "quoteAsset": "USDT",
@@ -4559,7 +4557,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RIVERUSDT",
-      "venueInstrumentVersionId": 799,
+      "venueInstrumentVersionId": 9620,
       "sourceSymbol": "RIVERUSDT",
       "baseAsset": "RIVER",
       "quoteAsset": "USDT",
@@ -4573,7 +4571,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RLCUSDT",
-      "venueInstrumentVersionId": 9453,
+      "venueInstrumentVersionId": 9540,
       "sourceSymbol": "RLCUSDT",
       "baseAsset": "RLC",
       "quoteAsset": "USDT",
@@ -4587,7 +4585,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ROBOUSDT",
-      "venueInstrumentVersionId": 939,
+      "venueInstrumentVersionId": 9746,
       "sourceSymbol": "ROBOUSDT",
       "baseAsset": "ROBO",
       "quoteAsset": "USDT",
@@ -4601,7 +4599,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RONINUSDT",
-      "venueInstrumentVersionId": 992,
+      "venueInstrumentVersionId": 9789,
       "sourceSymbol": "RONINUSDT",
       "baseAsset": "RONIN",
       "quoteAsset": "USDT",
@@ -4615,7 +4613,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ROSEUSDT",
-      "venueInstrumentVersionId": 885,
+      "venueInstrumentVersionId": 9703,
       "sourceSymbol": "ROSEUSDT",
       "baseAsset": "ROSE",
       "quoteAsset": "USDT",
@@ -4629,7 +4627,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RPLUSDT",
-      "venueInstrumentVersionId": 931,
+      "venueInstrumentVersionId": 9740,
       "sourceSymbol": "RPLUSDT",
       "baseAsset": "RPL",
       "quoteAsset": "USDT",
@@ -4643,7 +4641,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:RTXUSDT",
-      "venueInstrumentVersionId": 1108,
+      "venueInstrumentVersionId": 9836,
       "sourceSymbol": "RTXUSDT",
       "baseAsset": "RTX",
       "quoteAsset": "USDT",
@@ -4657,7 +4655,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SAGAUSDT",
-      "venueInstrumentVersionId": 1033,
+      "venueInstrumentVersionId": 9823,
       "sourceSymbol": "SAGAUSDT",
       "baseAsset": "SAGA",
       "quoteAsset": "USDT",
@@ -4671,7 +4669,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SAHARAUSDT",
-      "venueInstrumentVersionId": 728,
+      "venueInstrumentVersionId": 9556,
       "sourceSymbol": "SAHARAUSDT",
       "baseAsset": "SAHARA",
       "quoteAsset": "USDT",
@@ -4685,7 +4683,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SANDUSDT",
-      "venueInstrumentVersionId": 649,
+      "venueInstrumentVersionId": 9474,
       "sourceSymbol": "SANDUSDT",
       "baseAsset": "SAND",
       "quoteAsset": "USDT",
@@ -4699,7 +4697,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SAPIENUSDT",
-      "venueInstrumentVersionId": 748,
+      "venueInstrumentVersionId": 9570,
       "sourceSymbol": "SAPIENUSDT",
       "baseAsset": "SAPIEN",
       "quoteAsset": "USDT",
@@ -4713,7 +4711,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SCRUSDT",
-      "venueInstrumentVersionId": 9442,
+      "venueInstrumentVersionId": 9913,
       "sourceSymbol": "SCRUSDT",
       "baseAsset": "SCR",
       "quoteAsset": "USDT",
@@ -4727,7 +4725,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SEIUSDT",
-      "venueInstrumentVersionId": 702,
+      "venueInstrumentVersionId": 9528,
       "sourceSymbol": "SEIUSDT",
       "baseAsset": "SEI",
       "quoteAsset": "USDT",
@@ -4741,7 +4739,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SENTUSDT",
-      "venueInstrumentVersionId": 827,
+      "venueInstrumentVersionId": 9647,
       "sourceSymbol": "SENTUSDT",
       "baseAsset": "SENT",
       "quoteAsset": "USDT",
@@ -4755,7 +4753,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SHELLUSDT",
-      "venueInstrumentVersionId": 897,
+      "venueInstrumentVersionId": 9713,
       "sourceSymbol": "SHELLUSDT",
       "baseAsset": "SHELL",
       "quoteAsset": "USDT",
@@ -4769,7 +4767,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SHROOMUSDT",
-      "venueInstrumentVersionId": 3189,
+      "venueInstrumentVersionId": 9885,
       "sourceSymbol": "SHROOMUSDT",
       "baseAsset": "SHROOM",
       "quoteAsset": "USDT",
@@ -4783,7 +4781,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SIGNUSDT",
-      "venueInstrumentVersionId": 947,
+      "venueInstrumentVersionId": 9750,
       "sourceSymbol": "SIGNUSDT",
       "baseAsset": "SIGN",
       "quoteAsset": "USDT",
@@ -4797,7 +4795,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SIRENUSDT",
-      "venueInstrumentVersionId": 917,
+      "venueInstrumentVersionId": 9726,
       "sourceSymbol": "SIRENUSDT",
       "baseAsset": "SIREN",
       "quoteAsset": "USDT",
@@ -4811,7 +4809,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SIUSDT",
-      "venueInstrumentVersionId": 9438,
+      "venueInstrumentVersionId": 9911,
       "sourceSymbol": "SIUSDT",
       "baseAsset": "SI",
       "quoteAsset": "USDT",
@@ -4825,7 +4823,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SKRUSDT",
-      "venueInstrumentVersionId": 1881,
+      "venueInstrumentVersionId": 9708,
       "sourceSymbol": "SKRUSDT",
       "baseAsset": "SKR",
       "quoteAsset": "USDT",
@@ -4839,7 +4837,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SKYAIUSDT",
-      "venueInstrumentVersionId": 838,
+      "venueInstrumentVersionId": 9658,
       "sourceSymbol": "SKYAIUSDT",
       "baseAsset": "SKYAI",
       "quoteAsset": "USDT",
@@ -4853,7 +4851,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SKYUSDT",
-      "venueInstrumentVersionId": 763,
+      "venueInstrumentVersionId": 9585,
       "sourceSymbol": "SKYUSDT",
       "baseAsset": "SKY",
       "quoteAsset": "USDT",
@@ -4867,7 +4865,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SLPUSDT",
-      "venueInstrumentVersionId": 4214,
+      "venueInstrumentVersionId": 9844,
       "sourceSymbol": "SLPUSDT",
       "baseAsset": "SLP",
       "quoteAsset": "USDT",
@@ -4881,7 +4879,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SLXUSDT",
-      "venueInstrumentVersionId": 1076,
+      "venueInstrumentVersionId": 9834,
       "sourceSymbol": "SLXUSDT",
       "baseAsset": "SLX",
       "quoteAsset": "USDT",
@@ -4895,7 +4893,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SNXUSDT",
-      "venueInstrumentVersionId": 673,
+      "venueInstrumentVersionId": 9499,
       "sourceSymbol": "SNXUSDT",
       "baseAsset": "SNX",
       "quoteAsset": "USDT",
@@ -4909,7 +4907,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SOLUSDT",
-      "venueInstrumentVersionId": 643,
+      "venueInstrumentVersionId": 9468,
       "sourceSymbol": "SOLUSDT",
       "baseAsset": "SOL",
       "quoteAsset": "USDT",
@@ -4923,7 +4921,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SOLVUSDT",
-      "venueInstrumentVersionId": 953,
+      "venueInstrumentVersionId": 9756,
       "sourceSymbol": "SOLVUSDT",
       "baseAsset": "SOLV",
       "quoteAsset": "USDT",
@@ -4937,7 +4935,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SOMIUSDT",
-      "venueInstrumentVersionId": 896,
+      "venueInstrumentVersionId": 9712,
       "sourceSymbol": "SOMIUSDT",
       "baseAsset": "SOMI",
       "quoteAsset": "USDT",
@@ -4951,7 +4949,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SOONUSDT",
-      "venueInstrumentVersionId": 860,
+      "venueInstrumentVersionId": 9678,
       "sourceSymbol": "SOONUSDT",
       "baseAsset": "SOON",
       "quoteAsset": "USDT",
@@ -4965,7 +4963,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SPACEUSDT",
-      "venueInstrumentVersionId": 894,
+      "venueInstrumentVersionId": 9711,
       "sourceSymbol": "SPACEUSDT",
       "baseAsset": "SPACE",
       "quoteAsset": "USDT",
@@ -4979,7 +4977,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SPKUSDT",
-      "venueInstrumentVersionId": 737,
+      "venueInstrumentVersionId": 9559,
       "sourceSymbol": "SPKUSDT",
       "baseAsset": "SPK",
       "quoteAsset": "USDT",
@@ -4993,7 +4991,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SPXUSDT",
-      "venueInstrumentVersionId": 870,
+      "venueInstrumentVersionId": 9688,
       "sourceSymbol": "SPXUSDT",
       "baseAsset": "SPX",
       "quoteAsset": "USDT",
@@ -5007,7 +5005,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SQDUSDT",
-      "venueInstrumentVersionId": 776,
+      "venueInstrumentVersionId": 9597,
       "sourceSymbol": "SQDUSDT",
       "baseAsset": "SQD",
       "quoteAsset": "USDT",
@@ -5021,7 +5019,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STABLEUSDT",
-      "venueInstrumentVersionId": 815,
+      "venueInstrumentVersionId": 9636,
       "sourceSymbol": "STABLEUSDT",
       "baseAsset": "STABLE",
       "quoteAsset": "USDT",
@@ -5035,7 +5033,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STARUSDT",
-      "venueInstrumentVersionId": 1036,
+      "venueInstrumentVersionId": 9825,
       "sourceSymbol": "STARUSDT",
       "baseAsset": "STAR",
       "quoteAsset": "USDT",
@@ -5049,7 +5047,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STBLUSDT",
-      "venueInstrumentVersionId": 8577,
+      "venueInstrumentVersionId": 9592,
       "sourceSymbol": "STBLUSDT",
       "baseAsset": "STBL",
       "quoteAsset": "USDT",
@@ -5063,7 +5061,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STEEMUSDT",
-      "venueInstrumentVersionId": 1019,
+      "venueInstrumentVersionId": 9814,
       "sourceSymbol": "STEEMUSDT",
       "baseAsset": "STEEM",
       "quoteAsset": "USDT",
@@ -5077,7 +5075,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STONKBROKERUSDT",
-      "venueInstrumentVersionId": 2021,
+      "venueInstrumentVersionId": 9880,
       "sourceSymbol": "STONKBROKERUSDT",
       "baseAsset": "STONKBROKER",
       "quoteAsset": "USDT",
@@ -5091,7 +5089,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STONKSUSDT",
-      "venueInstrumentVersionId": 8196,
+      "venueInstrumentVersionId": 9886,
       "sourceSymbol": "STONKSUSDT",
       "baseAsset": "STONKS",
       "quoteAsset": "USDT",
@@ -5105,7 +5103,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STONKUSDT",
-      "venueInstrumentVersionId": 3220,
+      "venueInstrumentVersionId": 9892,
       "sourceSymbol": "STONKUSDT",
       "baseAsset": "STONK",
       "quoteAsset": "USDT",
@@ -5119,7 +5117,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STOUSDT",
-      "venueInstrumentVersionId": 957,
+      "venueInstrumentVersionId": 9760,
       "sourceSymbol": "STOUSDT",
       "baseAsset": "STO",
       "quoteAsset": "USDT",
@@ -5133,7 +5131,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STRKUSDT",
-      "venueInstrumentVersionId": 713,
+      "venueInstrumentVersionId": 9541,
       "sourceSymbol": "STRKUSDT",
       "baseAsset": "STRK",
       "quoteAsset": "USDT",
@@ -5147,7 +5145,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:STXUSDT",
-      "venueInstrumentVersionId": 703,
+      "venueInstrumentVersionId": 9529,
       "sourceSymbol": "STXUSDT",
       "baseAsset": "STX",
       "quoteAsset": "USDT",
@@ -5161,7 +5159,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SUIUSDT",
-      "venueInstrumentVersionId": 689,
+      "venueInstrumentVersionId": 9515,
       "sourceSymbol": "SUIUSDT",
       "baseAsset": "SUI",
       "quoteAsset": "USDT",
@@ -5175,7 +5173,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SUSDT",
-      "venueInstrumentVersionId": 925,
+      "venueInstrumentVersionId": 9734,
       "sourceSymbol": "SUSDT",
       "baseAsset": "S",
       "quoteAsset": "USDT",
@@ -5189,7 +5187,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SUSHIUSDT",
-      "venueInstrumentVersionId": 4413,
+      "venueInstrumentVersionId": 9835,
       "sourceSymbol": "SUSHIUSDT",
       "baseAsset": "SUSHI",
       "quoteAsset": "USDT",
@@ -5203,7 +5201,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SWARMSUSDT",
-      "venueInstrumentVersionId": 1451,
+      "venueInstrumentVersionId": 9774,
       "sourceSymbol": "SWARMSUSDT",
       "baseAsset": "SWARMS",
       "quoteAsset": "USDT",
@@ -5217,7 +5215,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SXTUSDT",
-      "venueInstrumentVersionId": 1143,
+      "venueInstrumentVersionId": 9852,
       "sourceSymbol": "SXTUSDT",
       "baseAsset": "SXT",
       "quoteAsset": "USDT",
@@ -5231,7 +5229,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SYNUSDT",
-      "venueInstrumentVersionId": 1118,
+      "venueInstrumentVersionId": 9839,
       "sourceSymbol": "SYNUSDT",
       "baseAsset": "SYN",
       "quoteAsset": "USDT",
@@ -5245,7 +5243,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:SYRUPUSDT",
-      "venueInstrumentVersionId": 1005,
+      "venueInstrumentVersionId": 9801,
       "sourceSymbol": "SYRUPUSDT",
       "baseAsset": "SYRUP",
       "quoteAsset": "USDT",
@@ -5259,7 +5257,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TACUSDT",
-      "venueInstrumentVersionId": 997,
+      "venueInstrumentVersionId": 9793,
       "sourceSymbol": "TACUSDT",
       "baseAsset": "TAC",
       "quoteAsset": "USDT",
@@ -5273,7 +5271,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TAGUSDT",
-      "venueInstrumentVersionId": 741,
+      "venueInstrumentVersionId": 9563,
       "sourceSymbol": "TAGUSDT",
       "baseAsset": "TAG",
       "quoteAsset": "USDT",
@@ -5287,7 +5285,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TAIKOUSDT",
-      "venueInstrumentVersionId": 1132,
+      "venueInstrumentVersionId": 9843,
       "sourceSymbol": "TAIKOUSDT",
       "baseAsset": "TAIKO",
       "quoteAsset": "USDT",
@@ -5301,7 +5299,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TAKEUSDT",
-      "venueInstrumentVersionId": 759,
+      "venueInstrumentVersionId": 9581,
       "sourceSymbol": "TAKEUSDT",
       "baseAsset": "TAKE",
       "quoteAsset": "USDT",
@@ -5315,7 +5313,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TAOUSDT",
-      "venueInstrumentVersionId": 865,
+      "venueInstrumentVersionId": 9683,
       "sourceSymbol": "TAOUSDT",
       "baseAsset": "TAO",
       "quoteAsset": "USDT",
@@ -5329,7 +5327,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TAUSDT",
-      "venueInstrumentVersionId": 1006,
+      "venueInstrumentVersionId": 9802,
       "sourceSymbol": "TAUSDT",
       "baseAsset": "TA",
       "quoteAsset": "USDT",
@@ -5343,7 +5341,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:THETAUSDT",
-      "venueInstrumentVersionId": 4411,
+      "venueInstrumentVersionId": 9811,
       "sourceSymbol": "THETAUSDT",
       "baseAsset": "THETA",
       "quoteAsset": "USDT",
@@ -5357,7 +5355,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:THEUSDT",
-      "venueInstrumentVersionId": 1140,
+      "venueInstrumentVersionId": 9851,
       "sourceSymbol": "THEUSDT",
       "baseAsset": "THE",
       "quoteAsset": "USDT",
@@ -5371,7 +5369,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TIAUSDT",
-      "venueInstrumentVersionId": 708,
+      "venueInstrumentVersionId": 9534,
       "sourceSymbol": "TIAUSDT",
       "baseAsset": "TIA",
       "quoteAsset": "USDT",
@@ -5385,7 +5383,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TLMUSDT",
-      "venueInstrumentVersionId": 1134,
+      "venueInstrumentVersionId": 9845,
       "sourceSymbol": "TLMUSDT",
       "baseAsset": "TLM",
       "quoteAsset": "USDT",
@@ -5399,7 +5397,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TMXUSDT",
-      "venueInstrumentVersionId": 1176,
+      "venueInstrumentVersionId": 9876,
       "sourceSymbol": "TMXUSDT",
       "baseAsset": "TMX",
       "quoteAsset": "USDT",
@@ -5413,7 +5411,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TNSRUSDT",
-      "venueInstrumentVersionId": 828,
+      "venueInstrumentVersionId": 9648,
       "sourceSymbol": "TNSRUSDT",
       "baseAsset": "TNSR",
       "quoteAsset": "USDT",
@@ -5427,7 +5425,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TOSHIUSDT",
-      "venueInstrumentVersionId": 770,
+      "venueInstrumentVersionId": 9591,
       "sourceSymbol": "TOSHIUSDT",
       "baseAsset": "TOSHI",
       "quoteAsset": "USDT",
@@ -5441,7 +5439,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TOWNSUSDT",
-      "venueInstrumentVersionId": 744,
+      "venueInstrumentVersionId": 9566,
       "sourceSymbol": "TOWNSUSDT",
       "baseAsset": "TOWNS",
       "quoteAsset": "USDT",
@@ -5455,7 +5453,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRADOORUSDT",
-      "venueInstrumentVersionId": 774,
+      "venueInstrumentVersionId": 9595,
       "sourceSymbol": "TRADOORUSDT",
       "baseAsset": "TRADOOR",
       "quoteAsset": "USDT",
@@ -5469,7 +5467,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRBUSDT",
-      "venueInstrumentVersionId": 695,
+      "venueInstrumentVersionId": 9521,
       "sourceSymbol": "TRBUSDT",
       "baseAsset": "TRB",
       "quoteAsset": "USDT",
@@ -5483,7 +5481,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TREEUSDT",
-      "venueInstrumentVersionId": 738,
+      "venueInstrumentVersionId": 9560,
       "sourceSymbol": "TREEUSDT",
       "baseAsset": "TREE",
       "quoteAsset": "USDT",
@@ -5497,7 +5495,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRIAUSDT",
-      "venueInstrumentVersionId": 918,
+      "venueInstrumentVersionId": 9727,
       "sourceSymbol": "TRIAUSDT",
       "baseAsset": "TRIA",
       "quoteAsset": "USDT",
@@ -5511,7 +5509,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TROLLUSDT",
-      "venueInstrumentVersionId": 1030,
+      "venueInstrumentVersionId": 9820,
       "sourceSymbol": "TROLLUSDT",
       "baseAsset": "TROLL",
       "quoteAsset": "USDT",
@@ -5525,7 +5523,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRUMPUSDT",
-      "venueInstrumentVersionId": 720,
+      "venueInstrumentVersionId": 9548,
       "sourceSymbol": "TRUMPUSDT",
       "baseAsset": "TRUMP",
       "quoteAsset": "USDT",
@@ -5539,7 +5537,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRUSTUSDT",
-      "venueInstrumentVersionId": 812,
+      "venueInstrumentVersionId": 9633,
       "sourceSymbol": "TRUSTUSDT",
       "baseAsset": "TRUST",
       "quoteAsset": "USDT",
@@ -5553,7 +5551,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRUTHUSDT",
-      "venueInstrumentVersionId": 820,
+      "venueInstrumentVersionId": 9640,
       "sourceSymbol": "TRUTHUSDT",
       "baseAsset": "TRUTH",
       "quoteAsset": "USDT",
@@ -5567,7 +5565,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TRXUSDT",
-      "venueInstrumentVersionId": 656,
+      "venueInstrumentVersionId": 9481,
       "sourceSymbol": "TRXUSDT",
       "baseAsset": "TRX",
       "quoteAsset": "USDT",
@@ -5581,7 +5579,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TSTUSDT",
-      "venueInstrumentVersionId": 1455,
+      "venueInstrumentVersionId": 9782,
       "sourceSymbol": "TSTUSDT",
       "baseAsset": "TST",
       "quoteAsset": "USDT",
@@ -5595,7 +5593,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TURBOUSDT",
-      "venueInstrumentVersionId": 872,
+      "venueInstrumentVersionId": 9690,
       "sourceSymbol": "TURBOUSDT",
       "baseAsset": "TURBO",
       "quoteAsset": "USDT",
@@ -5609,7 +5607,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TURTLEUSDT",
-      "venueInstrumentVersionId": 801,
+      "venueInstrumentVersionId": 9622,
       "sourceSymbol": "TURTLEUSDT",
       "baseAsset": "TURTLE",
       "quoteAsset": "USDT",
@@ -5623,7 +5621,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:TUTUSDT",
-      "venueInstrumentVersionId": 1458,
+      "venueInstrumentVersionId": 9864,
       "sourceSymbol": "TUTUSDT",
       "baseAsset": "TUT",
       "quoteAsset": "USDT",
@@ -5637,7 +5635,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:UAIUSDT",
-      "venueInstrumentVersionId": 813,
+      "venueInstrumentVersionId": 9634,
       "sourceSymbol": "UAIUSDT",
       "baseAsset": "UAI",
       "quoteAsset": "USDT",
@@ -5651,7 +5649,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:UBUSDT",
-      "venueInstrumentVersionId": 766,
+      "venueInstrumentVersionId": 9587,
       "sourceSymbol": "UBUSDT",
       "baseAsset": "UB",
       "quoteAsset": "USDT",
@@ -5665,7 +5663,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:UMAUSDT",
-      "venueInstrumentVersionId": 933,
+      "venueInstrumentVersionId": 9742,
       "sourceSymbol": "UMAUSDT",
       "baseAsset": "UMA",
       "quoteAsset": "USDT",
@@ -5679,7 +5677,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:UNIUSDT",
-      "venueInstrumentVersionId": 674,
+      "venueInstrumentVersionId": 9500,
       "sourceSymbol": "UNIUSDT",
       "baseAsset": "UNI",
       "quoteAsset": "USDT",
@@ -5693,7 +5691,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:UPUSDT",
-      "venueInstrumentVersionId": 1059,
+      "venueInstrumentVersionId": 9830,
       "sourceSymbol": "UPUSDT",
       "baseAsset": "UP",
       "quoteAsset": "USDT",
@@ -5707,7 +5705,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:USD1USDT",
-      "venueInstrumentVersionId": 727,
+      "venueInstrumentVersionId": 9555,
       "sourceSymbol": "USD1USDT",
       "baseAsset": "USD1",
       "quoteAsset": "USDT",
@@ -5721,7 +5719,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:USELESSUSDT",
-      "venueInstrumentVersionId": 927,
+      "venueInstrumentVersionId": 9736,
       "sourceSymbol": "USELESSUSDT",
       "baseAsset": "USELESS",
       "quoteAsset": "USDT",
@@ -5735,7 +5733,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:USUSDT",
-      "venueInstrumentVersionId": 843,
+      "venueInstrumentVersionId": 9663,
       "sourceSymbol": "USUSDT",
       "baseAsset": "US",
       "quoteAsset": "USDT",
@@ -5749,7 +5747,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:VANAUSDT",
-      "venueInstrumentVersionId": 920,
+      "venueInstrumentVersionId": 9729,
       "sourceSymbol": "VANAUSDT",
       "baseAsset": "VANA",
       "quoteAsset": "USDT",
@@ -5763,7 +5761,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:VELOUSDT",
-      "venueInstrumentVersionId": 887,
+      "venueInstrumentVersionId": 9705,
       "sourceSymbol": "VELOUSDT",
       "baseAsset": "VELO",
       "quoteAsset": "USDT",
@@ -5777,7 +5775,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:VELVETUSDT",
-      "venueInstrumentVersionId": 998,
+      "venueInstrumentVersionId": 9794,
       "sourceSymbol": "VELVETUSDT",
       "baseAsset": "VELVET",
       "quoteAsset": "USDT",
@@ -5791,7 +5789,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:VERONAUSDT",
-      "venueInstrumentVersionId": 8309,
+      "venueInstrumentVersionId": 9907,
       "sourceSymbol": "VERONAUSDT",
       "baseAsset": "VERONA",
       "quoteAsset": "USDT",
@@ -5805,7 +5803,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:VIRTUALUSDT",
-      "venueInstrumentVersionId": 857,
+      "venueInstrumentVersionId": 9675,
       "sourceSymbol": "VIRTUALUSDT",
       "baseAsset": "VIRTUAL",
       "quoteAsset": "USDT",
@@ -5819,7 +5817,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:VVVUSDT",
-      "venueInstrumentVersionId": 861,
+      "venueInstrumentVersionId": 9679,
       "sourceSymbol": "VVVUSDT",
       "baseAsset": "VVV",
       "quoteAsset": "USDT",
@@ -5833,7 +5831,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:WETUSDT",
-      "venueInstrumentVersionId": 841,
+      "venueInstrumentVersionId": 9661,
       "sourceSymbol": "WETUSDT",
       "baseAsset": "WET",
       "quoteAsset": "USDT",
@@ -5847,7 +5845,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:WIFUSDT",
-      "venueInstrumentVersionId": 1450,
+      "venueInstrumentVersionId": 9552,
       "sourceSymbol": "WIFUSDT",
       "baseAsset": "WIF",
       "quoteAsset": "USDT",
@@ -5861,7 +5859,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:WLDUSDT",
-      "venueInstrumentVersionId": 696,
+      "venueInstrumentVersionId": 9522,
       "sourceSymbol": "WLDUSDT",
       "baseAsset": "WLD",
       "quoteAsset": "USDT",
@@ -5875,7 +5873,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:WLFIUSDT",
-      "venueInstrumentVersionId": 749,
+      "venueInstrumentVersionId": 9571,
       "sourceSymbol": "WLFIUSDT",
       "baseAsset": "WLFI",
       "quoteAsset": "USDT",
@@ -5889,7 +5887,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XAIUSDT",
-      "venueInstrumentVersionId": 950,
+      "venueInstrumentVersionId": 9753,
       "sourceSymbol": "XAIUSDT",
       "baseAsset": "XAI",
       "quoteAsset": "USDT",
@@ -5903,7 +5901,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XANUSDT",
-      "venueInstrumentVersionId": 956,
+      "venueInstrumentVersionId": 9759,
       "sourceSymbol": "XANUSDT",
       "baseAsset": "XAN",
       "quoteAsset": "USDT",
@@ -5917,7 +5915,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XCNUSDT",
-      "venueInstrumentVersionId": 1003,
+      "venueInstrumentVersionId": 9799,
       "sourceSymbol": "XCNUSDT",
       "baseAsset": "XCN",
       "quoteAsset": "USDT",
@@ -5931,7 +5929,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XDPUSDT",
-      "venueInstrumentVersionId": 8626,
+      "venueInstrumentVersionId": 9910,
       "sourceSymbol": "XDPUSDT",
       "baseAsset": "XDP",
       "quoteAsset": "USDT",
@@ -5945,7 +5943,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XLMUSDT",
-      "venueInstrumentVersionId": 698,
+      "venueInstrumentVersionId": 9524,
       "sourceSymbol": "XLMUSDT",
       "baseAsset": "XLM",
       "quoteAsset": "USDT",
@@ -5959,7 +5957,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XMRUSDT",
-      "venueInstrumentVersionId": 675,
+      "venueInstrumentVersionId": 9501,
       "sourceSymbol": "XMRUSDT",
       "baseAsset": "XMR",
       "quoteAsset": "USDT",
@@ -5973,7 +5971,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XNYUSDT",
-      "venueInstrumentVersionId": 746,
+      "venueInstrumentVersionId": 9568,
       "sourceSymbol": "XNYUSDT",
       "baseAsset": "XNY",
       "quoteAsset": "USDT",
@@ -5987,7 +5985,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XPINUSDT",
-      "venueInstrumentVersionId": 767,
+      "venueInstrumentVersionId": 9588,
       "sourceSymbol": "XPINUSDT",
       "baseAsset": "XPIN",
       "quoteAsset": "USDT",
@@ -6001,7 +5999,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XPLUSDT",
-      "venueInstrumentVersionId": 750,
+      "venueInstrumentVersionId": 9572,
       "sourceSymbol": "XPLUSDT",
       "baseAsset": "XPL",
       "quoteAsset": "USDT",
@@ -6015,7 +6013,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:XRPUSDT",
-      "venueInstrumentVersionId": 644,
+      "venueInstrumentVersionId": 9469,
       "sourceSymbol": "XRPUSDT",
       "baseAsset": "XRP",
       "quoteAsset": "USDT",
@@ -6029,7 +6027,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:YBUSDT",
-      "venueInstrumentVersionId": 790,
+      "venueInstrumentVersionId": 9611,
       "sourceSymbol": "YBUSDT",
       "baseAsset": "YB",
       "quoteAsset": "USDT",
@@ -6043,7 +6041,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:YFIUSDT",
-      "venueInstrumentVersionId": 4414,
+      "venueInstrumentVersionId": 9848,
       "sourceSymbol": "YFIUSDT",
       "baseAsset": "YFI",
       "quoteAsset": "USDT",
@@ -6057,7 +6055,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:YGGUSDT",
-      "venueInstrumentVersionId": 699,
+      "venueInstrumentVersionId": 9525,
       "sourceSymbol": "YGGUSDT",
       "baseAsset": "YGG",
       "quoteAsset": "USDT",
@@ -6071,7 +6069,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZAMAUSDT",
-      "venueInstrumentVersionId": 864,
+      "venueInstrumentVersionId": 9682,
       "sourceSymbol": "ZAMAUSDT",
       "baseAsset": "ZAMA",
       "quoteAsset": "USDT",
@@ -6085,7 +6083,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZBTUSDT",
-      "venueInstrumentVersionId": 797,
+      "venueInstrumentVersionId": 9618,
       "sourceSymbol": "ZBTUSDT",
       "baseAsset": "ZBT",
       "quoteAsset": "USDT",
@@ -6099,7 +6097,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZCATUSDT",
-      "venueInstrumentVersionId": 3218,
+      "venueInstrumentVersionId": 9890,
       "sourceSymbol": "ZCATUSDT",
       "baseAsset": "ZCAT",
       "quoteAsset": "USDT",
@@ -6113,7 +6111,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZECUSDT",
-      "venueInstrumentVersionId": 6745,
+      "venueInstrumentVersionId": 9600,
       "sourceSymbol": "ZECUSDT",
       "baseAsset": "ZEC",
       "quoteAsset": "USDT",
@@ -6127,7 +6125,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZENUSDT",
-      "venueInstrumentVersionId": 807,
+      "venueInstrumentVersionId": 9628,
       "sourceSymbol": "ZENUSDT",
       "baseAsset": "ZEN",
       "quoteAsset": "USDT",
@@ -6141,7 +6139,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZEREBROUSDT",
-      "venueInstrumentVersionId": 952,
+      "venueInstrumentVersionId": 9755,
       "sourceSymbol": "ZEREBROUSDT",
       "baseAsset": "ZEREBRO",
       "quoteAsset": "USDT",
@@ -6155,7 +6153,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZESTUSDT",
-      "venueInstrumentVersionId": 1039,
+      "venueInstrumentVersionId": 9827,
       "sourceSymbol": "ZESTUSDT",
       "baseAsset": "ZEST",
       "quoteAsset": "USDT",
@@ -6169,7 +6167,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZILUSDT",
-      "venueInstrumentVersionId": 664,
+      "venueInstrumentVersionId": 9489,
       "sourceSymbol": "ZILUSDT",
       "baseAsset": "ZIL",
       "quoteAsset": "USDT",
@@ -6183,7 +6181,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZKCUSDT",
-      "venueInstrumentVersionId": 1718,
+      "venueInstrumentVersionId": 9589,
       "sourceSymbol": "ZKCUSDT",
       "baseAsset": "ZKC",
       "quoteAsset": "USDT",
@@ -6197,7 +6195,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZKPUSDT",
-      "venueInstrumentVersionId": 847,
+      "venueInstrumentVersionId": 9667,
       "sourceSymbol": "ZKPUSDT",
       "baseAsset": "ZKP",
       "quoteAsset": "USDT",
@@ -6211,7 +6209,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZKUSDT",
-      "venueInstrumentVersionId": 718,
+      "venueInstrumentVersionId": 9546,
       "sourceSymbol": "ZKUSDT",
       "baseAsset": "ZK",
       "quoteAsset": "USDT",
@@ -6225,7 +6223,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZORAUSDT",
-      "venueInstrumentVersionId": 4378,
+      "venueInstrumentVersionId": 9562,
       "sourceSymbol": "ZORAUSDT",
       "baseAsset": "ZORA",
       "quoteAsset": "USDT",
@@ -6239,7 +6237,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZROUSDT",
-      "venueInstrumentVersionId": 893,
+      "venueInstrumentVersionId": 9710,
       "sourceSymbol": "ZROUSDT",
       "baseAsset": "ZRO",
       "quoteAsset": "USDT",
@@ -6253,7 +6251,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:ZZZUSDT",
-      "venueInstrumentVersionId": 6104,
+      "venueInstrumentVersionId": 9897,
       "sourceSymbol": "ZZZUSDT",
       "baseAsset": "ZZZ",
       "quoteAsset": "USDT",
@@ -6267,7 +6265,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:哈基米USDT",
-      "venueInstrumentVersionId": 4228,
+      "venueInstrumentVersionId": 9888,
       "sourceSymbol": "哈基米USDT",
       "baseAsset": "哈基米",
       "quoteAsset": "USDT",
@@ -6281,7 +6279,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:币安人生USDT",
-      "venueInstrumentVersionId": 4226,
+      "venueInstrumentVersionId": 9681,
       "sourceSymbol": "币安人生USDT",
       "baseAsset": "币安人生",
       "quoteAsset": "USDT",
@@ -6295,7 +6293,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:我踏马来了USDT",
-      "venueInstrumentVersionId": 4227,
+      "venueInstrumentVersionId": 9693,
       "sourceSymbol": "我踏马来了USDT",
       "baseAsset": "我踏马来了",
       "quoteAsset": "USDT",
@@ -6309,7 +6307,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:牛来USDT",
-      "venueInstrumentVersionId": 4225,
+      "venueInstrumentVersionId": 9871,
       "sourceSymbol": "牛来USDT",
       "baseAsset": "牛来",
       "quoteAsset": "USDT",
@@ -6323,7 +6321,7 @@
     {
       "venue": "aster",
       "venueInstrumentId": "aster:龙虾USDT",
-      "venueInstrumentVersionId": 4224,
+      "venueInstrumentVersionId": 9752,
       "sourceSymbol": "龙虾USDT",
       "baseAsset": "龙虾",
       "quoteAsset": "USDT",
@@ -6911,7 +6909,7 @@
     {
       "venue": "bitget",
       "venueInstrumentId": "bitget:ARKUSDT",
-      "venueInstrumentVersionId": 9055,
+      "venueInstrumentVersionId": 9463,
       "sourceSymbol": "ARKUSDT",
       "baseAsset": "ARK",
       "quoteAsset": "USDT",
@@ -11447,7 +11445,7 @@
     {
       "venue": "bitget",
       "venueInstrumentId": "bitget:SLPUSDT",
-      "venueInstrumentVersionId": 9450,
+      "venueInstrumentVersionId": 9460,
       "sourceSymbol": "SLPUSDT",
       "baseAsset": "SLP",
       "quoteAsset": "USDT",
@@ -15351,8 +15349,6 @@
       "mappingMethod": "exact_base_heuristic"
     }
   ],
-  "catalogFingerprint": "05065343f5e4a994a9223caf1708b077d7ab35ee4236605e2ce31230e9ab44dd",
-  "marketDataIssueIds": [
-    "aster:RLCUSDT"
-  ]
+  "catalogFingerprint": "935e11344df80782132e2f1f9528d17381ee9afaaf5c322b2bd56be22403d03a",
+  "marketDataIssueIds": []
 }

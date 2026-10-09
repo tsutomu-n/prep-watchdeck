@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-10-09T15:08:03+09:00",
+  "generated_at": "2026-10-09T16:01:26+09:00",
   "source_status": "PASS",
   "overall_runtime_acceptance": "PARTIAL",
   "branch": "ai/research-remediation-20261009-1428",
-  "scope": "all planned source remediations and optional tool boundaries; external data and production adoption remain separately gated",
+  "scope": "source remediation completed; branch push, production rollout and initial real-data capture performed; long-term and statistical acceptance remains separate",
   "checks": {
     "market_pytest": {
       "status": "PASS",
@@ -44,6 +44,34 @@
       "evaluator": "APPROVED",
       "integration": "APPROVED",
       "open_P0_P1_P2": 0
+    },
+    "release_gate": {
+      "source_sha": "35de6f2dcf7d60d1704b3a6e1ae0ace5549ad9cf",
+      "status": "PASS",
+      "exit_code": 0,
+      "market_tests": 279,
+      "ranking_tests": 156,
+      "attention_tests": 56,
+      "web_vitest_tests": 221,
+      "web_e2e_tests": 136,
+      "isolated_database": true,
+      "CI_used": false,
+      "at": "2026-10-09T15:48:15.145990+09:00"
+    },
+    "map_refresh": {
+      "pytest": {
+        "passed": 25,
+        "failed": 0
+      },
+      "schema_check": "PASS",
+      "evidence_check": "PASS",
+      "ranking_qualification": "PASS",
+      "require_reviewed": {
+        "exit_code": 1,
+        "reason": "existing 3 unreviewed quantities and 3 Widgets preserved"
+      },
+      "original_identity_or_quantity_changes": 0,
+      "native_version_changes": 454
     }
   },
   "remediations": [
@@ -51,7 +79,7 @@
       "gap": "reader_observed_editions",
       "source": "PASS",
       "implementation": "immutable journal, post-publication receipt, causal as-of verifier",
-      "runtime": "not_run"
+      "runtime": "pilot verified and bounded daily capture running; gaps retained"
     },
     {
       "gap": "self_contained_context",
@@ -62,13 +90,13 @@
       "gap": "hyperliquid_receipt_finality",
       "source": "PASS",
       "implementation": "nullable finalized_at, late corrections, store/archive/export/audit propagation",
-      "runtime": "not_deployed"
+      "runtime": "deployed; newly finalized rows observed for all 3 Venues"
     },
     {
       "gap": "aster_funding_interval",
       "source": "PASS",
       "implementation": "official config provenance and versioned interval; missing remains unknown",
-      "runtime": "not_deployed"
+      "runtime": "deployed; interval and fundingInfo provenance observed on 452 active contracts"
     },
     {
       "gap": "aster_oi",
@@ -86,13 +114,13 @@
       "gap": "fixed_ab_evaluator",
       "source": "PASS",
       "implementation": "pre-registered rules/source/input, causal fills, finite cash, funding ordering/cadence, corrected mark, split/purge and cash control",
-      "real_data_comparison": "not_run"
+      "real_data_comparison": "future rules registered; capture running; pilot ineligible due gaps"
     },
     {
       "gap": "data_operations_monitor",
       "source": "PASS",
       "implementation": "detailed removed/unmapped/version/identity samples and matching map/port template placeholders",
-      "runtime_map_adoption": "not_run"
+      "runtime_map_adoption": "PASS; c0b276f328e1ad423f448bfa, 1096 matched, 0 mismatch, no operational failures"
     }
   ],
   "reuse": {
@@ -104,17 +132,96 @@
   },
   "not_run": [
     "CI",
-    "git push",
-    "PR",
-    "production deploy",
-    "live migration",
-    "unit install/enable/start/stop/restart",
-    "production map adoption",
-    "new Provider market capture",
-    "24-hour observation",
+    "PR/main merge",
+    "backup restore drill",
+    "completed 24-hour observation",
     "30-day evidence",
     "hftbacktest engine/full-feed acceptance",
     "actual execution/PnL acceptance"
   ],
-  "commit_policy": "only this task scope; no push; final commit is identified by git history and completion response"
+  "commit_policy": "only rollout map/docs scope; push this explicit branch; no main merge or CI",
+  "production_rollout": {
+    "status": "PASS",
+    "source_sha": "35de6f2dcf7d60d1704b3a6e1ae0ace5549ad9cf",
+    "source_release": "/home/tn/releases/prep-watchdeck/35de6f2",
+    "branch_push": "verified remote source SHA; final map/docs push recorded by completion commit",
+    "migration": {
+      "at": "2026-10-09T15:49:42.366392+09:00",
+      "before": {
+        "ready": false,
+        "current_version": 4,
+        "latest_version": 5,
+        "pending": 1
+      },
+      "migration": {
+        "applied": [
+          5
+        ],
+        "current_version": 5,
+        "pending": 0
+      },
+      "after": {
+        "ready": true,
+        "current_version": 5,
+        "latest_version": 5,
+        "pending": 0
+      },
+      "rollback": "retain nullable column; previous source remains compatible"
+    },
+    "backup": {
+      "path": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/database/prep-watchdeck-market-20261009T064422Z.dump",
+      "sha256": "9aa968caf7333ed5cede3a30aa4a1367822a4a3378d1773df9b22969408b564d",
+      "archive_list_and_database": "PASS",
+      "restore_drill": "not_run"
+    },
+    "ranking_map": "/home/tn/releases/prep-watchdeck-ranking-maps/c0b276f328e1ad423f448bfa/initial-map.json",
+    "map_version": "c0b276f328e1ad423f448bfa",
+    "monitor": {
+      "checked_at": "2026-10-09T06:59:18.511139+00:00",
+      "matched": 1096,
+      "version_mismatch": 0,
+      "operational_failures": [],
+      "warnings": [
+        "candleRecovery_incomplete",
+        "candleRecovery_native_history_missing",
+        "endpointRecovery_incomplete",
+        "native_metric_unavailable"
+      ]
+    },
+    "protected_workspace_and_selection_hashes": "unchanged",
+    "raw_evidence_root": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223",
+    "rollback": "prior units/dropins/releases preserved; nullable schema5 compatible with previous Market source"
+  },
+  "initial_data_capture": {
+    "status": "STARTED_WITH_QUALITY_GAPS",
+    "unit": "prep-watchdeck-research-bitget-btc-20261009.service",
+    "root": "/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550",
+    "target": {
+      "instrument_id": "bitget:BTCUSDT",
+      "version_id": 1
+    },
+    "samples": 1440,
+    "interval_seconds": 60,
+    "maximum_duration_hours": 24,
+    "restart": "no",
+    "pilot": {
+      "at": "2026-10-09T06:53:47.888595+00:00",
+      "kind": "pilot",
+      "acceptance": "PARTIAL",
+      "snapshot": "/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550/pilot/snapshots/cd757e14128c49989b85021e9d203545",
+      "snapshot_sha256": "1e3afe2a707fee932a4e05e350241505220523b0e695ac57420e2778baec934a",
+      "replay_valid": true,
+      "qualified_for_ab": false,
+      "observed_evidence": true,
+      "reasons": [
+        "research_candle_gap",
+        "research_state_gap"
+      ],
+      "observations": 3,
+      "quality": "/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550/pilot/quality/6e846dae6f7e4a7fb4ae3e460d5a12e9"
+    },
+    "cost_basis": "explicit sensitivity scenario; not observed fee/slippage/funding",
+    "finalization": "automatic immutable snapshot, quality, fixed trial/result and daily-outcome JSON after stop",
+    "long_term_acceptance": "pending"
+  }
 }

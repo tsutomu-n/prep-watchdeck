@@ -1,8 +1,8 @@
 # Research remediation implementation plan
 
-timestamp="2026-10-09(金)_15:08 JST"
+timestamp="2026-10-09(金)_16:01 JST"
 - 作成: `2026-10-09T14:28:00+09:00`
-- 更新: `2026-10-09T15:08:03+09:00`
+- 更新: `2026-10-09T16:01:26+09:00`
 - 状態: `実装計画`
 
 **Goal:** 研究入力を観測した版のまま保存し、因果時刻と費用を検査して固定A/Bを比較できる。
@@ -12,7 +12,9 @@ timestamp="2026-10-09(金)_15:08 JST"
 
 ## Global constraints
 
-- No production writes, deployment, unit actions, CI, push, PR, model/provider reruns or old evidence edits.
+- Source phase prohibited production operations. The later 2026-10-09 user request authorizes this
+  branch push, production deployment, scoped backup/migration/unit/map actions and initial data capture.
+  CI, PR/main merge, credential changes, trading, and old evidence edits remain outside this task.
 - Unknown data/costs are never zero-filled. Use exact native identity/version/unit and timezone-aware times.
 - New state is isolated; outputs are bounded, immutable, strict-JSON, hash-checked and read back.
 - Errors use stable safe codes; never expose DSNs, keys, raw exception text or partial success as qualified.
@@ -106,11 +108,29 @@ Repository実装とlocal gateは完了。gate・review・元データ保全は
 [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](../../../decisions/0016-reader-observed-research.md)へ反映した。
 このplanは以下の未実施受入だけを再開対象として残す。実装作業を未完了と誤認して再実装しない。
 
-- [ ] 承認されたrelease/DBにMigration 0005を適用し、sourceを配置してProvider finality/intervalを実受入する。
-- [ ] 監視と稼働mapの根拠review・validation・採用後monitorを確認する。現在のmapを推測で書き換えない。
-- [ ] 研究rootで新しいrule登録後に将来観測し、24時間captureと複数日/30日evidenceを別段階で確認する。
+- [x] Source 35de6f2を配置し、検証済みbackup後にMigration 0005を適用。3 Venueの新しい確定時刻とAster 452件のinterval provenanceを実確認。
+- [x] Map c0b276f328e1ad423f448bfaを根拠review・validation後に採用。monitorで1,096件一致、version不一致0、operationalFailuresなし。
+- [x] Future ruleを登録し、独立rootで1,440 samples・60秒間隔・最大24時間の観測を開始。pilotの3観測はreplay/hash検証済み。
+- [ ] 24時間captureの終了と品質を確認し、複数日/30日evidenceを別段階で受け入れる。pilotはcandle/state欠測によりqualified_for_ab=false。
 - [ ] Aster OIはnative symbol・単位・side/multiplier・時刻を確認できる取得契約と実応答が揃うまで除外する。
 - [ ] hftbacktest engine受入は完全な連続feedとlatency/queue仮定が揃ってから行う。
 
-production DBへのwrite、unit操作、map稼働採用、deployは明示許可後の実行対象。
+今回のproduction操作は2026-10-09の明示指示に従って実施済み。稼働状態と再開先はacceptanceに記録する。
 既存journal・Phase0・runtime stateは保全し、過去availabilityや未観測値を埋めない。
+
+## Running capture and remaining checks
+
+- Unit: `prep-watchdeck-research-bitget-btc-20261009.service`。one-shotで起動済み、enable/restart loopは使わない。
+- Research root: `/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550`。
+- `capture-config.json`とimmutable registrationがrule/sourceを固定する。fee/slippage各10bps、
+  fundingゼロは明示した感度scenarioであり、実料金や実損益の受入ではない。
+- 2026-10-09 15:54 JSTに開始。正常なら2026-10-10 15:53 JST頃に1,440回を終了する。
+  `ExecStopPost`は新snapshot、quality、trial/result、`daily-outcome-*.json`を残す。
+  終了3は不適格理由を確認し、成功へ読み替えない。自動再起動してgapを隠さない。
+- 初回pilotは実観測・replay/hash検証済み、candle/state gapによりA/B不適格。
+  24時間経過だけで資格や統計的優位を認定しない。
+- 状態確認は`systemctl --user status prep-watchdeck-research-bitget-btc-20261009.service`。
+  停止が必要な場合は同unitだけをstopし、既存journalを保全する。再開は新研究rootと登録を使う。
+- Rollback資料とDB dumpは`/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223`。
+  新readerを止め、今回追加したMarket/maintenance/monitor/Ranking drop-inを退避して旧unitへ戻す。
+  nullable migration列・原本・旧releaseを維持し、downgradeやrestoreを自動実行しない。

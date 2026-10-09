@@ -1,8 +1,8 @@
 # Research remediation implementation
 
-timestamp="2026-10-09(金)_15:08 JST"
+timestamp="2026-10-09(金)_16:01 JST"
 - 作成: `2026-10-09T14:28:00+09:00`
-- 更新: `2026-10-09T15:08:03+09:00`
+- 更新: `2026-10-09T16:01:26+09:00`
 - 状態: `実装計画`
 
 ## Goal and authority
@@ -32,15 +32,17 @@ offline検証・評価へ実装する。利用者は「これまで計画した�
 ## Boundaries
 
 Python 3.13、既存uv/Polars/Pydantic/psycopgを使う。既存fixture契約とPhase0成果物は不変。
-研究出力はMarket/Ranking/Attention stateと別root。production DBへのwrite、live migration、
-service操作、常駐開始、deploy、push、PR、CIは今回実行しない。既存DB時刻の遡及書換えは禁止。
+研究出力はMarket/Ranking/Attention stateと別root。実装段階ではproduction操作を行わなかった。
+続く2026-10-09のuser指示でpush・本番反映・実データ受入開始が承認され、専用DB backup/
+Migration 0005、Market/maintenance/monitor配置、根拠確認済みmap採用、bounded研究unitを実行した。
+PR/main merge/CI、credential変更、自動注文、既存DB時刻の遡及書換えは含まない。
 source/local検証と本番配置、24時間/30日実データ受入を分ける。
 
 ## Completion and rollback
 
 全項目についてcode、focused tests、CLI経路、エラー終了、使用法と制約を対応づける。
 新研究出力を破棄せず、旧read pathへ戻せる。provider source修正はcommit単位でrevert可能。
-live未反映、未取得OI、長期データ不足は未達として残す。外部依存の条件を偽造してPASSにしない。
+未取得OI、長期データ不足、研究cohortの欠測は未達として残す。外部依存の条件を偽造してPASSにしない。
 
 ## Checkpoints
 
@@ -55,7 +57,7 @@ live未反映、未取得OI、長期データ不足は未達として残す。�
 
 - 実装済みAttentionのimmutable/freeze/edition設計を再利用し、Attention runtimeへ研究writerを追加しない。
 - 別Bitget repo全体を依存にせず、少量の検査ロジックを当repoの契約に合わせる。
-- 未確認OIの取得契約、長期統計、実約定、production map採用/監視回復は外部受入。
+- 未確認OIの取得契約、長期統計、実約定は外部受入。production map採用と監視回復は2026-10-09に実確認した。
 
 ## Source completion / remaining acceptance
 
@@ -65,11 +67,12 @@ Repository実装とlocal gateは完了。gate・review・元データ保全は
 [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](../../../decisions/0016-reader-observed-research.md)へ反映した。
 このplanは以下の未実施受入だけを再開対象として残す。実装作業を未完了と誤認して再実装しない。
 
-- [ ] 承認されたrelease/DBにMigration 0005を適用し、sourceを配置してProvider finality/intervalを実受入する。
-- [ ] 監視と稼働mapの根拠review・validation・採用後monitorを確認する。現在のmapを推測で書き換えない。
-- [ ] 研究rootで新しいrule登録後に将来観測し、24時間captureと複数日/30日evidenceを別段階で確認する。
+- [x] Source 35de6f2を配置し、検証済みbackup後にMigration 0005を適用。3 Venueの新しい確定時刻とAster 452件のinterval provenanceを実確認。
+- [x] Map c0b276f328e1ad423f448bfaを根拠review・validation後に採用。monitorで1,096件一致、version不一致0、operationalFailuresなし。
+- [x] Future ruleを登録し、独立rootで1,440 samples・60秒間隔・最大24時間の観測を開始。pilotの3観測はreplay/hash検証済み。
+- [ ] 24時間captureの終了と品質を確認し、複数日/30日evidenceを別段階で受け入れる。pilotはcandle/state欠測によりqualified_for_ab=false。
 - [ ] Aster OIはnative symbol・単位・side/multiplier・時刻を確認できる取得契約と実応答が揃うまで除外する。
 - [ ] hftbacktest engine受入は完全な連続feedとlatency/queue仮定が揃ってから行う。
 
-production DBへのwrite、unit操作、map稼働採用、deployは明示許可後の実行対象。
+今回のproduction操作は2026-10-09の明示指示に従って実施済み。稼働状態と再開先はacceptanceに記録する。
 既存journal・Phase0・runtime stateは保全し、過去availabilityや未観測値を埋めない。
