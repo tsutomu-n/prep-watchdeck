@@ -143,6 +143,7 @@ class SelectionRuntime:
         state_dir: Path,
         session: aiohttp.ClientSession | None,
         *,
+        enabled_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc"),
         connection_factory: ConnectionFactory | None = None,
         stream_factory: StreamFactory | None = None,
         poll_seconds: float = SELECTION_POLL_SECONDS,
@@ -153,6 +154,7 @@ class SelectionRuntime:
     ) -> None:
         if poll_seconds <= 0 or queue_size <= 0 or batch_size <= 0 or batch_wait_seconds < 0:
             raise ValueError("selection runtime bounds must be positive")
+        self._enabled_venues = enabled_venues
         self._database_url = database_url
         self._state_dir = state_dir
         self._session = session
@@ -244,7 +246,7 @@ class SelectionRuntime:
             if active is None or active.expires_at <= now:
                 try:
                     await self._run_db(
-                        lambda: _load_group_instruments(
+                        lambda: self._enabled_group_instruments(
                             self._require_connection(),
                             command.group_id,
                             command.venue_instrument_id,
@@ -272,7 +274,7 @@ class SelectionRuntime:
         ):
             try:
                 await self._run_db(
-                    lambda: _load_group_instruments(
+                    lambda: self._enabled_group_instruments(
                         self._require_connection(),
                         command.group_id,
                         command.venue_instrument_id,
@@ -331,7 +333,7 @@ class SelectionRuntime:
             raise SelectionRuntimeError("selection activation occurred outside reconciliation")
         activated_at = max(reconcile_at, self._clock())
         instruments = await self._run_db(
-            lambda: _load_group_instruments(
+            lambda: self._enabled_group_instruments(
                 self._require_connection(),
                 group_id,
                 primary_venue_instrument_id,
@@ -426,7 +428,7 @@ class SelectionRuntime:
         self._next_membership_check = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
         try:
             instruments = await self._run_db(
-                lambda: _load_group_instruments(
+                lambda: self._enabled_group_instruments(
                     self._require_connection(),
                     active.group_id,
                     active.primary_venue_instrument_id,
@@ -557,6 +559,15 @@ class SelectionRuntime:
         if failures:
             raise BaseExceptionGroup("selection runtime shutdown failed", failures)
 
+    def _enabled_group_instruments(
+        self, connection: Connection[Any], group_id: str, primary_id: str
+    ) -> tuple[CatalogInstrument, ...]:
+        instruments = _load_group_instruments(connection, group_id, primary_id)
+        enabled = tuple(i for i in instruments if i.venue in self._enabled_venues)
+        if primary_id not in {i.venue_instrument_id for i in enabled}:
+            raise InvalidSelectionCommandError("selected primary Venue acquisition is disabled")
+        return enabled
+
     async def _run_db(self, operation: Callable[[], _T]) -> _T:
         async with self._db_lock:
             return await asyncio.to_thread(operation)
@@ -603,8 +614,14 @@ def _load_group_instruments(
                   AND upper(instrument.quote_asset) = ANY(%s)
                   AND upper(instrument.settle_asset) = ANY(%s)
                   AND upper(instrument.collateral_asset) = ANY(%s)
-                  AND instrument.quantity_unit = 'base'
-                  AND instrument.contract_multiplier = 1
+                  AND ((instrument.venue <> 'mexc' AND instrument.quantity_unit = 'base'
+                        AND instrument.contract_multiplier = 1)
+                    OR (instrument.venue = 'mexc' AND instrument.quantity_unit = 'contracts'
+                        AND instrument.contract_multiplier > 0
+                        AND instrument.raw_definition->'watchdeckIdentityEvidence'
+                            ->>'price_unit' = 'quote_per_base'
+                        AND instrument.raw_definition->'watchdeckQuantityEvidence'
+                            ->>'base_per_contract' = instrument.contract_multiplier::text))
                 ORDER BY instrument.venue, instrument.source_symbol
             """,
             (
@@ -639,7 +656,7 @@ def _instrument_from_row(row: Sequence[object]) -> CatalogInstrument:
     if len(row) != 17 or not isinstance(row[16], dict):
         raise SelectionRuntimeError("selected instrument row has an invalid shape")
     venue_text = str(row[0])
-    if venue_text not in {"bitget", "hyperliquid", "aster"}:
+    if venue_text not in {"bitget", "hyperliquid", "aster", "mexc"}:
         raise SelectionRuntimeError("selected instrument row has an invalid Venue")
     quantity_text = str(row[11])
     if quantity_text not in {"base", "contracts", "unknown"}:

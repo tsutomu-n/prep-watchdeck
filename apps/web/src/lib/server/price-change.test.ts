@@ -13,6 +13,26 @@ const ANCHOR = Date.parse("2026-09-10T15:00:00.000Z");
 type Venue = UniverseInstrumentArtifact["venue"];
 
 describe("daily price change", () => {
+  test("MEXC daily price change uses exact one-minute baseline close and source seconds", async () => {
+    const item = instrument("mexc:BTC_USDT");
+    const bundle = fixture(item);
+    let requests = 0;
+    const fetcher = vi.fn(async (url: URL) => {
+      expect(url.origin).toBe("https://api.mexc.com");
+      expect(url.pathname).toBe("/api/v1/contract/kline/BTC_USDT");
+      expect(url.searchParams.get("interval")).toBe("Min1");
+      const latest = requests++ === 0;
+      expect(Number(url.searchParams.get("end"))).toBe(Math.floor((latest ? NOW : ANCHOR - 1) / 1000));
+      const start = latest ? Math.floor(NOW / MINUTE) * MINUTE : ANCHOR - MINUTE;
+      const close = latest ? 110 : 100;
+      return json({ success: true, code: 0, data: { time: [start / 1000], open: [100], high: [110], low: [100],
+        close: [close], vol: [10000], amount: [100] } });
+    });
+    const service = new DailyPriceChangeService({ source: nativeSource(bundle, fetcher), now: () => NOW });
+    expect(await service.change(query(item.venueInstrumentId))).toMatchObject({ status: "ready", baselinePrice: 100,
+      currentPrice: 110, changePercent: expect.closeTo(10), venueInstrumentVersionId: 1 });
+  });
+
   test("requires exactly one instrument and strict JST referenceTime, with no extra parameters", async () => {
     const state = setup();
     for (const input of [

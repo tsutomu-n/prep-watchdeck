@@ -37,7 +37,7 @@ def extract_roster(path: Path) -> dict[str, Any]:
     for item in payload["items"]:
         if item.get("active") is not True or item.get("marketType") != "linear_perpetual":
             continue
-        if item.get("venue") not in ("bitget", "hyperliquid", "aster"):
+        if item.get("venue") not in ("bitget", "hyperliquid", "aster", "mexc"):
             raise ValueError("unexpected original venue")
         entries.append({name: item[name] for name in IDENTITY_FIELDS})
         quality = item.get("quality")

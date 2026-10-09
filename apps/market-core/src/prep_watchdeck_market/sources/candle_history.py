@@ -224,7 +224,9 @@ class NativeCandleHistoryClient:
 
         async def fetch_pages() -> None:
             nonlocal pages
-            page_minutes = {"bitget": 200, "hyperliquid": 360, "aster": 500}[target.venue]
+            page_minutes = {"bitget": 200, "hyperliquid": 360, "aster": 500, "mexc": 500}[
+                target.venue
+            ]
             ranges = _ranges(missing, max_span_minutes=page_minutes if coalesce else None)
             for range_start, range_end in reversed(ranges) if newest_first else ranges:
                 if target.venue == "bitget":
@@ -290,7 +292,7 @@ class NativeCandleHistoryClient:
                                 },
                             )
                             candles = _parse_hyperliquid_page(payload, target, observed_at=observed)
-                        else:
+                        elif target.venue == "aster":
                             payload, observed = await self._request_json(
                                 "GET",
                                 ASTER_HISTORY_URL,
@@ -303,6 +305,57 @@ class NativeCandleHistoryClient:
                                 },
                             )
                             candles = _parse_aster_page(payload, target, observed_at=observed)
+                        elif target.venue == "mexc":
+                            from prep_watchdeck_market.models import CatalogInstrument
+                            from prep_watchdeck_market.sources.mexc_candles import (
+                                parse_mexc_history,
+                            )
+
+                            if (
+                                target.quantity_unit != "contracts"
+                                or target.contract_multiplier is None
+                            ):
+                                raise HistoryPayloadInvalid(
+                                    "MEXC recovery quantity definition invalid"
+                                )
+                            factor = target.contract_multiplier
+                            instrument = CatalogInstrument(
+                                "mexc",
+                                target.source_symbol,
+                                True,
+                                "0",
+                                "crypto",
+                                "linear_perpetual",
+                                "clob",
+                                target.base_asset,
+                                target.quote_asset,
+                                target.settle_asset,
+                                target.settle_asset,
+                                "contracts",
+                                factor,
+                                None,
+                                None,
+                                None,
+                                {
+                                    "contractSize": format(factor, "f"),
+                                    "watchdeckQuantityEvidence": {
+                                        "base_per_contract": format(factor, "f")
+                                    },
+                                },
+                            )
+                            payload, observed = await self._request_json(
+                                "GET",
+                                "https://api.mexc.com/api/v1/contract/kline/"
+                                + target.source_symbol,
+                                params={
+                                    "interval": "Min1",
+                                    "start": str(int(chunk_start.timestamp())),
+                                    "end": str(int(chunk_end.timestamp()) - 1),
+                                },
+                            )
+                            candles = parse_mexc_history(payload, instrument, observed_at=observed)
+                        else:
+                            raise HistoryPayloadInvalid("unsupported candle history Venue")
                         pages += 1
                         for candle in candles:
                             _accept(candle, target, expected, accepted, rejected)

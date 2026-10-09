@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-09(金)_18:32 JST"
+timestamp="2026-10-10(土)_07:08 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T18:32:09+09:00`
+- 更新: `2026-10-10T07:08:23+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -293,6 +293,26 @@ Repo rootのfull local gateにAttention package、schema checkとWebのDesktop/M
 受入にはexact identity/time、stable bundle、欠測と0、midrank、SQLite transaction/readback、future-only outcome、edition訂正、freeze済みfamilyのjoint day-block評価、shadow/manual分離、no-store/loopback、390px/keyboardを含む。隔離runnerの成功は実データ・production capacity受入ではない。
 
 Hosted CIは明示依頼時だけ実行する。workflowへのAttention gate追加とローカルcheckを、CI実行成功と読み替えない。候補の実運用での優位性は30日以上のprospective evidenceで別途評価し、synthetic planted-edge成功から推定しない。白色化・iidのminute sample推論は行わず、White/SPA/Romano-Wolfそのものの再現は主張しない。
+
+## MEXC・候補比較の検証境界
+
+Marketの関連pytestでは、確認済みcryptoの採否、契約係数と価格倍率の分離、exact versionでの数量換算、
+係数変更、WS板の連続性・無効化、約定重複、履歴回復、Funding間隔、MEXC収集無効化を確認する。
+Rankingは新Venueの読取とexact map/evidence整合を既存schema・根拠checkerで確認する。
+`--require-ranking-qualified`と`--require-reviewed`を別々に扱い、既存の元数量・Widget未確認を成功へ置き換えない。
+現行mapの`bitget:1MCHEEMSUSDT`、`bitget:10000NEXUSDT`、`bitget:1000RATSUSDT`の数量と
+対応Widgetは未確認であり、strictな全確認gateの未達として報告する。
+
+Attentionの`test_discovery.py`は固定条件・source/time・同cutoff重複・連続性・欠測中断・再確認・identity変更・
+履歴上限・cursor・GET無副作用を確認する。Webはworkspace v1読込とv2保存、4件上限、CAS、判断の重複排除と
+容量上限、対象再確認、見送りのepisode範囲、MEXCのChart/価格読取を検証する。
+`tests/e2e/discovery.e2e.ts`はDesktop/Mobileで候補保持、再読込、明示確認時だけのselection切替を確認する。
+schema生成・Web型生成後、変更に対応するpackage gateとRepositoryのfull local gateを実行する。CI実行は別の明示依頼が必要。
+
+実MEXCの受入は専用DB/state/portで、確認済み契約の取得、係数換算、Ranking→Attentionのexact identity、
+Chart・板・約定、60分の更新・欠測・rate limit・再接続・容量を記録する。
+Web healthや短い公開API到達、fixture成功をこの受入へ読み替えない。source検証・隔離実データ・本番配置・
+本人の操作受入を分け、判断時間の短縮や候補の収益性は未測定のまま断定しない。
 
 ## Research remediation
 

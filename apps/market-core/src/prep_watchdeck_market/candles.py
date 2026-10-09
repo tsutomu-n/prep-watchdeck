@@ -32,6 +32,7 @@ class Candle1m:
     # Local finality decision/receipt of confirmation; never database availability.
     # Historical rows without retained evidence remain unknown.
     finalized_at: datetime | None = None
+    source_contract_multiplier: Decimal | None = None
 
     def __post_init__(self) -> None:
         if not self.source_symbol.strip():

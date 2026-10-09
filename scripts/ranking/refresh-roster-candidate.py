@@ -67,6 +67,7 @@ CATALOG_IDENTITY_FIELDS = {
     ),
     "bitget": ("symbol", "baseCoin", "quoteCoin", "symbolType", "symbolStatus"),
     "hyperliquid": ("name", "isDelisted", "szDecimals"),
+    "mexc": ("symbol", "baseCoin", "quoteCoin", "settleCoin", "state", "type", "contractSize"),
 }
 
 
@@ -112,7 +113,10 @@ def prepare(
         "database": "prep_watchdeck_market",
     }:
         raise ValueError("definition audit must be captured in a read-only session")
-    if set(catalogs["catalogs"]) != {"aster", "bitget", "hyperliquid", "bybit", "binance"}:
+    required_catalogs = {"aster", "bitget", "hyperliquid", "bybit", "binance"} | {
+        entry["venue"] for entry in [*previous_roster["items"], *roster["items"]]
+    }
+    if set(catalogs["catalogs"]) != required_catalogs:
         raise ValueError("refresh requires complete official catalog evidence")
     if catalogs.get("complete") is not True:
         raise ValueError("official catalog capture must confirm complete pagination")

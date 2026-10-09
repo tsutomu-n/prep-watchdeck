@@ -20,7 +20,7 @@ from prep_watchdeck_market.models import Venue
 ArchiveDataset = Literal["market_state_1m", "candle_1m", "funding_events"]
 ArchiveStatus = Literal["confirmed"]
 _SUPPORTED_DATASETS = {"market_state_1m", "candle_1m", "funding_events"}
-_SUPPORTED_VENUES = {"bitget", "hyperliquid", "aster"}
+_SUPPORTED_VENUES = {"bitget", "hyperliquid", "aster", "mexc"}
 _SCHEMA_VERSION = 1
 _PART_FILE_NAME = "part-0000.parquet"
 _PARQUET_DECIMAL = pl.Decimal(precision=38, scale=18)

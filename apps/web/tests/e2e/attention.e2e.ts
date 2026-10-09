@@ -10,7 +10,7 @@ test("注目の成分・欠損・お気に入り・方向・停止時刻を独�
   let selectionWrites = 0;
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
-  let workspace: UserWorkspace = { schemaVersion: 1, revision: 0, favorites: [], savedViews: [] };
+  let workspace: UserWorkspace = { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] };
   await page.route("**/api/attention", route => route.fulfill(stopped ? { status: 503, json: { error: "stopped" } } : { json: fixture }));
   await page.route("**/api/selection**", route => { selectionWrites++; return route.abort(); });
   await page.route("https://**", route => route.abort());

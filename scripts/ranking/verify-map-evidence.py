@@ -3,9 +3,66 @@
 import argparse
 import json
 from collections import Counter
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 from prep_watchdeck_ranking.mapping import compile_map, qualification_summary, reference_revision
+from prep_watchdeck_ranking.models import content_digest
+
+
+def verify_mexc_original(original, reference, evidence: dict) -> None:
+    """Bind the reviewed price identity to its exact captured native version.
+
+    The native contractSize remains separate quantity provenance. It must never
+    become the integer multiplier used to identify the asset behind a price.
+    """
+    proof = evidence.get("mexcQualification", {}).get(original.instrument_id, {})
+    entry = evidence["catalogs"]["mexc"].get(original.symbol, {})
+    identity = proof.get("identity", {})
+    definition = proof.get("normalizedDefinition", {})
+    raw = definition.get("rawDefinition", {})
+    if (
+        proof.get("versionId") != original.version_id
+        or proof.get("symbol") != original.symbol
+        or proof.get("baseAsset") != original.base_asset
+        or proof.get("priceMultiplier") != original.multiplier
+        or proof.get("referenceKey") != (reference.key if reference else None)
+        or proof.get("catalogEntryDigest") != content_digest(entry)
+        or proof.get("definitionDigest") != content_digest(definition)
+        or definition.get("venue") != "mexc"
+        or definition.get("sourceSymbol") != original.symbol
+        or definition.get("baseAsset") != original.base_asset
+        or definition.get("quantityUnit") != "contracts"
+        or raw.get("watchdeckIdentityEvidence", {}).get("identity_price_multiplier") != "1"
+        or any(raw.get(name) != value for name, value in entry.items())
+        or not proof.get("observedAt")
+        or not proof.get("identityEvidence")
+        or not proof.get("priceEvidence")
+        or identity.get("assetClass") != "crypto"
+        or not identity.get("project")
+        or entry.get("symbol") != original.symbol
+        or entry.get("baseCoin") != original.base_asset
+        or entry.get("quoteCoin") != "USDT"
+        or entry.get("settleCoin") != "USDT"
+        or entry.get("futureType") != 1
+        or entry.get("state") != 0
+        or entry.get("type") != 1
+        or original.multiplier != 1
+    ):
+        raise ValueError(f"MEXC exact price identity evidence differs: {original.instrument_id}")
+    try:
+        contract_size = Decimal(str(entry["contractSize"]))
+        captured_size = Decimal(str(proof["baseQuantityPerContract"]))
+        normalized_size = Decimal(str(definition["contractMultiplier"]))
+    except (KeyError, InvalidOperation):
+        raise ValueError("MEXC base quantity evidence absent") from None
+    if (
+        not contract_size.is_finite()
+        or contract_size <= 0
+        or captured_size != contract_size
+        or normalized_size != contract_size
+    ):
+        raise ValueError("MEXC base quantity evidence differs from native contractSize")
 
 
 def verify(directory: Path) -> dict:
@@ -22,6 +79,8 @@ def verify(directory: Path) -> dict:
             entry = evidence["catalogs"][original.venue].get(original.symbol)
             if entry is None and row.status != "review":
                 raise ValueError(f"original catalog evidence absent: {original.instrument_id}")
+            if original.venue == "mexc" and row.status != "review":
+                verify_mexc_original(original, row.reference, evidence)
         if row.reference is None:
             continue
         ref = row.reference

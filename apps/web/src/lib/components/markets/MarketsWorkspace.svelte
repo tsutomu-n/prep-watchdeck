@@ -5,6 +5,7 @@
   import { page } from "$app/state";
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
   import { loadNativeMarkets, loadReferenceMarkets } from "./lazy-surfaces";
+  import DiscoveryCompare from "./DiscoveryCompare.svelte";
   import RecentMarkets from "./RecentMarkets.svelte";
 
   let { data }: { data: { market?: MarketArtifactBundle; marketError?: string } } = $props();
@@ -80,6 +81,7 @@
 {#if startupError}<p role="status">{startupError}</p>{/if}
 {#if startupReady}
 <RecentMarkets />
+<DiscoveryCompare />
 {#if mode === "reference" && ReferenceMarkets}
   <ReferenceMarkets market={data.market ?? null} legacyEntry={page.url.pathname === "/rankings"} />
 {:else if mode === "native" && NativeMarkets}

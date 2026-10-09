@@ -1,9 +1,9 @@
 # prep-watchdeck 現行UIワークフロー
 
-timestamp="2026-10-09(金)_18:32 JST"
+timestamp="2026-10-10(土)_07:29 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T18:32:09+09:00`
+- 更新: `2026-10-10T07:29:22+09:00`
 - 検証: `2026-10-06T17:30:22+09:00`
 - 状態: `現行`
 
@@ -11,7 +11,7 @@ timestamp="2026-10-09(金)_18:32 JST"
 
 ## この文書の範囲
 
-この文書は**Repositoryに実装済みのUniverseとランキングUI**の挙動を説明する。
+この文書は**Repositoryに実装済みのUniverse、ランキング、候補比較UI**の挙動を説明する。
 稼働反映の状態と将来のStocks、prediction、journal、複数selection、追加Chart等の製品境界は別に扱う。
 製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
 
@@ -30,6 +30,23 @@ Universeはbase→Venueの既定順。groupのないactive契約も単体詳細�
 
 お気に入りと名前付きviewはstate rootのuser-workspaceへatomic保存する。最近見た対象は端末localStorage、未保存メモは銘柄/version別にsessionStorageへ保存し、利用不可時は画面内保持を知らせる。メモPOSTはread token一致時だけ成功し、古い応答で編集後の下書きを消さない。参照詳細の観測メモでは保存先の取扱い契約を選び、任意で参照の出所・比較時刻・値を添付できる。native初期表示やURL復元はselectionをPOSTせず、明示選択後のheartbeatは同一tokenのまま5分ごとに送り、hidden中は停止する。L1品質はBrowser時計でも120秒超で期限切れにする。
 
+## 候補比較・判断と常時監視
+
+Marketsの比較欄は最大4件のpinをuser-workspace v2へ保存する。順位低下・filter外・条件解除で外さず、
+favoriteや実captureのselectionとは独立する。参照key/original集合またはinstrument versionが変わった対象は
+保存時の根拠を保持して再確認を表示し、pinを自動置換しない。再登録は明示解除・再追加とする。
+
+固定条件は参照15分売買代金の昨日・一昨日同時刻比が双方3倍以上、方向表示は±2%。
+Browserの強調設定やBitget専用の普段比を使わない。Attention稼働中は画面を閉じても条件episodeを更新する。
+初回確認・再確認を新規成立と区別し、欠測・停止・古い入力はunknown/中断であって条件解除ではない。
+参照値・native値のsource、単位、観測時刻、window、品質を近接表示する。
+
+「この実Venueを確認」から移動を明示確定したときだけ、最新DiscoveryとUniverseのexact identity・鮮度を
+再照合し、既存selectionをPOSTしてnative詳細へ進む。pin操作、判断保存、初期表示、URL復元はselectionを送らない。
+監視/見送りは理由と表示snapshotをWeb側へ保存し、見送りは当該episodeにだけ適用する。
+保存競合・上限・取得失敗を表示し、既存候補と履歴を破棄しない。MEXCもVenue filter・保存view・URL復元の対象となる。
+旧AttentionがDiscoveryに未対応でも既存Marketsは利用でき、候補機能の利用不可を別に表示する。
+
 ## 読み込みと一覧への復帰
 
 参照市場と取引所別画面は必要になった時にコードを読み込む。メニューへのpointer接近・focusでは
@@ -46,7 +63,7 @@ URLの明示条件と変更後の既定設定を優先し、異なる条件の�
 
 ## 共通メニュー・設定と表示条件
 
-ランキング上部の取引所モードは「すべて／Hyperliquid」を切り替えます。Hyperliquidは既存の取扱い名簿で銘柄を絞り、騰落率・売買代金・全体順位は既存のBybit／Binance参照データを維持します。「ランキング条件」の取扱い取引所と同じvenueを使い、比較期間・並び順・その他の条件・選択ID・Chart足は保持します。目的別表示の切替、保存viewの適用、URLのvenue復元にも選択状態が追従します。Bitget／Asterを詳細条件で選んだ場合は上部の両ボタンを未選択にし、適用条件に取扱い取引所を表示します。
+ランキング上部の取引所モードは「すべて／Bitget／Hyperliquid／MEXC」を切り替えます。選択した取引所の取扱い名簿で銘柄を絞り、騰落率・売買代金・全体順位は既存のBybit／Binance参照データを維持します。「ランキング条件」の取扱い取引所と同じvenueを使い、比較期間・並び順・その他の条件・選択ID・Chart足は保持します。目的別表示の切替、保存viewの適用、URLのvenue復元にも選択状態が追従します。Asterを詳細条件で選んだ場合は上部のボタンを未選択にし、適用条件に取扱い取引所を表示します。
 
 参照一覧の「目的別の表示」は、実際の条件から選択状態を判定します。市場全体は24h/turnover/標準列、短期の値動きは15m/gainers/値動き列、売買代金の増加は15m/turnover/値動き列＋15分平常比降順、お気に入り監視は24h/turnover/標準列＋favoritesOnlyです。平常比順でも全体順位は売買代金順のままです。固定の数値しきい値は追加しません。切替は検索・下限・追加filter・行順固定・保存view選択を解除し、venue・選択ID・Chart足・JST設定を保持します。
 

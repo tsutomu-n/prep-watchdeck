@@ -21,7 +21,7 @@
   import { filterSortRankingRows, type RankingSort } from "$lib/market/market-view";
   import { newlyIncreasedRows, relativeVolumeState } from "$lib/market/relative-volume";
   import { formatPrice } from "$lib/market/universe-view";
-  import { favoriteKey, readUserWorkspace, setFavorite } from "$lib/market/user-workspace";
+  import { favoriteKey, readUserWorkspace, setFavorite, reconfirmFavorite } from "$lib/market/user-workspace";
   import { recordRecentMarket } from "$lib/market/recent-markets";
   import {
     browserRankingSession, rankingPreferenceKey, rankingSnapshotExpired, type RankingSession
@@ -54,7 +54,7 @@
   let turnoverDecimals = $state(DEFAULT_TURNOVER_DECIMALS);
   let search = $state("");
   let includeUnranked = $state(false);
-  let venue = $state<"all" | "bitget" | "hyperliquid" | "aster">("all");
+  let venue = $state<"all" | "bitget" | "hyperliquid" | "aster" | "mexc">("all");
   let minRatio = $state<number | null>(null);
   let ratioPeriod = $state<"15m" | "1h">("15m");
   let minDayPosition = $state<number | null>(null);
@@ -268,7 +268,7 @@
   const activeConditions = $derived([
     minimum > 0 ? `売買代金 ${minimum.toLocaleString("en-US")} USDT以上` : "",
     search.trim() ? `検索: ${search.trim()}` : "", favoritesOnly ? "お気に入りのみ" : "",
-    venue !== "all" ? `取扱い: ${venue === "hyperliquid" ? "Hyperliquid" : venue === "bitget" ? "Bitget" : "Aster"}` : "",
+    venue !== "all" ? `取扱い: ${venue === "hyperliquid" ? "Hyperliquid" : venue === "bitget" ? "Bitget" : venue === "mexc" ? "MEXC" : "Aster"}` : "",
     includeUnranked ? "順位外・未対応を含む" : "",
     minRatio !== null ? `${ratioPeriod === "15m" ? "15分" : "1時間"}平常比 ${minRatio}倍以上` : "",
     minDayPosition !== null ? `当日位置 ${minDayPosition}%以上` : "",
@@ -416,7 +416,7 @@
       }
       search = params.get("q") ?? "";
       const requestedVenue = params.get("venue");
-      if (["all", "bitget", "hyperliquid", "aster"].includes(requestedVenue ?? "")) {
+      if (["all", "bitget", "hyperliquid", "aster", "mexc"].includes(requestedVenue ?? "")) {
         venue = requestedVenue as typeof venue;
       }
       includeUnranked = params.get("includeUnranked") === "1";
@@ -649,7 +649,7 @@
   }
 
   function venueLabel(value: string) {
-    return value === "bitget" ? "Bitget" : value === "hyperliquid" ? "Hyperliquid" : "Aster";
+    return value === "bitget" ? "Bitget" : value === "hyperliquid" ? "Hyperliquid" : value === "mexc" ? "MEXC" : "Aster";
   }
 
   function referenceTarget(row: RankedRow): FavoriteTarget | null {
@@ -669,9 +669,14 @@
       JSON.stringify([...saved.originals].sort()) === JSON.stringify([...target.originals].sort());
   }
 
-  async function toggleFavorite(row: RankedRow) {
+  let favoriteRecheck = $state<RankedRow | null>(null);
+
+  async function toggleFavorite(row: RankedRow, confirmed = false) {
     const target = referenceTarget(row);
     if (!target) return;
+    const saved = workspace?.favorites.find(entry => entry.kind === "reference" && entry.id === row.id);
+    if (saved && !referenceFavoriteCurrent(row) && !confirmed) { favoriteRecheck = row; return; }
+    favoriteRecheck = null;
     const key = favoriteKey(target);
     const current = favoriteIntent[key] ?? referenceFavoriteCurrent(row);
     favoriteIntent = { ...favoriteIntent, [key]: !current };
@@ -680,7 +685,8 @@
     try {
       while (true) {
         const desired = favoriteIntent[key];
-        workspace = await setFavorite(target, desired);
+        workspace = confirmed && saved && !current && desired && workspace
+          ? await reconfirmFavorite(target, workspace.revision) : await setFavorite(target, desired);
         workspaceError = null;
         if (favoriteIntent[key] === desired) break;
       }
@@ -731,7 +737,7 @@
       reference = String(view.reference);
       minimum = Number(view.minimum);
       search = typeof view.search === "string" ? view.search : "";
-      venue = ["all", "bitget", "hyperliquid", "aster"].includes(String(view.venue))
+      venue = ["all", "bitget", "hyperliquid", "aster", "mexc"].includes(String(view.venue))
         ? view.venue as typeof venue : "all";
       includeUnranked = view.includeUnranked === true;
       favoritesOnly = view.favoritesOnly === true;
@@ -802,6 +808,13 @@
   {#if data}<RosterNotice {data} {now} />{/if}
   {#if workspaceError}<p class="notice" role="alert">{workspaceError}</p>{/if}
 
+  {#if favoriteRecheck}
+    <section class="selection-notice" aria-label="お気に入り対象の再確認">
+      <p>参照市場または元の取扱い契約が変更されました。保存対象は保持しています。現在の対象: {JSON.stringify(referenceTarget(favoriteRecheck))}</p>
+      <button type="button" onclick={() => favoriteRecheck && toggleFavorite(favoriteRecheck, true)}>現在の対象を確認してお気に入り更新</button>
+      <button type="button" onclick={() => favoriteRecheck = null}>保存対象を保持</button>
+    </section>
+  {/if}
   <div class="workspace">
     <section class="ranking-list" class:mobile-hidden={mobileDetail} aria-labelledby="list-title">
   <div class="ranking-overview" class:mobile-hidden={mobileDetail}>
@@ -815,6 +828,7 @@
       <button type="button" aria-pressed={venue === "all"} onclick={() => venue = "all"}>すべて</button>
       <button type="button" aria-pressed={venue === "bitget"} onclick={() => venue = "bitget"}>Bitget</button>
       <button type="button" aria-pressed={venue === "hyperliquid"} onclick={() => venue = "hyperliquid"}>Hyperliquid</button>
+      <button type="button" aria-pressed={venue === "mexc"} onclick={() => venue = "mexc"}>MEXC</button>
     </div>
 
     <div class="purpose-switcher" role="group" aria-label="目的別の表示">
@@ -849,7 +863,7 @@
         <label>売買代金の下限 · USDT<input aria-label="売買代金の下限" type="number" min="0" max="1000000000000000000" step="any" bind:value={minimum} /></label>
         <label>取扱い取引所<select aria-label="取扱い取引所" bind:value={venue}>
           <option value="all">すべて</option><option value="bitget">Bitget</option>
-          <option value="hyperliquid">Hyperliquid</option><option value="aster">Aster</option>
+          <option value="hyperliquid">Hyperliquid</option><option value="aster">Aster</option><option value="mexc">MEXC</option>
         </select></label>
         <label>表示列<select aria-label="表示列プリセット" bind:value={preset}>
           <option value="standard">標準</option><option value="movement">値動き</option>
@@ -943,12 +957,14 @@
                     {(changeLabel.startsWith("比較不可") || row.rank === null) ? "—" : changeLabel}
                   </small>
                 {/if}</td>
-                <th scope="row" class="asset-cell"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
+                <th scope="row" class="asset-cell"><div class="asset-actions"><button type="button" class="select-row" aria-pressed={selectedId === row.id} onclick={() => select(row)}>
                   <div class="asset-icon-slot"><AssetIcon symbol={row.asset} assetId={row.id} originals={row.originals} /></div>
-                  <strong>{row.asset}</strong><span>{row.venues.map((v) => v === "hyperliquid" ? "Hyperliquid" : v === "bitget" ? "Bitget" : "Aster").join(" · ")}</span>
+                  <strong>{row.asset}</strong><span>{row.venues.map((v) => v === "hyperliquid" ? "Hyperliquid" : v === "bitget" ? "Bitget" : v === "mexc" ? "MEXC" : "Aster").join(" · ")}</span>
                   <small class="desktop-only">{referenceLabel(row)}</small>
                   <small class="mobile-only">{row.reference ? `参照 ${row.reference.provider === "bybit" ? "Bybit" : "Binance"}` : "参照未対応"}</small>
                 </button>
+                  <button type="button" class="compare-action" onclick={event => { event.stopPropagation(); window.dispatchEvent(new CustomEvent("watchdeck:compare", { detail: { assetId: row.id } })); }} aria-label={`${row.asset}を比較へ追加`}>比較へ</button>
+                  </div>
                   <button class="mobile-only mobile-favorite" type="button" disabled={!referenceTarget(row)}
                     title={workspace?.favorites.some((entry) => entry.kind === "reference" && entry.id === row.id) && !referenceFavoriteCurrent(row)
                       ? "参照対応が変わりました。確認してから再登録してください" : undefined}
@@ -998,8 +1014,8 @@
       </div>
       {#if visibleRows.length > limit}<button class="more" type="button" onclick={() => limit += 50}>さらに50件を表示（{limit} / {visibleRows.length}）</button>{/if}
       <details class="metric-help"><summary>指標の読み方</summary>
-        <p class="metric-note">取扱いはBitget / Hyperliquid / Asterの元契約です。参照取引所の契約で騰落率・売買代金を比較し、取扱い取引所の合計にはしません。</p>
-        <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。3取引所や市場全体の合計ではありません。</p>
+        <p class="metric-note">取扱いはBitget / Hyperliquid / Aster / MEXCの元契約です。参照取引所の契約で騰落率・売買代金を比較し、取扱い取引所の合計にはしません。</p>
+        <p class="metric-note">売買代金は同じ比較期間における、参照取引所の当該契約のUSDT建て合計です。取扱い取引所や市場全体の合計ではありません。</p>
         <p class="metric-note">「Bitget 24h」「Hyperliquid 24h」は、各取引所が配信する直近24時間の売買代金です。単位は契約ごとのUSDT／USDCを表示します。比較期間を変えても24時間値です。kは千、mは百万を表します。取得できない値・古い値・契約版が一致しない値は「—」にします。</p>
         <p class="metric-note">Bitgetの短時間表示は、15分・1時間の売買代金の普段比と直前比、15分の価格変化、直近4区間の推移です。約3分前までの確定1分足を1分ごとに集計します。普段比は過去7日の同時刻・同じ長さの窓の中央値が基準で、3日以上の完全な履歴が必要です。棒の欠測と実測ゼロは区別します。Hyperliquidの短時間指標は表示しません。</p>
         <p class="metric-note">全体順位は全対応銘柄から計算します。検索やお気に入りは表示する行だけを絞ります。列見出しによる並べ替え後も全体順位は維持します。</p>
@@ -1188,6 +1204,11 @@
   .select-row > strong, .select-row > span, .select-row > small { grid-column: 2; min-width: 0; }
   .select-row strong { font-size: var(--type-data-md-size); overflow-wrap: anywhere; }
   .select-row span, .select-row small { color: var(--muted); font-size: var(--type-label-caps-size); overflow-wrap: anywhere; }
+  @media (min-width: 961px) and (pointer: fine) {
+    .asset-actions { display: flex; align-items: center; gap: var(--space-xs); }
+    .asset-actions .select-row { flex: 1; min-width: 0; }
+    .compare-action { flex: 0 0 auto; white-space: nowrap; }
+  }
   .numeric { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
   .up { color: var(--up); }.down { color: var(--down); }
   .missing { color: var(--quality-risk); font-size: var(--type-label-caps-size); white-space: normal; }

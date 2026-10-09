@@ -46,7 +46,7 @@ def capability_status(value: object) -> str:
 
 def local_ccxt_capabilities(venue: str) -> dict[str, Any]:
     """Inspect an explicitly installed CCXT adapter without credentials or network calls."""
-    if venue not in {"bitget", "hyperliquid", "aster"}:
+    if venue not in {"bitget", "hyperliquid", "aster", "mexc"}:
         raise BundleError("research_identity_invalid")
     try:
         module = importlib.import_module("ccxt")

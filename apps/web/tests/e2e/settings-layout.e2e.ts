@@ -7,7 +7,7 @@ async function prepare(page: Page) {
   page.on("pageerror", error => errors.push(error.message));
   await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
   await page.route("**/api/user-workspace", route => route.fulfill({
-    json: { schemaVersion: 1, revision: 0, favorites: [], savedViews: [] }
+    json: { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] }
   }));
   await page.route("**/api/rankings?**", route => {
     const data = rankingFixture(new URL(route.request().url()).searchParams,
@@ -185,7 +185,7 @@ test("目的別の表示は条件を切り替え、取扱い取引所と選択�
     `
   }));
   let workspace: UserWorkspace = {
-    schemaVersion: 1, revision: 1, savedViews: [],
+    schemaVersion: 2, revision: 1, savedViews: [], pins: [],
     favorites: [{ kind: "reference", id: "asset:BTC", referenceKey: "bybit:BTCUSDT:fixture-v1",
       originals: ["bitget:BTCUSDT:1"] }]
   };

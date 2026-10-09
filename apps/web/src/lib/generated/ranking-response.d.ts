@@ -50,13 +50,13 @@ export type Asset = string;
  */
 export type Mappingstatus = "verified" | "unsupported" | "review" | "out_of_scope";
 export type Venues = string[];
-export type Venue = "bitget" | "hyperliquid" | "aster";
+export type Venue = "bitget" | "hyperliquid" | "aster" | "mexc";
 export type Instrumentid = string;
 export type Versionid = number;
 export type Symbol = string;
 export type Baseasset = string;
 /**
- * Original underlying quantity per unit; null means conversion is unverified. This does not determine fixed-reference ranking eligibility.
+ * Underlying asset units represented by one original quoted price unit; null means conversion is unverified. This is an asset-price identity multiplier, not base quantity per order contract (for example MEXC contractSize), and does not determine fixed-reference ranking eligibility.
  */
 export type Multiplier = number | null;
 export type Originals = OriginalInstrument[];

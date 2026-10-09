@@ -63,7 +63,8 @@ def load_missing_endpoints(
                 """
                 SELECT vi.venue_instrument_version_id, vi.venue, vi.source_symbol,
                        vi.definition_hash, vi.valid_from,
-                       vi.base_asset, vi.quote_asset, vi.settle_asset, endpoint.bucket_at
+                       vi.base_asset, vi.quote_asset, vi.settle_asset,
+                       vi.quantity_unit, vi.contract_multiplier, endpoint.bucket_at
                 FROM venue_instrument_versions vi
                 CROSS JOIN LATERAL (
                     SELECT %s::timestamptz - age * interval '1 minute' AS bucket_at
@@ -74,7 +75,7 @@ def load_missing_endpoints(
                  AND candle.bucket_at = endpoint.bucket_at
                 WHERE vi.valid_to IS NULL AND vi.active
                   AND vi.asset_class = 'crypto' AND vi.market_type = 'linear_perpetual'
-                  AND vi.venue IN ('bitget', 'hyperliquid', 'aster')
+                  AND vi.venue IN ('bitget', 'hyperliquid', 'aster', 'mexc')
                   AND (%s::bigint IS NULL OR vi.venue_instrument_version_id = %s)
                   AND endpoint.bucket_at >= vi.valid_from
                   AND endpoint.bucket_at < %s
@@ -95,8 +96,8 @@ def load_missing_endpoints(
         raise RecoveryStoreError("endpoint scan unavailable") from None
     found: dict[RecoveryTarget, list[datetime]] = {}
     for row in rows:
-        target = RecoveryTarget(*row[:8])
-        found.setdefault(target, []).append(row[8])
+        target = RecoveryTarget(*row[:10])
+        found.setdefault(target, []).append(row[10])
     metric_end = cutoff - timedelta(minutes=1)
     result: EndpointSnapshot = {}
     for target, buckets in found.items():
@@ -148,8 +149,10 @@ class CandleEndpointRecovery:
         state_dir: Path,
         *,
         on_inserted: Callable[[], None] | None = None,
+        enabled_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc"),
         utc_clock: Callable[[], datetime] | None = None,
     ) -> None:
+        self._enabled_venues = enabled_venues
         self._database_url = database_url
         self._state_dir = state_dir
         self._on_inserted = on_inserted
@@ -271,6 +274,11 @@ class CandleEndpointRecovery:
             )
             write_artifact_atomic(state_path, state("running", None))
             before = await _thread_call(load_missing_endpoints, connection, now=started_at)
+            before = {
+                target: buckets
+                for target, buckets in before.items()
+                if target.venue in self._enabled_venues
+            }
             scanned = True
             current_end = cutoff - timedelta(minutes=1)
             recent_start = cutoff - timedelta(minutes=61)

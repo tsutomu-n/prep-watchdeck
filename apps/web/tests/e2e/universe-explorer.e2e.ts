@@ -1462,7 +1462,13 @@ test("2タブのメモCASと別favorite・savedView競合・旧selection heartbe
     expect(stored.favorites.map((item: { id: string }) => item.id).sort()).toEqual(["bitget:BTCUSDT", "bitget:ETHUSDT"]);
     await page.reload(); await other.reload();
     for (const tab of [page, other]) {
+      // Reload restores a native detail entry after the lazy surface mounts.
+      // Wait for that visible state before asking the helper to return to the list.
+      if ((tab.viewportSize()?.width ?? 1440) <= 768) {
+        await expect(tab.getByRole("button", { name: "一覧へ戻る", exact: true })).toBeVisible();
+      }
       await showMarketList(tab);
+      await expect(tab.getByRole("heading", { name: "銘柄一覧", exact: true })).toBeVisible();
       await openSection(tab, "表示条件を保存／管理");
     }
     await page.getByLabel("取引所別の表示名").fill("先の表示");

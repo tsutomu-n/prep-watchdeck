@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     database_url: str
     state_dir: Path = Field(default_factory=_default_state_dir)
     log_level: str = "INFO"
+    # Disable acquisition during compatible-reader rollback; retain stored MEXC data.
+    mexc_enabled: bool = True
     allow_nonstandard_database_target: bool = False
     candle_recovery_enabled: bool = Field(
         default=False, validation_alias="PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED"

@@ -75,15 +75,17 @@ class Widget(Contract):
 
 
 class OriginalInstrument(Contract):
-    venue: Literal["bitget", "hyperliquid", "aster"]
+    venue: Literal["bitget", "hyperliquid", "aster", "mexc"]
     instrument_id: str
     version_id: int
     symbol: str
     base_asset: str
     multiplier: int | None = Field(
         gt=0,
-        description="Original underlying quantity per unit; null means conversion is unverified. "
-        "This does not determine fixed-reference ranking eligibility.",
+        description="Underlying asset units represented by one original quoted price unit; "
+        "null means conversion is unverified. This is an asset-price identity multiplier, "
+        "not base quantity per order contract (for example MEXC contractSize), and does not "
+        "determine fixed-reference ranking eligibility.",
     )
 
 

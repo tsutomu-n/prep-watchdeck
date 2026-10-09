@@ -208,6 +208,20 @@ async def produce_selected_stream(
     """Produce selected CLOB depth/trades for one fail-closed catalog instrument."""
 
     validate_selected_instrument(instrument)
+    if instrument.venue == "mexc":
+        from prep_watchdeck_market.sources.mexc_selected import produce_mexc_selected
+
+        await produce_mexc_selected(
+            session,
+            instrument,
+            emit,
+            stop_event,
+            ws_factory=ws_factory,
+            receive_poll_seconds=receive_poll_seconds,
+            reconnect_delay_seconds=reconnect_delay_seconds,
+            clock=clock,
+        )
+        return
     if receive_poll_seconds <= 0 or reconnect_delay_seconds < 0:
         raise ValueError("poll and reconnect intervals must be valid")
     connect = _resolve_factory(session, ws_factory)

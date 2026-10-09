@@ -112,6 +112,36 @@ async def fetch_funding_history(
                 observed_at=observed_now(),
             )
 
+        if instrument.venue == "mexc":
+            from prep_watchdeck_market.sources.mexc import fetch_mexc_json, mexc_data
+
+            payload = await fetch_mexc_json(
+                session,
+                "/api/v1/contract/funding_rate/history",
+                params={"symbol": instrument.source_symbol, "page_size": "100", "page_num": "1"},
+            )
+            data = require_mapping(mexc_data(payload), field_name="MEXC funding history")
+            rows = require_list(data.get("resultList"), field_name="MEXC funding events")
+            events = _parse_events(
+                rows,
+                instrument,
+                start_at=start_at,
+                end_at=end_at,
+                observed_at=observed_now(),
+                symbol_field="symbol",
+                rate_field="fundingRate",
+                timestamp_field="settleTime",
+            )
+            return FundingBatch(
+                "mexc",
+                instrument.source_symbol,
+                "/api/v1/contract/funding_rate/history",
+                observed_now(),
+                canonical_json_sha256(payload),
+                events,
+                require_mapping(payload, field_name="MEXC funding envelope"),
+            )
+
         if instrument.venue == "aster":
             async with session.get(
                 ASTER_FUNDING_URL,

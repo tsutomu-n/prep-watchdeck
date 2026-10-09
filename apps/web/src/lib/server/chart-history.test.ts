@@ -8,6 +8,28 @@ const DAY = 86_400_000;
 const START = Date.parse("2026-09-10T00:00:00.000Z");
 
 describe("native chart history", () => {
+  test("MEXC uses second bounds and UTC candles, validates parallel arrays and keeps contract volume out of base", async () => {
+    const bundle = fixture("mexc");
+    bundle.universe.items[0].sourceSymbol = "BTC_USDT";
+    bundle.universe.items[0].venueInstrumentId = "mexc:BTC_USDT";
+    const fetcher = vi.fn(async (url: URL) => {
+      expect(url.origin).toBe("https://api.mexc.com");
+      expect(url.pathname).toBe("/api/v1/contract/kline/BTC_USDT");
+      expect(url.searchParams.get("interval")).toBe("Day1");
+      expect(Number(url.searchParams.get("end"))).toBe(Math.floor(NOW / 1000));
+      return json({ success: true, code: 0, data: { time: [START / 1000], open: [100],
+        high: [105], low: [95], close: [102], vol: [20_000], amount: [204] } });
+    });
+    const page = await setup(bundle, fetcher).history(query("mexc:BTC_USDT", "24h"));
+    expect(page.bars[0]).toMatchObject({ bucketAt: new Date(START).toISOString(),
+      volumeBase: null, volumeNotional: 204, complete: false });
+    for (const change of [{ time: [START] }, { amount: [] }, { low: [110] }]) {
+      const invalid = { time: [START / 1000], open: [100], high: [105], low: [95], close: [102], vol: [20], amount: [204], ...change };
+      await expect(setup(bundle, async () => json({ success: true, code: 0, data: invalid }))
+        .history(query("mexc:BTC_USDT", "24h"))).rejects.toMatchObject({ code: "chart_source_invalid" });
+    }
+  });
+
   test("resolves only active grouped linear instruments from a fresh universe before fetching", async () => {
     const fetcher = vi.fn(async () => json([]));
     const bundle = fixture("aster");

@@ -113,7 +113,8 @@
             "enum": [
               "bitget",
               "hyperliquid",
-              "aster"
+              "aster",
+              "mexc"
             ],
             "type": "string"
           },
@@ -225,7 +226,8 @@
           "enum": [
             "bitget",
             "hyperliquid",
-            "aster"
+            "aster",
+            "mexc"
           ],
           "title": "Venue",
           "type": "string"

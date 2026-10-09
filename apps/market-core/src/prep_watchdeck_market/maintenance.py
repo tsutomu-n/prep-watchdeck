@@ -25,7 +25,7 @@ ARCHIVE_DATASETS: tuple[ArchiveDataset, ...] = (
     "candle_1m",
     "funding_events",
 )
-ARCHIVE_VENUES: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster")
+ARCHIVE_VENUES: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc")
 MAX_RETENTION_PARTITIONS_PER_RUN = 30
 MAX_NORMALIZED_DELETE_BATCHES_PER_RUN = 180
 MAX_RAW_DELETE_BATCHES_PER_RUN = 10

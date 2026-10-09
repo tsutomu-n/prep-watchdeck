@@ -182,7 +182,9 @@ class CandleRecovery:
         state_dir: Path,
         *,
         on_inserted: Callable[[], None] | None = None,
+        enabled_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc"),
     ) -> None:
+        self._enabled_venues = enabled_venues
         self._database_url = database_url
         self._state_dir = state_dir
         self._on_inserted = on_inserted
@@ -290,6 +292,7 @@ class CandleRecovery:
             targets = await _thread_call(
                 load_recovery_targets, connection, venue=venue, instrument_id=instrument_id
             )
+            targets = tuple(target for target in targets if target.venue in self._enabled_venues)
             assert isinstance(targets, tuple)
             if instrument_id and not targets:
                 raise ValueError("recovery target is not an active current contract")

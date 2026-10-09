@@ -92,7 +92,7 @@ def read_observation(
     since, until = instant(since), instant(until)
     started = datetime.now(UTC)
     tick = time.monotonic()
-    if re.fullmatch(r"(bitget|hyperliquid|aster):[^\s:]{1,150}", instrument_id) is None or (
+    if re.fullmatch(r"(bitget|hyperliquid|aster|mexc):[^\s:]{1,150}", instrument_id) is None or (
         version_id is not None and (type(version_id) is not int or version_id < 1)
     ):
         raise BundleError("research_identity_invalid")

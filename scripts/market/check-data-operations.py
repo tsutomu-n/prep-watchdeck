@@ -21,7 +21,7 @@ ARTIFACT_MAX_AGE = 120
 RANKING_MAX_AGE = 150
 MAX_IDENTITY_DIAGNOSTICS = 20
 IDENTIFIER = re.compile(r"[A-Za-z0-9_:.-]{1,200}\Z")
-VENUES = {"aster", "bitget", "hyperliquid"}
+VENUES = {"aster", "bitget", "hyperliquid", "mexc"}
 AVAILABILITIES = {"available", "missing", "unsupported", "invalid"}
 CODE = re.compile(r"[a-z][a-z0-9_]{0,99}\Z")
 

@@ -18,6 +18,7 @@ const MAX_INFLIGHT = 8;
 const REQUEST_TIMEOUT_MS = 10_000;
 const PAGE_TIMEOUT_MS = 30_000;
 const BITGET_REQUEST_INTERVAL_MS = 1_000;
+const MEXC_REQUEST_INTERVAL_MS = 100;
 const DAY_MS = 86_400_000;
 const MIN_CANDLE_TIME_MS = Date.UTC(2009, 0, 1);
 
@@ -65,8 +66,8 @@ export class ChartHistoryService {
   private readonly now: () => number;
   private readonly monotonicNow: () => number;
   private readonly wait: (milliseconds: number, signal: AbortSignal) => Promise<void>;
-  private bitgetStartQueue: Promise<void> = Promise.resolve();
-  private nextBitgetStart = 0;
+  private startQueues = { bitget: Promise.resolve(), mexc: Promise.resolve() };
+  private nextStarts = { bitget: 0, mexc: 0 };
   private readonly cache = new Map<string, { expiresAt: number; value: ChartHistory }>();
   private readonly inflight = new Map<string, Promise<ChartHistory>>();
   private minuteRequests = 0;
@@ -228,6 +229,29 @@ export class ChartHistoryService {
     const step = timeframe === "1m" ? 60_000 : CHART_TIMEFRAME_SECONDS[timeframe] * 1_000;
     const interval = timeframe === "24h" ? "1d" : timeframe;
     const end = before - 1;
+    if (instrument.venue === "mexc") {
+      const intervals = { "1m": "Min1", "5m": "Min5", "15m": "Min15", "1h": "Min60", "4h": "Hour4", "24h": "Day1" };
+      const url = new URL(`https://api.mexc.com/api/v1/contract/kline/${encodeURIComponent(instrument.sourceSymbol)}`);
+      const start = Math.max(0, Math.floor(end / step) * step - (pageSize - 1) * step);
+      url.search = new URLSearchParams({ interval: intervals[timeframe],
+        start: String(Math.floor(start / 1000)), end: String(Math.floor(end / 1000)) }).toString();
+      const root = record(await this.request(url, {}, signal));
+      if (root.success !== true || root.code !== 0) invalidSource();
+      const values = record(root.data);
+      const keys = ["time", "open", "high", "low", "close", "vol", "amount"];
+      const columns = keys.map(key => array(values[key], pageSize + 1));
+      if (columns.some(column => column.length !== columns[0].length)) invalidSource();
+      return columns[0].map((time, index) => {
+        if ((typeof time !== "number" && (typeof time !== "string" || !/^\d+$/.test(time))) ||
+            !Number.isSafeInteger(Number(time)) || Number(time) <= 0) invalidSource();
+        const timestamp = Number(time) * 1000;
+        if (timestamp < start || timestamp > end) invalidSource();
+        // MEXC vol is contract quantity, not base. Keep base null; amount is quote turnover.
+        number(columns[5][index]);
+        return candle(timestamp, columns.slice(1, 5).map(column => column[index]),
+          null, columns[6][index], now, step);
+      });
+    }
     if (instrument.venue === "aster") {
       const url = new URL("https://fapi.asterdex.com/fapi/v1/klines");
       url.search = new URLSearchParams({
@@ -241,6 +265,7 @@ export class ChartHistoryService {
       });
     }
     const start = Math.max(0, Math.floor(end / step) * step - (pageSize - 1) * step);
+    if (instrument.venue !== "hyperliquid") throw new ChartHistoryError(404, "chart_instrument_unavailable");
     const payload = await this.request(new URL("https://api.hyperliquid.xyz/info"), {
       method: "POST", headers: { "content-type": "application/json" },
       body: JSON.stringify({ type: "candleSnapshot", req: {
@@ -261,7 +286,8 @@ export class ChartHistoryService {
   private async request(url: URL, init: RequestInit, pageSignal: AbortSignal): Promise<unknown> {
     let signal = pageSignal;
     try {
-      if (url.hostname === "api.bitget.com") await this.paceBitget(pageSignal);
+      if (url.hostname === "api.bitget.com") await this.paceRequests("bitget", pageSignal);
+      if (url.hostname === "api.mexc.com") await this.paceRequests("mexc", pageSignal);
       signal = AbortSignal.any([pageSignal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
       const response = await this.fetcher(url, { ...init, signal, redirect: "error" });
       if (!response.ok) throw new ChartHistoryError(502, "chart_source_unavailable");
@@ -279,16 +305,16 @@ export class ChartHistoryService {
     }
   }
 
-  private paceBitget(signal: AbortSignal): Promise<void> {
-    const slot = this.bitgetStartQueue.then(async () => {
+  private paceRequests(venue: "bitget" | "mexc", signal: AbortSignal): Promise<void> {
+    const slot = this.startQueues[venue].then(async () => {
       signal.throwIfAborted();
-      const delay = Math.max(0, this.nextBitgetStart - this.monotonicNow());
+      const delay = Math.max(0, this.nextStarts[venue] - this.monotonicNow());
       if (delay > 0) await this.wait(delay, signal);
       signal.throwIfAborted();
-      this.nextBitgetStart = this.monotonicNow() + BITGET_REQUEST_INTERVAL_MS;
+      this.nextStarts[venue] = this.monotonicNow() + (venue === "bitget" ? BITGET_REQUEST_INTERVAL_MS : MEXC_REQUEST_INTERVAL_MS);
     });
     // An aborted page must release the queue for other instruments and timeframes.
-    this.bitgetStartQueue = slot.catch(() => undefined);
+    this.startQueues[venue] = slot.catch(() => undefined);
     return slot;
   }
 }
@@ -333,10 +359,12 @@ function parseQuery(parameters: URLSearchParams, now: number): Query {
 }
 
 function assertSupportedInstrument(instrument: UniverseInstrumentArtifact) {
-  if (!["bitget", "hyperliquid", "aster"].includes(instrument.venue) ||
+  if (!["bitget", "hyperliquid", "aster", "mexc"].includes(instrument.venue) ||
       !/^[\p{L}\p{N}][\p{L}\p{N}._-]{0,99}$/u.test(instrument.sourceSymbol) ||
       (instrument.venue === "bitget" && (!["USDT", "USDC"].includes(instrument.quoteAsset) ||
-        instrument.settleAsset !== instrument.quoteAsset))) {
+        instrument.settleAsset !== instrument.quoteAsset)) ||
+      (instrument.venue === "mexc" && (instrument.quoteAsset !== "USDT" ||
+        instrument.settleAsset !== "USDT" || !/^[A-Z0-9]+_USDT$/.test(instrument.sourceSymbol)))) {
     throw new ChartHistoryError(404, "chart_instrument_unavailable");
   }
 }

@@ -16,6 +16,8 @@ from prep_watchdeck_ranking.models import RankingResponse
 from .allocation import allocate_shadow_hotset
 from .components import ComponentPolicy, score_attention
 from .config import AttentionSettings
+from .discovery import build_discovery_rows
+from .discovery_models import DiscoveryResponse
 from .features import build_feature_generation
 from .market_input import MarketInputBundle, MarketInputError, read_market_inputs, utc_ms
 from .models import MINUTE, AllocationPolicy, AttentionResponse, InputReference
@@ -87,6 +89,14 @@ class AttentionService:
         self.cycles = 0
         self._task: asyncio.Task[None] | None = None
         self._generation_lock = asyncio.Lock()
+        self._discovery_restarted = True
+
+    def _observation_failed(self, reason: str) -> None:
+        self.last_error = reason
+        try:
+            self.store.interrupt_discovery(reason)
+        except (sqlite3.Error, OSError, ValueError, RuntimeError):
+            self.last_error = "storage_unavailable"
 
     async def generate_once(self, *, now: datetime | None = None) -> bool:
         async with self._generation_lock:
@@ -95,15 +105,19 @@ class AttentionService:
             try:
                 ranking = await self.ranking_reader.read(now_ms=utc_ms(now))
             except (RankingInputError, OSError, TimeoutError):
-                self.last_error = "ranking_unavailable"
+                self._observation_failed("ranking_unavailable")
                 return False
             try:
                 market = self.market_reader(self.settings.market_state_dir, now=now)
                 inputs, features = build_feature_generation(market, ranking, decision_at=now)
             except (MarketInputError, ValueError, OSError):
-                self.last_error = "market_input_unavailable"
+                self._observation_failed("market_input_unavailable")
                 return False
             if self.current and _input_key(inputs) == _input_key(self.current.inputs):
+                if self._discovery_restarted:
+                    self._observation_failed("awaiting_new_cutoff")
+                    if self.last_error == "storage_unavailable":
+                        return False
                 self.last_error = None
                 return False
             try:
@@ -132,8 +146,15 @@ class AttentionService:
                 saved = self.store.latest_response()
                 if saved is None or saved != candidate:
                     raise ValueError("committed generation readback differs")
+                evaluated = self.store.save_discovery(
+                    inputs,
+                    build_discovery_rows(market, ranking, inputs, features),
+                    restarted=self._discovery_restarted,
+                )
+                if evaluated:
+                    self._discovery_restarted = False
             except (sqlite3.Error, OSError, ValueError, RuntimeError):
-                self.last_error = "storage_unavailable"
+                self._observation_failed("storage_unavailable")
                 return False
             self.current = saved
             self.last_error = None
@@ -151,6 +172,56 @@ class AttentionService:
             # Keep provenance and original timestamps; never relabel an old generation fresh.
             return self.current.model_copy(update={"status": "stale", "reason": error})
         return self.current
+
+    def discovery_response(
+        self,
+        *,
+        asset_ids: tuple[str, ...] = (),
+        limit: int = 50,
+        cursor: str | None = None,
+    ) -> DiscoveryResponse:
+        response = self.store.discovery_response(asset_ids=asset_ids, limit=limit, cursor=cursor)
+        if response.ranking_cutoff is None:
+            return response.model_copy(update={"reason": self.last_error or response.reason})
+        age = self.clock() - response.ranking_cutoff
+        error = self.last_error or (
+            "awaiting_new_cutoff"
+            if self._discovery_restarted
+            else "discovery_stale"
+            if age > 150_000
+            else "clock_before_generation"
+            if age < 0
+            else None
+        )
+        if error:
+            return response.model_copy(
+                update={
+                    "status": "stale",
+                    "reason": error,
+                    "rows": tuple(
+                        row.model_copy(
+                            update={
+                                "state": "unknown",
+                                "reason": error,
+                                "confirmation": None,
+                            }
+                        )
+                        for row in response.rows
+                    ),
+                    "episodes": tuple(
+                        episode.model_copy(
+                            update={
+                                "state": "interrupted",
+                                "interruption_reason": error,
+                            }
+                        )
+                        if episode.ended_at is None
+                        else episode
+                        for episode in response.episodes
+                    ),
+                }
+            )
+        return response
 
     def health(self) -> dict[str, object]:
         response = self.current_response()
@@ -201,7 +272,7 @@ def application(service: AttentionService) -> web.Application:
             return web.json_response(
                 {"status": "unavailable", "reason": "loopback_only"}, status=403, headers=headers
             )
-        if request.query_string:
+        if request.query_string and request.path != "/discovery":
             return web.json_response(
                 {"status": "unavailable", "reason": "unknown_query"}, status=400, headers=headers
             )
@@ -228,7 +299,31 @@ def application(service: AttentionService) -> web.Application:
     async def health(_request: web.Request) -> web.Response:
         return web.json_response(service.health())
 
+    async def discovery(request: web.Request) -> web.Response:
+        try:
+            if set(request.query) - {"assetId", "limit", "cursor"} or any(
+                len(request.query.getall(key, [])) > 1 for key in ("limit", "cursor")
+            ):
+                raise ValueError("unknown or repeated query")
+            asset_ids = tuple(request.query.getall("assetId", []))
+            if any(not asset_id or len(asset_id) > 200 for asset_id in asset_ids):
+                raise ValueError("invalid asset ID")
+            cursor = request.query.get("cursor")
+            if cursor is not None and len(cursor) > 2048:
+                raise ValueError("invalid cursor")
+            limit = int(request.query.get("limit", "50"))
+            response = service.discovery_response(asset_ids=asset_ids, limit=limit, cursor=cursor)
+        except ValueError:
+            return web.json_response(
+                {"status": "unavailable", "reason": "invalid_discovery_query"}, status=400
+            )
+        return web.json_response(
+            response.model_dump(mode="json", by_alias=True),
+            status=503 if response.status == "unavailable" else 200,
+        )
+
     app = web.Application(middlewares=[access], client_max_size=1024)
     app.router.add_get("/attention", attention)
     app.router.add_get("/health", health)
+    app.router.add_get("/discovery", discovery)
     return app

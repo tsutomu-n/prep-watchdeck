@@ -16,7 +16,7 @@ RUN_ID_PATTERN = r"^[0-9a-f]{32}$"
 SHA_PATTERN = r"^[0-9a-f]{64}$"
 NONNEGATIVE_DECIMAL_PATTERN = r"^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
 SIGNED_DECIMAL_PATTERN = r"^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?$"
-TARGET_PATTERN = r"^(bitget|hyperliquid|aster):[^\x00-\x20\x7f]+$"
+TARGET_PATTERN = r"^(bitget|hyperliquid|aster|mexc):[^\x00-\x20\x7f]+$"
 TEXT_PATTERN = r"^[^\x00-\x1f\x7f]+$"
 SOURCE_ID_PATTERN = r"^[a-z0-9][a-z0-9._-]{0,63}$"
 ComparisonKind = Literal["snapshot_revision", "acquisition_routes", "repeatability"]
@@ -130,7 +130,7 @@ class AuditInputs(ArtifactModel):
 
 
 class AuditSeries(ArtifactModel):
-    venue: Literal["bitget", "hyperliquid", "aster"]
+    venue: Literal["bitget", "hyperliquid", "aster", "mexc"]
     source_symbol: str = Field(min_length=1, max_length=128, pattern=TEXT_PATTERN)
     venue_instrument_version_id: int = Field(ge=1)
     definition_sha256: str = Field(pattern=SHA_PATTERN)

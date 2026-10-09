@@ -315,6 +315,8 @@ def test_recovery_store_retains_explicit_confirmation_timestamp() -> None:
                     target.base_asset,
                     target.quote_asset,
                     target.settle_asset,
+                    target.quantity_unit,
+                    target.contract_multiplier,
                 )
             return None
 

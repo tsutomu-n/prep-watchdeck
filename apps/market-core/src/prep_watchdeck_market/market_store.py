@@ -84,7 +84,7 @@ def persist_market_cycle(
             current_rows = cursor.execute(
                 """
                     SELECT venue_instrument_version_id, venue, source_symbol,
-                           quote_asset, collateral_asset
+                           quote_asset, collateral_asset, contract_multiplier
                     FROM venue_instrument_versions
                     WHERE valid_to IS NULL AND active = true
                       AND venue = ANY(%s)
@@ -98,6 +98,7 @@ def persist_market_cycle(
                 for row in current_rows
             }
 
+            mexc_factors = {str(row[2]): row[5] for row in current_rows if row[1] == "mexc"}
             raw_written = 0
             observations: dict[tuple[str, str], MarketObservation] = {}
             unknown_source_rows = 0
@@ -139,6 +140,11 @@ def persist_market_cycle(
                         raise ValueError(
                             "market observation identity does not match its Venue symbol"
                         )
+                    if batch.venue == "mexc" and observation.raw_payload.get(
+                        "watchdeckBasePerContract"
+                    ) != format(mexc_factors[observation.source_symbol], "f"):
+                        unknown_source_rows += 1
+                        continue
                     observations[key] = observation
 
             written = 0
@@ -214,11 +220,18 @@ def _validate_cycle(
     _require_aware(started_at, "started_at")
     if cycle_at.second != 0 or cycle_at.microsecond != 0:
         raise ValueError("cycle_at must be aligned to a whole minute")
-    if len(batches) != 3 or {batch.venue for batch in batches} != {
-        "bitget",
-        "hyperliquid",
-        "aster",
-    }:
+    venues = [batch.venue for batch in batches]
+    if (
+        not batches
+        or len(set(venues)) != len(venues)
+        or not set(venues)
+        <= {
+            "bitget",
+            "hyperliquid",
+            "aster",
+            "mexc",
+        }
+    ):
         raise ValueError("market cycle requires exactly one batch for each supported Venue")
     for batch in batches:
         _require_aware(batch.observed_at, "batch observed_at")

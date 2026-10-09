@@ -1,11 +1,11 @@
 {
   "schemaVersion": "ranking-map-v2",
-  "version": "c0b276f328e1ad423f448bfa",
-  "verifiedAt": 1791528979945,
+  "version": "d8d57399f2baa663005c35d8",
+  "verifiedAt": 1791582834063,
   "rosterGeneratedAt": 1791528936104,
-  "rosterFingerprint": "935e11344df80782132e2f1f9528d17381ee9afaaf5c322b2bd56be22403d03a",
+  "rosterFingerprint": "295f6b0c28e376542ae89c00061d63c8f458bb8930fa88c7a6796f52b7f0418e",
   "rosterSource": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/map-inputs/universe-snapshot.json",
-  "sourceInstrumentCount": 1096,
+  "sourceInstrumentCount": 1106,
   "rows": [
     {
       "id": "crypto:0G",
@@ -583,6 +583,14 @@
           "symbol": "ADA",
           "baseAsset": "ADA",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:ADA_USDT",
+          "versionId": 16,
+          "symbol": "ADA_USDT",
+          "baseAsset": "ADA",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -612,7 +620,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # ADAUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # ADA",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ADAUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ADAUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ADAUSDT",
+        "https://www.mexc.com/price/ADA",
+        "https://www.mexc.com/futures/ADA_USDT"
       ]
     },
     {
@@ -2974,6 +2984,14 @@
           "symbol": "AVAX",
           "baseAsset": "AVAX",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:AVAX_USDT",
+          "versionId": 17,
+          "symbol": "AVAX_USDT",
+          "baseAsset": "AVAX",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -3003,7 +3021,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # AVAXUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # AVAX",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # AVAXUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=AVAXUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=AVAXUSDT",
+        "https://www.mexc.com/price/AVAX",
+        "https://www.mexc.com/futures/AVAX_USDT"
       ]
     },
     {
@@ -4990,6 +5010,14 @@
           "symbol": "BNB",
           "baseAsset": "BNB",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:BNB_USDT",
+          "versionId": 19,
+          "symbol": "BNB_USDT",
+          "baseAsset": "BNB",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -5019,7 +5047,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # BNBUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # BNB",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BNBUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BNBUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BNBUSDT",
+        "https://www.mexc.com/price/BNB",
+        "https://www.mexc.com/futures/BNB_USDT"
       ]
     },
     {
@@ -5597,6 +5627,14 @@
           "symbol": "BTC",
           "baseAsset": "BTC",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:BTC_USDT",
+          "versionId": 11,
+          "symbol": "BTC_USDT",
+          "baseAsset": "BTC",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -5626,7 +5664,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # BTCUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # BTC",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # BTCUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BTCUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=BTCUSDT",
+        "https://www.mexc.com/price/BTC",
+        "https://www.mexc.com/futures/BTC_USDT"
       ]
     },
     {
@@ -8202,6 +8242,14 @@
           "symbol": "DOGE",
           "baseAsset": "DOGE",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:DOGE_USDT",
+          "versionId": 15,
+          "symbol": "DOGE_USDT",
+          "baseAsset": "DOGE",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -8231,7 +8279,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # DOGEUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # DOGE",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # DOGEUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=DOGEUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=DOGEUSDT",
+        "https://www.mexc.com/price/DOGE",
+        "https://www.mexc.com/futures/DOGE_USDT"
       ]
     },
     {
@@ -9535,6 +9585,14 @@
           "symbol": "ETH",
           "baseAsset": "ETH",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:ETH_USDT",
+          "versionId": 12,
+          "symbol": "ETH_USDT",
+          "baseAsset": "ETH",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -9564,7 +9622,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # ETHUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # ETH",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # ETHUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ETHUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=ETHUSDT",
+        "https://www.mexc.com/price/ETH",
+        "https://www.mexc.com/futures/ETH_USDT"
       ]
     },
     {
@@ -14902,6 +14962,14 @@
           "symbol": "LTC",
           "baseAsset": "LTC",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:LTC_USDT",
+          "versionId": 18,
+          "symbol": "LTC_USDT",
+          "baseAsset": "LTC",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -14931,7 +14999,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # LTCUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # LTC",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # LTCUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=LTCUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=LTCUSDT",
+        "https://www.mexc.com/price/LTC",
+        "https://www.mexc.com/futures/LTC_USDT"
       ]
     },
     {
@@ -22589,6 +22659,14 @@
           "symbol": "SOL",
           "baseAsset": "SOL",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:SOL_USDT",
+          "versionId": 13,
+          "symbol": "SOL_USDT",
+          "baseAsset": "SOL",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -22618,7 +22696,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # SOLUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # SOL",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # SOLUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=SOLUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=SOLUSDT",
+        "https://www.mexc.com/price/SOL",
+        "https://www.mexc.com/futures/SOL_USDT"
       ]
     },
     {
@@ -25252,6 +25332,14 @@
           "symbol": "TRX",
           "baseAsset": "TRX",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:TRX_USDT",
+          "versionId": 20,
+          "symbol": "TRX_USDT",
+          "baseAsset": "TRX",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -25281,7 +25369,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # TRXUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # TRX",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # TRXUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=TRXUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=TRXUSDT",
+        "https://www.mexc.com/price/TRX",
+        "https://www.mexc.com/futures/TRX_USDT"
       ]
     },
     {
@@ -27480,6 +27570,14 @@
           "symbol": "XRP",
           "baseAsset": "XRP",
           "multiplier": 1
+        },
+        {
+          "venue": "mexc",
+          "instrumentId": "mexc:XRP_USDT",
+          "versionId": 14,
+          "symbol": "XRP_USDT",
+          "baseAsset": "XRP",
+          "multiplier": 1
         }
       ],
       "reference": {
@@ -27509,7 +27607,9 @@
         "https://api.bybit.com/v5/market/instruments-info?category=linear&limit=1000 # XRPUSDT",
         "https://api.hyperliquid.xyz/info (type=meta, default Core dex) # XRP",
         "https://fapi.asterdex.com/fapi/v1/exchangeInfo # XRPUSDT",
-        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=XRPUSDT"
+        "https://fapi.asterdex.com/fapi/v3/indexreferences?symbol=XRPUSDT",
+        "https://www.mexc.com/price/XRP",
+        "https://www.mexc.com/futures/XRP_USDT"
       ]
     },
     {

@@ -10,7 +10,7 @@ from prep_watchdeck_market.fixture_models import FixtureTarget, FixtureWindow
 
 
 class ReferenceNative(ArtifactModel):
-    venue: Literal["bitget", "hyperliquid", "aster"]
+    venue: Literal["bitget", "hyperliquid", "aster", "mexc"]
     source_symbol: str = Field(min_length=1, max_length=120)
     venue_instrument_version_id: int = Field(ge=1)
     definition_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")

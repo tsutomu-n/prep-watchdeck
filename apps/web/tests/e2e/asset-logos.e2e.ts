@@ -111,7 +111,7 @@ async function prepare(page: Page, unknownVersion = false) {
   await Promise.all(Object.entries({ "universe-snapshot": bundle.universe, "market-chart": bundle.chart,
     "selected-market": bundle.selected, "service-state": bundle.service }).map(([name, payload]) =>
     writeFile(resolve(runtimeRoot, "artifacts", `${name}.json`), JSON.stringify(payload))));
-  let workspace: UserWorkspace = { schemaVersion: 1, revision: 0, favorites: [], savedViews: [] };
+  let workspace: UserWorkspace = { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] };
   await page.route("**/api/user-workspace", async route => {
     if (route.request().method() === "POST") {
       const request = route.request().postDataJSON() as { target: FavoriteTarget; enabled: boolean };

@@ -124,7 +124,7 @@ def _read_database(
     if ":" not in instrument_id or version_id < 1:
         raise BundleError("fixture_target_invalid")
     venue, source_symbol = instrument_id.split(":", 1)
-    if venue not in {"bitget", "hyperliquid", "aster"} or not source_symbol:
+    if venue not in {"bitget", "hyperliquid", "aster", "mexc"} or not source_symbol:
         raise BundleError("fixture_target_invalid")
     try:
         with (

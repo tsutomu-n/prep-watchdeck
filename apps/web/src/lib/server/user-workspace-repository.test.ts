@@ -49,3 +49,59 @@ test("unknown schemas and capacity failures preserve the existing workspace byte
     expect(await readFile(path, "utf-8")).toBe(full);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
+
+test("v1 migration preserves favorites, views and revision; pins have a separate four-target CAS limit", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-pins-"));
+  const path = join(root, "workspace.json");
+  const repository = new LocalFileUserWorkspaceRepository(path);
+  const favorite = { kind: "reference" as const, id: "asset:BTC", referenceKey: "bybit:BTCUSDT:v1", originals: ["mexc:BTC_USDT:1"] };
+  const legacy = { schemaVersion: 1, revision: 9, favorites: [favorite], savedViews: [{ id: "kept", name: "監視", view: { period: "1h" } }] };
+  try {
+    await writeFile(path, JSON.stringify(legacy));
+    expect(await repository.read()).toEqual({ ...legacy, schemaVersion: 2, pins: [] });
+    expect(JSON.parse(await readFile(path, "utf-8"))).toEqual(legacy); // A read never rewrites storage.
+    for (let index = 0; index < 4; index++) {
+      await repository.setPin({ target: { kind: "instrument", id: `mexc:T${index}_USDT`, version: 1 },
+        episodeId: null, discoveredAt: 1000, snapshot: {} }, true, 9 + index);
+    }
+    const stored = await readFile(path, "utf-8");
+    await expect(repository.setPin({ target: { kind: "instrument", id: "mexc:FIFTH_USDT", version: 1 },
+      episodeId: null, discoveredAt: 1000, snapshot: {} }, true, 13)).rejects.toMatchObject({ status: 413 });
+    await expect(repository.setPin({ target: favorite, episodeId: "e1", discoveredAt: 1000, snapshot: {} }, true, 9))
+      .rejects.toMatchObject({ status: 409 });
+    expect(await readFile(path, "utf-8")).toBe(stored);
+    expect((await repository.read()).favorites).toEqual(legacy.favorites);
+    expect((await repository.read()).savedViews).toEqual(legacy.savedViews);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("reference favorite identity replacement requires explicit revision confirmation", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-recheck-"));
+  const repository = new LocalFileUserWorkspaceRepository(join(root, "workspace.json"));
+  const old = { kind: "reference" as const, id: "asset:BTC", referenceKey: "bybit:BTCUSDT:v1", originals: ["mexc:BTC_USDT:1"] };
+  const changed = { ...old, originals: ["mexc:BTC_USDT:2"] };
+  try {
+    const saved = await repository.setFavorite(old, true);
+    await expect(repository.setFavorite(changed, true)).rejects.toMatchObject({ status: 409 });
+    await expect(repository.setFavorite(changed, true, saved.revision - 1)).rejects.toMatchObject({ status: 409 });
+    expect((await repository.read()).favorites).toEqual([old]);
+    expect((await repository.setFavorite(changed, true, saved.revision)).favorites).toEqual([changed]);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+
+test("stale reconfirmation never resurrects a favorite deleted in another tab", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-recheck-delete-"));
+  const repository = new LocalFileUserWorkspaceRepository(join(root, "workspace.json"));
+  const old = { kind: "reference" as const, id: "asset:BTC", referenceKey: "bybit:BTCUSDT:v1", originals: ["mexc:BTC_USDT:1"] };
+  const changed = { ...old, originals: ["mexc:BTC_USDT:2"] };
+  try {
+    const saved = await repository.setFavorite(old, true);
+    const removed = await repository.setFavorite(old, false);
+    await expect(repository.setFavorite(changed, true, saved.revision)).rejects.toMatchObject({ status: 409 });
+    expect(await repository.read()).toEqual(removed);
+    const ordinary = await repository.setFavorite(changed, true);
+    expect(ordinary.favorites).toEqual([changed]);
+    expect(await repository.setFavorite(changed, true, saved.revision)).toEqual(ordinary);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});

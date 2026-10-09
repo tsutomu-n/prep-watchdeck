@@ -7,7 +7,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-Venue = Literal["bitget", "hyperliquid", "aster"]
+Venue = Literal["bitget", "hyperliquid", "aster", "mexc"]
+SUPPORTED_VENUES: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc")
 QuantityUnit = Literal["base", "contracts", "unknown"]
 SourceKind = Literal["native_rest", "native_ws"]
 JsonPayload = dict[str, object] | list[object]
@@ -121,6 +122,28 @@ class CatalogInstrument:
             # onboardDate remains in the signature as the listing boundary.
             # Aster's extra createTime metadata drifts without a contract change.
             ignored = {"createTime"}
+        elif self.venue == "mexc":
+            ignored = {
+                "displayName",
+                "displayNameEn",
+                "fn",
+                "baseCoinIconUrl",
+                "makerFeeRate",
+                "takerFeeRate",
+                "liquidationFeeRate",
+                "feeRateMode",
+                "feeRateType",
+                "leverageFeeRates",
+                "tieredFeeRates",
+                "isZeroFeeRate",
+                "isZeroFeeSymbol",
+                "minLeverage",
+                "maxLeverage",
+                "countryConfigContractMaxLeverage",
+                "regularMaxLeverage",
+                "isMaxLeverage",
+                "tempMaxLeverageLimited",
+            }
         raw_definition = {
             name: value for name, value in self.raw_definition.items() if name not in ignored
         }
@@ -138,3 +161,24 @@ class CatalogBatch:
 
 def _decimal_text(value: Decimal | None) -> str | None:
     return None if value is None else format(value, "f")
+
+
+def quantity_normalizable(instrument: CatalogInstrument) -> bool:
+    if instrument.venue != "mexc":
+        return instrument.quantity_unit == "base" and instrument.contract_multiplier == Decimal("1")
+    raw = instrument.raw_definition
+    evidence = raw.get("watchdeckQuantityEvidence")
+    identity = raw.get("watchdeckIdentityEvidence")
+    multiplier = instrument.contract_multiplier
+    return (
+        instrument.quantity_unit == "contracts"
+        and multiplier is not None
+        and multiplier.is_finite()
+        and multiplier > 0
+        and isinstance(evidence, dict)
+        and evidence.get("base_per_contract") == format(multiplier, "f")
+        and isinstance(identity, dict)
+        and identity.get("base_asset") == instrument.base_asset
+        and identity.get("price_unit") == "quote_per_base"
+        and identity.get("identity_price_multiplier") == "1"
+    )

@@ -57,6 +57,8 @@ from prep_watchdeck_market.sources.hyperliquid_l1 import (
     HYPERLIQUID_L1_ENDPOINT,
     fetch_hyperliquid_l1,
 )
+from prep_watchdeck_market.sources.mexc import fetch_mexc_catalog
+from prep_watchdeck_market.sources.mexc_l1 import MEXC_L1_ENDPOINT, fetch_mexc_l1
 
 
 class MarketServiceError(RuntimeError):
@@ -76,8 +78,20 @@ class CatalogRefreshResult:
 
 class MarketService:
     def __init__(
-        self, database_url: str, state_dir: Path, *, recovery_enabled: bool = False
+        self,
+        database_url: str,
+        state_dir: Path,
+        *,
+        recovery_enabled: bool = False,
+        enabled_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc"),
     ) -> None:
+        if (
+            not enabled_venues
+            or len(set(enabled_venues)) != len(enabled_venues)
+            or not set(enabled_venues) <= {"bitget", "hyperliquid", "aster", "mexc"}
+        ):
+            raise ValueError("enabled_venues must be unique supported Venues")
+        self._enabled_venues = enabled_venues
         self._database_url = database_url
         self._state_dir = state_dir
         self._catalogs: dict[Venue, CatalogBatch] = {}
@@ -113,6 +127,7 @@ class MarketService:
                 self._database_url,
                 self._state_dir,
                 session,
+                enabled_venues=self._enabled_venues,
             )
             catalog_task = asyncio.create_task(
                 self._catalog_loop(stop_event), name="market-catalog-loop"
@@ -179,6 +194,7 @@ class MarketService:
             self._database_url,
             self._state_dir,
             on_inserted=self._notify_recovery_inserted,
+            enabled_venues=self._enabled_venues,
         )
         trigger: RecoveryTrigger = "startup"
         while not stop_event.is_set():
@@ -234,6 +250,7 @@ class MarketService:
             self._database_url,
             self._state_dir,
             on_inserted=self._notify_recovery_inserted,
+            enabled_venues=self._enabled_venues,
         )
         trigger: RecoveryTrigger = "startup"
         while not stop_event.is_set():
@@ -277,12 +294,15 @@ class MarketService:
 
     async def refresh_catalog(self) -> CatalogRefreshResult:
         session = self._require_session()
-        venues: tuple[Venue, Venue, Venue] = "bitget", "hyperliquid", "aster"
+        venues = self._enabled_venues
+        fetchers = {
+            "bitget": fetch_bitget_catalog,
+            "hyperliquid": fetch_hyperliquid_catalog,
+            "aster": fetch_aster_catalog,
+            "mexc": fetch_mexc_catalog,
+        }
         results = await asyncio.gather(
-            fetch_bitget_catalog(session),
-            fetch_hyperliquid_catalog(session),
-            fetch_aster_catalog(session),
-            return_exceptions=True,
+            *(fetchers[v](session) for v in venues), return_exceptions=True
         )
         succeeded: dict[Venue, CatalogBatch] = {}
         failed: list[Venue] = []
@@ -385,11 +405,19 @@ class MarketService:
             while next_refresh <= now:
                 next_refresh += timedelta(seconds=900)
 
-    def _l1_fetchers(self) -> tuple[VenueFetcher, VenueFetcher, VenueFetcher]:
-        return (
+    def _l1_fetchers(self) -> tuple[VenueFetcher, ...]:
+        fetchers = (
             VenueFetcher("bitget", BITGET_L1_ENDPOINT, self._fetch_bitget),
             VenueFetcher("hyperliquid", HYPERLIQUID_L1_ENDPOINT, self._fetch_hyperliquid),
             VenueFetcher("aster", ASTER_L1_ENDPOINT, self._fetch_aster),
+            VenueFetcher("mexc", MEXC_L1_ENDPOINT, self._fetch_mexc),
+        )
+
+        return tuple(f for f in fetchers if f.venue in self._enabled_venues)
+
+    async def _fetch_mexc(self, cycle_at: datetime) -> MarketBatch:
+        return await fetch_mexc_l1(
+            self._require_session(), self._instruments("mexc"), cycle_at=cycle_at
         )
 
     async def _fetch_bitget(self, cycle_at: datetime) -> MarketBatch:
@@ -629,11 +657,17 @@ async def run_market_service(
     stop_event: asyncio.Event,
     *,
     recovery_enabled: bool = False,
+    mexc_enabled: bool = True,
 ) -> None:
     """Run catalog, L1, candle, and selected-data loops until stopped."""
-    await MarketService(database_url, state_dir, recovery_enabled=recovery_enabled).run_forever(
-        stop_event
+    enabled_venues: tuple[Venue, ...] = (
+        ("bitget", "hyperliquid", "aster", "mexc")
+        if mexc_enabled
+        else ("bitget", "hyperliquid", "aster")
     )
+    await MarketService(
+        database_url, state_dir, recovery_enabled=recovery_enabled, enabled_venues=enabled_venues
+    ).run_forever(stop_event)
 
 
 def _publish_artifacts_url(

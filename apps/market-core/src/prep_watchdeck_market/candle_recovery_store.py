@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, time, timedelta
+from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
@@ -11,7 +12,7 @@ from psycopg import Connection
 from psycopg.types.json import Jsonb
 
 from prep_watchdeck_market.candles import Candle1m, require_utc_datetime
-from prep_watchdeck_market.models import Venue
+from prep_watchdeck_market.models import QuantityUnit, Venue
 
 
 class RecoveryStoreError(RuntimeError):
@@ -32,6 +33,8 @@ class RecoveryTarget:
     base_asset: str
     quote_asset: str
     settle_asset: str
+    quantity_unit: QuantityUnit = "base"
+    contract_multiplier: Decimal | None = Decimal("1")
 
     @property
     def instrument_id(self) -> str:
@@ -49,11 +52,12 @@ def load_recovery_targets(
         rows = connection.execute(
             """
                 SELECT venue_instrument_version_id, venue, source_symbol,
-                       definition_hash, valid_from, base_asset, quote_asset, settle_asset
+                       definition_hash, valid_from, base_asset, quote_asset, settle_asset,
+                       quantity_unit, contract_multiplier
                 FROM venue_instrument_versions
                 WHERE valid_to IS NULL AND active
                   AND asset_class = 'crypto' AND market_type = 'linear_perpetual'
-                  AND venue IN ('bitget', 'hyperliquid', 'aster')
+                  AND venue IN ('bitget', 'hyperliquid', 'aster', 'mexc')
                   AND (%s::text IS NULL OR venue = %s)
                   AND (%s::text IS NULL OR venue || ':' || source_symbol = %s)
                 ORDER BY venue, source_symbol, venue_instrument_version_id
@@ -72,6 +76,8 @@ def load_recovery_targets(
             base_asset=row[5],
             quote_asset=row[6],
             settle_asset=row[7],
+            quantity_unit=row[8],
+            contract_multiplier=row[9],
         )
         for row in rows
     )
@@ -138,6 +144,10 @@ def insert_missing_candles(
         candle.venue != target.venue
         or candle.source_symbol != target.source_symbol
         or candle.bucket_start < target_window_start(target, candle.bucket_start)
+        or (
+            target.venue == "mexc"
+            and candle.source_contract_multiplier != target.contract_multiplier
+        )
         or (target.venue == "bitget" and candle.finality != "confirmed")
         or (target.venue != "bitget" and candle.finality != "derived_final")
         for candle in candles
@@ -149,7 +159,8 @@ def insert_missing_candles(
                 """
                     SELECT definition_hash, valid_from, active, valid_to,
                            asset_class, market_type, venue, source_symbol,
-                           base_asset, quote_asset, settle_asset
+                           base_asset, quote_asset, settle_asset,
+                       quantity_unit, contract_multiplier
                     FROM venue_instrument_versions
                     WHERE venue_instrument_version_id = %s
                     FOR SHARE
@@ -168,6 +179,8 @@ def insert_missing_candles(
                 target.base_asset,
                 target.quote_asset,
                 target.settle_asset,
+                target.quantity_unit,
+                target.contract_multiplier,
             ):
                 raise RecoveryVersionChanged("recovery target definition changed")
             for day in {candle.bucket_start.date() for candle in candles}:

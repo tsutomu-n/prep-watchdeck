@@ -1164,7 +1164,7 @@ def read_chart_records(
     venue_text, separator, source_symbol = venue_instrument_id.partition(":")
     if (
         separator != ":"
-        or venue_text not in {"bitget", "hyperliquid", "aster"}
+        or venue_text not in {"bitget", "hyperliquid", "aster", "mexc"}
         or not source_symbol
     ):
         raise ArtifactContractError("selected venue_instrument_id is invalid")
@@ -1453,7 +1453,7 @@ def _database_optional_datetime(value: object, field_name: str) -> datetime | No
 
 def _venue(value: object) -> Venue:
     venue_text = str(value)
-    if venue_text not in {"bitget", "hyperliquid", "aster"}:
+    if venue_text not in {"bitget", "hyperliquid", "aster", "mexc"}:
         raise ArtifactContractError("database Venue is invalid")
     return venue_text  # type: ignore[return-value]
 
@@ -1498,4 +1498,8 @@ def _optional_utc(value: datetime | None, field_name: str) -> datetime | None:
 
 def _valid_venue_instrument_id(value: str) -> bool:
     venue, separator, source_symbol = value.partition(":")
-    return separator == ":" and venue in {"bitget", "hyperliquid", "aster"} and bool(source_symbol)
+    return (
+        separator == ":"
+        and venue in {"bitget", "hyperliquid", "aster", "mexc"}
+        and bool(source_symbol)
+    )

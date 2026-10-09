@@ -21,6 +21,7 @@ from prep_watchdeck_market.sources.bitget_candles import (
 from prep_watchdeck_market.sources.hyperliquid_candle_stream import (
     produce_hyperliquid_candles,
 )
+from prep_watchdeck_market.sources.mexc_candle_stream import produce_mexc_candles
 
 BITGET_FINISHED_CANDLES_URL = "https://api.bitget.com/api/v2/mix/market/history-candles"
 BITGET_SWEEP_SECONDS = 120.0
@@ -102,6 +103,10 @@ class CandleRuntime:
                     stop_event,
                 ),
                 name="aster-candle-supervisor",
+            ),
+            asyncio.create_task(
+                self._run_ws_supervisor("mexc", produce_mexc_candles, writer, stop_event),
+                name="mexc-candle-supervisor",
             ),
         )
         stop_task = asyncio.create_task(stop_event.wait(), name="candle-runtime-stop")

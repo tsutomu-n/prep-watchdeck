@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from decimal import Decimal
 from typing import Literal
 
-from prep_watchdeck_market.models import CatalogInstrument
+from prep_watchdeck_market.models import CatalogInstrument, quantity_normalizable
 
-MappingMethod = Literal["exact_base_heuristic"]
+MappingMethod = Literal["exact_base_heuristic", "verified_native_contract"]
 UnmappedReason = Literal[
     "inactive",
     "asset_class_not_crypto",
@@ -65,7 +65,11 @@ def resolve_market_groups(instruments: Iterable[CatalogInstrument]) -> list[Iden
             IdentityResolution(
                 venue_instrument_id=instrument.venue_instrument_id,
                 group_id=f"crypto:{instrument.base_asset}:linear-perp",
-                mapping_method="exact_base_heuristic",
+                mapping_method=(
+                    "verified_native_contract"
+                    if instrument.venue == "mexc"
+                    else "exact_base_heuristic"
+                ),
                 unmapped_reason=None,
             )
         )
@@ -83,6 +87,8 @@ def _individual_unmapped_reason(instrument: CatalogInstrument) -> UnmappedReason
         return "base_asset_missing"
     if instrument.raw_definition.get("identity_alias_required") is True:
         return "alias_required"
+    if instrument.venue == "mexc" and quantity_normalizable(instrument):
+        return None
     if instrument.quantity_unit == "unknown":
         return "quantity_unit_unknown"
     if instrument.quantity_unit != "base":

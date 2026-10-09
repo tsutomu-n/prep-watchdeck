@@ -96,7 +96,8 @@
           "enum": [
             "bitget",
             "hyperliquid",
-            "aster"
+            "aster",
+            "mexc"
           ],
           "title": "Venue",
           "type": "string"
@@ -127,7 +128,7 @@
               "type": "null"
             }
           ],
-          "description": "Original underlying quantity per unit; null means conversion is unverified. This does not determine fixed-reference ranking eligibility.",
+          "description": "Underlying asset units represented by one original quoted price unit; null means conversion is unverified. This is an asset-price identity multiplier, not base quantity per order contract (for example MEXC contractSize), and does not determine fixed-reference ranking eligibility.",
           "title": "Multiplier"
         }
       },

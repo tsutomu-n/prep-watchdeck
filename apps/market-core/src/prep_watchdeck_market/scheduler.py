@@ -53,7 +53,11 @@ class L1Scheduler:
         clock: Callable[[], datetime] | None = None,
     ) -> None:
         venues = [fetcher.venue for fetcher in fetchers]
-        if len(fetchers) != 3 or set(venues) != {"bitget", "hyperliquid", "aster"}:
+        if (
+            not fetchers
+            or len(set(venues)) != len(venues)
+            or not set(venues) <= {"bitget", "hyperliquid", "aster", "mexc"}
+        ):
             raise ValueError("L1 scheduler requires exactly one fetcher for each supported Venue")
         if interval_seconds <= 0:
             raise ValueError("interval_seconds must be positive")

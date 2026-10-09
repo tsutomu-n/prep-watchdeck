@@ -11,6 +11,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .config import isolated_attention_state, no_symlink_path
+from .discovery_storage import DiscoveryStorage
 from .models import (
     MINUTE,
     AttentionEvaluationReport,
@@ -55,7 +56,7 @@ def atomic_json(path: Path, payload: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-class AttentionStore:
+class AttentionStore(DiscoveryStorage):
     def __init__(
         self,
         state_dir: Path,
@@ -163,6 +164,7 @@ class AttentionStore:
                 self.connection.execute(
                     "INSERT OR IGNORE INTO metadata VALUES ('schema',?)", (SCHEMA_VERSION,)
                 )
+            self.initialize_discovery()
         except BaseException:
             if hasattr(self, "connection"):
                 self.connection.close()

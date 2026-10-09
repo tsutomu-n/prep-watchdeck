@@ -1,8 +1,8 @@
 # prep-watchdeck 現行概要
 
-timestamp="2026-10-09(金)_00:39 JST"
+timestamp="2026-10-10(土)_07:08 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T00:39:16+09:00`
+- 更新: `2026-10-10T07:08:23+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -13,8 +13,10 @@ timestamp="2026-10-09(金)_00:39 JST"
 `prep-watchdeck`は、裁量トレーダーが市場から注目対象を発見し、分析し、比較し、最終判断を行うための
 local-first market intelligence workspaceである。
 
-Repositoryの現行surfaceはBitget、Hyperliquid Core、Asterのactive crypto linear perpetualを扱う
-Perp Universe Explorerと、確認済みの外部参照を使うデイトレランキング。稼働配置は運用記録で確認する。
+Repositoryの現行surfaceはBitget、Hyperliquid Core、Aster、MEXCのactive crypto linear perpetualを扱う
+Perp Universe Explorerと、確認済みの外部参照を使うデイトレランキング、候補比較・判断記録である。
+MEXCはBTC・ETH・SOL・XRP・DOGE・ADA・AVAX・LTC・BNB・TRXの確認済みUSDT perpetualだけを採用し、
+未審査の契約や株式・金属・FXを含む全catalogの対応を意味しない。稼働配置は運用記録で確認する。
 これは現行実装範囲であり、将来のasset class、Venue、データ源、ranking、
 forecast、Chart、保存方式の上限ではない。
 
@@ -22,7 +24,7 @@ forecast、Chart、保存方式の上限ではない。
 
 ## 現行実装の機能
 
-- 3 Venueのcatalogを15分周期、L1を60秒fixed-rateで取得する。
+- 有効なVenueのcatalogを15分周期、L1を60秒fixed-rateで取得する。MEXCは設定で収集を無効化できる。
 - mark、reference price種別、BBO、funding、OI、24時間出来高、quality、freshness、provenanceを
   Venue別に表示する。
 - 検索、Venue、coverage、quality filterでinstrumentを絞る。現在の既定sortはbase、次にVenue。
@@ -32,16 +34,18 @@ forecast、Chart、保存方式の上限ではない。
 - 指定したJST時刻を基準に、同じVenue・契約の約定騰落率を表示する。
 - 固定参照の騰落率・売買代金ランキングと、順位変化・平常比・JST当日高安位置を表示する。
 - Past Noteを`venueInstrumentId`単位でローカル保存する。
+- 最大4件の比較候補を保持し、条件の成立・中断・解除、元データと実Venueを確認して監視/見送りを記録する。
+- Attention稼働中はブラウザーを閉じても固定条件を評価する。外部通知や自動注文は行わない。
 - Postgresの期限後履歴を照合済みParquetへ保存してbounded retentionする。
 
-現在の3 Venue、更新周期、sort、timeframe、bar数、depth/trade件数、book-walk notional、artifact数、retention等は
+現在の4 Venue、更新周期、sort、timeframe、bar数、depth/trade件数、book-walk notional、artifact数、retention等は
 実装値であり、将来変更可能である。
 
 ## 将来拡張
 
 必要なdata contract、検証、運用設計を伴えば次を追加できる。
 
-- Attention / momentum / direction / LONG・SHORT候補等のrankingとscore
+- 追加のmomentum / direction / LONG・SHORT候補等のrankingとscore
 - Stocks、ETF、RWAその他のasset class
 - 追加Venue、aggregator、read-only broker/market-data source
 - 正規paid market data、credential付きread-only API
@@ -70,6 +74,7 @@ kill switch、audit、rollbackを扱う別Decisionを要求する。
 
 - `apps/market-core`: Python 3.13、CLI `watchdeck-market`
 - `apps/ranking-core`: Python 3.13、独立collector・SQLite・loopback API
+- `apps/attention-core`: Python 3.13、既存read modelによる注目度とDiscovery・専用SQLite
 - `apps/web`: SvelteKit 2 / Svelte 5、現在はlocalhost UI
 - `deploy/market-postgres`: 専用Postgres 17 Compose
 - `schemas`: 現行Web read model schema

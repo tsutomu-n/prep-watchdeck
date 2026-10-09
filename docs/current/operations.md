@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-09(金)_18:32 JST"
+timestamp="2026-10-10(土)_07:08 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T18:32:09+09:00`
+- 更新: `2026-10-10T07:08:23+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -11,6 +11,7 @@ timestamp="2026-10-09(金)_18:32 JST"
 ## この文書の範囲
 
 この文書は**現在productionの3 Venue Perp runtime**を安全に運用する手順を記述する。
+RepositoryのMEXC・Discovery対応sourceについては下記の配置境界を適用する。本番への反映済みを意味しない。
 port、path、unit、artifact数、retention、public API構成等は現在のruntime contractであり、
 [product boundary](product-boundary.md)が許可する将来機能を禁止するものではない。
 
@@ -571,6 +572,30 @@ Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`va
 `freeze-family --family-id <新family>`、`settle-outcomes --fixture <offline export.json>`、`evaluate-family --family-id <固定family>`は専用SQLiteへ書くため、Attention serviceを停止した状態で実行する。共通の`--state-dir`等を指定できる。後二者はProvider取得やactive Ranking DB接続を行わない。評価結果はstdoutと`artifacts/evaluation.json`へ出る。訂正後のstale reportは再評価が必要。
 
 停止・rollbackは起動したAttention process、または承認された`prep-watchdeck-attention.service`だけを停止する。Webも戻す場合は保存した旧drop-inを復元してWebだけを再起動する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。
+
+## MEXC・Discovery対応sourceの配置境界
+
+MEXCを含むsourceを配置するときは、先にMarket artifact、Ranking original、Attention、Webのreaderを
+対応させ、取得を無効にした互換構成で確認してから収集を有効化する。既定値は
+`PREP_WATCHDECK_MARKET_MEXC_ENABLED=true`で、reader先行配置では明示的に`false`を設定する。
+この設定はMarket CoreのMEXC Catalog/L1/candle/recovery/funding/selected収集を止め、既存stateを削除しない。
+Webから明示要求する表示用Chart履歴・約定騰落率の公開API読取は別経路であり、この設定では停止しない。
+
+採用範囲は審査済みregistryの10 USDT perpetualだけで、未審査catalogの全件収集ではない。
+同梱Ranking mapのMEXC versionは隔離DBのcatalog captureに基づく。本番DBのcurrent instrument/versionを
+取得し、定義・数量係数・原資産・固定参照の根拠を再照合してから採用する。
+隔離captureの内部SCD2 IDを本番へそのままコピーしない。参照価格のProviderはBybit/Binanceのまま維持する。
+
+Discoveryは既存Attention serviceのwriterで動き、専用の新serviceを追加しない。
+Webの`/api/discovery`、`/api/decisions`と比較操作は対応Webのbuildで提供する。
+配置確認では実際のsource版とstateを特定し、固定条件、連続世代、欠測時の中断、保存候補、
+明示確認以外でselectionが変わらないことを、source testと別に確認する。
+
+rollbackもMEXCを読める互換版を使い、Market側の取得を無効化して保存データを保持する。
+MEXC入りartifact/mapを旧3 Venue readerへ戻さず、user-workspace v2を書いた後にv1専用Webへ戻さない。
+比較pinとfavorite/view、`manual-decisions.json`、Attention SQLiteを保全対象に含める。
+終了Discovery episodeの7日/10,000件制限は既存Attention evidence全体のretentionではない。
+手動判断は1,000件/16 MiBで新規保存を拒否し、自動削除しない。満杯時は保存済み内容を保全して容量方針を再判断する。
 
 ## Researchと新しいcandle finalityの配置境界
 

@@ -1,0 +1,1238 @@
+{
+  "$defs": {
+    "DiscoveryEpisode": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "policyId": {
+          "default": "discovery-reference-turnover-15m-v1",
+          "title": "Policyid",
+          "type": "string"
+        },
+        "identityKey": {
+          "title": "Identitykey",
+          "type": "string"
+        },
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referencekey"
+        },
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/OriginalReference"
+          },
+          "title": "Originals",
+          "type": "array"
+        },
+        "state": {
+          "enum": [
+            "active",
+            "interrupted",
+            "ended"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "startKind": {
+          "enum": [
+            "new",
+            "initial_confirmation",
+            "reconfirmation"
+          ],
+          "title": "Startkind",
+          "type": "string"
+        },
+        "firstObservedAt": {
+          "title": "Firstobservedat",
+          "type": "integer"
+        },
+        "lastConfirmedAt": {
+          "title": "Lastconfirmedat",
+          "type": "integer"
+        },
+        "consecutiveConfirmations": {
+          "minimum": 1,
+          "title": "Consecutiveconfirmations",
+          "type": "integer"
+        },
+        "observedDurationMs": {
+          "minimum": 0,
+          "title": "Observeddurationms",
+          "type": "integer"
+        },
+        "endedAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endedat"
+        },
+        "endReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endreason"
+        },
+        "interruptionReason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Interruptionreason"
+        },
+        "direction": {
+          "enum": [
+            "up",
+            "down",
+            "turnover",
+            "unknown"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "firstSourceGenerationId": {
+          "title": "Firstsourcegenerationid",
+          "type": "string"
+        },
+        "lastSourceGenerationId": {
+          "title": "Lastsourcegenerationid",
+          "type": "string"
+        },
+        "firstRankingCutoff": {
+          "title": "Firstrankingcutoff",
+          "type": "integer"
+        },
+        "lastRankingCutoff": {
+          "title": "Lastrankingcutoff",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "policyId",
+        "identityKey",
+        "assetId",
+        "asset",
+        "referenceKey",
+        "originals",
+        "state",
+        "startKind",
+        "firstObservedAt",
+        "lastConfirmedAt",
+        "consecutiveConfirmations",
+        "observedDurationMs",
+        "endedAt",
+        "endReason",
+        "interruptionReason",
+        "direction",
+        "firstSourceGenerationId",
+        "lastSourceGenerationId",
+        "firstRankingCutoff",
+        "lastRankingCutoff"
+      ],
+      "title": "DiscoveryEpisode",
+      "type": "object"
+    },
+    "DiscoveryNative": {
+      "additionalProperties": false,
+      "properties": {
+        "instrumentId": {
+          "title": "Instrumentid",
+          "type": "string"
+        },
+        "versionId": {
+          "title": "Versionid",
+          "type": "integer"
+        },
+        "venue": {
+          "title": "Venue",
+          "type": "string"
+        },
+        "sourceSymbol": {
+          "title": "Sourcesymbol",
+          "type": "string"
+        },
+        "quality": {
+          "title": "Quality",
+          "type": "string"
+        },
+        "qualityReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        },
+        "markPrice": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "fundingRateRaw": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "fundingRatePerHour": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "fundingIntervalSeconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fundingintervalseconds"
+        },
+        "openInterestRaw": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "openInterestBase": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "openInterestNotional": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "oiChange": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RawFeatureValue"
+          },
+          "title": "Oichange",
+          "type": "object"
+        },
+        "returnPct": {
+          "additionalProperties": {
+            "$ref": "#/$defs/RawFeatureValue"
+          },
+          "title": "Returnpct",
+          "type": "object"
+        }
+      },
+      "required": [
+        "instrumentId",
+        "versionId",
+        "venue",
+        "sourceSymbol",
+        "quality",
+        "qualityReasons",
+        "markPrice",
+        "fundingRateRaw",
+        "fundingRatePerHour",
+        "fundingIntervalSeconds",
+        "openInterestRaw",
+        "openInterestBase",
+        "openInterestNotional",
+        "oiChange",
+        "returnPct"
+      ],
+      "title": "DiscoveryNative",
+      "type": "object"
+    },
+    "DiscoveryPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "discovery-reference-turnover-15m-v1",
+          "default": "discovery-reference-turnover-15m-v1",
+          "title": "Id",
+          "type": "string"
+        },
+        "turnoverRatioThreshold": {
+          "const": 3,
+          "default": 3,
+          "title": "Turnoverratiothreshold",
+          "type": "integer"
+        },
+        "returnThresholdPct": {
+          "const": 2,
+          "default": 2,
+          "title": "Returnthresholdpct",
+          "type": "integer"
+        },
+        "windowMinutes": {
+          "const": 15,
+          "default": 15,
+          "title": "Windowminutes",
+          "type": "integer"
+        },
+        "browserSettingsIndependent": {
+          "const": true,
+          "default": true,
+          "title": "Browsersettingsindependent",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "turnoverRatioThreshold",
+        "returnThresholdPct",
+        "windowMinutes",
+        "browserSettingsIndependent"
+      ],
+      "title": "DiscoveryPolicy",
+      "type": "object"
+    },
+    "DiscoveryRow": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referencekey"
+        },
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/OriginalReference"
+          },
+          "title": "Originals",
+          "type": "array"
+        },
+        "identityKey": {
+          "title": "Identitykey",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "matched",
+            "not_matched",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "direction": {
+          "enum": [
+            "up",
+            "down",
+            "turnover",
+            "unknown"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "confirmation": {
+          "anyOf": [
+            {
+              "enum": [
+                "new",
+                "initial_confirmation",
+                "reconfirmation",
+                "continuing"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confirmation"
+        },
+        "episodeId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Episodeid"
+        },
+        "raw": {
+          "$ref": "#/$defs/FeatureSnapshotRow"
+        },
+        "turnoverComparison": {
+          "$ref": "#/$defs/TurnoverComparison"
+        },
+        "native": {
+          "items": {
+            "$ref": "#/$defs/DiscoveryNative"
+          },
+          "title": "Native",
+          "type": "array"
+        }
+      },
+      "required": [
+        "assetId",
+        "asset",
+        "referenceKey",
+        "originals",
+        "identityKey",
+        "state",
+        "reason",
+        "direction",
+        "confirmation",
+        "episodeId",
+        "raw",
+        "turnoverComparison",
+        "native"
+      ],
+      "title": "DiscoveryRow",
+      "type": "object"
+    },
+    "FeatureSnapshotRow": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referencekey"
+        },
+        "originalInstrumentVersions": {
+          "items": {
+            "$ref": "#/$defs/OriginalReference"
+          },
+          "title": "Originalinstrumentversions",
+          "type": "array"
+        },
+        "decisionAt": {
+          "title": "Decisionat",
+          "type": "integer"
+        },
+        "identityStatus": {
+          "enum": [
+            "ready",
+            "partial",
+            "invalid",
+            "excluded"
+          ],
+          "title": "Identitystatus",
+          "type": "string"
+        },
+        "qualityReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        },
+        "referenceClose": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceReturn15M": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceReturn1H": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceReturn24H": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceTurnover15M": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceTurnover1H": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceTurnoverRatio15M": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceTurnoverRatio1H": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "referenceDayRangePosition": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "nativeReturn15MMedian": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "nativeReturn1HMedian": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "oiChange15MMedian": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "oiChange1HMedian": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "fundingAbsMaxPerHour": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "fundingRangePerHour": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "spreadMedianBps": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "spreadMaxBps": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "markDispersionBps": {
+          "$ref": "#/$defs/RawFeatureValue"
+        },
+        "freshNativeVenueCount": {
+          "minimum": 0,
+          "title": "Freshnativevenuecount",
+          "type": "integer"
+        },
+        "readyNativeVenueCount": {
+          "minimum": 0,
+          "title": "Readynativevenuecount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "assetId",
+        "asset",
+        "referenceKey",
+        "originalInstrumentVersions",
+        "decisionAt",
+        "identityStatus",
+        "qualityReasons",
+        "referenceClose",
+        "referenceReturn15M",
+        "referenceReturn1H",
+        "referenceReturn24H",
+        "referenceTurnover15M",
+        "referenceTurnover1H",
+        "referenceTurnoverRatio15M",
+        "referenceTurnoverRatio1H",
+        "referenceDayRangePosition",
+        "nativeReturn15MMedian",
+        "nativeReturn1HMedian",
+        "oiChange15MMedian",
+        "oiChange1HMedian",
+        "fundingAbsMaxPerHour",
+        "fundingRangePerHour",
+        "spreadMedianBps",
+        "spreadMaxBps",
+        "markDispersionBps",
+        "freshNativeVenueCount",
+        "readyNativeVenueCount"
+      ],
+      "title": "FeatureSnapshotRow",
+      "type": "object"
+    },
+    "Indicator": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "history_missing",
+            "no_baseline",
+            "unsupported_period",
+            "starting",
+            "no_range",
+            "invalid_data",
+            "reference_unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "value",
+        "status"
+      ],
+      "title": "Indicator",
+      "type": "object"
+    },
+    "InputReference": {
+      "additionalProperties": false,
+      "properties": {
+        "generationId": {
+          "minLength": 1,
+          "title": "Generationid",
+          "type": "string"
+        },
+        "featureVersion": {
+          "const": "attention-features-v1",
+          "default": "attention-features-v1",
+          "title": "Featureversion",
+          "type": "string"
+        },
+        "decisionAt": {
+          "exclusiveMinimum": 0,
+          "title": "Decisionat",
+          "type": "integer"
+        },
+        "rankingCutoff": {
+          "exclusiveMinimum": 0,
+          "title": "Rankingcutoff",
+          "type": "integer"
+        },
+        "rankingGeneratedAt": {
+          "exclusiveMinimum": 0,
+          "title": "Rankinggeneratedat",
+          "type": "integer"
+        },
+        "rankingGenerationId": {
+          "minLength": 1,
+          "title": "Rankinggenerationid",
+          "type": "string"
+        },
+        "rankingMapVersion": {
+          "minLength": 1,
+          "title": "Rankingmapversion",
+          "type": "string"
+        },
+        "rankingMetricVersion": {
+          "minLength": 1,
+          "title": "Rankingmetricversion",
+          "type": "string"
+        },
+        "universeGeneratedAt": {
+          "exclusiveMinimum": 0,
+          "title": "Universegeneratedat",
+          "type": "integer"
+        },
+        "serviceGeneratedAt": {
+          "exclusiveMinimum": 0,
+          "title": "Servicegeneratedat",
+          "type": "integer"
+        },
+        "marketMetricsGenerationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marketmetricsgenerationid"
+        },
+        "marketMetricsGeneratedAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marketmetricsgeneratedat"
+        },
+        "marketMetricsCandleCutoff": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marketmetricscandlecutoff"
+        },
+        "inputSkewSeconds": {
+          "minimum": 0,
+          "title": "Inputskewseconds",
+          "type": "number"
+        },
+        "qualityReasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "generationId",
+        "featureVersion",
+        "decisionAt",
+        "rankingCutoff",
+        "rankingGeneratedAt",
+        "rankingGenerationId",
+        "rankingMapVersion",
+        "rankingMetricVersion",
+        "universeGeneratedAt",
+        "serviceGeneratedAt",
+        "marketMetricsGenerationId",
+        "marketMetricsGeneratedAt",
+        "marketMetricsCandleCutoff",
+        "inputSkewSeconds",
+        "qualityReasons"
+      ],
+      "title": "InputReference",
+      "type": "object"
+    },
+    "OriginalReference": {
+      "additionalProperties": false,
+      "properties": {
+        "instrumentId": {
+          "title": "Instrumentid",
+          "type": "string"
+        },
+        "versionId": {
+          "exclusiveMinimum": 0,
+          "title": "Versionid",
+          "type": "integer"
+        },
+        "venue": {
+          "title": "Venue",
+          "type": "string"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Groupid"
+        },
+        "multiplier": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Multiplier"
+        },
+        "current": {
+          "default": true,
+          "title": "Current",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "instrumentId",
+        "versionId",
+        "venue",
+        "groupId",
+        "multiplier",
+        "current"
+      ],
+      "title": "OriginalReference",
+      "type": "object"
+    },
+    "RawFeatureValue": {
+      "additionalProperties": false,
+      "properties": {
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "missing",
+            "stale",
+            "invalid",
+            "unsupported"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "startAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startat"
+        },
+        "endAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endat"
+        },
+        "observedAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observedat"
+        },
+        "observations": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/SourceObservation"
+          },
+          "title": "Observations",
+          "type": "array"
+        }
+      },
+      "required": [
+        "value",
+        "status",
+        "reason",
+        "unit",
+        "source",
+        "startAt",
+        "endAt",
+        "observedAt",
+        "observations"
+      ],
+      "title": "RawFeatureValue",
+      "type": "object"
+    },
+    "SourceObservation": {
+      "additionalProperties": false,
+      "properties": {
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Value"
+        },
+        "payloadHash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Payloadhash"
+        },
+        "startAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Startat"
+        },
+        "endAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Endat"
+        },
+        "observedAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Observedat"
+        },
+        "sourceAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourceat"
+        },
+        "finality": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Finality"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "source",
+        "value",
+        "payloadHash",
+        "startAt",
+        "endAt",
+        "observedAt",
+        "sourceAt",
+        "finality",
+        "unit"
+      ],
+      "title": "SourceObservation",
+      "type": "object"
+    },
+    "TurnoverComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "current": {
+          "$ref": "#/$defs/TurnoverWindow"
+        },
+        "previousDay": {
+          "$ref": "#/$defs/TurnoverWindow"
+        },
+        "twoDaysAgo": {
+          "$ref": "#/$defs/TurnoverWindow"
+        },
+        "previousDayRatio": {
+          "$ref": "#/$defs/Indicator"
+        },
+        "twoDaysAgoRatio": {
+          "$ref": "#/$defs/Indicator"
+        }
+      },
+      "required": [
+        "current",
+        "previousDay",
+        "twoDaysAgo",
+        "previousDayRatio",
+        "twoDaysAgoRatio"
+      ],
+      "title": "TurnoverComparison",
+      "type": "object"
+    },
+    "TurnoverWindow": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "title": "Anchor",
+          "type": "integer"
+        },
+        "cutoff": {
+          "title": "Cutoff",
+          "type": "integer"
+        },
+        "quoteTurnover": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Quoteturnover"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "history_missing",
+            "starting",
+            "invalid_data",
+            "reference_unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "anchor",
+        "cutoff",
+        "quoteTurnover",
+        "status"
+      ],
+      "title": "TurnoverWindow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "discovery-response-v1",
+      "default": "discovery-response-v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/DiscoveryPolicy",
+      "default": {
+        "id": "discovery-reference-turnover-15m-v1",
+        "turnoverRatioThreshold": 3,
+        "returnThresholdPct": 2,
+        "windowMinutes": 15,
+        "browserSettingsIndependent": true
+      }
+    },
+    "generationId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Generationid"
+    },
+    "decisionAt": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Decisionat"
+    },
+    "rankingCutoff": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Rankingcutoff"
+    },
+    "inputs": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InputReference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "stale",
+        "unavailable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "historyAvailableFrom": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Historyavailablefrom"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/DiscoveryRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "episodes": {
+      "items": {
+        "$ref": "#/$defs/DiscoveryEpisode"
+      },
+      "title": "Episodes",
+      "type": "array"
+    },
+    "nextCursor": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Nextcursor"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "policy",
+    "generationId",
+    "decisionAt",
+    "rankingCutoff",
+    "inputs",
+    "status",
+    "reason",
+    "historyAvailableFrom",
+    "rows",
+    "episodes",
+    "nextCursor"
+  ],
+  "title": "DiscoveryResponse",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

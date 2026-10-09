@@ -227,3 +227,23 @@ def test_maintenance_uses_explicit_completed_utc_day(monkeypatch, tmp_path: Path
     assert seen == [date(2026, 8, 13)]
     assert "archives=0" in result.output
     assert DATABASE_URL not in result.output
+
+
+def test_mexc_disable_env_is_threaded_through_cli_service(monkeypatch, tmp_path):
+    monkeypatch.setenv("PREP_WATCHDECK_MARKET_DATABASE_URL", DATABASE_URL)
+    monkeypatch.setenv("PREP_WATCHDECK_MARKET_STATE_DIR", str(tmp_path))
+    monkeypatch.delenv("PREP_WATCHDECK_MARKET_MEXC_ENABLED", raising=False)
+    assert Settings().mexc_enabled is True
+    monkeypatch.setenv("PREP_WATCHDECK_MARKET_MEXC_ENABLED", "false")
+    assert Settings().mexc_enabled is False
+    seen = []
+
+    async def fake_service(
+        database_url, state_dir, stop_event, *, mexc_enabled=True, recovery_enabled=False
+    ):
+        seen.append(mexc_enabled)
+        stop_event.set()
+
+    monkeypatch.setattr("prep_watchdeck_market.cli.run_market_service", fake_service)
+    assert runner.invoke(app, ["service"]).exit_code == 0
+    assert seen == [False]
