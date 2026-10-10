@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-10(土)_11:47 JST"
+timestamp="2026-10-10(土)_12:22 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T11:47:54+09:00`
+- 更新: `2026-10-10T12:22:30+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -81,6 +81,9 @@ MEXCのWSにはclosed flagがなく、分終了後5秒を基準とする導出�
 将来、別timeframe/source/backfill laneを追加できる。
 
 MEXCのCurrent FundingはTickerとは独立して毎秒2件開始・最大4並列で取得し、60秒巡回を目標にする。
+取得済みFundingは2秒周期で変更分を保存し、次のL1周期を待たずartifact更新を通知する。
+Catalog・L1・Funding writerの順序を保ち、L1保存時はlock取得後の最新Fundingを再結合する。
+契約のnative versionが一致する取得根拠を同じtransactionで保存し、価格・OIの時刻や標本数は変更しない。
 Funding期限切れは価格・OI公開を止めない。Candle WSは25銘柄/接続、全接続合計5購読/秒、ping15秒。
 ACKを確認し、失敗した接続だけをbackoff/jitterで再接続する。これらの数値は設計値で公式上限ではない。
 

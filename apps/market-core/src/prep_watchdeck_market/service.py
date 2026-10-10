@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Sequence
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
@@ -37,7 +37,9 @@ from prep_watchdeck_market.market_state import MarketBatch
 from prep_watchdeck_market.market_store import (
     DATABASE_TIMEOUT_OPTIONS,
     MarketStoreResult,
+    load_current_mexc_version_ids_url,
     persist_market_cycle_url,
+    persist_mexc_funding_url,
 )
 from prep_watchdeck_market.models import CatalogBatch, CatalogInstrument, Venue
 from prep_watchdeck_market.native_activity_publication import (
@@ -58,8 +60,32 @@ from prep_watchdeck_market.sources.hyperliquid_l1 import (
     fetch_hyperliquid_l1,
 )
 from prep_watchdeck_market.sources.mexc import fetch_mexc_catalog
-from prep_watchdeck_market.sources.mexc_funding import MexcFundingRuntime
+from prep_watchdeck_market.sources.mexc_funding import (
+    MexcFundingRuntime,
+    funding_reason,
+    join_funding,
+)
 from prep_watchdeck_market.sources.mexc_l1 import MEXC_L1_ENDPOINT, fetch_mexc_l1
+
+
+async def _await_locked_thread[T](task: asyncio.Task[T]) -> T:
+    """Keep a lock-owning writer alive through repeated cancellation until its thread finishes."""
+    cancelled = False
+    while True:
+        try:
+            result = await asyncio.shield(task)
+            break
+        except asyncio.CancelledError:
+            if task.cancelled():
+                raise
+            cancelled = True
+        except Exception:
+            if cancelled:
+                raise asyncio.CancelledError from None
+            raise
+    if cancelled:
+        raise asyncio.CancelledError
+    return result
 
 
 class MarketServiceError(RuntimeError):
@@ -98,6 +124,9 @@ class MarketService:
         self._catalogs: dict[Venue, CatalogBatch] = {}
         self._candle_version_starts: dict[str, datetime] = {}
         self._catalog_update_lock = asyncio.Lock()
+        self._market_write_lock = asyncio.Lock()
+        self._mexc_version_ids: dict[str, int] = {}
+        self._funding_published: dict[str, tuple[int, str | None]] = {}
         self._artifact_trigger = asyncio.Event()
         self._metrics_trigger = asyncio.Event()
         self._artifact_publish_lock = asyncio.Lock()
@@ -116,7 +145,13 @@ class MarketService:
                 venues=initial.venues_succeeded,
                 count=initial.instruments_received,
             )
-            self._mexc_funding = MexcFundingRuntime(session, lambda: self._instruments("mexc"))
+            self._mexc_funding = (
+                MexcFundingRuntime(
+                    session, lambda: self._instruments("mexc"), lambda: self._mexc_version_ids
+                )
+                if "mexc" in self._enabled_venues
+                else None
+            )
             scheduler = L1Scheduler(self._l1_fetchers(), self._persist_l1_cycle)
             candle_runtime = CandleRuntime(
                 self._database_url,
@@ -136,7 +171,14 @@ class MarketService:
                 asyncio.create_task(
                     self._mexc_funding.run_forever(stop_event), name="market-mexc-funding-loop"
                 )
-                if "mexc" in self._enabled_venues
+                if self._mexc_funding is not None
+                else None
+            )
+            funding_flush_task = (
+                asyncio.create_task(
+                    self._funding_flush_loop(stop_event), name="market-funding-flush"
+                )
+                if funding_task is not None
                 else None
             )
             catalog_task = asyncio.create_task(
@@ -189,6 +231,7 @@ class MarketService:
                     activity_task,
                 )
                 + (() if funding_task is None else (funding_task,))
+                + (() if funding_flush_task is None else (funding_flush_task,))
                 + (() if recovery_task is None else (recovery_task,))
                 + (() if endpoint_recovery_task is None else (endpoint_recovery_task,))
             )
@@ -353,11 +396,7 @@ class MarketService:
                 ),
                 name="market-catalog-persist",
             )
-            try:
-                persisted = await asyncio.shield(persist_task)
-            except asyncio.CancelledError:
-                await asyncio.gather(persist_task, return_exceptions=True)
-                raise
+            persisted = await _await_locked_thread(persist_task)
             version_starts_task = asyncio.create_task(
                 asyncio.to_thread(
                     _load_current_candle_version_starts_url,
@@ -366,15 +405,17 @@ class MarketService:
                 name="market-current-candle-versions-load",
             )
             try:
-                version_starts = await asyncio.shield(version_starts_task)
-            except asyncio.CancelledError:
-                await asyncio.gather(version_starts_task, return_exceptions=True)
-                raise
+                version_starts = await _await_locked_thread(version_starts_task)
             except CandleStoreError as error:
                 self._candle_version_starts = {}
                 raise MarketServiceError(
                     "current candle catalog versions are unavailable"
                 ) from error
+            if "mexc" in persisted:
+                ids_task = asyncio.create_task(
+                    asyncio.to_thread(load_current_mexc_version_ids_url, self._database_url)
+                )
+                self._mexc_version_ids = await _await_locked_thread(ids_task)
             for venue in persisted:
                 self._catalogs[venue] = succeeded[venue]
             self._candle_version_starts = version_starts
@@ -455,24 +496,104 @@ class MarketService:
         started_at: datetime,
         batches: Sequence[MarketBatch],
     ) -> MarketStoreResult:
-        thread_task = asyncio.create_task(
-            asyncio.to_thread(
-                persist_market_cycle_url,
-                self._database_url,
-                cycle_at,
-                started_at,
-                batches,
-            ),
-            name=f"market-l1-persist-{cycle_at.isoformat()}",
-        )
-        try:
-            result = await asyncio.shield(thread_task)
-        except asyncio.CancelledError:
-            await asyncio.gather(thread_task, return_exceptions=True)
-            raise
+        # Fixed lock order also excludes catalog persistence until this writer drains.
+        async with self._catalog_update_lock, self._market_write_lock:
+            funding_snapshots = None
+            if self._mexc_funding is not None:
+                instruments = {i.source_symbol: i for i in self._instruments("mexc")}
+                funding_as_of = datetime.now(UTC)
+                funding_snapshots = dict(self._mexc_funding.snapshots)
+                batches = tuple(
+                    replace(
+                        batch,
+                        observations=tuple(
+                            join_funding(
+                                row,
+                                funding_snapshots.get(row.source_symbol),
+                                instruments[row.source_symbol],
+                                funding_as_of=funding_as_of,
+                                native_version_id=self._mexc_version_ids.get(row.source_symbol),
+                            )
+                            if row.source_symbol in instruments
+                            else row
+                            for row in batch.observations
+                        ),
+                    )
+                    if batch.venue == "mexc"
+                    else batch
+                    for batch in batches
+                )
+            work = (
+                asyncio.to_thread(
+                    persist_market_cycle_url,
+                    self._database_url,
+                    cycle_at,
+                    started_at,
+                    batches,
+                    mexc_version_ids=dict(self._mexc_version_ids),
+                    mexc_funding_snapshots=funding_snapshots,
+                )
+                if self._mexc_funding is not None
+                else asyncio.to_thread(
+                    persist_market_cycle_url,
+                    self._database_url,
+                    cycle_at,
+                    started_at,
+                    batches,
+                )
+            )
+            thread_task = asyncio.create_task(
+                work, name=f"market-l1-persist-{cycle_at.isoformat()}"
+            )
+            result = await _await_locked_thread(thread_task)
         self._artifact_trigger.set()
         self._metrics_trigger.set()
         return result
+
+    async def _flush_mexc_funding(self) -> int:
+        async with self._catalog_update_lock, self._market_write_lock:
+            runtime = self._mexc_funding
+            if runtime is None:
+                return 0
+            funding_as_of = datetime.now(UTC)
+            updates = {}
+            tokens = {}
+            for item in self._instruments("mexc"):
+                snapshot = runtime.snapshots.get(item.source_symbol)
+                if snapshot is None or snapshot.native_version_id != self._mexc_version_ids.get(
+                    item.source_symbol
+                ):
+                    continue
+                token = (id(snapshot), funding_reason(snapshot, item, funding_as_of))
+                if (
+                    item.source_symbol in runtime.dirty_symbols
+                    or self._funding_published.get(item.source_symbol) != token
+                ):
+                    updates[item.source_symbol] = (item, snapshot)
+                    tokens[item.source_symbol] = token
+            if not updates:
+                return 0
+            thread = asyncio.create_task(
+                asyncio.to_thread(
+                    persist_mexc_funding_url, self._database_url, updates, funding_as_of
+                ),
+                name="market-funding-persist",
+            )
+            written = await _await_locked_thread(thread)
+            for symbol, (_, snapshot) in updates.items():
+                if runtime.snapshots.get(symbol) is snapshot:
+                    runtime.dirty_symbols.discard(symbol)
+                    self._funding_published[symbol] = tokens[symbol]
+        if written:
+            self._artifact_trigger.set()
+        return written
+
+    async def _funding_flush_loop(self, stop_event: asyncio.Event) -> None:
+        while not stop_event.is_set():
+            with suppress(TimeoutError):
+                await asyncio.wait_for(stop_event.wait(), 2.0)
+            if not stop_event.is_set():
+                await self._flush_mexc_funding()
 
     async def _metrics_loop(self, stop_event: asyncio.Event) -> None:
         """Publish an optional read model without coupling it to the core artifacts."""

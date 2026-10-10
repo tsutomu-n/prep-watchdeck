@@ -121,6 +121,7 @@ async def fetch_funding_history(
                 params={"symbol": instrument.source_symbol, "page_size": "100", "page_num": "1"},
                 lane="recovery",
             )
+            observed_at = observed_now()
             data = require_mapping(mexc_data(payload), field_name="MEXC funding history")
             rows = require_list(data.get("resultList"), field_name="MEXC funding events")
             events = _parse_events(
@@ -128,7 +129,7 @@ async def fetch_funding_history(
                 instrument,
                 start_at=start_at,
                 end_at=end_at,
-                observed_at=observed_now(),
+                observed_at=observed_at,
                 symbol_field="symbol",
                 rate_field="fundingRate",
                 timestamp_field="settleTime",
@@ -137,7 +138,7 @@ async def fetch_funding_history(
                 "mexc",
                 instrument.source_symbol,
                 "/api/v1/contract/funding_rate/history",
-                observed_now(),
+                observed_at,
                 canonical_json_sha256(payload),
                 events,
                 require_mapping(payload, field_name="MEXC funding envelope"),

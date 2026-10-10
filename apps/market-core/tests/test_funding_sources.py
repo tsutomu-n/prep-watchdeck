@@ -1,11 +1,16 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import asyncio
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import cast
 
+import aiohttp
 import pytest
 
+from prep_watchdeck_market.funding_store import _validate_batches
 from prep_watchdeck_market.models import CatalogInstrument
+from prep_watchdeck_market.sources import funding, mexc
 from prep_watchdeck_market.sources.funding import (
     ASTER_FUNDING_ENDPOINT,
     BITGET_FUNDING_ENDPOINT,
@@ -19,6 +24,50 @@ from prep_watchdeck_market.sources.funding import (
 START = datetime(2026, 8, 18, 8, 0, tzinfo=UTC)
 END = datetime(2026, 8, 18, 12, 0, tzinfo=UTC)
 OBSERVED = datetime(2026, 8, 18, 12, 0, 5, tzinfo=UTC)
+
+
+def test_mexc_history_shares_the_http_completion_time_with_its_events(monkeypatch) -> None:
+    instrument = _instrument("mexc", "BTC_USDT", 28_800)
+    session = cast(aiohttp.ClientSession, object())
+    settled_at = datetime(2026, 8, 18, 8, tzinfo=UTC)
+    payload = {
+        "success": True,
+        "code": 0,
+        "data": {
+            "resultList": [
+                {"symbol": "BTC_USDT", "fundingRate": "-0.0001", "settleTime": _ms(settled_at)}
+            ]
+        },
+    }
+    response_completed = False
+    clock = iter((OBSERVED, OBSERVED + timedelta(microseconds=1)))
+
+    async def fetch(_session, endpoint, *, params, lane):
+        nonlocal response_completed
+        assert _session is session
+        assert endpoint == "/api/v1/contract/funding_rate/history"
+        assert params == {"symbol": "BTC_USDT", "page_size": "100", "page_num": "1"}
+        assert lane == "recovery"
+        response_completed = True
+        return payload
+
+    def observed_now() -> datetime:
+        assert response_completed
+        return next(clock)
+
+    monkeypatch.setattr(mexc, "fetch_mexc_json", fetch)
+    monkeypatch.setattr(funding, "observed_now", observed_now)
+    batch = asyncio.run(
+        funding.fetch_funding_history(session, instrument, start_at=START, end_at=END)
+    )
+
+    _validate_batches((batch,))
+    assert batch.observed_at == OBSERVED
+    assert len(batch.events) == 1
+    assert batch.events[0].observed_at == OBSERVED
+    assert batch.events[0].funding_at == settled_at
+    assert batch.events[0].funding_rate_raw == Decimal("-0.0001")
+    assert batch.raw_payload == payload
 
 
 def test_bitget_parser_filters_window_sorts_and_deduplicates() -> None:
@@ -121,7 +170,7 @@ def _instrument(
     symbol: str,
     interval_seconds: int | None,
 ) -> CatalogInstrument:
-    base = symbol.removesuffix("USDT")
+    base = symbol.removesuffix("USDT").removesuffix("_")
     return CatalogInstrument(
         venue=venue,  # type: ignore[arg-type]
         source_symbol=symbol,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from time import perf_counter
 from typing import Any, Literal
@@ -12,7 +12,12 @@ from psycopg import Connection
 from psycopg.types.json import Jsonb
 
 from prep_watchdeck_market.market_state import MarketBatch, MarketObservation
-from prep_watchdeck_market.models import canonical_json_sha256
+from prep_watchdeck_market.models import CatalogInstrument, canonical_json_sha256
+from prep_watchdeck_market.sources.mexc_funding import (
+    MexcFundingSnapshot,
+    funding_quality,
+    funding_values,
+)
 
 RunStatus = Literal["succeeded", "partial", "failed"]
 DATABASE_TIMEOUT_OPTIONS = "-c statement_timeout=20000 -c transaction_timeout=20000"
@@ -38,6 +43,9 @@ def persist_market_cycle_url(
     cycle_at: datetime,
     started_at: datetime,
     batches: Sequence[MarketBatch],
+    *,
+    mexc_version_ids: Mapping[str, int] | None = None,
+    mexc_funding_snapshots: Mapping[str, MexcFundingSnapshot] | None = None,
 ) -> MarketStoreResult:
     try:
         with psycopg.connect(
@@ -45,7 +53,14 @@ def persist_market_cycle_url(
             connect_timeout=5,
             options=DATABASE_TIMEOUT_OPTIONS,
         ) as connection:
-            return persist_market_cycle(connection, cycle_at, started_at, batches)
+            return persist_market_cycle(
+                connection,
+                cycle_at,
+                started_at,
+                batches,
+                mexc_version_ids=mexc_version_ids,
+                mexc_funding_snapshots=mexc_funding_snapshots,
+            )
     except MarketStoreError:
         raise
     except (psycopg.Error, OSError):
@@ -57,6 +72,9 @@ def persist_market_cycle(
     cycle_at: datetime,
     started_at: datetime,
     batches: Sequence[MarketBatch],
+    *,
+    mexc_version_ids: Mapping[str, int] | None = None,
+    mexc_funding_snapshots: Mapping[str, MexcFundingSnapshot] | None = None,
 ) -> MarketStoreResult:
     _validate_cycle(cycle_at, started_at, batches)
     run_id = uuid4()
@@ -145,6 +163,23 @@ def persist_market_cycle(
                     ) != format(mexc_factors[observation.source_symbol], "f"):
                         unknown_source_rows += 1
                         continue
+                    if (
+                        batch.venue == "mexc"
+                        and mexc_version_ids is not None
+                        and (mexc_version_ids.get(observation.source_symbol) != current[key][0])
+                    ):
+                        status, error = funding_quality(
+                            observation.status, observation.error_code, "funding_contract_changed"
+                        )
+                        observation = replace(
+                            observation,
+                            funding_rate_raw=None,
+                            funding_interval_seconds=None,
+                            funding_rate_per_hour=None,
+                            next_funding_at=None,
+                            status=status,
+                            error_code=error,
+                        )
                     observations[key] = observation
 
             written = 0
@@ -165,6 +200,21 @@ def persist_market_cycle(
                 )
                 _upsert_latest(cursor, version_id, run_id, cycle_at, values)
                 _upsert_minute(cursor, version_id, run_id, cycle_at, values)
+                snapshot = (
+                    (mexc_funding_snapshots or {}).get(source_symbol) if venue == "mexc" else None
+                )
+                if (
+                    snapshot is not None
+                    and snapshot.native_version_id == version_id
+                    and observation is not None
+                    and observation.funding_source_at == snapshot.source_at
+                    and observation.funding_observed_at == snapshot.observed_at
+                    and (
+                        mexc_version_ids is None
+                        or mexc_version_ids.get(source_symbol) == version_id
+                    )
+                ):
+                    raw_written += _insert_funding_raw(cursor, source_symbol, version_id, snapshot)
                 written += 1
 
             venue_statuses = {
@@ -502,3 +552,121 @@ def _upsert_minute(
 def _require_aware(value: datetime, field_name: str) -> None:
     if value.tzinfo is None or value.utcoffset() is None:
         raise ValueError(f"{field_name} must be timezone-aware")
+
+
+def load_current_mexc_version_ids_url(database_url: str) -> dict[str, int]:
+    try:
+        with psycopg.connect(
+            database_url, connect_timeout=5, options=DATABASE_TIMEOUT_OPTIONS
+        ) as conn:
+            return {
+                str(symbol): int(version_id)
+                for symbol, version_id in conn.execute(
+                    "SELECT source_symbol, venue_instrument_version_id "
+                    "FROM venue_instrument_versions "
+                    "WHERE venue='mexc' AND active=true AND valid_to IS NULL"
+                ).fetchall()
+            }
+    except (psycopg.Error, OSError):
+        raise MarketStoreError("current MEXC catalog versions are unavailable") from None
+
+
+def persist_mexc_funding_url(
+    database_url: str,
+    updates: Mapping[str, tuple[CatalogInstrument, MexcFundingSnapshot]],
+    funding_as_of: datetime,
+) -> int:
+    try:
+        with psycopg.connect(
+            database_url, connect_timeout=5, options=DATABASE_TIMEOUT_OPTIONS
+        ) as conn:
+            return persist_mexc_funding(conn, updates, funding_as_of)
+    except (psycopg.Error, OSError):
+        raise MarketStoreError("MEXC funding persistence failed") from None
+
+
+def persist_mexc_funding(
+    connection: Connection[Any],
+    updates: Mapping[str, tuple[CatalogInstrument, MexcFundingSnapshot]],
+    funding_as_of: datetime,
+) -> int:
+    """Replace Funding only on the current native contract and its existing ticker bucket."""
+    _require_aware(funding_as_of, "funding_as_of")
+    written = 0
+    with connection.transaction(), connection.cursor() as cursor:
+        rows = cursor.execute(
+            "SELECT v.source_symbol,v.venue_instrument_version_id,l.cycle_at,l.status,l.error_code "
+            "FROM venue_instrument_versions v JOIN latest_market_state l "
+            "USING (venue_instrument_version_id) "
+            "WHERE v.venue='mexc' AND v.active=true AND v.valid_to IS NULL "
+            "AND v.source_symbol=ANY(%s) ORDER BY v.source_symbol FOR SHARE OF v FOR UPDATE OF l",
+            (list(updates),),
+        ).fetchall()
+        for symbol, version_id, cycle_at, status, error_code in rows:
+            instrument, snapshot = updates[str(symbol)]
+            if snapshot.native_version_id != version_id:
+                continue
+            values = funding_values(
+                snapshot, instrument, funding_as_of=funding_as_of, native_version_id=int(version_id)
+            )
+            next_status, next_error = funding_quality(status, error_code, values.reason)
+            cursor.execute(
+                "UPDATE latest_market_state SET funding_rate_raw=%s,funding_interval_seconds=%s,"
+                "funding_rate_per_hour=%s,next_funding_at=%s,funding_source_at=%s,"
+                "funding_observed_at=%s,funding_valid_until=%s,status=%s,error_code=%s,"
+                "updated_at=clock_timestamp() WHERE venue_instrument_version_id=%s",
+                (*values[:7], next_status, next_error, version_id),
+            )
+            cursor.execute(
+                "UPDATE market_state_1m SET funding_rate_raw=%s,funding_interval_seconds=%s,"
+                "funding_rate_per_hour=%s,funding_source_at=%s,funding_observed_at=%s,"
+                "funding_valid_until=%s,status=%s "
+                "WHERE venue_instrument_version_id=%s AND bucket_at=%s",
+                (*values[:3], *values[4:7], next_status, version_id, cycle_at),
+            )
+            _insert_funding_raw(cursor, str(symbol), int(version_id), snapshot)
+            written += 1
+    return written
+
+
+def _insert_funding_raw(
+    cursor: Any,
+    symbol: str,
+    version_id: int,
+    snapshot: MexcFundingSnapshot,
+) -> int:
+    if snapshot.observed_at is None or snapshot.native_version_id != version_id:
+        return 0
+    raw = {
+        "funding": snapshot.payload,
+        "nativeVersionId": snapshot.native_version_id,
+        "contractVersion": snapshot.contract_version,
+        "fundingSourceAt": None if snapshot.source_at is None else snapshot.source_at.isoformat(),
+        "fundingObservedAt": snapshot.observed_at.isoformat(),
+        "fundingValidUntil": None
+        if snapshot.valid_until is None
+        else snapshot.valid_until.isoformat(),
+        "errorCode": snapshot.error_code,
+    }
+    payload_hash = canonical_json_sha256(raw)
+    cursor.execute(
+        "INSERT INTO raw_market_observations (observed_date,venue,source_symbol,"
+        "venue_instrument_version_id,dataset,observed_at,source_at,payload_hash,payload) "
+        "SELECT %s,'mexc',%s,%s,'funding_current',%s,%s,%s,%s "
+        "WHERE NOT EXISTS (SELECT 1 FROM raw_market_observations "
+        "WHERE venue_instrument_version_id=%s AND dataset='funding_current' "
+        "AND observed_at=%s AND payload_hash=%s)",
+        (
+            snapshot.observed_at.astimezone(UTC).date(),
+            symbol,
+            version_id,
+            snapshot.observed_at,
+            snapshot.source_at,
+            payload_hash,
+            Jsonb(raw),
+            version_id,
+            snapshot.observed_at,
+            payload_hash,
+        ),
+    )
+    return int(cursor.rowcount)

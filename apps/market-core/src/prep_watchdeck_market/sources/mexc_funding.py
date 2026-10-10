@@ -1,14 +1,21 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Collection
+from collections.abc import Callable, Collection, Mapping
 from contextlib import suppress
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
+from decimal import Decimal
+from typing import NamedTuple
 
 import aiohttp
 
-from prep_watchdeck_market.market_state import finite_decimal
+from prep_watchdeck_market.market_state import (
+    MarketObservation,
+    MarketStatus,
+    finite_decimal,
+    funding_per_hour,
+)
 from prep_watchdeck_market.models import CatalogInstrument
 from prep_watchdeck_market.sources.common import (
     CatalogSourceError,
@@ -33,6 +40,7 @@ class MexcFundingSnapshot:
     observed_at: datetime | None
     valid_until: datetime | None
     error_code: str | None = None
+    native_version_id: int | None = None
 
 
 def funding_snapshot(
@@ -102,6 +110,91 @@ def funding_reason(
     return None
 
 
+class FundingValues(NamedTuple):
+    rate: Decimal | None
+    interval: int | None
+    per_hour: Decimal | None
+    next_at: datetime | None
+    source_at: datetime | None
+    observed_at: datetime | None
+    valid_until: datetime | None
+    reason: str | None
+
+
+def funding_values(
+    snapshot: MexcFundingSnapshot | None,
+    instrument: CatalogInstrument,
+    *,
+    funding_as_of: datetime,
+    native_version_id: int | None = None,
+) -> FundingValues:
+    reason = funding_reason(snapshot, instrument, funding_as_of)
+    if native_version_id is not None and (
+        snapshot is None or snapshot.native_version_id != native_version_id
+    ):
+        reason = "funding_contract_changed" if snapshot is not None else "funding_missing"
+    row = (
+        require_mapping(mexc_data(snapshot.payload), field_name="MEXC funding")
+        if snapshot is not None and reason is None
+        else {}
+    )
+    hours = positive_int(row.get("collectCycle"))
+    interval = None if hours is None else hours * 3600
+    rate = finite_decimal(row.get("fundingRate"))
+    return FundingValues(
+        rate,
+        interval,
+        funding_per_hour(rate, interval),
+        timestamp_from_milliseconds(row.get("nextSettleTime")),
+        None if snapshot is None else snapshot.source_at,
+        None if snapshot is None else snapshot.observed_at,
+        None if snapshot is None else snapshot.valid_until,
+        reason,
+    )
+
+
+def funding_quality(
+    status: MarketStatus, error_code: str | None, reason: str | None
+) -> tuple[MarketStatus, str | None]:
+    # Funding may only repair/degrade quality previously attributed solely to Funding.
+    if status == "ready" or (
+        status == "partial"
+        and error_code is not None
+        and error_code.startswith("funding_only_partial:")
+    ):
+        return ("ready", None) if reason is None else ("partial", f"funding_only_partial:{reason}")
+    return status, error_code
+
+
+def join_funding(
+    observation: MarketObservation,
+    snapshot: MexcFundingSnapshot | None,
+    instrument: CatalogInstrument,
+    *,
+    funding_as_of: datetime,
+    native_version_id: int | None,
+) -> MarketObservation:
+    rate, interval, per_hour, next_at, source, observed, valid, reason = funding_values(
+        snapshot,
+        instrument,
+        funding_as_of=funding_as_of,
+        native_version_id=native_version_id,
+    )
+    status, error = funding_quality(observation.status, observation.error_code, reason)
+    return replace(
+        observation,
+        funding_rate_raw=rate,
+        funding_interval_seconds=interval,
+        funding_rate_per_hour=per_hour,
+        next_funding_at=next_at,
+        funding_source_at=source,
+        funding_observed_at=observed,
+        funding_valid_until=valid,
+        status=status,
+        error_code=error,
+    )
+
+
 class MexcFundingRuntime:
     """Independent bounded Funding reader; cache timestamps only advance on HTTP completion."""
 
@@ -109,12 +202,20 @@ class MexcFundingRuntime:
         self,
         session: aiohttp.ClientSession,
         instruments: Callable[[], Collection[CatalogInstrument]],
+        version_ids: Callable[[], Mapping[str, int]] | None = None,
     ) -> None:
         self._session = session
         self._instruments = instruments
+        self._version_ids = version_ids
+        self.dirty_symbols: set[str] = set()
         self.snapshots: dict[str, MexcFundingSnapshot] = {}
 
     async def fetch_one(self, instrument: CatalogInstrument) -> None:
+        version_id = (
+            self._version_ids().get(instrument.source_symbol) if self._version_ids else None
+        )
+        if self._version_ids is not None and version_id is None:
+            return
         try:
             payload = await fetch_mexc_json(
                 self._session,
@@ -131,7 +232,24 @@ class MexcFundingRuntime:
                 None,
                 "funding_fetch_failed",
             )
-        self.snapshots[instrument.source_symbol] = snapshot
+        if self._version_ids is not None:
+            current = next(
+                (
+                    item
+                    for item in self._instruments()
+                    if item.source_symbol == instrument.source_symbol
+                ),
+                None,
+            )
+            if (
+                self._version_ids().get(instrument.source_symbol) != version_id
+                or current is None
+                or not current.active
+                or current.semantic_definition_sha256() != snapshot.contract_version
+            ):
+                return
+        self.snapshots[instrument.source_symbol] = replace(snapshot, native_version_id=version_id)
+        self.dirty_symbols.add(instrument.source_symbol)
 
     async def run_forever(self, stop_event: asyncio.Event) -> None:
         run = asyncio.create_task(self._run(stop_event))

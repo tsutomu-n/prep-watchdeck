@@ -1,5 +1,6 @@
 import asyncio
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from itertools import pairwise
 
 from prep_watchdeck_market.sources import mexc_l1
@@ -334,3 +335,403 @@ def test_funding_stamps_round_trip_and_migration_keeps_legacy_unknown(tmp_path):
         finally:
             connection.execute("RESET search_path")
             connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+
+
+def test_funding_completion_rejects_native_version_aba_and_old_failure(monkeypatch):
+    from prep_watchdeck_market.sources import mexc_funding
+    from prep_watchdeck_market.sources.common import CatalogSourceError
+
+    async def run():
+        item = instrument()
+        versions = {item.source_symbol: 1}
+        runtime = mexc_funding.MexcFundingRuntime(None, lambda: [item], lambda: versions)
+        started, finish = asyncio.Event(), asyncio.Event()
+
+        async def fetch(*args, **kwargs):
+            started.set()
+            await finish.wait()
+            return funding_payload()
+
+        monkeypatch.setattr(mexc_funding, "fetch_mexc_json", fetch)
+        old = asyncio.create_task(runtime.fetch_one(item))
+        await started.wait()
+        # Reversion to identical semantic definition still has a new native SCD2 ID.
+        versions[item.source_symbol] = 3
+        finish.set()
+        await old
+        assert runtime.snapshots == {}
+        assert runtime.dirty_symbols == set()
+
+        started.clear()
+        finish.clear()
+
+        async def fail(*args, **kwargs):
+            started.set()
+            await finish.wait()
+            raise CatalogSourceError("safe failure")
+
+        monkeypatch.setattr(mexc_funding, "fetch_mexc_json", fail)
+        old = asyncio.create_task(runtime.fetch_one(item))
+        await started.wait()
+        versions[item.source_symbol] = 4
+        fresh = mexc_funding.funding_snapshot(funding_payload(), item, observed_at=NOW)
+        runtime.snapshots[item.source_symbol] = fresh
+        finish.set()
+        await old
+        assert runtime.snapshots[item.source_symbol] is fresh
+
+    asyncio.run(run())
+
+
+def test_independent_funding_updates_existing_ticker_bucket_and_artifact():
+    import os
+    from dataclasses import replace
+    from uuid import uuid4
+
+    import psycopg
+    import pytest
+    from psycopg import sql
+
+    from prep_watchdeck_market.artifacts import build_universe_snapshot, read_universe_records
+    from prep_watchdeck_market.catalog_store import persist_catalog
+    from prep_watchdeck_market.database import apply_migrations
+    from prep_watchdeck_market.identity import resolve_market_groups
+    from prep_watchdeck_market.market_store import persist_market_cycle, persist_mexc_funding
+    from prep_watchdeck_market.sources.mexc_funding import MexcFundingSnapshot, funding_snapshot
+
+    url = os.environ.get("TEST_DATABASE_URL")
+    if not url:
+        pytest.skip("requires isolated TEST_DATABASE_URL")
+    schema = "funding_publication_" + uuid4().hex
+    with psycopg.connect(url, autocommit=True) as conn:
+        conn.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        conn.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        try:
+            apply_migrations(conn)
+            catalog = parse_mexc_catalog(envelope([instrument().raw_definition]), observed_at=NOW)
+            persist_catalog(conn, catalog, resolve_market_groups(catalog.instruments))
+            item = catalog.instruments[0]
+            version_id = conn.execute(
+                "SELECT venue_instrument_version_id FROM venue_instrument_versions"
+            ).fetchone()[0]
+            batch = mexc_l1.parse_mexc_l1(
+                envelope([ticker_row()]),
+                {item.source_symbol: funding_payload()},
+                [item],
+                cycle_at=NOW,
+                observed_at=NOW,
+            )
+            persist_market_cycle(
+                conn, NOW, NOW, [batch], mexc_version_ids={item.source_symbol: version_id + 2}
+            )
+            assert conn.execute(
+                "SELECT funding_rate_raw,error_code FROM latest_market_state"
+            ).fetchone() == (None, "funding_only_partial:funding_contract_changed")
+            latest_fixed = "collector_run_id,cycle_at,observed_at,source_at,mark_price," + (
+                "reference_price,best_bid,best_ask,open_interest_raw,open_interest_base,"
+                "open_interest_notional,volume_24h_raw,source_payload_hash"
+            )
+            minute_fixed = "collector_run_id,bucket_at,first_observed_at,last_observed_at," + (
+                "source_at,sample_count,mark_price,reference_price,best_bid,best_ask,"
+                "open_interest_raw,open_interest_base,open_interest_notional,volume_24h_raw"
+            )
+            before = conn.execute("SELECT " + latest_fixed + " FROM latest_market_state").fetchone()
+            minute_before = conn.execute(
+                "SELECT " + minute_fixed + " FROM market_state_1m"
+            ).fetchone()
+            current = NOW + timedelta(seconds=40)
+            payload = envelope(
+                {**funding_payload()["data"], "timestamp": int(current.timestamp() * 1000)}
+            )
+            snapshot = replace(
+                funding_snapshot(payload, item, observed_at=current), native_version_id=version_id
+            )
+            assert persist_mexc_funding(conn, {item.source_symbol: (item, snapshot)}, current) == 1
+            record = read_universe_records(conn)[0]
+            artifact = build_universe_snapshot([record], generated_at=NOW + timedelta(seconds=57))
+            assert artifact.items[0].funding_rate_raw is not None
+            assert artifact.items[0].funding_observed_at == current
+            assert (
+                conn.execute("SELECT " + latest_fixed + " FROM latest_market_state").fetchone()
+                == before
+            )
+            assert (
+                conn.execute("SELECT " + minute_fixed + " FROM market_state_1m").fetchone()
+                == minute_before
+            )
+            raw = conn.execute(
+                "SELECT venue_instrument_version_id,observed_at,payload "
+                "FROM raw_market_observations WHERE dataset='funding_current'"
+            ).fetchone()
+            assert raw[:2] == (version_id, current)
+            assert raw[2]["nativeVersionId"] == version_id
+            assert (
+                persist_mexc_funding(
+                    conn,
+                    {
+                        item.source_symbol: (
+                            item,
+                            replace(snapshot, native_version_id=version_id + 2),
+                        )
+                    },
+                    current,
+                )
+                == 0
+            )
+            failure = MexcFundingSnapshot(
+                None,
+                snapshot.contract_version,
+                None,
+                None,
+                None,
+                "funding_fetch_failed",
+                version_id,
+            )
+            persist_mexc_funding(conn, {item.source_symbol: (item, failure)}, current)
+            record = read_universe_records(conn)[0]
+            assert record.funding_rate_raw is None
+            assert record.funding_observed_at is None
+            assert record.error_code == "funding_only_partial:funding_fetch_failed"
+            # Funding cannot turn an invalid ticker into ready.
+            conn.execute("UPDATE latest_market_state SET error_code='incomplete_source_row'")
+            persist_mexc_funding(conn, {item.source_symbol: (item, snapshot)}, current)
+            assert conn.execute("SELECT status,error_code FROM latest_market_state").fetchone() == (
+                "partial",
+                "incomplete_source_row",
+            )
+            persist_mexc_funding(
+                conn, {item.source_symbol: (item, snapshot)}, current + timedelta(seconds=90)
+            )
+            assert (
+                conn.execute("SELECT funding_rate_raw FROM latest_market_state").fetchone()[0]
+                is None
+            )
+            assert (
+                conn.execute("SELECT " + latest_fixed + " FROM latest_market_state").fetchone()
+                == before
+            )
+            assert (
+                conn.execute("SELECT " + minute_fixed + " FROM market_state_1m").fetchone()
+                == minute_before
+            )
+        finally:
+            conn.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
+
+
+def test_l1_writer_rejoins_new_cache_after_lock_and_drains_cancellation(monkeypatch, tmp_path):
+    import threading
+    from dataclasses import replace
+    from types import SimpleNamespace
+
+    import pytest
+
+    from prep_watchdeck_market import service
+    from prep_watchdeck_market.sources.mexc_funding import MexcFundingRuntime, funding_snapshot
+
+    async def run():
+        instance = service.MarketService("unused", tmp_path, enabled_venues=("mexc",))
+        item = instrument()
+        catalog = parse_mexc_catalog(envelope([item.raw_definition]), observed_at=NOW)
+        instance._catalogs["mexc"] = catalog
+        instance._mexc_version_ids = {item.source_symbol: 7}
+        runtime = MexcFundingRuntime(None, lambda: [item])
+        instance._mexc_funding = runtime
+        stale = mexc_l1.parse_mexc_l1(
+            envelope([ticker_row()]), {}, [item], cycle_at=NOW, observed_at=NOW
+        )
+        entered, finish = threading.Event(), threading.Event()
+        captured = []
+
+        def persist(*args, **kwargs):
+            captured.extend(args[3])
+            entered.set()
+            finish.wait(2)
+            return SimpleNamespace()
+
+        monkeypatch.setattr(service, "persist_market_cycle_url", persist)
+        await instance._market_write_lock.acquire()
+        task = asyncio.create_task(instance._persist_l1_cycle(NOW, NOW, [stale]))
+        await asyncio.sleep(0)
+        current = datetime.now(UTC)
+        payload = envelope(
+            {
+                **funding_payload(current + timedelta(hours=4))["data"],
+                "timestamp": int(current.timestamp() * 1000),
+            }
+        )
+        fresh = replace(funding_snapshot(payload, item, observed_at=current), native_version_id=7)
+        runtime.snapshots[item.source_symbol] = fresh
+        instance._market_write_lock.release()
+        await asyncio.to_thread(entered.wait, 1)
+        assert captured[0].observations[0].funding_observed_at == current
+        assert captured[0].observations[0].source_at == NOW
+        assert (
+            captured[0].observations[0].source_payload_hash
+            == stale.observations[0].source_payload_hash
+        )
+        task.cancel()
+        await asyncio.sleep(0.01)
+        assert instance._market_write_lock.locked()
+        assert not task.done()
+        task.cancel()  # run_forever's finally can cancel an already-cancelling writer again.
+        await asyncio.sleep(0.01)
+        assert instance._market_write_lock.locked()
+        assert instance._catalog_update_lock.locked()
+        assert not task.done()
+        finish.set()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        assert not instance._market_write_lock.locked()
+        assert not instance._catalog_update_lock.locked()
+
+    asyncio.run(run())
+
+
+def test_funding_flush_keeps_completion_during_commit_dirty_and_triggers_artifact(
+    monkeypatch, tmp_path
+):
+    import threading
+    from dataclasses import replace
+
+    from prep_watchdeck_market import service
+    from prep_watchdeck_market.sources.mexc_funding import MexcFundingRuntime, funding_snapshot
+
+    async def run():
+        instance = service.MarketService("unused", tmp_path, enabled_venues=("mexc",))
+        item = instrument()
+        instance._catalogs["mexc"] = parse_mexc_catalog(
+            envelope([item.raw_definition]), observed_at=NOW
+        )
+        instance._mexc_version_ids = {item.source_symbol: 7}
+        runtime = MexcFundingRuntime(None, lambda: [item])
+        instance._mexc_funding = runtime
+        snapshot = replace(
+            funding_snapshot(funding_payload(), item, observed_at=NOW), native_version_id=7
+        )
+        runtime.snapshots[item.source_symbol] = snapshot
+        runtime.dirty_symbols.add(item.source_symbol)
+        entered, finish = threading.Event(), threading.Event()
+        captured = []
+
+        def persist(url, updates, funding_as_of):
+            captured.append(updates[item.source_symbol][1])
+            entered.set()
+            finish.wait(2)
+            return 1
+
+        monkeypatch.setattr(service, "persist_mexc_funding_url", persist)
+        flush = asyncio.create_task(instance._flush_mexc_funding())
+        await asyncio.to_thread(entered.wait, 1)
+        newer = replace(snapshot, error_code="funding_fetch_failed", payload=None)
+        runtime.snapshots[item.source_symbol] = newer
+        finish.set()
+        assert await flush == 1
+        assert instance._artifact_trigger.is_set()
+        assert item.source_symbol in runtime.dirty_symbols
+        assert await instance._flush_mexc_funding() == 1
+        assert captured == [snapshot, newer]
+        assert runtime.dirty_symbols == set()
+        assert await instance._flush_mexc_funding() == 0
+
+    asyncio.run(run())
+
+
+def test_l1_rejoined_funding_raw_commits_before_any_flush(monkeypatch, tmp_path):
+    import os
+    from dataclasses import replace
+    from uuid import uuid4
+
+    import psycopg
+    import pytest
+    from psycopg import sql
+
+    from prep_watchdeck_market import service
+    from prep_watchdeck_market.catalog_store import persist_catalog
+    from prep_watchdeck_market.database import apply_migrations
+    from prep_watchdeck_market.identity import resolve_market_groups
+    from prep_watchdeck_market.market_store import persist_market_cycle, persist_mexc_funding
+    from prep_watchdeck_market.sources.mexc_funding import MexcFundingRuntime, funding_snapshot
+
+    url = os.environ.get("TEST_DATABASE_URL")
+    if not url:
+        pytest.skip("requires isolated TEST_DATABASE_URL")
+    schema = "funding_provenance_" + uuid4().hex
+    with psycopg.connect(url, autocommit=True) as conn:
+        conn.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        conn.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        try:
+            apply_migrations(conn)
+            catalog = parse_mexc_catalog(envelope([instrument().raw_definition]), observed_at=NOW)
+            persist_catalog(conn, catalog, resolve_market_groups(catalog.instruments))
+            item = catalog.instruments[0]
+            version_id = conn.execute(
+                "SELECT venue_instrument_version_id FROM venue_instrument_versions"
+            ).fetchone()[0]
+            first = replace(
+                funding_snapshot(funding_payload(), item, observed_at=NOW),
+                native_version_id=version_id,
+            )
+            batch = mexc_l1.parse_mexc_l1(
+                envelope([ticker_row()]),
+                {item.source_symbol: first},
+                [item],
+                cycle_at=NOW,
+                observed_at=NOW,
+            )
+            current = datetime.now(UTC)
+            payload = envelope(
+                {
+                    **funding_payload(current + timedelta(hours=4))["data"],
+                    "timestamp": int(current.timestamp() * 1000),
+                    "fundingRate": "-.008",
+                }
+            )
+            latest = replace(
+                funding_snapshot(payload, item, observed_at=current), native_version_id=version_id
+            )
+            instance = service.MarketService("unused", tmp_path, enabled_venues=("mexc",))
+            instance._catalogs["mexc"] = catalog
+            instance._mexc_version_ids = {item.source_symbol: version_id}
+            runtime = MexcFundingRuntime(None, lambda: [item])
+            runtime.snapshots[item.source_symbol] = latest
+            instance._mexc_funding = runtime
+
+            def persist(url, cycle_at, started_at, batches, **kwargs):
+                return persist_market_cycle(conn, cycle_at, started_at, batches, **kwargs)
+
+            monkeypatch.setattr(service, "persist_market_cycle_url", persist)
+            result = asyncio.run(instance._persist_l1_cycle(NOW, NOW, [batch]))
+            # No independent Funding flush has run; this was the L1 transaction alone.
+            assert result.raw_payloads_written == 2
+            row = conn.execute(
+                "SELECT funding_rate_raw,funding_source_at,funding_observed_at,"
+                "source_payload_hash,source_at,observed_at FROM latest_market_state"
+            ).fetchone()
+            assert row[0] == Decimal("-0.008")
+            assert row[1:3] == (latest.source_at, current)
+            assert row[3].strip() == batch.observations[0].source_payload_hash
+            assert row[4:] == (NOW, NOW)
+            raw = conn.execute(
+                "SELECT venue_instrument_version_id,observed_at,source_at,payload "
+                "FROM raw_market_observations WHERE dataset='funding_current'"
+            ).fetchone()
+            assert raw[:3] == (version_id, current, latest.source_at)
+            assert raw[3]["funding"] == payload
+            assert raw[3]["nativeVersionId"] == version_id
+            assert raw[3]["fundingObservedAt"] == current.isoformat()
+            l1_raw = conn.execute(
+                "SELECT payload_hash,payload FROM raw_market_observations "
+                "WHERE dataset='l1_all_market'"
+            ).fetchone()
+            assert l1_raw[0].strip() == batch.payload_hash
+            assert l1_raw[1]["funding"][item.source_symbol] == first.payload
+            # Reusing the same raw snapshot in the later flush adds no duplicate raw event.
+            persist_mexc_funding(conn, {item.source_symbol: (item, latest)}, current)
+            assert (
+                conn.execute(
+                    "SELECT count(*) FROM raw_market_observations WHERE dataset='funding_current'"
+                ).fetchone()[0]
+                == 1
+            )
+        finally:
+            conn.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))

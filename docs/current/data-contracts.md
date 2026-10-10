@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_11:47 JST"
+timestamp="2026-10-10(土)_12:22 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T11:47:54+09:00`
+- 更新: `2026-10-10T12:22:30+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -40,6 +40,9 @@ timestamp="2026-10-10(土)_11:47 JST"
 - Fundingはraw、interval、nextFundingを保存し、interval確認時だけper-hourを公開する
 - MEXC Current Fundingはnullableな`fundingSourceAt`、`fundingObservedAt`、`fundingValidUntil`を持つ。
   source/observedの90秒期限と次回決済時刻の最小が有効期限で、Ticker更新で延長しない。
+  独立保存は最新行と既存Ticker bucketのFundingだけを更新し、価格・OI・Ticker時刻・標本数を維持する。
+  L1保存で再結合したFundingも、対応するnative versionと取得時刻付きの原文を同じtransactionの
+  `raw_market_observations`（`dataset=funding_current`）へ保存する。Tickerの原文・hashとは区別する。
 - OIはraw値とraw unitを保持し、確認できる時だけbase/notionalへ派生する
 - 24h volumeはsource由来値とunitを保持する
 - source timestampがない場合はnullを維持する

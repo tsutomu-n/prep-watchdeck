@@ -1,8 +1,8 @@
 # MEXC 10 → 50 → 100 銘柄の最適化と段階受入
 
-timestamp="2026-10-10(土)_11:54 JST"
+timestamp="2026-10-10(土)_12:30 JST"
 - 作成: `2026-10-10T10:30:00+09:00`
-- 更新: `2026-10-10T11:54:35+09:00`
+- 更新: `2026-10-10T12:30:44+09:00`
 - 検証: `未検証`
 - 状態: `実装計画`
 
@@ -93,7 +93,7 @@ generated types再生成はprimaryと時刻調整する。
   contractSizeのquantity係数とasset price multiplierを混同しない。
 - 審査済み10 / 50 / 100の固定registry source bundleを作れるよう成果物を用意する。
   個別activation flagや日次自動入替は追加しない。最初の実装releaseは10件を保ち、
-  50/100 registryの適用はprimaryが段階gate後に行う。
+  50/100 registryの本番適用はprimaryが段階gate後に行う。互換release候補の準備は観測中にも進める。
 - prepare-mexc-mapは追加・再実行対応、既存根拠/review日時/定義を保持、同入力で重複/不要version
   変更なし。structural identity変更は再審査要求。現在roster全体のexact coverageを維持する。
 - Bybit/Binance等の同一性が確認できない新銘柄はreference:null＋理由＋根拠を持つnative-only。
@@ -147,3 +147,9 @@ MEXC取得停止→直前段階registryへ→単一writerでcurrent catalog→�
 - 11:46 JST: 最適化済み10件の600秒通常運転はPASS。OOM/restart0、cycle最大3.197秒、入力age最大47.694秒、summary/detail p95 201.837/72.533ms、anonymous+kernel標本peak470.20MiB。容量の10分外挿は診断のみで、24h容量受入は未実施。実効registryを50件へ変更し次releaseを準備する。
 - 11:51 JST: 3e3933eの50件registryを配置。専用writer停止中にhash固定の審査済みcatalogだけを保存し、実contractVersionでmap 0ac45f50a8e5861642d3428eを採用。旧資格・日時・history保持、1147 originals/618 rows、native-only review40・quantity4・Widget43（旧3保持）。ranking資格gateのexit1は未審査40件による想定失敗。11:53に価格/OI/Funding50件readyとnative singleton40件を確認。2h観測はまだ開始前。
 - 隔離copyへ現singletonでevidence1世代だけ追加したprofileはcycle3.636秒、同時summary1要求3.594秒。既存1705世代・immutable全hashを保持。latest読取の全走査と一時sortを確認し、decision_at DESC,id DESCの複合indexだけを追加。latest SQL/保存後一致検証/schema1を維持し、旧DB読取・同時刻tie・query plan回帰を含むstorage/service8件とRuff/Pyreflyを通過。改善量は配置後の通常観測で確認する。
+- 50件2h通常観測を 2026-10-10T02:55:57.056155+00:00 に開始。Attentionだけをindex追加版63591dfへ更新し、他serviceは50件版3e3933e・map0ac45f50a8e5861642d3428eを維持。観測中に100件source候補と最終横断gateを準備するが、100件本番拡大は2h判定後。
+- 12:02 JST: 初回50件観測を360秒で中断し昇格証拠から除外。Fundingの独立取得後もDB反映が次60秒L1周期まで待つため、同じ7銘柄でsource age最大120.217秒・期限切れが90秒実測で再現。価格/OI欠測0。TTL90を維持したまま、2秒のFunding専用保存・L1とのwrite順序・native契約version競合を修正し、新しい2h観測を開始する。
+- 100件candidate横断gateはMarket350/Ranking176/Attention78/Web266と必須check成功、E2E156成功/1既定skip/1失敗でraw exit1。mobile設定testがlive Attention8770の実Discovery候補を読むfixture隔離欠陥を特定し、専用port18870と空候補/判断fixtureへ修正。設定/Discovery desktop/mobile16 E2EとWeb checkが成功し、3426117をcommit/push。Funding修正後の最終release gateは未実施。
+- Funding公開遅延修正の関連28件・Ruff/Pyreflyと独立reviewが成功。2秒保存、L1後着再結合、actual native version照合、二重cancel時のwriter drain、同transactionのFunding原文保全を確認。最終横断gateを実行中で、50件修正版は未配置。100件registry候補は別差分として保持し、50件再観測後まで本番へ配置しない。
+- 12:27 JST: Funding修正版の横断gate exit0。Market355/Ranking176/Attention78/Web266、E2E157成功/既定1skip、Ruff/Pyrefly/schema/type/docs/buildが通過。12:02通常maintenanceのsettled Fundingでbatch/各eventの観測時刻不一致による失敗を確認し、MEXC分岐の二重時刻取得を最小修正中。12:19 dataopsはranking_original_identity_mismatchで失敗しており、実対象を確認するまで50再観測と100昇格を保留する。
+- settled FundingはMEXCのHTTP完了後に時計を2回読む不具合を3行で修正。実store validatorでREDを確認した回帰を含む関連6件、Ruff/Pyrefly・独立reviewが成功。50件互換修正版としてFunding公開修正と配置する。dataopsのmismatchはKAIA/MAGIC/TAO/USの4 MEXC native-only行（03:15 catalog更新）に限定され、旧/current定義を確認中。通常maintenanceの修正後成功と新50件2h受入は未実施。
