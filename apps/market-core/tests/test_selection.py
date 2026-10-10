@@ -86,6 +86,48 @@ def test_selection_controller_debounces_last_write_and_cleans_before_switch() ->
     asyncio.run(scenario())
 
 
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated test PostgreSQL")
+def test_resumed_selection_store_retains_the_existing_command_deadline() -> None:
+    assert TEST_DATABASE_URL is not None
+    schema_name = f"selected_resume_test_{uuid.uuid4().hex}"
+    requested_at = datetime(2026, 8, 14, 12, 0, tzinfo=UTC)
+    resumed_at = requested_at + timedelta(minutes=14)
+    deadline = requested_at + timedelta(minutes=15)
+    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema_name)))
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema_name)))
+        try:
+            apply_migrations(connection)
+            _seed_group(connection, requested_at)
+            transition = activate_selection(
+                connection,
+                selection_id=uuid.uuid4(),
+                group_id="crypto:BTC",
+                primary_venue_instrument_id="bitget:BTCUSDT",
+                activated_at=resumed_at,
+                expires_at=deadline,
+            )
+            assert transition.current.activated_at == resumed_at
+            assert transition.current.expires_at == deadline
+            assert connection.execute(
+                "SELECT expires_at FROM selected_group_leases WHERE superseded_at IS NULL"
+            ).fetchone() == (deadline,)
+            with pytest.raises(InvalidSelectionError, match="unexpired"):
+                activate_selection(
+                    connection,
+                    selection_id=uuid.uuid4(),
+                    group_id="crypto:BTC",
+                    primary_venue_instrument_id="bitget:BTCUSDT",
+                    activated_at=deadline,
+                    expires_at=deadline,
+                )
+        finally:
+            connection.execute("RESET search_path")
+            connection.execute(
+                sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema_name))
+            )
+
+
 @pytest.mark.skipif(
     not TEST_DATABASE_URL,
     reason="set TEST_DATABASE_URL to run the isolated PostgreSQL integration test",

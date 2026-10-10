@@ -14,7 +14,7 @@ export class DiscoveryReader {
     }
     if ([...parameters.keys()].some(key => !["assetId", "cursor", "limit"].includes(key)) ||
         parameters.getAll("assetId").length > 4 ||
-        parameters.getAll("assetId").some(id => !/^[A-Za-z0-9:._-]{1,160}$/.test(id)) ||
+        parameters.getAll("assetId").some(id => !/^[\p{L}\p{N}:._-]{1,160}$/u.test(id)) ||
         ["cursor", "limit"].some(key => parameters.getAll(key).length > 1) ||
         (parameters.has("cursor") && (parameters.get("cursor")!.length > 1000 || !parameters.get("cursor"))) ||
         (parameters.has("limit") && !/^(?:[1-9]|[1-4]\d|50)$/.test(parameters.get("limit")!))) {

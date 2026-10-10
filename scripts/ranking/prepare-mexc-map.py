@@ -1,4 +1,4 @@
-"""Append explicit reviewed MEXC identities from an isolated persisted catalog capture.
+"""Append reviewed MEXC identities from an explicitly scoped persisted catalog capture.
 
 Legacy rows, references, quantity reviews, Widgets and observation dates remain intact.
 This is additive source qualification, never a complete live roster refresh or deployment.
@@ -8,7 +8,7 @@ import argparse
 import copy
 import json
 import runpy
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -20,17 +20,102 @@ VERIFY = runpy.run_path(str(ROOT / "scripts/ranking/verify-map-evidence.py"))["v
 OUTPUT_DIRECTORY = runpy.run_path(str(ROOT / "scripts/ranking/refresh-roster-candidate.py"))[
     "output_directory"
 ]
+PRODUCTION_DATABASE_TARGET = {
+    "host": "127.0.0.1",
+    "port": 55432,
+    "database": "prep_watchdeck_market",
+}
 
 
-def prepare(directory: Path, capture: dict[str, Any], reviews: dict[str, Any]) -> tuple[dict, ...]:
+def validate_capture_scope(
+    capture: dict[str, Any],
+    previous_roster: dict[str, Any],
+    *,
+    capture_scope: str,
+    now: datetime,
+) -> dict[str, Any]:
+    """Bind production IDs to a recent read-only DB snapshot, never an isolated ID remap."""
+    observed = datetime.fromisoformat(capture["observedAt"])
+    if observed.tzinfo is None:
+        raise ValueError("MEXC capture must identify a timezone-aware observation")
+    declared_scope = capture.get("captureScope", "isolated")
+    if capture_scope != declared_scope:
+        raise ValueError("MEXC capture scope requires an explicit matching invocation")
+    if capture_scope == "isolated":
+        if capture.get("isolated") is not True:
+            raise ValueError("MEXC isolated capture must identify an isolated observation")
+        return {
+            "captureScope": "isolated",
+            "versionScope": "isolated persisted catalog; production versions require requalification",
+        }
+    if capture_scope != "production_read_only" or capture.get("isolated") is not False:
+        raise ValueError("unsupported MEXC capture scope")
+    if now.tzinfo is None or not 0 <= (now - observed).total_seconds() <= 1800:
+        raise ValueError("MEXC production capture is stale or from the future")
+    audit = capture.get("databaseAudit", {})
+    if (
+        audit.get("sessionReadOnly") is not True
+        or audit.get("databaseTarget") != PRODUCTION_DATABASE_TARGET
+    ):
+        raise ValueError("MEXC production versions require the dedicated read-only database audit")
+    current = audit["currentRoster"]
+    expected = [
+        *previous_roster["items"],
+        *[{name: item[name] for name in IDENTITY_FIELDS} for item in capture["items"]],
+    ]
+
+    def by_id(values: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+        return {item["venueInstrumentId"]: item for item in values}
+
+    if (
+        len(by_id(current)) != len(current)
+        or len(by_id(expected)) != len(expected)
+        or by_id(current) != by_id(expected)
+    ):
+        raise ValueError(
+            "current production roster differs; legacy identities require requalification"
+        )
+    definitions = audit["currentMexcDefinitions"]
+    definition_by_id = {item["instrumentId"]: item for item in definitions}
+    if len(definition_by_id) != len(definitions) or set(definition_by_id) != {
+        item["venueInstrumentId"] for item in capture["items"]
+    }:
+        raise ValueError("production MEXC definition audit must cover every captured identity")
+    for item in capture["items"]:
+        proof = definition_by_id[item["venueInstrumentId"]]
+        if (
+            proof["currentVersion"] != item["venueInstrumentVersionId"]
+            or "validTo" not in proof
+            or proof["validTo"] is not None
+            or proof["normalizedDefinition"] != item["normalizedDefinition"]
+            or content_digest(proof["normalizedDefinition"]) != item["definitionDigest"]
+        ):
+            raise ValueError("production MEXC current version or stored definition differs")
+    return {
+        "captureScope": "production_read_only",
+        "versionScope": "production persisted catalog; exact current versions read in a read-only session",
+        "databaseAudit": copy.deepcopy(audit),
+        "databaseAuditDigest": content_digest(audit),
+    }
+
+
+def prepare(
+    directory: Path,
+    capture: dict[str, Any],
+    reviews: dict[str, Any],
+    *,
+    capture_scope: str = "isolated",
+    now: datetime | None = None,
+) -> tuple[dict, ...]:
     """Require exact persisted IDs and separately reviewed cross-market price identities."""
     VERIFY(directory)
     saved = json.loads((directory / "initial-map.json").read_text())
     roster = json.loads((directory / "initial-roster.json").read_text())
     evidence = json.loads((directory / "qualification-evidence.json").read_text())
     observed = datetime.fromisoformat(capture["observedAt"])
-    if observed.tzinfo is None or capture.get("isolated") is not True:
-        raise ValueError("MEXC capture must identify a timezone-aware isolated observation")
+    scope_evidence = validate_capture_scope(
+        capture, roster, capture_scope=capture_scope, now=now or datetime.now(UTC)
+    )
     if capture.get("versionsAssignedBy") != "persist_catalog":
         raise ValueError("MEXC versions must be assigned by the native catalog store")
     if capture.get("complete") is not True or not capture.get("payloadHash"):
@@ -172,7 +257,7 @@ def prepare(directory: Path, capture: dict[str, Any], reviews: dict[str, Any]) -
         "legacyRosterObservationPreserved": True,
         "fixedReferencesPreserved": True,
         "widgetQualificationsPreserved": True,
-        "versionScope": "isolated persisted catalog; production versions require requalification",
+        **scope_evidence,
         "adoption": "candidate_only",
     }
     return mapping.model_dump(mode="json", by_alias=True), roster, evidence
@@ -184,12 +269,16 @@ def main() -> None:
     parser.add_argument("--capture", required=True, type=Path)
     parser.add_argument("--reviews", required=True, type=Path)
     parser.add_argument("--output-directory", required=True, type=Path)
+    parser.add_argument(
+        "--capture-scope", choices=("isolated", "production_read_only"), default="isolated"
+    )
     args = parser.parse_args()
     output = OUTPUT_DIRECTORY(args.output_directory, [args.capture, args.reviews])
     result = prepare(
         args.previous_directory,
         json.loads(args.capture.read_text()),
         json.loads(args.reviews.read_text()),
+        capture_scope=args.capture_scope,
     )
     output.mkdir(parents=True, mode=0o700)
     for name, value in zip(

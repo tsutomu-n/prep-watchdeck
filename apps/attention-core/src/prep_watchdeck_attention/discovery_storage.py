@@ -55,19 +55,36 @@ class DiscoveryStorage:
         ).fetchone()
         return DiscoveryEpisode.model_validate_json(row[0]) if row else None
 
-    def _latest_discovery(self) -> DiscoveryResponse | None:
+    def _latest_discovery(
+        self, *, asset_ids: tuple[str, ...] = (), include_rows: bool = True
+    ) -> DiscoveryResponse | None:
+        projection = "payload"
+        if not include_rows:
+            projection = "json_set(payload,'$.rows',json('[]'))"
+        elif asset_ids:
+            # Filter inside SQLite: a four-asset read must not deserialize every native
+            # observation in the full-universe projection into Python objects.
+            placeholders = ",".join("?" for _ in asset_ids)
+            projection = (
+                "json_set(payload,'$.rows',json((SELECT json_group_array(json(value)) "
+                "FROM json_each(payload,'$.rows') WHERE json_extract(value,'$.assetId') "
+                f"IN ({placeholders}))))"
+            )
         row = self.connection.execute(
-            "SELECT payload FROM discovery_latest WHERE singleton=1"
+            f"SELECT {projection} FROM discovery_latest WHERE singleton=1",
+            asset_ids if include_rows else (),
         ).fetchone()
         return DiscoveryResponse.model_validate_json(row[0]) if row else None
 
-    def _write_projection(self, response: DiscoveryResponse) -> None:
+    def _write_projection(self, response: DiscoveryResponse) -> str:
         response = DiscoveryResponse.model_validate_json(response.model_dump_json())
+        payload = response.model_dump_json(by_alias=True)
         self.connection.execute(
             "INSERT INTO discovery_latest VALUES (1,?) ON CONFLICT(singleton) DO UPDATE "
             "SET payload=excluded.payload",
-            (response.model_dump_json(by_alias=True),),
+            (payload,),
         )
+        return payload
 
     def interrupt_discovery(self, reason: str) -> None:
         """Writer-side failed observation; no condition release or elapsed-time invention."""
@@ -127,7 +144,7 @@ class DiscoveryStorage:
         rows = tuple(DiscoveryRow.model_validate_json(row.model_dump_json()) for row in rows)
         if len({row.asset_id for row in rows}) != len(rows):
             raise ValueError("duplicate discovery row")
-        latest = self._latest_discovery()
+        latest = self._latest_discovery(include_rows=False)
         if (
             latest
             and latest.ranking_cutoff is not None
@@ -142,7 +159,19 @@ class DiscoveryStorage:
         }
         new_cutoff = latest is None or latest.ranking_cutoff != inputs.ranking_cutoff
         if not new_cutoff:
-            previous_rows = {row.asset_id: row for row in latest.rows} if latest else {}
+            # Refreshes need only condition continuity, not the previous native/raw tree.
+            previous_rows = {
+                asset_id: json.loads(state)
+                for asset_id, state in self.connection.execute(
+                    "SELECT json_extract(value,'$.assetId'),json_object("
+                    "'identityKey',json_extract(value,'$.identityKey'),"
+                    "'state',json_extract(value,'$.state'),"
+                    "'reason',json_extract(value,'$.reason'),"
+                    "'confirmation',json_extract(value,'$.confirmation'),"
+                    "'episodeId',json_extract(value,'$.episodeId')) "
+                    "FROM discovery_latest,json_each(payload,'$.rows') WHERE singleton=1"
+                )
+            }
             # A refresh cannot reconfirm/release the evaluated condition, but missing or
             # ineligible observations must break continuity even within the same cutoff.
             refreshed = []
@@ -153,7 +182,7 @@ class DiscoveryStorage:
             for row in rows:
                 previous = previous_rows.get(row.asset_id)
                 old = previous_states.get(row.asset_id)
-                same = previous is not None and previous.identity_key == row.identity_key
+                same = previous is not None and previous["identityKey"] == row.identity_key
                 same_state = bool(
                     old and old["identityKey"] == row.identity_key and old["policyId"] == POLICY_ID
                 )
@@ -167,10 +196,14 @@ class DiscoveryStorage:
                 if old and (unavailable or not same_state):
                     interruptions[row.asset_id] = reason if unavailable else "identity_changed"
                 state = (
-                    "unknown" if unavailable else previous.state if same and previous else "unknown"
+                    "unknown"
+                    if unavailable
+                    else previous["state"]
+                    if same and previous
+                    else "unknown"
                 )
                 episode_id = (
-                    previous.episode_id
+                    previous["episodeId"]
                     if same and previous
                     else old.get("episodeId")
                     if same_state and old
@@ -182,10 +215,10 @@ class DiscoveryStorage:
                             "state": state,
                             "reason": reason
                             if unavailable
-                            else previous.reason
+                            else previous["reason"]
                             if same and previous
                             else "awaiting_new_cutoff",
-                            "confirmation": previous.confirmation
+                            "confirmation": previous["confirmation"]
                             if state != "unknown" and same and previous
                             else None,
                             "episode_id": episode_id,
@@ -388,7 +421,7 @@ class DiscoveryStorage:
                 )
             self._prune_discovery(inputs.decision_at)
             incomplete = missing_active or any(row.state == "unknown" for row in projected)
-            self._write_projection(
+            expected_payload = self._write_projection(
                 DiscoveryResponse(
                     generation_id=inputs.generation_id,
                     decision_at=inputs.decision_at,
@@ -401,12 +434,12 @@ class DiscoveryStorage:
                     episodes=(),
                 )
             )
-        saved = self._latest_discovery()
-        if (
-            saved is None
-            or saved.generation_id != inputs.generation_id
-            or saved.rows != tuple(projected)
-        ):
+        saved = self.connection.execute(
+            "SELECT payload FROM discovery_latest WHERE singleton=1"
+        ).fetchone()
+        # The complete payload was schema-validated before writing. Compare the exact
+        # committed bytes without keeping another full model graph alive for readback.
+        if saved is None or saved[0] != expected_payload:
             raise RuntimeError("discovery projection readback mismatch")
         return True
 
@@ -472,7 +505,7 @@ class DiscoveryStorage:
             next_cursor = base64.urlsafe_b64encode(
                 canonical_json([tail.first_observed_at, tail.id, scope]).encode()
             ).decode()
-        latest = self._latest_discovery() or DiscoveryResponse(
+        latest = self._latest_discovery(asset_ids=asset_ids) or DiscoveryResponse(
             generation_id=None,
             decision_at=None,
             ranking_cutoff=None,
@@ -488,8 +521,5 @@ class DiscoveryStorage:
                 "history_available_from": history,
                 "episodes": episodes,
                 "next_cursor": next_cursor,
-                "rows": tuple(
-                    row for row in latest.rows if not asset_ids or row.asset_id in asset_ids
-                ),
             }
         )

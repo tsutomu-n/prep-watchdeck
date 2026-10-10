@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_07:08 JST"
+timestamp="2026-10-10(土)_08:57 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T07:08:23+09:00`
+- 更新: `2026-10-10T08:57:39+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -585,6 +585,13 @@ Webから明示要求する表示用Chart履歴・約定騰落率の公開API読
 同梱Ranking mapのMEXC versionは隔離DBのcatalog captureに基づく。本番DBのcurrent instrument/versionを
 取得し、定義・数量係数・原資産・固定参照の根拠を再照合してから採用する。
 隔離captureの内部SCD2 IDを本番へそのままコピーしない。参照価格のProviderはBybit/Binanceのまま維持する。
+`prepare-mexc-map.py --capture-scope production_read_only`は専用DBのread-only snapshot、全current roster、
+MEXCのcurrent version・保存済み定義と30分以内の観測を照合する。既存Venueのidentityに差分があれば、
+先に独立したroster refreshを行う。既存の数量・Widget未確認をMEXC追加だけで承認済みにしない。
+取得無効時はcatalogも停止するため、採番にはMarketとmaintenanceを停止し、同じruntime lock下で
+catalogを一度だけ保存する。単独MEXC catalogは一時的に全件coverageを満たさないため、対応mapを
+配置して通常serviceを再開した後、全Venue catalog成功・件数整合・version一致を確認する。
+maintenance writerとdata-operations readerのrelease/mapも配置対象に含める。
 
 Discoveryは既存Attention serviceのwriterで動き、専用の新serviceを追加しない。
 Webの`/api/discovery`、`/api/decisions`と比較操作は対応Webのbuildで提供する。

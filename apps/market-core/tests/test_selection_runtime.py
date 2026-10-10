@@ -20,6 +20,7 @@ from prep_watchdeck_market.selected_store import (
     SelectionTransition,
 )
 from prep_watchdeck_market.selection_runtime import (
+    SelectionCommand,
     SelectionRuntime,
     read_selection_command,
 )
@@ -60,6 +61,7 @@ def test_selection_command_runtime_switches_safely_with_one_bounded_writer(
             group_id: str,
             primary_venue_instrument_id: str,
             activated_at: datetime,
+            expires_at: datetime,
         ) -> SelectionTransition:
             nonlocal active_lease
             assert actual_connection is connection
@@ -72,7 +74,7 @@ def test_selection_command_runtime_switches_safely_with_one_bounded_writer(
                 primary_venue_instrument_version_id=primary_version,
                 activated_at=activated_at,
                 heartbeat_at=activated_at,
-                expires_at=activated_at + timedelta(minutes=15),
+                expires_at=expires_at,
                 superseded_at=None,
                 cleanup_deadline_at=None,
                 cleaned_at=None,
@@ -208,13 +210,64 @@ def test_selection_command_runtime_switches_safely_with_one_bounded_writer(
     asyncio.run(scenario())
 
 
+def test_rejected_command_retries_without_new_heartbeat_and_keeps_original_expiry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from prep_watchdeck_market.selection import SelectionController
+
+    async def scenario() -> None:
+        requested_at = datetime(2026, 8, 14, 12, 0, tzinfo=UTC)
+        now = requested_at + timedelta(minutes=14)
+        loaded = []
+
+        def load(*_args):
+            loaded.append(True)
+            return _group("BTC")
+
+        monkeypatch.setattr("prep_watchdeck_market.selection_runtime._load_group_instruments", load)
+        opened = []
+
+        async def subscribe(*args):
+            opened.append(args)
+            return object()
+
+        async def unsubscribe(*_args):
+            return None
+
+        runtime = SelectionRuntime(
+            "postgresql://not-used", tmp_path, None, enabled_venues=("hyperliquid",)
+        )
+        runtime._connection = cast(Any, _FakeConnection())
+        runtime._controller = SelectionController(subscribe, unsubscribe)
+        command = SelectionCommand("crypto:BTC", "bitget:BTCUSDT", requested_at, requested_at)
+        await runtime._accept_command(command, now=now)
+        await runtime._accept_command(command, now=now + timedelta(seconds=1))
+        assert len(loaded) == 1
+        assert opened == []
+        runtime._enabled_venues = ("bitget", "hyperliquid")
+        retry_at = now + timedelta(seconds=5)
+        await runtime._accept_command(command, now=retry_at)
+        active = await runtime._controller.reconcile(retry_at)
+        assert active is not None
+        assert len(loaded) == 2
+        assert len(opened) == 1
+        assert active.expires_at == requested_at + timedelta(minutes=15)
+        assert await runtime._controller.reconcile(active.expires_at) is None
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("restart_delay_minutes", [0, 14])
 def test_expired_selection_cleans_lease_and_same_command_heartbeat_reactivates(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
+    restart_delay_minutes: int,
 ) -> None:
     async def scenario() -> None:
         requested_at = datetime(2026, 8, 14, 15, 14, tzinfo=UTC)
-        clock = _MutableClock(requested_at + timedelta(milliseconds=600))
+        clock = _MutableClock(
+            requested_at + timedelta(minutes=restart_delay_minutes, milliseconds=600)
+        )
         command_path = tmp_path / "control" / "selection.json"
         command_path.parent.mkdir(parents=True)
         connection = _FakeConnection()
@@ -240,6 +293,7 @@ def test_expired_selection_cleans_lease_and_same_command_heartbeat_reactivates(
             group_id: str,
             primary_venue_instrument_id: str,
             activated_at: datetime,
+            expires_at: datetime,
         ) -> SelectionTransition:
             nonlocal active_lease
             assert actual_connection is connection
@@ -251,7 +305,7 @@ def test_expired_selection_cleans_lease_and_same_command_heartbeat_reactivates(
                 primary_venue_instrument_version_id=1,
                 activated_at=activated_at,
                 heartbeat_at=activated_at,
-                expires_at=activated_at + timedelta(minutes=15),
+                expires_at=expires_at,
                 superseded_at=None,
                 cleanup_deadline_at=None,
                 cleaned_at=None,
@@ -314,7 +368,14 @@ def test_expired_selection_cleans_lease_and_same_command_heartbeat_reactivates(
         )
         stop_event = asyncio.Event()
         task = asyncio.create_task(runtime.run_forever(stop_event))
-        await _wait_until(lambda: len(activation_ids) == 1)
+        await _wait_until(
+            lambda: runtime._controller is not None and runtime._controller.active is not None
+        )
+        assert active_lease is not None
+        assert active_lease.expires_at == requested_at + timedelta(minutes=15)
+        active = runtime._require_controller().active
+        assert active is not None
+        assert active.expires_at == active_lease.expires_at
 
         clock.value = requested_at + timedelta(minutes=15, seconds=1)
         await _wait_until(lambda: cleaned_ids == activation_ids[:1])
@@ -360,6 +421,7 @@ def test_failed_stream_open_flushes_events_and_closes_new_lease(
             group_id: str,
             primary_venue_instrument_id: str,
             activated_at: datetime,
+            expires_at: datetime,
         ) -> SelectionTransition:
             nonlocal active_lease
             assert active_lease is None
@@ -369,7 +431,7 @@ def test_failed_stream_open_flushes_events_and_closes_new_lease(
                 primary_venue_instrument_version_id=1,
                 activated_at=activated_at,
                 heartbeat_at=activated_at,
-                expires_at=activated_at + timedelta(minutes=15),
+                expires_at=expires_at,
                 superseded_at=None,
                 cleanup_deadline_at=None,
                 cleaned_at=None,

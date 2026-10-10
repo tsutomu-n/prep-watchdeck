@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-10(土)_08:32 JST"
+timestamp="2026-10-10(土)_08:51 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-10T08:32:22+09:00`
+- 更新: `2026-10-10T08:51:29+09:00`
 - 検証: `2026-10-08T16:09:39+09:00`
 - 状態: `現行`
 
@@ -51,6 +51,8 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 - [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](decisions/0016-reader-observed-research.md): Reader観測版と固定比較の証拠境界。
 
 ## 実装計画
+
+- [MEXC・Discovery 修正と本番反映](plans/active/daytrader-mexc-hardening/PLAN.md): 保存容量、常駐容量、本番mapと配置受入。
 
 - [Research remediation](plans/active/research-remediation/GOAL.md): 将来観測、時点再生、固定A/Bとデータ品質。[実装手順](plans/active/research-remediation/PLAN.md)。
 - [Attention Core](plans/active/attention-core/GOAL.md): F0–F7 source実装済み。未実行のF8 capacity・production/実データ受入を再開対象とする。

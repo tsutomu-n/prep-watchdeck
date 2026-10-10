@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import tracemalloc
 from datetime import UTC, datetime
 
 import pytest
@@ -235,6 +236,34 @@ def test_retention_preserves_active_and_pagination_is_stable(tmp_path, monkeypat
         remaining = store.discovery_response().episodes
         assert len(remaining) == 1 and remaining[0].state == "active"
         assert remaining[0].first_observed_at == response.episodes[0].first_observed_at
+    finally:
+        store.close()
+
+
+def test_filtered_projection_preserves_rows_with_bounded_python_memory(tmp_path):
+    store = AttentionStore(tmp_path / "attention")
+    try:
+        inputs, rows = discovery_generation()
+        expanded = tuple(
+            rows[0].model_copy(update={"asset_id": f"asset:{index}"}) for index in range(32)
+        )
+        store.save_discovery(inputs, expanded)
+
+        def measured_read(asset_ids=()):
+            tracemalloc.start()
+            try:
+                response = store.discovery_response(asset_ids=asset_ids)
+                return response, tracemalloc.get_traced_memory()[1]
+            finally:
+                tracemalloc.stop()
+
+        full, full_peak = measured_read()
+        selected_ids = ("asset:1", "asset:3", "asset:5", "asset:7")
+        selected, selected_peak = measured_read(selected_ids)
+        assert selected.rows == tuple(row for row in full.rows if row.asset_id in selected_ids)
+        assert selected.inputs == full.inputs and selected.status == full.status
+        # Selecting four assets must not construct the entire universe's Python object graph.
+        assert selected_peak < full_peak / 2
     finally:
         store.close()
 

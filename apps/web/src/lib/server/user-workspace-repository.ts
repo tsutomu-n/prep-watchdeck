@@ -46,7 +46,7 @@ export function favoriteKey(target: FavoriteTarget) {
 export function isFavoriteTarget(value: unknown): value is FavoriteTarget {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const target = value as Record<string, unknown>;
-  if (typeof target.id !== "string" || !/^[A-Za-z0-9:._-]{1,160}$/.test(target.id)) return false;
+  if (typeof target.id !== "string" || !/^[\p{L}\p{N}:._-]{1,160}$/u.test(target.id)) return false;
   if (target.kind === "instrument") {
     return Object.keys(target).every((key) => ["kind", "id", "version"].includes(key)) &&
       Number.isSafeInteger(target.version) && Number(target.version) > 0;

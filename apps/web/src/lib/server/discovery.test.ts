@@ -16,3 +16,14 @@ test("discovery proxy uses only configured loopback and handles an older Attenti
   await expect(new DiscoveryReader(async () => new Response("not found", { status: 404 })).read()).rejects.toThrow();
   await expect(new DiscoveryReader(fetcher, { PREP_WATCHDECK_ATTENTION_PORT: "5432" }).read()).rejects.toThrow();
 });
+
+test("discovery queries preserve Unicode market identities as one encoded asset parameter", async () => {
+  const parameters = new URLSearchParams({ assetId: "crypto:币安人生" });
+  const reader = new DiscoveryReader(async input => {
+    const url = new URL(String(input));
+    expect(url.origin).toBe("http://127.0.0.1:18870");
+    expect([...url.searchParams]).toEqual([["assetId", "crypto:币安人生"]]);
+    return new Response(JSON.stringify(discoveryFixture()));
+  }, { PREP_WATCHDECK_ATTENTION_PORT: "18870" });
+  expect((await reader.read(parameters)).rows).toHaveLength(5);
+});

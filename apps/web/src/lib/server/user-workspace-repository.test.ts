@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { LocalFileUserWorkspaceRepository } from "./user-workspace-repository";
+import { isFavoriteTarget, LocalFileUserWorkspaceRepository } from "./user-workspace-repository";
 
 test("favorite operations merge under lock and saved views use revision CAS", async () => {
   const root = await mkdtemp(join(tmpdir(), "watchdeck-workspace-"));
@@ -103,5 +103,24 @@ test("stale reconfirmation never resurrects a favorite deleted in another tab", 
     const ordinary = await repository.setFavorite(changed, true);
     expect(ordinary.favorites).toEqual([changed]);
     expect(await repository.setFavorite(changed, true, saved.revision)).toEqual(ordinary);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("Unicode market identities retain their exact values in favorites and comparison pins", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-unicode-target-"));
+  const path = join(root, "workspace.json");
+  const repository = new LocalFileUserWorkspaceRepository(path);
+  const target = { kind: "reference" as const, id: "crypto:我踏马来了",
+    referenceKey: "bybit:我踏马来了USDT:v1", originals: ["bitget:我踏马来了USDT:1"] };
+  const pin = { target, episodeId: "episode-unicode", discoveredAt: 1791585000000,
+    snapshot: { asset: "我踏马来了", referenceClose: { value: 0.001, unit: "USDT", source: "bybit" } } };
+  try {
+    const favorite = await repository.setFavorite(target, true);
+    const saved = await repository.setPin(pin, true, favorite.revision);
+    expect((await new LocalFileUserWorkspaceRepository(path).read()).favorites).toEqual([target]);
+    expect(saved.pins).toEqual([pin]);
+    for (const id of ["crypto:../bad", "crypto:BTC\n", "crypto:BTC\u0000", "crypto:BTC&assetId=ETH"]) {
+      expect(isFavoriteTarget({ ...target, id })).toBe(false);
+    }
   } finally { await rm(root, { recursive: true, force: true }); }
 });

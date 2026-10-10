@@ -294,7 +294,9 @@ def application(service: AttentionService) -> web.Application:
             return web.json_response(
                 {"status": "unavailable", "reason": service.last_error}, status=503
             )
-        return web.json_response(response.model_dump(mode="json", by_alias=True))
+        return web.Response(
+            text=response.model_dump_json(by_alias=True), content_type="application/json"
+        )
 
     async def health(_request: web.Request) -> web.Response:
         return web.json_response(service.health())
@@ -317,8 +319,9 @@ def application(service: AttentionService) -> web.Application:
             return web.json_response(
                 {"status": "unavailable", "reason": "invalid_discovery_query"}, status=400
             )
-        return web.json_response(
-            response.model_dump(mode="json", by_alias=True),
+        return web.Response(
+            text=response.model_dump_json(by_alias=True),
+            content_type="application/json",
             status=503 if response.status == "unavailable" else 200,
         )
 

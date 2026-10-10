@@ -110,8 +110,13 @@ def activate_selection(
     group_id: str,
     primary_venue_instrument_id: str,
     activated_at: datetime,
+    expires_at: datetime | None = None,
 ) -> SelectionTransition:
     _require_utc(activated_at, "activated_at")
+    expires_at = expires_at or activated_at + SELECTION_TTL
+    _require_utc(expires_at, "expires_at")
+    if not activated_at < expires_at <= activated_at + SELECTION_TTL:
+        raise InvalidSelectionError("selection activation requires an unexpired bounded lease")
     if not group_id.strip():
         raise ValueError("selected group_id must not be empty")
     try:
@@ -145,7 +150,7 @@ def activate_selection(
                         SET heartbeat_at = %s, expires_at = %s
                         WHERE selection_id = %s
                     """,
-                    (activated_at, activated_at + SELECTION_TTL, selection_id),
+                    (activated_at, expires_at, selection_id),
                 )
                 return SelectionTransition(
                     current=_active_lease(
@@ -153,6 +158,7 @@ def activate_selection(
                         group_id,
                         primary_version_id,
                         activated_at,
+                        expires_at,
                     ),
                     previous=None,
                 )
@@ -188,6 +194,7 @@ def activate_selection(
                 group_id,
                 primary_version_id,
                 activated_at,
+                expires_at,
             )
             cursor.execute(
                 """
@@ -739,6 +746,7 @@ def _active_lease(
     group_id: str,
     primary_version_id: int,
     activated_at: datetime,
+    expires_at: datetime,
 ) -> SelectionLease:
     return SelectionLease(
         selection_id=selection_id,
@@ -746,7 +754,7 @@ def _active_lease(
         primary_venue_instrument_version_id=primary_version_id,
         activated_at=activated_at,
         heartbeat_at=activated_at,
-        expires_at=activated_at + SELECTION_TTL,
+        expires_at=expires_at,
         superseded_at=None,
         cleanup_deadline_at=None,
         cleaned_at=None,

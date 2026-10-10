@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-10(土)_07:27 JST"
+timestamp="2026-10-10(土)_08:57 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T07:27:05+09:00`
+- 更新: `2026-10-10T08:57:39+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -253,6 +253,8 @@ Discoveryも同じAttention writerが既存入力から毎分評価し、既存A
 active/interruptedは保持する。Attention世代とDiscoveryはそれぞれcommit/readback後に公開し、
 後者の保存失敗は成功扱いせず`storage_unavailable`と観測中断を示す。
 `GET /discovery`とWebの`/api/discovery`は読取だけで、Provider・user-workspace・selectionを呼ばない。
+最大4対象の取得はSQLite内で行を絞り、全Universeのraw treeをPythonへ展開しない。
+世代更新時も旧projectionは必要な継続判定fieldだけを読み、完全payloadのreadbackは保存bytesの一致で確認する。
 
 Webは最大4件の比較pinを`user-workspace.json` v2、手動の監視/見送りを別の`manual-decisions.json`に保存する。
 お気に入り、条件episode、比較候補、実captureのselectionは独立する。比較・判断記録だけではcaptureを変更せず、

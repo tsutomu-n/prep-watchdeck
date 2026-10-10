@@ -177,6 +177,7 @@ class SelectionRuntime:
         self._reconcile_at: datetime | None = None
         self._active_instrument_fingerprint: tuple[tuple[str, str], ...] = ()
         self._next_membership_check: datetime | None = None
+        self._retry_command_at: datetime | None = None
 
     async def run_forever(self, stop_event: asyncio.Event) -> None:
         if self._connection is not None:
@@ -222,6 +223,9 @@ class SelectionRuntime:
                     await controller.reconcile(now)
                 except InvalidSelectionCommandError:
                     await controller.stop()
+                    self._retry_command_at = now + timedelta(
+                        seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS
+                    )
             finally:
                 self._reconcile_at = None
             await self._refresh_active_membership(now)
@@ -238,39 +242,23 @@ class SelectionRuntime:
                 return
             if (
                 self._last_heartbeat_at is not None
-                and command.heartbeat_at <= self._last_heartbeat_at
+                and command.heartbeat_at < self._last_heartbeat_at
             ):
                 return
-            controller = self._require_controller()
-            active = controller.active
-            if active is None or active.expires_at <= now:
-                try:
-                    await self._run_db(
-                        lambda: self._enabled_group_instruments(
-                            self._require_connection(),
-                            command.group_id,
-                            command.venue_instrument_id,
-                        )
-                    )
-                except InvalidSelectionCommandError:
-                    self._last_heartbeat_at = command.heartbeat_at
-                    return
-                self._last_heartbeat_at = command.heartbeat_at
-                controller.request(
-                    command.group_id,
-                    command.venue_instrument_id,
-                    command.requested_at,
-                )
+            if command.heartbeat_at == self._last_heartbeat_at and (
+                self._retry_command_at is None or now < self._retry_command_at
+            ):
                 return
-            await self._heartbeat_active(command)
-            self._last_heartbeat_at = command.heartbeat_at
-            return
 
         controller = self._require_controller()
         active = controller.active
-        if active is None or (
-            active.group_id != command.group_id
-            or active.primary_venue_instrument_id != command.venue_instrument_id
+        if (
+            active is None
+            or active.expires_at <= now
+            or (
+                active.group_id != command.group_id
+                or active.primary_venue_instrument_id != command.venue_instrument_id
+            )
         ):
             try:
                 await self._run_db(
@@ -284,12 +272,15 @@ class SelectionRuntime:
                 self._last_requested_at = command.requested_at
                 self._last_identity = identity
                 self._last_heartbeat_at = command.heartbeat_at
+                self._retry_command_at = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
                 return
         self._last_requested_at = command.requested_at
         self._last_identity = identity
         self._last_heartbeat_at = command.heartbeat_at
+        self._retry_command_at = None
         if (
             active is not None
+            and active.expires_at > now
             and active.group_id == command.group_id
             and active.primary_venue_instrument_id == command.venue_instrument_id
         ):
@@ -299,6 +290,7 @@ class SelectionRuntime:
             command.group_id,
             command.venue_instrument_id,
             command.requested_at,
+            expires_at=command.heartbeat_at + SELECTION_TTL,
         )
 
     async def _heartbeat_active(self, command: SelectionCommand) -> None:
@@ -332,6 +324,11 @@ class SelectionRuntime:
         if reconcile_at is None:
             raise SelectionRuntimeError("selection activation occurred outside reconciliation")
         activated_at = max(reconcile_at, self._clock())
+        expires_at = self._require_controller().pending_expires_at
+        if expires_at is None:
+            raise SelectionRuntimeError("selection activation has no command deadline")
+        if expires_at <= activated_at:
+            raise InvalidSelectionCommandError("selection command expired before activation")
         instruments = await self._run_db(
             lambda: self._enabled_group_instruments(
                 self._require_connection(),
@@ -346,6 +343,7 @@ class SelectionRuntime:
                 group_id=group_id,
                 primary_venue_instrument_id=primary_venue_instrument_id,
                 activated_at=activated_at,
+                expires_at=expires_at,
             )
         )
         await self._acknowledge_previous(transition, activated_at)
@@ -436,6 +434,7 @@ class SelectionRuntime:
             )
         except InvalidSelectionCommandError:
             await controller.stop()
+            self._retry_command_at = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
             return
         fingerprint = _instrument_fingerprint(instruments)
         if fingerprint == self._active_instrument_fingerprint:
@@ -445,6 +444,7 @@ class SelectionRuntime:
             active.group_id,
             active.primary_venue_instrument_id,
             now,
+            expires_at=active.expires_at,
         )
 
     async def _emit(self, event: SelectedEvent) -> None:

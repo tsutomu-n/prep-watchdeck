@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_07:08 JST"
+timestamp="2026-10-10(土)_08:57 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T07:08:23+09:00`
+- 更新: `2026-10-10T08:57:39+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -137,6 +137,9 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 ```
 
 現行validationはactive grouped instrument、timestamp、expiry等をfail-closedに確認する。
+保存済みselectionの再起動復元でも有効期限は最後のcommand heartbeatから15分であり、再起動や
+group membershipの再購読で延長しない。Venue取得が無効の間はselectionを開かず、有効化後に
+未期限切れの同じcommandを再評価できる。
 将来、単独instrument、複数selection、pinned/watch queue等の別command contractを追加できる。
 
 ## 現行Past Note
@@ -349,6 +352,7 @@ Ranking応答`ranking-v5`は同じgenerationの15分、1時間、直近24時間�
 
 `user-workspace.json`の現行schemaVersionは2で、favorite最大200件・saved view最大20件に加え、
 exact target・episode ID・追加時刻・根拠snapshotを持つ`pins`を最大4件保持する。全体上限は64 KiB。
+原資産IDはUnicodeの文字・数字を保持し、比較取得と保存で同じ文字種を許可する。正規化や別名推測はしない。
 v1のfavorite/view/revisionを保持してpins空として読み、更新時だけv2を書き込む。
 pin/viewは`expectedRevision`、lock、atomic writeで競合を拒否する。同じ対象keyの参照key/original集合が
 変わっても保存対象を自動で置換しない。favoriteは再確認付き更新、pinは明示解除・再追加を要求する。

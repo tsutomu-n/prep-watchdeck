@@ -43,6 +43,7 @@ class _PendingSelection:
     primary_venue_instrument_id: str
     requested_at: datetime
     activate_at: datetime
+    expires_at: datetime | None
 
 
 Subscribe = Callable[[UUID, str, str], Awaitable[object]]
@@ -90,6 +91,10 @@ class SelectionController:
         return () if self._active is None else (self._active.group_id,)
 
     @property
+    def pending_expires_at(self) -> datetime | None:
+        return None if self._pending is None else self._pending.expires_at
+
+    @property
     def heartbeat_due_at(self) -> datetime | None:
         if self._active is None:
             return None
@@ -100,8 +105,14 @@ class SelectionController:
         group_id: str,
         primary_venue_instrument_id: str,
         requested_at: datetime,
+        *,
+        expires_at: datetime | None = None,
     ) -> int:
         _require_utc(requested_at, "requested_at")
+        if expires_at is not None:
+            _require_utc(expires_at, "expires_at")
+            if expires_at <= requested_at:
+                raise ValueError("selection expiry must follow its request")
         if not group_id.strip():
             raise ValueError("selected group_id must not be empty")
         if not primary_venue_instrument_id.strip():
@@ -113,6 +124,7 @@ class SelectionController:
             primary_venue_instrument_id=primary_venue_instrument_id,
             requested_at=requested_at,
             activate_at=requested_at + self._debounce,
+            expires_at=expires_at,
         )
         return self._revision
 
@@ -139,6 +151,10 @@ class SelectionController:
             pending = self._pending
             if pending is None or pending.activate_at > now:
                 return self._active
+            if pending.expires_at is not None and pending.expires_at <= now:
+                self._pending = None
+                return self._active
+            expires_at = pending.expires_at or now + self._ttl
             if (
                 self._active is not None
                 and self._active.group_id == pending.group_id
@@ -147,7 +163,7 @@ class SelectionController:
                 self._active = replace(
                     self._active,
                     heartbeat_at=now,
-                    expires_at=now + self._ttl,
+                    expires_at=expires_at,
                 )
                 if self._pending is not None and self._pending.revision == pending.revision:
                     self._pending = None
@@ -172,7 +188,7 @@ class SelectionController:
                     subscription=subscription,
                     activated_at=now,
                     heartbeat_at=now,
-                    expires_at=now + self._ttl,
+                    expires_at=expires_at,
                 )
                 await self._cleanup(stale)
                 return self._active
@@ -183,7 +199,7 @@ class SelectionController:
                 subscription=subscription,
                 activated_at=now,
                 heartbeat_at=now,
-                expires_at=now + self._ttl,
+                expires_at=expires_at,
             )
             self._pending = None
             return self._active
