@@ -175,6 +175,54 @@ def _runtime_files(release: Path) -> dict[str, str]:
     return files
 
 
+def _legacy_test_inputs(
+    base: Path, helper_files: dict[str, bytes], commit: str
+) -> dict[str, bytes]:
+    """Snapshot the existing offline tests' fixtures and relocate only their input paths."""
+    files: dict[str, bytes] = {}
+    if "test_collector_clocks.py" in helper_files:
+        files["test_observer.py"] = _regular_bytes(base / "test_observer.py")
+    if "test_recovery_definition_capture.py" not in helper_files:
+        return files
+    raw = _regular_bytes(base / "test_mexc_readonly_capture.py")
+    files["evidence/original-test-mexc-readonly-capture.py"] = raw
+    replacements = (
+        (
+            b'REPOSITORY = Path("/home/tn/projects/.ai-worktrees/'
+            b'prep-watchdeck-mexc-100-20261010-1025")',
+            f'REPOSITORY = BASE / "releases/{commit[:12]}"'.encode(),
+        ),
+        (
+            b'PREVIOUS = Path("/home/tn/releases/prep-watchdeck-ranking-maps/'
+            b'94e54510036ac46f710cd568")',
+            b'PREVIOUS = BASE / "test-fixtures/map"',
+        ),
+        (
+            b'"/home/tn/projects/prep-watchdeck/var/tmp/daytrader-mexc/'
+            b'mexc-reviewed-major-identities.json"',
+            b'BASE / "test-fixtures/reviews.json"',
+        ),
+    )
+    for old, new in replacements:
+        if raw.count(old) != 1:
+            raise ValueError("bundle_test_fixture_layout_unsupported")
+        raw = raw.replace(old, new)
+    files["test_mexc_readonly_capture.py"] = raw
+    files["mexc-production-10-readonly-capture.json"] = _regular_bytes(
+        base / "mexc-production-10-readonly-capture.json"
+    )
+    fixture_map = PRODUCTION_MAPS / "94e54510036ac46f710cd568"
+    for name in MAP_FILES[:3]:
+        files["test-fixtures/map/" + name] = _regular_bytes(fixture_map / name)
+    files["test-fixtures/reviews.json"] = _regular_bytes(
+        Path(
+            "/home/tn/projects/prep-watchdeck/var/tmp/daytrader-mexc/"
+            "mexc-reviewed-major-identities.json"
+        )
+    )
+    return files
+
+
 def build_bundle(
     repository: Path,
     ref: str,
@@ -208,6 +256,7 @@ def build_bundle(
         raise ValueError("bundle_canonical_source_mismatch")
     dependencies: dict[str, bytes] = {}
     base = helper_manifest.parent.parent
+    test_inputs = _legacy_test_inputs(base, helper_files, commit)
     _dependency(base / "complete-mexc-scale.py", policy["completeDriverSha256"], dependencies)
     for name, expected in policy["helpers"].items():
         if len(_safe_relative(name).parts) != 1:
@@ -258,6 +307,10 @@ def build_bundle(
         (output / "maps" / name).write_bytes(raw)
     for name, raw in evidence.items():
         (output / "evidence" / name).write_bytes(raw)
+    for name, raw in test_inputs.items():
+        path = output.joinpath(*_safe_relative(name).parts)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(raw)
     _write_json(output / "evidence/original-helper-manifest.json", original_manifest)
     _write_json(output / "evidence/original-unit-bindings.json", original_bindings)
     # The existing supervisor anchors its output at HERE.parent. Relocate the copied
@@ -363,6 +416,7 @@ def build_bundle(
             for name, digest in runtime_files.items()
         }
     )
+    files.update({name: _digest(raw) for name, raw in test_inputs.items()})
     for directory in (output, output / "helper", output / "maps", output / "evidence"):
         for path in sorted(directory.iterdir()):
             if path.is_file():
@@ -381,6 +435,7 @@ def build_bundle(
         "files": files,
         "trackedSourceModes": source_modes,
         "runtimeFiles": runtime_files,
+        "offlineTestInputs": {name: _digest(raw) for name, raw in test_inputs.items()},
         "operationalAcceptance": "NOT_ACCEPTED",
         "requiredBeforeObservation": [
             "explicit_operational_authorization",
@@ -449,6 +504,24 @@ def verify_bundle(output: Path) -> dict[str, Any]:
     helper_manifest, helper_files = _helper_inputs(output / "helper/source-manifest.json")
     if any(files.get("helper/" + name) != _digest(raw) for name, raw in helper_files.items()):
         raise ValueError("bundle_helper_inventory_invalid")
+    offline_inputs = manifest.get("offlineTestInputs", {})
+    required_offline = set()
+    if "test_collector_clocks.py" in helper_files:
+        required_offline.add("test_observer.py")
+    if "test_recovery_definition_capture.py" in helper_files:
+        required_offline.update(
+            {
+                "test_mexc_readonly_capture.py",
+                "evidence/original-test-mexc-readonly-capture.py",
+                "mexc-production-10-readonly-capture.json",
+                "test-fixtures/reviews.json",
+                *("test-fixtures/map/" + name for name in MAP_FILES[:3]),
+            }
+        )
+    if not required_offline <= offline_inputs.keys() or any(
+        files.get(name) != digest for name, digest in offline_inputs.items()
+    ):
+        raise ValueError("bundle_offline_test_inventory_invalid")
     canonical = release / "apps/market-core/src/prep_watchdeck_market/acceptance_evidence.py"
     if (
         helper_manifest.get("sourceCommit") != commit
@@ -544,6 +617,20 @@ def main(argv: list[str] | None = None) -> int:
                 build_environment=args.build,
                 reconciliation=args.reconciliation,
             )
+            result = {
+                "output": str(args.output.absolute()),
+                "sourceStatus": "PASS",
+                **{
+                    key: result[key]
+                    for key in (
+                        "sourceCommit",
+                        "mapVersion",
+                        "build",
+                        "operationalAcceptance",
+                        "requiredBeforeObservation",
+                    )
+                },
+            }
         print(json.dumps(result, ensure_ascii=False))
         return 0
     except (OSError, ValueError, KeyError, TypeError, subprocess.SubprocessError):

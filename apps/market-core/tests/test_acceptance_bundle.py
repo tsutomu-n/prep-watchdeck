@@ -193,3 +193,27 @@ def test_omitted_legacy_dependency_cannot_report_pass(
     (output / "complete-mexc-scale.py").unlink()
     with pytest.raises(ValueError, match="bundle_dependency_binding_invalid"):
         verify_bundle(output)
+
+
+def test_offline_test_dependency_is_copied_and_cannot_be_omitted(
+    inputs: tuple[Path, str, Path, Path], tmp_path: Path
+) -> None:
+    repo, commit, helper, mapping = inputs
+    (helper.parent.parent / "test_observer.py").write_text('"""Offline fixture."""\n')
+    (helper.parent / "test_collector_clocks.py").write_text('"""Fixture test."""\n')
+    source_manifest = json.loads(helper.read_text())
+    source_manifest["files"]["test_collector_clocks.py"] = digest(
+        helper.parent / "test_collector_clocks.py"
+    )
+    write_json(helper, source_manifest)
+    output = tmp_path / "bundle"
+    build_bundle(repo, commit, helper, mapping, output)
+    assert (output / "test_observer.py").read_bytes() == (
+        helper.parent.parent / "test_observer.py"
+    ).read_bytes()
+    manifest = json.loads((output / "BUNDLE.json").read_text())
+    manifest["offlineTestInputs"] = {}
+    del manifest["files"]["test_observer.py"]
+    write_json(output / "BUNDLE.json", manifest)
+    with pytest.raises(ValueError, match="bundle_offline_test_inventory_invalid"):
+        verify_bundle(output)

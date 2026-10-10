@@ -1,6 +1,6 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_07:05 JST"
+timestamp="2026-10-11(日)_07:10 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
 - 更新: `2026-10-10T22:26:15+09:00`
@@ -627,7 +627,8 @@ Git archiveのtracked sourceだけを収録し、locked dependenciesとWebをloc
 `--build`なしは`NOT_RUN`となる。`--verify <作成DIR>`でhash・source mode・source/helper/map/policyの束縛を再検査できる。
 実build時はWeb出力とvenv設定/CLI entryも固定する。site-packages全体の真正性は主張しない。
 staged venvのeditable参照とshebangは絶対pathを持つため、本番先で環境を再構築・再bindingする。
-元helper/証拠は保全し、copied launcherの出力BASEだけをbundle内へ合わせる。
+元helper/証拠は保全し、copied launcherの出力BASEをbundle内へ合わせる。
+helperのoffline testに必要な旧test/fixtureも保存し、copied testの入力pathをstaged sourceと保存fixtureへ固定する。
 
 `BUNDLE.json`とstaged releaseはlocal成果物で、本番配置先とは別である。policyはapproved=false、
 警告例外は空、settlement例外は無効、recoveryNotBeforeは未確定のまま。

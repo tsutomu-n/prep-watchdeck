@@ -1,6 +1,6 @@
 # Identity・履歴診断・50件開始gateの根本修正
 
-timestamp="2026-10-11(日)_07:05 JST"
+timestamp="2026-10-11(日)_07:10 JST"
 - 作成: `2026-10-10T21:25:20+09:00`
 - 更新: `2026-10-11T06:54:18+09:00`
 - 検証: `2026-10-10T22:32:13+09:00`
@@ -249,3 +249,8 @@ Local source検証: Market全pytestは隔離Postgres17/専用port32817で517 PAS
 C1はfake DB/Providerと実thread/lock、C2は時計を置換した実Postgres FETCH timeoutで検証した。
 C3の同scope実read-only再scanでは旧PEARL欠損1/境界1が残る。比較manifestも両方を保全し、
 全履歴合格はnot_assessedのまま。C4のソース実装は完了し、immutable commitからの実bundle buildを次に検証する。
+
+最初のb3732bb bundleは実build/hash/3CLI helpとlauncher DRY_RUNまでPASSだったが、
+copied helper testで旧test/fixture参照2件の欠落を確認した。旧原本を変更せず、
+必要なoffline test/fixtureを収録し、sourceと入力pathをbundleへ固定した。追加focused8 PASS。
+修正版commitから別outputで再生成し、最初のbundleを後から書き換えない。
