@@ -1,8 +1,8 @@
 # Identity・履歴診断・50件開始gateの根本修正
 
-timestamp="2026-10-11(日)_08:31 JST"
+timestamp="2026-10-11(日)_08:34 JST"
 - 作成: `2026-10-10T21:25:20+09:00`
-- 更新: `2026-10-11T08:31:38+09:00`
+- 更新: `2026-10-11T08:34:21+09:00`
 - 検証: `2026-10-10T22:32:13+09:00`
 - 状態: `実装計画`
 
@@ -274,7 +274,7 @@ Sourceとlocal成果物はPASS。map資格は未達、PEARL欠損1/版境界1、
 
 - [x] D1 保存bundleのmanifest/fixtureから再生成できる。変換済みpathとlauncherを再変換で壊さず、元global fixtureへ依存しない。
 - [x] D2 map/roster/evidenceの内容整合を既存semantic checkerで生成・再検証する。未資格candidateは保持できるが不正内容は拒否する。
-- [ ] D3 再現RED→GREEN・関連最小検証・実bundle再生成・source/helper/hash検査・独立review・local commit。
+- [x] D3 再現RED→GREEN・関連最小検証・実bundle再生成・source/helper/hash検査・独立review・local commit。
 
 Scopeは生成/検証のlocal toolと回帰検証・必要docsだけ。本番deploy/unit/live DB/Provider回復/2h観測/CI/push/PRは含まない。
 Rollbackは今回commitと新outputだけ。旧成果物・旧台帳を変更・削除せず、履歴/data資格を合格へ昇格しない。
@@ -284,3 +284,11 @@ Source検証: 専用Postgres17/port32818でMarket全526 pytest PASS、container�
 Pyreflyを最初にRepo rootから実行した確認は別package testsのimport設定で11 errorsだったため、
 所定のMarket package directoryから再実行した。対象外の設定・testsは変更していない。
 旧bundle941 fileと元helper15 fileはhash一致。D3の実bundle再生成はimmutable source commit後に確認する。
+
+D3完了: immutable source commit55edb36から旧bundle内の保存入力だけで実locked buildを行い、
+新bundle943 fileのhashとmap内容を検証した。新bundleを入力にした連続再生成もPASS（2回目buildはNOT_RUN）。
+Staged helper38 unittest、3CLI help、launcher DRY_RUN、元bundle941/元helper15 file保全を確認。
+独立source reviewでも連続再生成、global fixture読取0、不正roster生成前/再hash後拒否を実測し指摘なし。
+成果物と詳細: `/home/tn/watchdeck-local-archive/acceptance-bundle-integrity-20261011-0825/README.md`。
+Map資格、07:04 JST保存snapshotのPEARL欠損1/分途中境界1、imn意味、本番操作と新2時間観測は引き続き未達。
+今回はsource/local成果物のみPASSで、運用受入NOT_ACCEPTEDを保持する。将来の受入checkpointが残るためplanはactive。
