@@ -44,6 +44,27 @@ _PARQUET_DECIMAL_COLUMNS = frozenset(
         "volume_notional",
     }
 )
+_PARQUET_COLUMN_TYPES = {
+    **dict.fromkeys(_PARQUET_DECIMAL_COLUMNS, _PARQUET_DECIMAL),
+    "venue_instrument_version_id": pl.Int64,
+    "venue": pl.String,
+    "source_symbol": pl.String,
+    "bucket_at": pl.Datetime("us", "UTC"),
+    "status": pl.String,
+    "first_observed_at": pl.Datetime("us", "UTC"),
+    "last_observed_at": pl.Datetime("us", "UTC"),
+    "source_at": pl.Datetime("us", "UTC"),
+    "sample_count": pl.Int64,
+    "reference_price_kind": pl.String,
+    "funding_interval_seconds": pl.Int64,
+    "open_interest_raw_unit": pl.String,
+    "volume_24h_unit": pl.String,
+    "trade_count": pl.Int64,
+    "finality": pl.String,
+    "observed_at": pl.Datetime("us", "UTC"),
+    "finalized_at": pl.Datetime("us", "UTC"),
+    "funding_at": pl.Datetime("us", "UTC"),
+}
 
 
 class ArchiveError(RuntimeError):
@@ -76,17 +97,11 @@ class _PartitionRows:
 
 
 def _partition_frame(partition: _PartitionRows) -> pl.DataFrame:
-    """Build a normalized partition with a stable Parquet decimal schema."""
+    """Use the SQL projection's types even when early rows contain only nulls."""
 
-    decimal_overrides = {
-        column: _PARQUET_DECIMAL
-        for column in partition.columns
-        if column in _PARQUET_DECIMAL_COLUMNS
-    }
     return pl.DataFrame(
         partition.rows,
-        schema=list(partition.columns),
-        schema_overrides=decimal_overrides,
+        schema={column: _PARQUET_COLUMN_TYPES[column] for column in partition.columns},
         orient="row",
         strict=False,
     )

@@ -14,7 +14,13 @@ import pytest
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from prep_watchdeck_market.archive import archive_partition
+from prep_watchdeck_market.archive import (
+    _partition_frame,
+    _PartitionRows,
+    _rows_digest,
+    _verify_readback,
+    archive_partition,
+)
 from prep_watchdeck_market.database import apply_migrations
 from prep_watchdeck_market.maintenance import _archive_dates, _archive_present_partitions
 from prep_watchdeck_market.retention import (
@@ -23,6 +29,62 @@ from prep_watchdeck_market.retention import (
 )
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+@pytest.mark.parametrize("dataset", ["market_state_1m", "candle_1m", "funding_events"])
+def test_archive_retains_nullable_values_after_first_hundred_missing_rows(
+    tmp_path: Path, dataset: str
+) -> None:
+    observed_at = datetime(2026, 10, 9, tzinfo=UTC)
+    timestamp_column = "funding_at" if dataset == "funding_events" else "bucket_at"
+    later_values: dict[str, Any] = {"source_at": observed_at + timedelta(minutes=100)}
+    if dataset == "market_state_1m":
+        later_values.update(
+            funding_interval_seconds=14400,
+            funding_rate_per_hour=Decimal("0.000025"),
+            open_interest_raw_unit="base",
+            volume_24h_unit="quote",
+        )
+    elif dataset == "candle_1m":
+        later_values.update(
+            trade_count=7,
+            volume_base=Decimal("0.125"),
+            finalized_at=observed_at + timedelta(minutes=101),
+        )
+    else:
+        later_values.update(
+            funding_interval_seconds=14400, funding_rate_per_hour=Decimal("0.000025")
+        )
+    columns = ("venue_instrument_version_id", timestamp_column, *later_values)
+    rows = tuple(
+        (
+            1,
+            observed_at + timedelta(minutes=index),
+            *[value if index == 100 else None for value in later_values.values()],
+        )
+        for index in range(101)
+    )
+    partition = _PartitionRows(
+        columns, ("venue_instrument_version_id", timestamp_column), timestamp_column, rows
+    )
+    path = tmp_path / f"{dataset}.parquet"
+    _partition_frame(partition).write_parquet(path)
+    _verify_readback(
+        path,
+        partition,
+        expected_min=observed_at,
+        expected_max=observed_at + timedelta(minutes=100),
+        expected_rows_digest=_rows_digest(columns, rows),
+    )
+    restored = pl.read_parquet(path)
+    for column, value in later_values.items():
+        assert restored.get_column(column).to_list() == [*[None] * 100, value]
+        if isinstance(value, datetime):
+            assert restored.schema[column] == pl.Datetime("us", "UTC")
+        elif isinstance(value, int):
+            assert restored.schema[column] == pl.Int64
+        elif isinstance(value, str):
+            assert restored.schema[column] == pl.String
 
 
 @pytest.mark.skipif(

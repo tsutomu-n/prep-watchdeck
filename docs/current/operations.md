@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_08:57 JST"
+timestamp="2026-10-10(土)_09:16 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T08:57:39+09:00`
+- 更新: `2026-10-10T09:16:44+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -10,8 +10,8 @@ timestamp="2026-10-10(土)_08:57 JST"
 
 ## この文書の範囲
 
-この文書は**現在productionの3 Venue Perp runtime**を安全に運用する手順を記述する。
-RepositoryのMEXC・Discovery対応sourceについては下記の配置境界を適用する。本番への反映済みを意味しない。
+この文書はBitget・Hyperliquid Core・Aster・MEXCのPerp runtimeとDiscoveryを安全に運用する手順を記述する。
+Repositoryの仕様と各hostの稼働releaseは別に確認し、MEXC対応版の切替には下記の配置境界を適用する。
 port、path、unit、artifact数、retention、public API構成等は現在のruntime contractであり、
 [product boundary](product-boundary.md)が許可する将来機能を禁止するものではない。
 
@@ -217,6 +217,7 @@ PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' \
 
 現在のmaintenanceは、normalized Parquetのreadback、row count、key、timestamp、row digest、SHA-256、active manifestを
 確認した後だけ対応sourceを削除する。空datasetをarchive成功として捏造しない。
+Parquet列はSQL projectionの型を明示する。先頭の行が欠測でも後続の値を保持し、欠測を0へ補完しない。
 
 現在の保持期間:
 
