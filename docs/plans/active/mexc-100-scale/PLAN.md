@@ -1,8 +1,8 @@
 # MEXC 10 → 50 → 100 銘柄の最適化と段階受入
 
-timestamp="2026-10-10(土)_11:27 JST"
+timestamp="2026-10-10(土)_11:47 JST"
 - 作成: `2026-10-10T10:30:00+09:00`
-- 更新: `2026-10-10T11:27:30+09:00`
+- 更新: `2026-10-10T11:47:54+09:00`
 - 検証: `未検証`
 - 状態: `実装計画`
 
@@ -141,6 +141,7 @@ MEXC取得停止→直前段階registryへ→単一writerでcurrent catalog→�
 - 横断gateはMarket345、Ranking176、Attention76、Web265 unitと必須check通過、E2Eは156成功/1既定skip/1失敗でraw exit1。既存JST設定のhydration raceを再現し修正後、Web266 unit・check/build・関連E2E16件が通過。raw gate全成功とは記録しない。native-onlyの追加16回帰・Ruff/Pyrefly・100件registry監査も通過。
 - 隔離capacityは保持済み1645世代を複製し100MEXC/全1197原本・60世代更新。cycle p95 4.208秒/max5.367秒、一覧＋4詳細p95 29.761ms、RSS high-water 549.047MiB、旧evidence hash保持。加速replayであり実運転ではない。専用cgroupのkernel peakとWeb proxy並行負荷は未観測でPASS WITH ISSUES、live段階で確認する。
 - production前の専用PG dumpとAttention SQLite backup・unit/control/workspace保全を確認。b49d71dをcommit/pushしtracked archiveからbuild。11:20 JSTに互換reader、migration0006、10件writerを切替。Market/Ranking/Attention/Webとmaintenance/dataopsのsourceを同releaseへ接続、共有予算を配置し10件の価格/OI/Funding readyを確認。元4ファイルとselection/workspace/manual decisionsの保全をhashで確認。
-- 11:15 JST（配置前）にSOL_USDTのversionが9925→9933へ変化。差分は公式hot symbol tagのisHot false→trueのみ。完全raw/旧定義を保全してsemantic比較の限定除外を追加し、現9933の独立再資格candidateを準備中。古いIDを復元しない。50件拡大はこの確認と10件連続観測の完了後。
+- 11:15 JST（配置前）にSOL_USDTのversionが9925→9933へ変化。差分は公式hot symbol tagのisHot false→trueのみ。完全raw/旧定義を保全してsemantic比較の限定除外を追加し、現9933を独立再資格判定。b562348とmap 687bdf8450250a4f8343d51aへ切替済み。古いIDの復元は行っていない。
 - 50件2h/100件24h観測と最終容量受入は未実施。isolated replayの追加90件groupIdはnullで、現singleton文字列を入れた場合も行数668は不変。summary増分0.77%、4詳細増分0.11%のserialization差を確認したが、その補正後性能は未実測。
 - 既存maintenance/dataopsは10:07/10:04時点で復帰しており、過去失敗を現障害としない。
+- 11:46 JST: 最適化済み10件の600秒通常運転はPASS。OOM/restart0、cycle最大3.197秒、入力age最大47.694秒、summary/detail p95 201.837/72.533ms、anonymous+kernel標本peak470.20MiB。容量の10分外挿は診断のみで、24h容量受入は未実施。実効registryを50件へ変更し次releaseを準備する。

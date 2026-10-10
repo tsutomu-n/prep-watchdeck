@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-10(土)_11:15 JST"
+timestamp="2026-10-10(土)_11:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T11:15:54+09:00`
+- 更新: `2026-10-10T11:47:54+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -58,8 +58,8 @@ observed/source time、capability、exclusion reasonを保持する。
 既存3 Venueのauto-groupはactive crypto linear perpetual、base完全一致、base数量、multiplier 1、
 Venue内候補1件を要求する。MEXCは確認済みのnative資産・価格単位・数量定義を
 `verified_native_contract`として扱い、exact versionの契約係数でbase数量へ変換する。
-確認済みregistryはBTC・ETH・SOL・XRP・DOGE・ADA・AVAX・LTC・BNB・TRXのUSDT perpetualに限定する。
-未審査・非crypto・定義不一致を推測でgroupへ入れない。段階追加用registryにある新90件はnative資産だけの
+実効registryは既存10件と追加40件の審査済みUSDT perpetual、計50件を固定採用する。
+未審査・非crypto・定義不一致を推測でgroupへ入れない。追加40件と100件段階用の残り50件はnative資産だけの
 審査結果を持ち、他Venueとの同一性を確認するまでは`native:mexc:<exact source symbol>:linear-perp`の
 単独groupを使う。参考mark比較やVenue内衝突の推測へ混ぜず、価格・OI・Chart・手動selectionは保持する。
 
