@@ -11,7 +11,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import Counter
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -163,6 +163,71 @@ def identity(row: dict[str, Any], *, original: bool = False) -> tuple[str, int]:
     return identifier, version
 
 
+def recovery_acceptance_blockers(
+    recovery: dict[str, dict[str, Any] | None], *, now: datetime, native_count: int
+) -> list[str]:
+    """A normal monitor warning is not proof that a full recovery scan completed.
+
+    Require the ordinary six-hour candle scan and current endpoint scan. This is
+    deliberately stricter than monitoring: honest missing data remains a warning
+    there, but cannot silently authorize a new acceptance measurement.
+    """
+    blockers = []
+    for name, maximum in (("candleRecovery", 1080), ("endpointRecovery", 180)):
+        document = recovery.get(name)
+        code = f"{name}_acceptance_unverified"
+        if document is None:
+            blockers.append(code)
+            continue
+        try:
+            summary = object_value(document.get("summary"))
+            started = instant(document.get("startedAt"))
+            finished = instant(document.get("finishedAt"))
+            generated = instant(document.get("generatedAt"))
+            window = object_value(document.get("window"))
+            start, end = instant(window.get("start")), instant(window.get("end"))
+            cutoff = started.replace(second=0, microsecond=0) - timedelta(seconds=180)
+            target = integer(summary.get("targetCount"))
+            scanned = integer(summary.get("scannedTargetCount"))
+            missing = integer(summary.get("missingBefore"))
+            restored = integer(summary.get("newlyPresent"))
+            complete = (
+                document.get("schemaVersion") == 1
+                and re.fullmatch(r"[0-9a-f]{32}", str(document.get("runId", ""))) is not None
+                and document.get("execution") == "succeeded"
+                and document.get("trigger") in {"startup", "periodic"}
+                and document.get("errorCode") is None
+                and started <= finished <= generated <= now
+                and 0 <= (now - finished).total_seconds() <= maximum
+                and target == scanned
+                and integer(summary.get("remaining")) == 0
+                and missing == restored
+                and integer(summary.get("failedTargets")) == 0
+                and integer(summary.get("deferredTargets")) == 0
+                and window.get("graceSeconds") == 180
+                and not any(value.second or value.microsecond for value in (start, end))
+            )
+            if name == "candleRecovery":
+                complete = complete and (
+                    target == native_count
+                    and target > 0
+                    and end - start == timedelta(hours=6)
+                    and timedelta(0) <= cutoff - end <= timedelta(minutes=1)
+                    and (finished - started).total_seconds() <= 615
+                )
+            else:
+                complete = complete and (
+                    start == cutoff - timedelta(minutes=1441)
+                    and cutoff <= end <= finished.replace(second=0, microsecond=0)
+                    and (finished - started).total_seconds() <= 75
+                )
+            if not complete:
+                blockers.append(code)
+        except InvalidInput:
+            blockers.append(code)
+    return blockers
+
+
 def check(
     universe: dict[str, Any],
     service: dict[str, Any],
@@ -172,6 +237,7 @@ def check(
     recovery: dict[str, dict[str, Any] | None],
     *,
     now: datetime,
+    require_complete_recovery: bool = False,
 ) -> dict[str, Any]:
     failures: set[str] = set()
     warnings: set[str] = set()
@@ -503,6 +569,10 @@ def check(
         recovery_states[name] = {
             "available": True,
             "execution": execution,
+            "runId": document.get("runId"),
+            "startedAt": document.get("startedAt"),
+            "finishedAt": document.get("finishedAt"),
+            "window": document.get("window"),
             "ageSeconds": round(age, 3),
             "fresh": 0 <= age <= maximum,
             "summary": summary_out,
@@ -514,6 +584,9 @@ def check(
         if summary_out["remaining"]:
             warnings.add(f"{name}_native_history_missing")
 
+    recovery_blockers = recovery_acceptance_blockers(recovery, now=now, native_count=len(current))
+    if require_complete_recovery:
+        failures.update(recovery_blockers)
     return {
         "schemaVersion": "data-operations-v1",
         "checkedAt": now.isoformat(),
@@ -545,6 +618,7 @@ def check(
         "metricTimestampDiagnosticsTruncated": timestamp_issue_count > len(timestamp_diagnostics),
         "ranking": ranking_state,
         "recovery": recovery_states,
+        "recoveryAcceptanceBlockers": recovery_blockers,
         "operationalFailures": sorted(failures),
         "warnings": sorted(warnings),
     }
@@ -556,6 +630,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--mapping", type=Path, required=True)
     parser.add_argument("--ranking-url", default="http://127.0.0.1:8769")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--require-complete-recovery",
+        action="store_true",
+        help="Reject incomplete, stale, unknown, or wrong-scope recovery before acceptance runs.",
+    )
     args = parser.parse_args(argv)
     now = datetime.now(UTC)
     try:
@@ -582,7 +661,16 @@ def main(argv: list[str] | None = None) -> int:
         except (urllib.error.URLError, TimeoutError, OSError):
             ranking = None
         now = datetime.now(UTC)
-        result = check(universe, service, metrics, mapping, ranking, recovery, now=now)
+        result = check(
+            universe,
+            service,
+            metrics,
+            mapping,
+            ranking,
+            recovery,
+            now=now,
+            require_complete_recovery=args.require_complete_recovery,
+        )
         code = 1 if result["operationalFailures"] else 0
     except InvalidInput as error:
         result = {

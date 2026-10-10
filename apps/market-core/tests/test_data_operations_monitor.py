@@ -325,3 +325,62 @@ def test_monitor_missing_mapping_file_is_explicit_and_does_not_call_ranking(
     assert result == 2
     assert json.loads(capsys.readouterr().out)["inputErrors"] == ["mapping_file_unavailable"]
     assert not calls
+
+
+def test_acceptance_rejects_unproved_recovery_even_when_operational_exit_would_be_zero() -> None:
+    """A succeeded label, null count, or incomplete scan must not authorize collectors."""
+    data = inputs()
+    complete = {
+        "schemaVersion": 1,
+        "runId": "a" * 32,
+        "generatedAt": NOW.isoformat(),
+        "startedAt": (NOW - timedelta(seconds=30)).isoformat(),
+        "finishedAt": NOW.isoformat(),
+        "execution": "succeeded",
+        "trigger": "periodic",
+        "window": {
+            "start": (NOW - timedelta(hours=6, minutes=4)).isoformat(),
+            "end": (NOW - timedelta(minutes=4)).isoformat(),
+            "graceSeconds": 180,
+        },
+        "summary": {
+            "targetCount": 1,
+            "scannedTargetCount": 1,
+            "httpRequests": 0,
+            "missingBefore": 0,
+            "inserted": 0,
+            "newlyPresent": 0,
+            "remaining": 0,
+            "failedTargets": 0,
+            "deferredTargets": 0,
+        },
+        "errorCode": None,
+    }
+    data["recovery"] = {"candleRecovery": complete, "endpointRecovery": copy.deepcopy(complete)}
+    data["recovery"]["endpointRecovery"]["window"]["start"] = (
+        NOW - timedelta(minutes=1445)
+    ).isoformat()
+    assert UTILITY["check"](**data, now=NOW)["recoveryAcceptanceBlockers"] == []
+    cases = [
+        ("execution", "running"),
+        ("finishedAt", None),
+        ("generatedAt", (NOW - timedelta(hours=2)).isoformat()),
+        ("summary.remaining", None),
+        ("summary.remaining", 1),
+        ("summary.scannedTargetCount", 0),
+        ("summary.failedTargets", 1),
+        ("summary.deferredTargets", 1),
+        ("summary.targetCount", 0),
+        ("window.start", (NOW - timedelta(minutes=5)).isoformat()),
+    ]
+    for key, value in cases:
+        changed = copy.deepcopy(data)
+        obj = changed["recovery"]["candleRecovery"]
+        fields = key.split(".")
+        for field in fields[:-1]:
+            obj = obj[field]
+        obj[fields[-1]] = value
+        report = UTILITY["check"](**changed, now=NOW)
+        assert report["recoveryAcceptanceBlockers"], (key, value)
+        strict = UTILITY["check"](**changed, now=NOW, require_complete_recovery=True)
+        assert set(report["recoveryAcceptanceBlockers"]) <= set(strict["operationalFailures"])

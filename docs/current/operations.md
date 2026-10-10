@@ -1,8 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_10:53 JST"
+timestamp="2026-10-10(土)_21:40 JST"
+
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T10:53:42+09:00`
+- 更新: `2026-10-10T21:40:21+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -520,6 +521,17 @@ Asterの上場境界`onboardDate`を確認できる`PERPETUAL`では、`createTi
 更新停止、収集失敗、現行UniverseとmapのID/version不一致は終了1、不正入力は終了2。
 銘柄履歴の不足、取得予算の未処理、24時間を過ぎた名簿は警告として件数・理由を残す。
 価格・秘密情報・個人メモをlogへ出さない。
+
+受入測定の開始前には同じcommandへ`--require-complete-recovery`を付ける。
+通常監視の終了codeは維持するが、この明示optionでは`recoveryAcceptanceBlockers`も終了1の理由に含める。
+両recoveryについて完了時刻・鮮度、全対象scan、既知の欠損件数、failed/deferred/remaining=0を確認する。
+通常candleの6時間窓と現行全件数、endpointの24時間指標を含む窓を別々に照合する。
+手動の狭いscan、running/null、未走査、古い成功、scope違いを受入開始へ流用しない。
+scan終了時のDB処理待ちには15秒の余裕を持ち、candle窓を作ってからrunが始まる分境界を1分まで許容する。
+`runId`・`startedAt`・`finishedAt`・`window`も返すため、測定側では採用map反映後のrunであることを確認できる。
+終了0だけで受入完了にはしない。最新通常maintenance/dataops invocation、全rosterのDB照合、
+個別warningの審査と期間内判定は測定側でも必要。例外をwarning名全体で一括承認しない。
+
 
 `config/systemd/prep-watchdeck-data-operations.service.in`と対応timerはread-only確認の任意template。
 `@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用state、`@RANKING_MAP@`と

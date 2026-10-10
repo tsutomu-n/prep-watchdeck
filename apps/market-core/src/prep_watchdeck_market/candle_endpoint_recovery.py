@@ -20,6 +20,7 @@ from prep_watchdeck_market.candle_recovery_state import (
     RecoveryTargetIdentity,
     RecoveryTrigger,
     RecoveryWindow,
+    bounded_recovery_details,
 )
 from prep_watchdeck_market.candle_recovery_store import (
     RecoveryStoreError,
@@ -236,7 +237,7 @@ class CandleEndpointRecovery:
                     failed_targets=len(errors),
                     deferred_targets=len(deferred),
                 ),
-                details=details[:128],
+                details=bounded_recovery_details(details),
                 details_truncated=len(details) > 128,
                 error_code=error_code,
             )

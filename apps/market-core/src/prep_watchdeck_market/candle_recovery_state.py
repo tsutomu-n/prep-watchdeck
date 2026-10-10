@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Literal
 
@@ -41,6 +42,15 @@ class RecoveryTargetDetail(ArtifactModel):
     inserted: int = Field(ge=0)
     remaining: int | None = Field(ge=0)
     error_code: str | None = Field(default=None, max_length=100)
+
+
+def bounded_recovery_details(
+    details: Sequence[RecoveryTargetDetail],
+) -> tuple[RecoveryTargetDetail, ...]:
+    """Keep unresolved targets visible before truncating healthy diagnostic rows."""
+    return tuple(
+        sorted(details, key=lambda item: not (item.error_code or item.remaining != 0))[:128]
+    )
 
 
 class CandleRecoveryState(ArtifactModel):

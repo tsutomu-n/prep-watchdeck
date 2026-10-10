@@ -1,8 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_13:27 JST"
+timestamp="2026-10-10(土)_21:40 JST"
+
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T13:27:31+09:00`
+- 更新: `2026-10-10T21:40:21+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -421,6 +422,8 @@ schemaに加え、重複identity、窓の長さ・順序・共通cutoff、現在
 対象の現行ID・version・definitionHash、半開UTC窓、scan/insert/rescan件数、失敗と未処理を分ける。
 `execution=running|succeeded|partial|failed`で、部分成功を全契約成功へ昇格しない。
 手動scanだけではartifactを更新しない。
+診断detailsの上限128件は維持し、失敗・残欠損・未確認を正常対象より先に表示する。
+`detailsTruncated=true`の結果だけでは全欠損を列挙したことにならない。完全な診断は固定窓・契約版で全件scanする。
 同じschemaを使う`candle-endpoint-recovery-state.json`は指標のexact endpointだけを回復した
 別runを記録する。通常履歴の全時間格子に対する完了状態とは別であり、endpointの成功から
 全履歴の完全性を主張しない。両runはversion/hashを再確認し、既存足を上書きしない。
