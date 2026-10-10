@@ -37,6 +37,8 @@ const validators = {
 };
 const MAX_UNIVERSE_READ_ATTEMPTS = 5;
 const UNIVERSE_READ_RETRY_DELAY_MS = 50;
+const MAX_PUBLICATION_RETRY_ATTEMPTS = 4;
+const PUBLICATION_RETRY_DELAY_MS = 50;
 
 export class LocalFileMarketArtifactRepository implements MarketArtifactRepository {
   constructor(
@@ -147,8 +149,32 @@ function waitForUniverseReadRetry(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, UNIVERSE_READ_RETRY_DELAY_MS));
 }
 
+function waitForPublicationRetry(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, PUBLICATION_RETRY_DELAY_MS));
+}
+
 export function createMarketArtifactRepository(): MarketArtifactRepository {
-  return new LocalFileMarketArtifactRepository();
+  const source = new LocalFileMarketArtifactRepository();
+  return {
+    latest: () => retryArtifactPublication(() => source.latest()),
+    latestUniverse: () => source.latestUniverse()
+  };
+}
+
+export async function retryArtifactPublication<T>(read: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; attempt < MAX_PUBLICATION_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      return await read();
+    } catch (cause) {
+      const isPublicationMismatch = cause instanceof Error &&
+        cause.message === "market artifacts changed while being read";
+      if (!isPublicationMismatch || attempt === MAX_PUBLICATION_RETRY_ATTEMPTS - 1) {
+        throw cause;
+      }
+      await waitForPublicationRetry();
+    }
+  }
+  throw new Error("market artifact publication retry exhausted");
 }
 
 async function readArtifact<T>(path: string, name: string, validate: ValidateFunction): Promise<T> {
