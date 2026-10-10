@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import os
+import subprocess
+import sys
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -9,6 +13,7 @@ import psycopg
 import pytest
 from psycopg import sql
 
+from prep_watchdeck_market import candle_gap_audit
 from prep_watchdeck_market.candle_gap_audit import (
     AuditScope,
     ContractRange,
@@ -202,6 +207,139 @@ def test_scope_requires_bounded_full_minutes(since, until):
         AuditScope(instrument_ids=("aster:PEARLUSDT",), since=since, until=until)
 
 
+def test_rescan_rejects_observation_time_before_previous_evidence():
+    first = audit()
+    with pytest.raises(ValueError, match="observation"):
+        build_audit(
+            scope(),
+            contracts(),
+            {},
+            observed_at=END,
+            snapshot="1:2:",
+            database_identity="unit-fixture",
+            previous=first,
+        )
+
+
+@pytest.mark.parametrize(
+    "corruption",
+    [
+        "negative_count",
+        "unbalanced_count",
+        "missing_scope",
+        "tracked_scope",
+        "boundary_scope",
+        "duplicate_version",
+        "observation_before_window",
+        "naive_observation",
+        "empty_coverage",
+        "legacy_unbound_database",
+        "empty_partition",
+        "hidden_boundary",
+        "recovered_missing_version",
+        "recovered_changed_hash",
+    ],
+)
+def test_load_rejects_inconsistent_evidence_even_with_matching_content_hash(tmp_path, corruption):
+    payload = audit().model_dump(mode="json", by_alias=True, exclude={"evidence_hash"})
+    if corruption == "negative_count":
+        payload["expectedMinutes"] = -1
+    elif corruption == "unbalanced_count":
+        payload["presentMinutes"] = 1
+    elif corruption == "missing_scope":
+        payload["missing"][0]["instrumentId"] = "aster:OTHERUSDT"
+    elif corruption == "tracked_scope":
+        payload["trackedGaps"][0]["key"]["bucket"] = "2026-10-10T08:27:00Z"
+    elif corruption == "boundary_scope":
+        payload["boundaries"][0]["bucket"] = "2026-10-10T08:33:00Z"
+    elif corruption == "duplicate_version":
+        payload["contractRanges"].append(payload["contractRanges"][0])
+    elif corruption == "observation_before_window":
+        payload["observedAt"] = "2026-10-10T08:28:00Z"
+    elif corruption == "naive_observation":
+        payload["observedAt"] = "2026-10-10T08:34:00"
+    elif corruption == "legacy_unbound_database":
+        payload["schemaVersion"] = "candle-gap-audit-v1"
+    elif corruption == "empty_partition":
+        payload.update(
+            expectedMinutes=5,
+            presentMinutes=5,
+            missing=[],
+            boundaries=[],
+            catalogUnavailable=[],
+            trackedGaps=[],
+            contractRanges=[],
+        )
+    elif corruption == "hidden_boundary":
+        payload.update(expectedMinutes=5, presentMinutes=1, boundaries=[])
+    elif corruption.startswith("recovered_"):
+        payload.update(expectedMinutes=5, presentMinutes=5, missing=[], boundaries=[])
+        payload["contractRanges"][0]["validTo"] = "2026-10-10T08:30:00Z"
+        payload["contractRanges"][1]["validFrom"] = "2026-10-10T08:30:00Z"
+        for item in payload["trackedGaps"]:
+            item["status"] = "recovered"
+        if corruption == "recovered_missing_version":
+            payload["trackedGaps"][0]["key"]["versionId"] = 123456
+        else:
+            payload["trackedGaps"][0]["key"]["definitionHash"] = "c" * 64
+    else:
+        payload.update(
+            expectedMinutes=0,
+            presentMinutes=0,
+            missing=[],
+            boundaries=[],
+            catalogUnavailable=[],
+            trackedGaps=[],
+            contractRanges=[],
+        )
+    payload["evidenceHash"] = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    ).hexdigest()
+    path = tmp_path / "invalid-evidence.json"
+    path.write_text(json.dumps(payload))
+    with pytest.raises(ValueError):
+        load_evidence(path)
+
+
+def test_audit_build_enforces_its_time_budget(monkeypatch):
+    clock = iter((0.0, 61.0))
+    monkeypatch.setattr(candle_gap_audit.time, "monotonic", lambda: next(clock, 61.0))
+    with pytest.raises(ValueError, match="time budget"):
+        audit()
+
+
+@pytest.mark.parametrize("source", ["previous", "roster"])
+def test_cli_input_fifo_is_rejected_without_waiting_for_a_writer(tmp_path, source):
+    fifo = tmp_path / "input.json"
+    os.mkfifo(fifo)
+    code = """
+import sys
+from pathlib import Path
+from prep_watchdeck_market.candle_gap_audit import load_evidence, main
+if sys.argv[1] == 'previous':
+    try:
+        load_evidence(Path(sys.argv[2]))
+    except (OSError, ValueError):
+        raise SystemExit(2)
+else:
+    raise SystemExit(main([
+        '--since', '2026-10-10T08:28:00Z', '--until', '2026-10-10T08:33:00Z',
+        '--roster', sys.argv[2], '--output', sys.argv[3],
+    ]))
+"""
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", code, source, str(fifo), str(tmp_path / "never.json")],
+            capture_output=True,
+            timeout=3,
+            check=False,
+        )
+    except subprocess.TimeoutExpired:
+        pytest.fail("invalid FIFO input blocked before validation")
+    assert result.returncode == 2
+    assert not (tmp_path / "never.json").exists()
+
+
 @pytest.mark.skipif(not os.environ.get("TEST_DATABASE_URL"), reason="isolated PostgreSQL required")
 def test_postgres_audit_retains_old_gap_and_reconciles_same_snapshot_scope(tmp_path):
     url = os.environ["TEST_DATABASE_URL"]
@@ -269,6 +407,28 @@ def test_postgres_audit_retains_old_gap_and_reconciles_same_snapshot_scope(tmp_p
             assert [item.status for item in second.tracked_gaps] == ["recovered"]
             assert second.boundaries == first.boundaries
             assert second.complete is False
+            alternate_schema = schema + "_alternate"
+            connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(alternate_schema)))
+            try:
+                for table in ("venue_instrument_versions", "candle_1m"):
+                    connection.execute(
+                        sql.SQL("CREATE VIEW {}.{} AS SELECT * FROM {}.{}").format(
+                            sql.Identifier(alternate_schema),
+                            sql.Identifier(table),
+                            sql.Identifier(schema),
+                            sql.Identifier(table),
+                        )
+                    )
+                connection.execute(
+                    sql.SQL("SET search_path TO {}").format(sql.Identifier(alternate_schema))
+                )
+                with pytest.raises(ValueError, match="database differs"):
+                    audit_connection(connection, scope(), previous=second)
+            finally:
+                connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+                connection.execute(
+                    sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(alternate_schema))
+                )
         finally:
             connection.execute("RESET search_path")
             connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))

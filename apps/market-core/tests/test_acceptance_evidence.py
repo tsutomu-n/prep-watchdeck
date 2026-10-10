@@ -128,6 +128,9 @@ def completion_fixture():
         "clockErrors": [],
         "observedElapsedSeconds": 7200,
         "observedWallSeconds": 7200,
+        "samples": 121,
+        "startedAt": "2026-10-10T00:00:00+00:00",
+        "lastSampleAt": "2026-10-10T02:00:00+00:00",
     }
     acceptance = {
         "stage": 50,
@@ -158,7 +161,12 @@ def completion_fixture():
         "streams": {
             name: {
                 "path": path,
-                "lastSampleIndex": 2,
+                "lastSampleIndex": {"performance": 120, "api": 1029, "funding": 2400}[name],
+                "firstSampleAt": "2026-10-10T00:00:00+00:00",
+                "lastSampleAt": "2026-10-10T02:00:00+00:00",
+                "firstElapsedSeconds": 0,
+                "lastElapsedSeconds": 7200,
+                "maxSampleGapSeconds": {"performance": 60, "api": 7, "funding": 3}[name],
                 "partialTailBytes": 0,
                 "completeLineBytes": 100,
                 "observedDurationSeconds": 7200,
@@ -181,6 +189,7 @@ def completion_fixture():
         acceptance_sha256=SHA,
         raw_sha256=raw,
         raw_sizes=dict.fromkeys(raw, 100),
+        raw_progress=deepcopy(receipt["streams"]),
     )
     return receipt, service, acceptance, kwargs
 
@@ -294,3 +303,44 @@ def test_recovery_roster_hashes_must_match_independent_database_snapshot():
         ).hexdigest()
         with pytest.raises(ValueError, match="recovery_definition_database_mismatch"):
             acceptance_evidence.validate_recovery_definitions(changed, current)
+
+
+@pytest.mark.parametrize("change", ["duration", "index", "tail", "gap", "summary"])
+def test_raw_progress_must_independently_match_receipt_and_summary(change):
+    from prep_watchdeck_market.acceptance_evidence import validate_observation_completion
+
+    receipt, service, acceptance, kwargs = completion_fixture()
+    progress = kwargs["raw_progress"]["performance"]
+    if change == "duration":
+        progress["observedDurationSeconds"] = 1
+    elif change == "index":
+        progress["lastSampleIndex"] = 1
+    elif change == "tail":
+        progress["partialTailBytes"] = 1
+    elif change == "gap":
+        progress["maxSampleGapSeconds"] = 7200
+        receipt["streams"]["performance"]["maxSampleGapSeconds"] = 7200
+    else:
+        acceptance["summary"]["samples"] = 120
+    with pytest.raises(ValueError):
+        validate_observation_completion(receipt, service, acceptance, **kwargs)
+
+
+def test_api_terminal_sample_retains_existing_thirty_second_allowance():
+    from prep_watchdeck_market.acceptance_evidence import validate_observation_completion
+
+    receipt, service, acceptance, kwargs = completion_fixture()
+    for stream in (receipt["streams"]["api"], kwargs["raw_progress"]["api"]):
+        stream.update(
+            lastSampleAt="2026-10-10T01:59:30+00:00",
+            lastElapsedSeconds=7170,
+            observedDurationSeconds=7170,
+        )
+    assert (
+        validate_observation_completion(receipt, service, acceptance, **kwargs)["fullAcceptance"]
+        == "PASS"
+    )
+    for stream in (receipt["streams"]["api"], kwargs["raw_progress"]["api"]):
+        stream["observedDurationSeconds"] = 7169
+    with pytest.raises(ValueError):
+        validate_observation_completion(receipt, service, acceptance, **kwargs)

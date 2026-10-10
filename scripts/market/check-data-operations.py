@@ -215,15 +215,9 @@ def select_recovery_evidence(
         try:
             started = instant(current.get("startedAt"))
             if current.get("execution") != "running":
-                if latest is not None and latest.get("runId") == current.get("runId"):
-                    if latest != current:
-                        continue
-                # A newer terminal record invalidates a still-visible older state.
-                if (
-                    latest is not None
-                    and latest.get("runId") != current.get("runId")
-                    and instant(latest.get("finishedAt")) >= started
-                ):
+                # Terminal files are published completion-first, so any disagreement
+                # is an incomplete publication or changed evidence, regardless of age.
+                if latest is not None and latest != current:
                     continue
                 selected[name] = current
             elif (
@@ -233,13 +227,25 @@ def select_recovery_evidence(
                 and current.get("errorCode") is None
                 and current.get("trigger") in {"startup", "periodic"}
                 and re.fullmatch(r"[0-9a-f]{32}", str(current.get("runId", ""))) is not None
-                and current.get("runId") != latest.get("runId")
-                and current.get("previousCompletedRunId") == latest.get("runId")
-                and instant(latest.get("finishedAt")) <= started
                 and started <= instant(current.get("generatedAt")) <= now
                 and 0 <= (now - started).total_seconds() <= maximum
             ):
-                selected[name] = latest
+                if current.get("runId") == latest.get("runId"):
+                    # The terminal completion is visible before its running state is
+                    # replaced. Validate the same invocation before adopting its proof.
+                    if (
+                        instant(latest.get("startedAt")) == started
+                        and latest.get("trigger") == current.get("trigger")
+                        and latest.get("previousCompletedRunId")
+                        == current.get("previousCompletedRunId")
+                        and instant(current.get("generatedAt")) <= instant(latest.get("finishedAt"))
+                    ):
+                        selected[name] = latest
+                elif (
+                    current.get("previousCompletedRunId") == latest.get("runId")
+                    and instant(latest.get("finishedAt")) <= started
+                ):
+                    selected[name] = latest
         except InvalidInput:
             continue
     return selected
@@ -618,9 +624,7 @@ def check(
                     "startObservedAt",
                     "endObservedAt",
                 ):
-                    validation_at = (
-                        instant(metrics["generatedAt"]) if reason == "future_timestamp" else now
-                    )
+                    validation_at = instant(metrics["generatedAt"])
                     stamp = None if metric.get(field) is None else instant(metric[field])
                     if stamp is not None and stamp > validation_at:
                         failures.add("metric_future_timestamp")

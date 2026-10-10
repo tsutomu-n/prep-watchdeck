@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_22:14 JST"
+timestamp="2026-10-10(土)_22:26 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T22:14:35+09:00`
+- 更新: `2026-10-10T22:26:15+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -598,6 +598,14 @@ Provider照会、保存足の挿入、現役service操作はしない。窓移�
 分途中の版切替は`boundary_unresolved`、catalogで覆えない期間は`catalog_unavailable`として残し、
 後のcatalog変化だけでは解消しない。終了0はこのscopeの完全、1は未解決あり、2は入力・DB・出力等の失敗。
 Provider可用性や将来の全履歴保証とは別の診断である。
+
+現在の出力は`candle-gap-audit-v2`。DB名/接続先に加えて参照する契約表と足表のrelation OIDを固定し、
+同DBの別schemaへのすり替わりと観測時刻の後退を拒否する。counts、scope、契約範囲、欠損キーと
+recoveredの整合も検査する。hash一致は署名や真正性の保証ではない。
+旧v1台帳は`--previous`へ流用しない。自動変換・自動baseline更新は行わず旧証拠を保全する。
+新形式のbaselineを用意する際も、旧未解決キー/境界を解消扱いにせず別途照合して引き継ぐ。
+60秒予算はSQL取得と台帳計算を通して適用する。previous/rosterはregular fileだけを容量制限付きで読み、
+FIFO等の特殊fileは待機せず拒否する。
 
 ## Attention Coreの隔離実行と運用
 

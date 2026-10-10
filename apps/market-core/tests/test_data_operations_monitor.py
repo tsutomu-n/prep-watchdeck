@@ -577,3 +577,53 @@ def test_invalid_completed_file_blocks_strict_without_changing_ordinary_monitor(
     assert UTILITY["main"]([*args, "--require-complete-recovery"]) == 1
     report = json.loads(capsys.readouterr().out)
     assert "endpointRecovery_acceptance_unverified" in report["operationalFailures"]
+
+
+def test_metric_future_at_generation_does_not_become_valid_when_checked_later():
+    data = inputs()
+    data["recovery"] = _completed_recovery()
+    data["metrics"]["rows"][0]["tradeChange"]["1h"]["endSourceAt"] = (
+        NOW + timedelta(seconds=1)
+    ).isoformat()
+    result = UTILITY["check"](
+        **data, now=NOW + timedelta(seconds=2), require_complete_recovery=True
+    )
+    assert "metric_future_timestamp" in result["operationalFailures"]
+    assert result["metricTimestampDiagnostics"][0]["validationAt"] == NOW.isoformat()
+
+
+def test_strict_accepts_completed_publication_before_running_state_is_replaced():
+    data = inputs()
+    completed = _completed_recovery()
+    data["recovery"] = copy.deepcopy(completed)
+    current = data["recovery"]["endpointRecovery"]
+    current.update(execution="running", finishedAt=None)
+    for execution, rejected in (("succeeded", False), ("partial", True), ("failed", True)):
+        latest = copy.deepcopy(completed)
+        latest["endpointRecovery"]["execution"] = execution
+        result = UTILITY["check"](
+            **data, now=NOW, completed_recovery=latest, require_complete_recovery=True
+        )
+        assert (
+            "endpointRecovery_acceptance_unverified" in result["operationalFailures"]
+        ) is rejected
+    completed["endpointRecovery"]["startedAt"] = (NOW - timedelta(seconds=29)).isoformat()
+    result = UTILITY["check"](
+        **data, now=NOW, completed_recovery=completed, require_complete_recovery=True
+    )
+    assert "endpointRecovery_acceptance_unverified" in result["operationalFailures"]
+
+
+def test_inconsistent_terminal_artifacts_cannot_ignore_older_failed_completion():
+    data = inputs()
+    data["recovery"] = _completed_recovery()
+    completed = copy.deepcopy(data["recovery"])
+    completed["endpointRecovery"].update(
+        runId="d" * 32,
+        execution="failed",
+        finishedAt=(NOW - timedelta(minutes=2)).isoformat(),
+    )
+    result = UTILITY["check"](
+        **data, now=NOW, completed_recovery=completed, require_complete_recovery=True
+    )
+    assert "endpointRecovery_acceptance_unverified" in result["operationalFailures"]

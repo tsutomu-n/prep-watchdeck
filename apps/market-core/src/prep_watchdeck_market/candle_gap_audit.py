@@ -124,12 +124,22 @@ class Boundary(EvidenceModel):
     status: Literal["boundary_unresolved"] = "boundary_unresolved"
     contracts: tuple[ContractRange, ...] = Field(min_length=1)
 
+    @field_validator("bucket")
+    @classmethod
+    def minute_time(cls, value: datetime) -> datetime:
+        return AuditScope.minute_time(value)
+
 
 class UnavailableRange(EvidenceModel):
     instrument_id: str
     since: datetime
     until: datetime
     status: Literal["catalog_unavailable"] = "catalog_unavailable"
+
+    @field_validator("since", "until")
+    @classmethod
+    def minute_time(cls, value: datetime) -> datetime:
+        return AuditScope.minute_time(value)
 
 
 class TrackedGap(EvidenceModel):
@@ -140,7 +150,7 @@ class TrackedGap(EvidenceModel):
 
 
 class HistoryAudit(EvidenceModel):
-    schema_version: Literal["candle-gap-audit-v1"] = "candle-gap-audit-v1"
+    schema_version: Literal["candle-gap-audit-v2"] = "candle-gap-audit-v2"
     scope: AuditScope
     scope_hash: str
     observed_at: datetime
@@ -151,14 +161,102 @@ class HistoryAudit(EvidenceModel):
     provider_requests: Literal[0] = 0
     provider_status: Literal["not_queried"] = "not_queried"
     contract_ranges: tuple[ContractRange, ...]
-    expected_minutes: int
-    present_minutes: int
+    expected_minutes: int = Field(ge=0, le=MAX_BUCKETS, strict=True)
+    present_minutes: int = Field(ge=0, le=MAX_BUCKETS, strict=True)
     missing: tuple[CandleKey, ...]
     boundaries: tuple[Boundary, ...]
     catalog_unavailable: tuple[UnavailableRange, ...]
     tracked_gaps: tuple[TrackedGap, ...]
     previous_evidence_hash: str | None
     evidence_hash: str
+
+    @field_validator("observed_at")
+    @classmethod
+    def observation_time(cls, value: datetime) -> datetime:
+        return _utc(value)
+
+    @model_validator(mode="after")
+    def consistent(self) -> Self:
+        if self.observed_at < self.scope.until:
+            raise ValueError("observation precedes the scope window")
+        total = len(self.scope.instrument_ids) * int(
+            (self.scope.until - self.scope.since).total_seconds() // 60
+        )
+        if (
+            self.expected_minutes > total
+            or self.present_minutes > self.expected_minutes
+            or self.expected_minutes - self.present_minutes != len(self.missing)
+            or (
+                not self.boundaries
+                and not self.catalog_unavailable
+                and self.expected_minutes != total
+            )
+        ):
+            raise ValueError("inconsistent coverage counts")
+        versions = {item.version_id: item for item in self.contract_ranges}
+        if len(versions) != len(self.contract_ranges) or len(versions) > MAX_VERSIONS:
+            raise ValueError("duplicate or excessive contract versions")
+        if any(item.instrument_id not in self.scope.instrument_ids for item in versions.values()):
+            raise ValueError("contract outside requested scope")
+        if not self.boundaries and not self.catalog_unavailable:
+            by_instrument: dict[str, list[ContractRange]] = defaultdict(list)
+            for contract in versions.values():
+                by_instrument[contract.instrument_id].append(contract)
+            for identity in self.scope.instrument_ids:
+                covered_until = self.scope.since
+                for contract in sorted(by_instrument[identity], key=lambda item: item.valid_from):
+                    start = max(self.scope.since, contract.valid_from)
+                    end = min(self.scope.until, contract.valid_to or self.scope.until)
+                    if start >= end:
+                        continue
+                    if start != covered_until or end.second or end.microsecond:
+                        raise ValueError(
+                            "contract coverage requires a boundary or catalog interval"
+                        )
+                    covered_until = end
+                if covered_until != self.scope.until:
+                    raise ValueError("contract coverage does not span the scope")
+        missing_keys = {_key(item) for item in self.missing}
+        tracked = {_key(item.key): item.status for item in self.tracked_gaps}
+        if len(missing_keys) != len(self.missing) or len(tracked) != len(self.tracked_gaps):
+            raise ValueError("duplicate gap keys")
+        if any(tracked.get(key) != "missing" for key in missing_keys):
+            raise ValueError("missing gap has no matching unresolved tracking entry")
+        for item in (*self.missing, *(entry.key for entry in self.tracked_gaps)):
+            if item.instrument_id not in self.scope.instrument_ids or not (
+                self.scope.since <= item.bucket < self.scope.until
+            ):
+                raise ValueError("gap outside requested scope")
+        for item in (
+            *self.missing,
+            *(entry.key for entry in self.tracked_gaps if entry.status == "recovered"),
+        ):
+            version = versions.get(item.version_id)
+            if (
+                version is None
+                or version.instrument_id != item.instrument_id
+                or version.definition_hash != item.definition_hash
+                or version.valid_from > item.bucket
+                or (version.valid_to is not None and version.valid_to < item.bucket + MINUTE)
+            ):
+                raise ValueError("missing or recovered gap has no matching contract")
+        if len({_boundary_key(item) for item in self.boundaries}) != len(self.boundaries):
+            raise ValueError("duplicate boundary keys")
+        for item in self.boundaries:
+            if (
+                item.instrument_id not in self.scope.instrument_ids
+                or not self.scope.since <= item.bucket < self.scope.until
+                or any(contract.instrument_id != item.instrument_id for contract in item.contracts)
+            ):
+                raise ValueError("boundary outside requested scope")
+        for item in self.catalog_unavailable:
+            if item.instrument_id not in self.scope.instrument_ids or not (
+                self.scope.since <= item.since < item.until <= self.scope.until
+            ):
+                raise ValueError("catalog interval outside requested scope")
+        if len(self.tracked_gaps) + len(self.boundaries) + len(self.catalog_unavailable) > MAX_GAPS:
+            raise ValueError("gap evidence exceeds budget")
+        return self
 
     @property
     def complete(self) -> bool:
@@ -193,6 +291,11 @@ def _check_previous(previous: HistoryAudit, scope: AuditScope, database_identity
         raise ValueError("previous evidence hash differs")
 
 
+def _check_deadline(deadline: float) -> None:
+    if time.monotonic() > deadline:
+        raise ValueError("audit exceeds time budget")
+
+
 def build_audit(
     scope: AuditScope,
     ranges: tuple[ContractRange, ...],
@@ -202,7 +305,10 @@ def build_audit(
     snapshot: str,
     database_identity: str,
     previous: HistoryAudit | None = None,
+    deadline: float | None = None,
 ) -> HistoryAudit:
+    deadline = time.monotonic() + 60 if deadline is None else deadline
+    _check_deadline(deadline)
     observed_at = _utc(observed_at)
     if scope.until > observed_at:
         raise ValueError("scope must end before the observation")
@@ -212,6 +318,8 @@ def build_audit(
         raise ValueError("contract outside requested scope")
     if previous is not None:
         _check_previous(previous, scope, database_identity)
+        if observed_at < previous.observed_at:
+            raise ValueError("observation precedes previous evidence")
     by_instrument: dict[str, list[ContractRange]] = defaultdict(list)
     for item in ranges:
         by_instrument[item.instrument_id].append(item)
@@ -225,6 +333,8 @@ def build_audit(
     for identity in scope.instrument_ids:
         uncovered_start: datetime | None = None
         for index in range(minutes):
+            if index % 256 == 0:
+                _check_deadline(deadline)
             bucket = scope.since + index * MINUTE
             overlaps = tuple(
                 item
@@ -329,7 +439,9 @@ def build_audit(
         previous_evidence_hash=None if previous is None else previous.evidence_hash,
         evidence_hash="",
     )
-    return report.model_copy(update={"evidence_hash": _content_hash(report)})
+    report = report.model_copy(update={"evidence_hash": _content_hash(report)})
+    _check_deadline(deadline)
+    return report
 
 
 def audit_connection(
@@ -351,7 +463,8 @@ def audit_connection(
             "SELECT statement_timestamp(), pg_current_snapshot()::text, "
             "current_setting('transaction_read_only'), current_database(), "
             "inet_server_addr()::text, inet_server_port(), "
-            "(SELECT oid FROM pg_database WHERE datname=current_database())"
+            "(SELECT oid FROM pg_database WHERE datname=current_database()), "
+            "'venue_instrument_versions'::regclass::oid, 'candle_1m'::regclass::oid"
         ).fetchone()
         if meta is None or meta[2] != "on":
             raise ValueError("read-only snapshot could not be established")
@@ -414,11 +527,12 @@ def audit_connection(
             snapshot=meta[1],
             database_identity=database_identity,
             previous=previous,
+            deadline=deadline,
         )
 
 
 def load_evidence(path: Path) -> HistoryAudit:
-    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC)
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK)
     with os.fdopen(descriptor, "rb") as stream:
         if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
             raise ValueError("previous evidence must be a regular file")
@@ -461,7 +575,10 @@ def main(argv: list[str] | None = None) -> int:
     try:
         identifiers = list(args.instrument_id)
         if args.roster is not None:
-            with args.roster.open("rb") as stream:
+            descriptor = os.open(args.roster, os.O_RDONLY | os.O_CLOEXEC | os.O_NONBLOCK)
+            with os.fdopen(descriptor, "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    raise ValueError("roster must be a regular file")
                 raw = stream.read(1024 * 1024 + 1)
             if len(raw) > 1024 * 1024:
                 raise ValueError("roster exceeds size budget")

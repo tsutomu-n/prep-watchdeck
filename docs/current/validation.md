@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-10(土)_22:14 JST"
+timestamp="2026-10-10(土)_22:26 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T22:14:35+09:00`
+- 更新: `2026-10-10T22:26:15+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -327,6 +327,10 @@ Web healthや短い公開API到達、fixture成功をこの受入へ読み替え
 測定の最終監査は正常な親/子process終了、signalなし、元receiptの完了状態、policy/supervisor/source hash、
 acceptanceとraw全量3fileのhashを確認する。observer/fundingの実経過7200秒とraw streamの期間、
 partial tailなしも必要。最終auditで後から正常終了を書き足して異常終了を合格へ昇格させない。
+最終監査はraw全量を再読し、同じbytesからhashとsample数/連続性/期間/最大gap/先頭末尾時刻を求める。
+receiptとsummaryの申告値だけでは合格にしない。epochとmonotonicの差、partial tail、再読後の差替えを
+拒否する。API末尾sampleだけの既存30秒猶予は維持する。JSON解析とhashも同一bytesへ結び付ける。
+metricの未来時刻はartifact生成時刻を基準に検査し、時間経過だけで正常値へ昇格させない。
 警告例外の実使用があれば`PASS_WITH_REVIEWED_EXCEPTIONS`とし、理由/対象/版/期間/上限/根拠を保持する。
 
 関連pytestは時計進行中のendpoint完了、同件数での版差替え、欠落proof、後続失敗、未知/増加warning、

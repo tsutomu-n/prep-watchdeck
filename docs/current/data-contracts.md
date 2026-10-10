@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_22:14 JST"
+timestamp="2026-10-10(土)_22:26 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T22:14:35+09:00`
+- 更新: `2026-10-10T22:26:15+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -428,6 +428,10 @@ run開始/終了のroster一致を保持する。旧artifactは読めるが、�
 同じschemaで直近terminal結果を保持する。成功に限定せずpartial/failedでも更新し、過去成功を失効させる。
 running側の`previousCompletedRunId`が直前完了runを指す。finishedAtは一度確定し、DB auditとartifactで
 共用する。generatedAtはそれ以降の時刻にする。
+接続前にrunningを発行し、DB接続/開始/終了記録の失敗やcancelでもfailed artifactを独立して発行する。
+片方の状態fileの書込が失敗しても他方を試す。両方が書込不能の場合は実行例外を維持する。
+latest-completedが同じrunのterminalへ先に置換された瞬間は、run ID・開始時刻・trigger・前任runの
+一致を確認してその完了証拠を検査する。不一致のterminal同士は受入へ使用しない。
 診断detailsの上限128件は維持し、失敗・残欠損・未確認を正常対象より先に表示する。
 `detailsTruncated=true`の結果だけでは全欠損を列挙したことにならない。完全な診断は固定窓・契約版で全件scanする。
 同じschemaを使う`candle-endpoint-recovery-state.json`は指標のexact endpointだけを回復した

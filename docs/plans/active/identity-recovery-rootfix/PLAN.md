@@ -1,9 +1,9 @@
 # Identity・履歴診断・50件開始gateの根本修正
 
-timestamp="2026-10-10(土)_22:14 JST"
+timestamp="2026-10-10(土)_22:32 JST"
 - 作成: `2026-10-10T21:25:20+09:00`
-- 更新: `2026-10-10T22:14:35+09:00`
-- 検証: `2026-10-10T22:14:35+09:00`
+- 更新: `2026-10-10T22:32:13+09:00`
+- 検証: `2026-10-10T22:32:13+09:00`
 - 状態: `実装計画`
 
 ## Goal / scope
@@ -29,7 +29,7 @@ timestamp="2026-10-10(土)_22:14 JST"
 
 関連pytest、Ruff check/format、Market Pyrefly、docs metadata/links、diff check。
 実DBを使う検証は専用隔離DBのみ。運用診断は専用Marketへのread-only transactionと保存artifactだけ。
-全体release gateは本番releaseを具体化する段階で実施する。
+複数境界の修正は隔離環境の全体gateでも検証する。本番releaseの組立・配置は別工程とする。
 50件の新7200秒観測と総合判定は本番操作範囲の明示後に実施し、判定後停止。
 
 ## Rollback / open items
@@ -77,7 +77,7 @@ helper=/home/tn/watchdeck-local-archive/mexc-100-scale-20261010-1025/reobserve-s
 PEARLのimmutable native map候補は下記の追加実装で作成したが、本番採用は未実施。
 固定窓の旧99欠損は保存済みとなったが、旧版PEARLの欠損・分途中境界を未解決のまま保持する。
 endpoint固定基準時刻の全件保証と全Venue完全性を達成したとは判定しない。
-必要なsourceだけを50件releaseへ組み立てる前にrelease gateを実行する。
+必要なsourceだけを50件releaseへ組み立て、local全体gateの結果とreleaseの同一性を照合する。
 本番map採用・対象unit操作・必要な限定回復・新50件7200秒測定は具体的操作の承認後。
 現在はlocal修正の検証・commitまで。旧100件候補を直接deployしない。
 
@@ -161,3 +161,65 @@ endpoint固定基準時刻の全件保証と全Venue完全性を達成したと�
 その具体的な運用変更と新50件測定を承認後に適用し、元の観測期間は合算しない。
 旧版PEARL1本と境界1件は未解決のまま追跡する。許可なしの旧足付替え・補間・hash除外は行わない。
 この未完了の運用/実データ境界があるためplanはactiveに残す。
+
+## 残リスクの徹底調査・FIX（d40ccb1後）
+
+ユーザーの追加指示に基づき、producer/consumerを横断して回復証拠、固定期間台帳、
+測定helperの停止/時刻/例外/証拠同一性を再監査する。独立した担当で再現を先に確認し、
+確認済み不具合だけを最小修正する。root checkoutのdirty4は保全し、
+隔離branch `ai/acceptance-risk-fix-20261010-2217` で作業する。
+
+- [x] R1 producer/checkerの中断・版変更・古い証拠・時刻境界の再現と修正。
+- [x] R2 固定期間台帳の再scan・時間・保存足有効性・scope/DB同一性の再現と修正。
+- [x] R3 受入helperの実producer連結・正常/異常終端・raw証拠・期間coverageの再現と修正。
+- [x] R4 統合検証、独立review、未解決データ/本番境界の明示、対象diffだけlocal commit。
+
+検証は実コードの必要最小限の回帰から進め、複数境界の修正を統合した場合はlocal全体gateで
+実DB/全package/生成schema/Web E2Eまで確認する。DBは必ず専用一時Postgresを使う。
+本番map採用、unit操作、live DB変更、Providerによる回復、再測定、CI/push/PRはこの作業では行わない。
+旧helper/evidence/candidateを保全し、helper修正が必要なら新copy
+`reobserve-stage50-riskfix-20261010-2217` を作る。rollbackは今回commitと新copyに限定する。
+
+
+### 再現した不具合と修正
+
+- Recovery: DB接続/開始/完了失敗とcancelが旧成功を残す経路を修正。接続前runningと
+  DB auditから独立したfailed artifactで失効させる。二重fileの片方が失敗しても他方を試す。
+  完了公開途中の同一runだけを検査し、不一致terminalと時刻経過だけで正常化する未来metricを拒否する。
+  完了証拠のFIFO/symlink/過大fileによる待機・読取も防ぐ。
+- 固定窓台帳: 時刻逆行、counts/scope/契約/欠損/recoveredの内部不整合、空の契約一覧や
+  境界削除による偽completeを拒否する。同DBの別schemaはrelation OIDで区別する。
+  SQLと計算に共通の60秒予算を適用し、特殊入力fileの待機を防ぐ。
+- 受入helper: 時刻のない短いrawでもreceipt自己申告で合格できた経路を修正。
+  raw全量の同一bytesから期間・連続性・gap・hashを再計算し、receipt/summaryと照合する。
+  JSON読取/hashの分離とreplay後のraw差替えも拒否する。API末尾の既存30秒猶予は維持する。
+- 独立最終review: 新しいactionable findingなし。実systemd停止、全体FS書込不能、
+  本番の7200秒観測をsource検証で確認済みにはしない。
+
+### 互換性と未完了の受入境界
+
+台帳は`candle-gap-audit-v2`で、旧v1を`--previous`に使用できない。
+旧v1証拠を保全し、新baselineと旧未解決キー/境界を明示的に照合して引き継ぐ。
+自動変換・過去欠損の消去・推定補完は行わない。hashは署名や真正性の保証ではない。
+新helperは`approved=false`、warning例外なし、settlement例外無効のまま。
+旧helper/evidenceはhash不変。本番採用・実unit停止受入・新50件7200秒観測は未実施。
+PEARL旧版欠損1本/境界1件と`imn`意味不明は前回22:05時点の保存証拠に基づく未解決事項であり、
+この追加監査ではlive DB/Providerの再照合を行っていない。
+
+
+### 追加リスクFIXの最終検証
+
+- PASS: `bash scripts/verify-local.sh` exit0。専用一時Postgres17（port32816）を使用。
+  Market485 / Ranking176 / Attention78 pytest、repository契約18、Web266 Vitest。
+  Desktop/Mobile E2E157 PASS、モバイル専用caseのDesktop側1件のみ予定skip。
+  実SQLの別schema拒否とproducer→artifact→API→Browserを含む。
+- PASS: Ruff/check-format、Pyrefly 0 errors（既存設定でtests除外、Market既存suppressionあり）、
+  schema/type再生成、Web check 0 errors/0 warnings、build。
+- PASS: 最終sourceの受入37 pytestと、新helper38 unittest。host testはprojectのuv環境を使用。
+  system Pythonではpsycopg未導入による1件の環境errorがあり、指定環境で全件再実行した。
+- PASS: 旧helper14/new helper15ファイルのhash、canonical source/testと全policy pin、launcher DRY_RUN。
+- PASS: docs metadata/links、diff check、独立review。今回15ファイルのみlocal commitし、rootのdirty4は保全。
+- 証拠: `/home/tn/watchdeck-local-archive/acceptance-risk-fix-20261010-2217/verify-local.log`。
+  helperは上記new copyでGit管理外のmanifestに紐付く。
+- Source検証はPASS。本番配置・実unit lifecycle・新50件7200秒観測・実データ受入は未完了。
+  push/PR/CI、本番DB書込、Provider回復、100件昇格は未実施。

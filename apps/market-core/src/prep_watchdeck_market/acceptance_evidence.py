@@ -166,6 +166,7 @@ def validate_observation_completion(
     acceptance_sha256: str,
     raw_sha256: Mapping[str, str],
     raw_sizes: Mapping[str, int],
+    raw_progress: Mapping[str, Mapping[str, Any]],
     minimum_seconds: int = 7200,
 ) -> dict[str, Any]:
     """Require the original run to have succeeded under exactly the audited policy/source.
@@ -237,8 +238,41 @@ def validate_observation_completion(
     )
     streams = _object(receipt.get("streams"), "original_streams_missing")
     _need(set(streams) == set(RAW_STREAMS), "original_streams_missing")
+    _need(set(raw_progress) == set(RAW_STREAMS), "original_raw_progress_missing")
     for name, path in RAW_STREAMS.items():
         stream = _object(streams[name], "original_stream_invalid")
+        actual = _object(raw_progress[name], "original_raw_progress_missing")
+        fields = (
+            "firstSampleAt",
+            "lastSampleAt",
+            "firstElapsedSeconds",
+            "lastElapsedSeconds",
+            "lastSampleIndex",
+            "partialTailBytes",
+            "completeLineBytes",
+            "observedDurationSeconds",
+            "maxSampleGapSeconds",
+        )
+        _need(
+            all(key in actual and stream.get(key) == actual[key] for key in fields),
+            "original_raw_progress_mismatch",
+        )
+        _need(
+            _seconds(actual.get("maxSampleGapSeconds"), 0)
+            and actual["maxSampleGapSeconds"]
+            <= {"performance": 93, "api": 13.5, "funding": 6}[name]
+            and _seconds(actual.get("firstElapsedSeconds"), 0)
+            and _seconds(
+                actual.get("lastElapsedSeconds"),
+                minimum_seconds - 30 if name == "api" else minimum_seconds,
+            )
+            and (name == "api" or actual["firstElapsedSeconds"] == 0)
+            and _time(receipt["startedAt"])
+            <= _time(actual["firstSampleAt"])
+            <= _time(actual["lastSampleAt"])
+            <= _time(receipt["endedAt"]),
+            "original_raw_clock_or_gap_invalid",
+        )
         # The API sampler is asynchronous; its final sample may precede the performance sample
         # by the same 30-second freshness bound enforced while observing.
         required = minimum_seconds - 30 if name == "api" else minimum_seconds
@@ -261,6 +295,15 @@ def validate_observation_completion(
         and _seconds(summary.get("observedElapsedSeconds"), minimum_seconds)
         and _seconds(summary.get("observedWallSeconds"), minimum_seconds),
         "original_summary_incomplete",
+    )
+    performance = raw_progress["performance"]
+    _need(
+        summary.get("samples") == performance["lastSampleIndex"] + 1
+        and _time(summary.get("startedAt")) == _time(performance["firstSampleAt"])
+        and _time(summary.get("lastSampleAt")) == _time(performance["lastSampleAt"])
+        and abs(summary["observedWallSeconds"] - performance["observedDurationSeconds"]) <= 0.000001
+        and abs(summary["observedElapsedSeconds"] - performance["lastElapsedSeconds"]) <= 0.000501,
+        "original_summary_raw_mismatch",
     )
     return {
         "fullAcceptance": receipt["fullAcceptance"],

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -158,7 +159,7 @@ def _state(
 ) -> CandleRecoveryState:
     return CandleRecoveryState(
         run_id=run_id,
-        generated_at=datetime.now(UTC),
+        generated_at=max(datetime.now(UTC), finished_at or started_at),
         started_at=started_at,
         finished_at=finished_at,
         execution=execution,
@@ -254,7 +255,7 @@ class CandleRecovery:
             AUTOMATIC_RUN_SECONDS if trigger != "manual" else MANUAL_RUN_SECONDS
         )
         run_id = uuid4()
-        connection = await _open_connection(self._database_url, apply=apply)
+        connection: psycopg.Connection[Any] | None = None
         state_path = self._state_dir / "artifacts" / "candle-recovery-state.json"
         previous_completed_id = previous_completed_run_id(state_path) if apply else None
         run_started = False
@@ -265,19 +266,6 @@ class CandleRecovery:
         client: NativeCandleHistoryClient | None = None
         try:
             if apply:
-                # A cancellation can arrive after the DB thread commits the start row.
-                # Failure cleanup must still finalize that row once the thread is joined.
-                run_started = True
-                await _thread_call(
-                    start_recovery_run,
-                    connection,
-                    run_id,
-                    started_at,
-                    metrics={
-                        "windowStart": window.start.isoformat(),
-                        "windowEnd": window.end.isoformat(),
-                    },
-                )
                 write_recovery_state(
                     state_path,
                     _state(
@@ -300,6 +288,21 @@ class CandleRecovery:
                         error_code=None,
                         previous_completed_id=previous_completed_id,
                     ),
+                )
+            connection = await _open_connection(self._database_url, apply=apply)
+            if apply:
+                # A cancellation can arrive after the DB thread commits the start row.
+                # Failure cleanup must still finalize that row once the thread is joined.
+                run_started = True
+                await _thread_call(
+                    start_recovery_run,
+                    connection,
+                    run_id,
+                    started_at,
+                    metrics={
+                        "windowStart": window.start.isoformat(),
+                        "windowEnd": window.end.isoformat(),
+                    },
                 )
             targets = await _thread_call(
                 load_recovery_targets, connection, venue=venue, instrument_id=instrument_id
@@ -560,23 +563,9 @@ class CandleRecovery:
             write_recovery_state(state_path, state)
             return state
         except BaseException:
-            if apply and run_started and not finalized:
+            if apply:
                 failed_at = max(datetime.now(UTC), started_at)
-                try:
-                    await _thread_call(
-                        finish_recovery_run,
-                        connection,
-                        run_id,
-                        failed_at,
-                        status="failed",
-                        received=sum(len(missing) for missing in before.values()),
-                        inserted=sum(inserted_by_target.values()),
-                        error_code="recovery_run_failed",
-                        metrics={
-                            "windowStart": window.start.isoformat(),
-                            "windowEnd": window.end.isoformat(),
-                        },
-                    )
+                with suppress(Exception):
                     write_recovery_state(
                         state_path,
                         _state(
@@ -614,8 +603,23 @@ class CandleRecovery:
                             previous_completed_id=previous_completed_id,
                         ),
                     )
-                except Exception:
-                    pass
+                if connection is not None and run_started and not finalized:
+                    with suppress(Exception):
+                        await _thread_call(
+                            finish_recovery_run,
+                            connection,
+                            run_id,
+                            failed_at,
+                            status="failed",
+                            received=sum(len(missing) for missing in before.values()),
+                            inserted=sum(inserted_by_target.values()),
+                            error_code="recovery_run_failed",
+                            metrics={
+                                "windowStart": window.start.isoformat(),
+                                "windowEnd": window.end.isoformat(),
+                            },
+                        )
             raise
         finally:
-            await _thread_call(connection.close)
+            if connection is not None:
+                await _thread_call(connection.close)

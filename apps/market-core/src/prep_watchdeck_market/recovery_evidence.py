@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import stat
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
@@ -13,6 +15,8 @@ from prep_watchdeck_market.candle_recovery_state import (
     RecoveryTargetIdentity,
 )
 from prep_watchdeck_market.candle_recovery_store import RecoveryTarget
+
+MAX_RECOVERY_STATE_BYTES = 8 * 1024 * 1024
 
 
 def roster_evidence(
@@ -51,9 +55,17 @@ def completed_state_path(state_path: Path) -> Path:
 def previous_completed_run_id(state_path: Path) -> str | None:
     """A running state names its direct predecessor, including a failed predecessor."""
     try:
-        completed = CandleRecoveryState.model_validate_json(
-            completed_state_path(state_path).read_bytes()
+        descriptor = os.open(
+            completed_state_path(state_path), os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
         )
+        with os.fdopen(descriptor, "rb") as handle:
+            info = os.fstat(handle.fileno())
+            if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_RECOVERY_STATE_BYTES:
+                return None
+            raw = handle.read(MAX_RECOVERY_STATE_BYTES + 1)
+            if len(raw) > MAX_RECOVERY_STATE_BYTES:
+                return None
+        completed = CandleRecoveryState.model_validate_json(raw)
     except (OSError, ValueError):
         return None
     if completed.execution == "running" or completed.finished_at is None:
@@ -64,6 +76,9 @@ def previous_completed_run_id(state_path: Path) -> str | None:
 def write_recovery_state(state_path: Path, state: CandleRecoveryState) -> None:
     # Publish every terminal result first: partial/failed must invalidate an older success.
     # The runtime lock serializes runs; each JSON replacement remains atomic.
-    if state.execution != "running":
-        write_artifact_atomic(completed_state_path(state_path), state)
-    write_artifact_atomic(state_path, state)
+    try:
+        if state.execution != "running":
+            write_artifact_atomic(completed_state_path(state_path), state)
+    finally:
+        # A broken completion path must not hide failure in an old running state.
+        write_artifact_atomic(state_path, state)

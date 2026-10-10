@@ -606,7 +606,9 @@ def test_cancel_while_connecting_closes_the_returned_connection(
 
     asyncio.run(exercise())
     assert len(connections) == 1 and connections[0].closed
-    assert not (tmp_path / "artifacts" / "candle-recovery-state.json").exists()
+    state = json.loads((tmp_path / "artifacts" / "candle-recovery-state.json").read_text())
+    assert state["execution"] == "failed"
+    assert state["errorCode"] == "recovery_run_failed"
     with exclusive_runtime_lock(tmp_path / "control" / "candle-recovery.lock"):
         pass
 

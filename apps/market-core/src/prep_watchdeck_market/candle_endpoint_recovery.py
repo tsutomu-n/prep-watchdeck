@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -191,7 +192,7 @@ class CandleEndpointRecovery:
         run_id = uuid4()
         state_path = self._state_dir / "artifacts" / "candle-endpoint-recovery-state.json"
         previous_completed_id = previous_completed_run_id(state_path)
-        connection = await _open_connection(self._database_url, apply=True)
+        connection: psycopg.Connection[Any] | None = None
         roster_targets: tuple[RecoveryTarget, ...] = ()
         roster_unchanged = False
         before: EndpointSnapshot = {}
@@ -285,11 +286,12 @@ class CandleEndpointRecovery:
             }
 
         try:
+            write_recovery_state(state_path, state("running", None))
+            connection = await _open_connection(self._database_url, apply=True)
             run_started = True
             await _thread_call(
                 start_recovery_run, connection, run_id, started_at, metrics=audit_metrics()
             )
-            write_recovery_state(state_path, state("running", None))
             roster_targets = await _thread_call(load_recovery_targets, connection)
             roster_targets = tuple(
                 target for target in roster_targets if target.venue in self._enabled_venues
@@ -451,9 +453,11 @@ class CandleEndpointRecovery:
             write_recovery_state(state_path, result)
             return result
         except BaseException:
-            if run_started and not finalized:
-                try:
-                    failed = state("failed", "endpoint_recovery_failed")
+            failed = state("failed", "endpoint_recovery_failed")
+            with suppress(Exception):
+                write_recovery_state(state_path, failed)
+            if connection is not None and run_started and not finalized:
+                with suppress(Exception):
                     await _thread_call(
                         finish_recovery_run,
                         connection,
@@ -465,9 +469,7 @@ class CandleEndpointRecovery:
                         error_code="endpoint_recovery_failed",
                         metrics=audit_metrics(),
                     )
-                    write_recovery_state(state_path, failed)
-                except Exception:
-                    pass
             raise
         finally:
-            await _thread_call(connection.close)
+            if connection is not None:
+                await _thread_call(connection.close)
