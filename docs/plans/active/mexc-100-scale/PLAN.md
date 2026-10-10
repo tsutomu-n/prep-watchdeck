@@ -1,8 +1,8 @@
 # MEXC 10 → 50 → 100 銘柄の最適化と段階受入
 
-timestamp="2026-10-10(土)_11:47 JST"
+timestamp="2026-10-10(土)_11:54 JST"
 - 作成: `2026-10-10T10:30:00+09:00`
-- 更新: `2026-10-10T11:47:54+09:00`
+- 更新: `2026-10-10T11:54:35+09:00`
 - 検証: `未検証`
 - 状態: `実装計画`
 
@@ -145,3 +145,5 @@ MEXC取得停止→直前段階registryへ→単一writerでcurrent catalog→�
 - 50件2h/100件24h観測と最終容量受入は未実施。isolated replayの追加90件groupIdはnullで、現singleton文字列を入れた場合も行数668は不変。summary増分0.77%、4詳細増分0.11%のserialization差を確認したが、その補正後性能は未実測。
 - 既存maintenance/dataopsは10:07/10:04時点で復帰しており、過去失敗を現障害としない。
 - 11:46 JST: 最適化済み10件の600秒通常運転はPASS。OOM/restart0、cycle最大3.197秒、入力age最大47.694秒、summary/detail p95 201.837/72.533ms、anonymous+kernel標本peak470.20MiB。容量の10分外挿は診断のみで、24h容量受入は未実施。実効registryを50件へ変更し次releaseを準備する。
+- 11:51 JST: 3e3933eの50件registryを配置。専用writer停止中にhash固定の審査済みcatalogだけを保存し、実contractVersionでmap 0ac45f50a8e5861642d3428eを採用。旧資格・日時・history保持、1147 originals/618 rows、native-only review40・quantity4・Widget43（旧3保持）。ranking資格gateのexit1は未審査40件による想定失敗。11:53に価格/OI/Funding50件readyとnative singleton40件を確認。2h観測はまだ開始前。
+- 隔離copyへ現singletonでevidence1世代だけ追加したprofileはcycle3.636秒、同時summary1要求3.594秒。既存1705世代・immutable全hashを保持。latest読取の全走査と一時sortを確認し、decision_at DESC,id DESCの複合indexだけを追加。latest SQL/保存後一致検証/schema1を維持し、旧DB読取・同時刻tie・query plan回帰を含むstorage/service8件とRuff/Pyreflyを通過。改善量は配置後の通常観測で確認する。

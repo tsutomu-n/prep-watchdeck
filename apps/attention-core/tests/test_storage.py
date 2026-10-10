@@ -83,6 +83,59 @@ def test_transaction_failure_does_not_publish_and_non_evidence_stays_separate(tm
         store.close()
 
 
+def test_latest_response_breaks_same_decision_time_ties_by_descending_id(tmp_path):
+    store = AttentionStore(tmp_path / "attention")
+    try:
+        for generation_id in ("z-generation", "a-generation"):
+            inputs, response = empty_generation(generation_id=generation_id)
+            store.save_generation(inputs, (), response, evidence=False)
+        latest = store.latest_response()
+        assert latest is not None
+        assert latest.generation_id == "z-generation"
+    finally:
+        store.close()
+
+
+def test_existing_database_gets_latest_order_index_without_changing_readback(tmp_path):
+    state = tmp_path / "attention"
+    store = AttentionStore(state)
+    inputs, response = empty_generation()
+    try:
+        store.save_generation(inputs, (), response, evidence=False)
+        # Reproduce the existing schema before the latest-order index was introduced.
+        store.connection.execute("DROP INDEX IF EXISTS input_latest_order")
+        original = store.connection.execute("SELECT * FROM input_generations").fetchall()
+    finally:
+        store.close()
+
+    reopened = AttentionStore(state)
+    try:
+        statements = []
+        reopened.connection.set_trace_callback(statements.append)
+        assert reopened.latest_response() == response
+        reopened.connection.set_trace_callback(None)
+        latest_query = statements[-1]
+        plan = reopened.connection.execute("EXPLAIN QUERY PLAN " + latest_query).fetchall()
+        assert not any("TEMP B-TREE" in row[3] for row in plan)
+        assert any("USING INDEX input_latest_order" in row[3] for row in plan)
+        indexes = reopened.connection.execute("PRAGMA index_list(input_generations)").fetchall()
+        assert "input_time" in {row[1] for row in indexes}
+        assert reopened.connection.execute("SELECT * FROM input_generations").fetchall() == original
+        reader = sqlite3.connect(f"file:{state / 'attention.sqlite3'}?mode=ro", uri=True)
+        try:
+            assert reader.execute("SELECT value FROM metadata WHERE key='schema'").fetchone() == (
+                "1",
+            )
+            assert (
+                AttentionResponse.model_validate_json(reader.execute(latest_query).fetchone()[0])
+                == response
+            )
+        finally:
+            reader.close()
+    finally:
+        reopened.close()
+
+
 def test_database_symlink_rejected_before_any_write(tmp_path):
     target = tmp_path / "original"
     target.write_text("unchanged")

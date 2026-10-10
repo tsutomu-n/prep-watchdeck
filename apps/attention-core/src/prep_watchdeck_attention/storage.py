@@ -152,6 +152,8 @@ class AttentionStore(DiscoveryStorage):
                     PRIMARY KEY(generation_id,policy_id)
                 );
                 CREATE INDEX IF NOT EXISTS input_time ON input_generations(decision_at);
+                CREATE INDEX IF NOT EXISTS input_latest_order
+                    ON input_generations(decision_at DESC,id DESC);
                 CREATE UNIQUE INDEX IF NOT EXISTS evidence_cutoff
                     ON input_generations(cutoff) WHERE evidence=1;
             """)
