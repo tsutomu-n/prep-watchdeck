@@ -30,6 +30,7 @@ export default defineConfig({
     env: {
       HOST: "127.0.0.1",
       PORT: "4174",
+      PREP_WATCHDECK_ATTENTION_PORT: "18870",
       PREP_WATCHDECK_MARKET_STATE_DIR: resolve(
         process.cwd(),
         "../../var/tmp/e2e/runtime"

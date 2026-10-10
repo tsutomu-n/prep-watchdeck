@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import type { UserWorkspace } from "../../src/lib/server/user-workspace-repository";
+import { discoverySummaryFixture } from "../../src/lib/discovery/discovery-test-fixture";
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
 async function prepare(page: Page) {
@@ -8,6 +9,12 @@ async function prepare(page: Page) {
   await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
   await page.route("**/api/user-workspace", route => route.fulfill({
     json: { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] }
+  }));
+  await page.route("**/api/discovery-summary", route => route.fulfill({
+    json: { ...discoverySummaryFixture(), rows: [] }
+  }));
+  await page.route("**/api/decisions", route => route.fulfill({
+    json: { schemaVersion: 1, revision: 0, decisions: [] }
   }));
   await page.route("**/api/rankings?**", route => {
     const data = rankingFixture(new URL(route.request().url()).searchParams,
@@ -107,6 +114,7 @@ test("設定を一か所で変更し市場へ反映、詳細条件を閉じた�
   await expect(page.getByText(/JST 09:30/).first()).toBeVisible();
   const conditions = page.locator("details").filter({ has: page.locator("summary", { hasText: /^ランキング条件/ }) });
   await expect(conditions).not.toHaveAttribute("open");
+  await expect(page.getByTestId("discovery-workflow")).toContainText("現在の成立候補なし");
   if ((page.viewportSize()?.width ?? 1440) < 960) {
     const candidates = page.getByTestId("volume-spotlight").getByTestId("relative-volume-signal");
     await expect(candidates.nth(0)).toContainText("BTC");
