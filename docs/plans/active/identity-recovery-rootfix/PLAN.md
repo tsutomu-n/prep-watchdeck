@@ -1,6 +1,6 @@
 # Identity・履歴診断・50件開始gateの根本修正
 
-timestamp="2026-10-11(日)_07:10 JST"
+timestamp="2026-10-11(日)_07:14 JST"
 - 作成: `2026-10-10T21:25:20+09:00`
 - 更新: `2026-10-11T06:54:18+09:00`
 - 検証: `2026-10-10T22:32:13+09:00`
@@ -233,8 +233,8 @@ branchは`ai/acceptance-closeout-20261011-0653`。元checkoutのdirty4と旧evid
 - [x] C1 反復cancelでもDB thread完了前にconnection/復旧lockを解放しない。接続中cancelも安全に終了。
 - [x] C2 台帳SQLの取得batchごとに残時間を確認し、SQL timeoutを残時間以下へ制限する。
 - [x] C3 v1旧証拠とv2同scope baselineの比較manifest。旧未解決キー/境界を消去せず対応・未確認を残す。
-- [ ] C4 source/helper/map/policyを揃えた再生成可能なlocal受入bundleとhash/検証結果。
-- [ ] C5 統合差分review・関連最小回帰・必須lint/type/docs確認・対象差分だけlocal commit。
+- [x] C4 source/helper/map/policyを揃えた再生成可能なlocal受入bundleとhash/検証結果。
+- [x] C5 統合差分review・関連最小回帰・必須lint/type/docs確認・対象差分だけlocal commit。
 
 C3はread-only file比較だけでDB/Provider取得・v1自動変換・解決の自動承認を行わない。
 C4はtracked sourceだけを収録し、helperの外部参照も固定する。policyは未承認のまま、
@@ -254,3 +254,14 @@ C3の同scope実read-only再scanでは旧PEARL欠損1/境界1が残る。比較m
 copied helper testで旧test/fixture参照2件の欠落を確認した。旧原本を変更せず、
 必要なoffline test/fixtureを収録し、sourceと入力pathをbundleへ固定した。追加focused8 PASS。
 修正版commitから別outputで再生成し、最初のbundleを後から書き換えない。
+
+C4/C5のlocal実装・成果物検証完了。Source commitは7e69af6、最終bundleは
+`/home/tn/watchdeck-local-archive/acceptance-closeout-20261011-0653/review-bundle-final`。
+実locked build、610 tracked source/290 runtimeを含む941 fileのhash、3 CLI help、
+launcher DRY_RUN、copied helper 38 unittestを確認した。追加bundle局所8 pytestもPASS。
+Independent reviewのdependency欠落・runtime inventory・旧test原本保持の指摘は修正済み。
+元helper15fileのhashと旧v1 raw SHAは一致を再確認した。
+Sourceとlocal成果物はPASS。map資格は未達、PEARL欠損1/版境界1、imn意味は未確認のまま。
+本番deploy/unit/live DB write/Provider回復/新2時間観測/CI/push/PRはnot_run。
+将来の本番受入checkpointが残るため、このplanはactiveで保持する。
+詳細の検証結果と限界は上記archiveのREADME.md/verification-summary.jsonに固定した。
