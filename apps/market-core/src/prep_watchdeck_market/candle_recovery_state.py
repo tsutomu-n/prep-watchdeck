@@ -36,6 +36,14 @@ class RecoveryTargetIdentity(ArtifactModel):
     definition_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class RecoveryEvidence(ArtifactModel):
+    schema_version: Literal[1] = 1
+    scope: Literal["full-candle-window", "metric-endpoints"]
+    roster: tuple[RecoveryTargetIdentity, ...]
+    roster_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+    roster_unchanged: bool
+
+
 class RecoveryTargetDetail(ArtifactModel):
     target: RecoveryTargetIdentity
     missing_before: int | None = Field(ge=0)
@@ -66,3 +74,5 @@ class CandleRecoveryState(ArtifactModel):
     details: tuple[RecoveryTargetDetail, ...] = Field(max_length=128)
     details_truncated: bool
     error_code: str | None = Field(default=None, max_length=100)
+    evidence: RecoveryEvidence | None = None
+    previous_completed_run_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")

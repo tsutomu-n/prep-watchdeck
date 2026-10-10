@@ -1,6 +1,7 @@
 """Operational alerts distinguish honest data gaps from broken identities and collectors."""
 
 import copy
+import hashlib
 import json
 import runpy
 from datetime import UTC, datetime, timedelta
@@ -360,6 +361,8 @@ def test_acceptance_rejects_unproved_recovery_even_when_operational_exit_would_b
     data["recovery"]["endpointRecovery"]["window"]["start"] = (
         NOW - timedelta(minutes=1445)
     ).isoformat()
+    for name, document in data["recovery"].items():
+        document["evidence"] = _evidence(name)
     assert UTILITY["check"](**data, now=NOW)["recoveryAcceptanceBlockers"] == []
     cases = [
         ("execution", "running"),
@@ -384,3 +387,193 @@ def test_acceptance_rejects_unproved_recovery_even_when_operational_exit_would_b
         assert report["recoveryAcceptanceBlockers"], (key, value)
         strict = UTILITY["check"](**changed, now=NOW, require_complete_recovery=True)
         assert set(report["recoveryAcceptanceBlockers"]) <= set(strict["operationalFailures"])
+
+
+def _evidence(name, *, version=7):
+    roster = [["bitget:BTCUSDT", version, "a" * 64]]
+    return {
+        "schemaVersion": 1,
+        "scope": "full-candle-window" if name == "candleRecovery" else "metric-endpoints",
+        "rosterUnchanged": True,
+        "rosterDigest": hashlib.sha256(
+            json.dumps(roster, separators=(",", ":")).encode()
+        ).hexdigest(),
+        "roster": [
+            {
+                "venueInstrumentId": roster[0][0],
+                "venueInstrumentVersionId": roster[0][1],
+                "definitionHash": roster[0][2],
+            }
+        ],
+    }
+
+
+def _completed_recovery():
+    documents = {}
+    for name in ("candleRecovery", "endpointRecovery"):
+        documents[name] = {
+            "schemaVersion": 1,
+            "runId": ("a" if name == "candleRecovery" else "b") * 32,
+            "generatedAt": (NOW - timedelta(seconds=5)).isoformat(),
+            "startedAt": (NOW - timedelta(seconds=30)).isoformat(),
+            "finishedAt": (NOW - timedelta(seconds=5)).isoformat(),
+            "execution": "succeeded",
+            "trigger": "periodic",
+            "errorCode": None,
+            "window": {
+                "start": (
+                    NOW - timedelta(minutes=364 if name == "candleRecovery" else 1445)
+                ).isoformat(),
+                "end": (NOW - timedelta(minutes=4)).isoformat(),
+                "graceSeconds": 180,
+            },
+            "summary": {
+                "targetCount": 1,
+                "scannedTargetCount": 1,
+                "httpRequests": 0,
+                "missingBefore": 0,
+                "inserted": 0,
+                "newlyPresent": 0,
+                "remaining": 0,
+                "failedTargets": 0,
+                "deferredTargets": 0,
+            },
+            "evidence": _evidence(name),
+        }
+    return documents
+
+
+def test_strict_recovery_requires_exact_roster_and_verified_digest():
+    data = inputs()
+    data["recovery"] = _completed_recovery()
+    assert not UTILITY["check"](**data, now=NOW, require_complete_recovery=True)[
+        "operationalFailures"
+    ]
+    for name in data["recovery"]:
+        for change in ("old_version", "digest", "missing", "roster_changed"):
+            changed = copy.deepcopy(data)
+            document = changed["recovery"][name]
+            if change == "old_version":
+                document["evidence"] = _evidence(name, version=6)
+            elif change == "digest":
+                document["evidence"]["roster"][0]["definitionHash"] = "c" * 64
+            elif change == "missing":
+                document.pop("evidence")
+            else:
+                document["evidence"]["rosterUnchanged"] = False
+            report = UTILITY["check"](**changed, now=NOW, require_complete_recovery=True)
+            assert f"{name}_acceptance_unverified" in report["operationalFailures"], change
+            assert not UTILITY["check"](**changed, now=NOW)["operationalFailures"]
+
+
+def test_running_recovery_uses_only_its_direct_completed_predecessor():
+    data = inputs()
+    completed = _completed_recovery()
+    data["recovery"] = copy.deepcopy(completed)
+    current = data["recovery"]["endpointRecovery"]
+    current.update(
+        {
+            "runId": "c" * 32,
+            "execution": "running",
+            "finishedAt": None,
+            "startedAt": (NOW - timedelta(seconds=1)).isoformat(),
+            "generatedAt": NOW.isoformat(),
+            "previousCompletedRunId": "b" * 32,
+        }
+    )
+    report = UTILITY["check"](
+        **data, now=NOW, completed_recovery=completed, require_complete_recovery=True
+    )
+    assert not report["operationalFailures"]
+    assert report["recovery"]["endpointRecovery"]["execution"] == "running"
+    assert report["recoveryAcceptanceEvidence"]["endpointRecovery"]["runId"] == "b" * 32
+    for change in ("failed", "partial", "different_predecessor", "stale_running"):
+        changed, latest = copy.deepcopy(data), copy.deepcopy(completed)
+        if change in {"failed", "partial"}:
+            latest["endpointRecovery"]["execution"] = change
+        elif change == "different_predecessor":
+            changed["recovery"]["endpointRecovery"]["previousCompletedRunId"] = "d" * 32
+        else:
+            changed["recovery"]["endpointRecovery"]["startedAt"] = (
+                NOW - timedelta(minutes=2)
+            ).isoformat()
+        result = UTILITY["check"](
+            **changed, now=NOW, completed_recovery=latest, require_complete_recovery=True
+        )
+        assert "endpointRecovery_acceptance_unverified" in result["operationalFailures"], change
+
+
+def test_warning_occurrences_preserve_exact_metric_and_review_targets(monkeypatch):
+    data = inputs()
+    data["mapping"]["rows"][0]["status"] = "review"
+    report = UTILITY["check"](**data, now=NOW)
+    occurrences = report.get("warningOccurrences")
+    assert occurrences is not None
+    assert {tuple(item.values()) for item in occurrences} == {
+        ("mapping_review_required", "bitget:BTCUSDT", 7, "mapping", "review_required"),
+        ("native_metric_unavailable", "bitget:BTCUSDT", 7, "tradeChange.15m", "endpoint_missing"),
+        ("native_metric_unavailable", "bitget:BTCUSDT", 7, "oiChange.15m", "endpoint_missing"),
+        ("native_metric_unavailable", "bitget:BTCUSDT", 7, "oiChange.1h", "endpoint_missing"),
+    }
+    assert report["warningOccurrenceCount"] == 4
+    assert not report["warningOccurrencesTruncated"]
+    monkeypatch.setitem(UTILITY["check"].__globals__, "MAX_WARNING_OCCURRENCES", 2)
+    limited = UTILITY["check"](**data, now=NOW)
+    assert len(limited["warningOccurrences"]) == 2
+    assert limited["warningOccurrenceCount"] == 4
+    assert limited["warningOccurrencesTruncated"]
+
+
+def test_completed_failure_cannot_be_hidden_by_current_success():
+    data = inputs()
+    data["recovery"] = _completed_recovery()
+    completed = copy.deepcopy(data["recovery"])
+    completed["endpointRecovery"]["execution"] = "partial"
+    report = UTILITY["check"](
+        **data, now=NOW, completed_recovery=completed, require_complete_recovery=True
+    )
+    assert "endpointRecovery_acceptance_unverified" in report["operationalFailures"]
+
+
+def test_acceptance_evidence_does_not_echo_unvalidated_recovery_fields():
+    data = inputs()
+    data["recovery"] = _completed_recovery()
+    data["recovery"]["candleRecovery"]["privateDebug"] = "private-secret-sentinel"
+    data["recovery"]["candleRecovery"]["evidence"]["privateDebug"] = "private-secret-sentinel"
+    report = UTILITY["check"](**data, now=NOW, require_complete_recovery=True)
+    assert not report["operationalFailures"]
+    assert "private-secret-sentinel" not in json.dumps(report)
+
+
+def test_invalid_completed_file_blocks_strict_without_changing_ordinary_monitor(
+    tmp_path, monkeypatch, capsys
+):
+    data = inputs()
+    data["recovery"] = _completed_recovery()
+    root = tmp_path / "artifacts"
+    root.mkdir()
+    for filename, document in (
+        ("universe-snapshot.json", data["universe"]),
+        ("service-state.json", data["service"]),
+        ("market-metrics.json", data["metrics"]),
+        ("candle-recovery-state.json", data["recovery"]["candleRecovery"]),
+        ("candle-endpoint-recovery-state.json", data["recovery"]["endpointRecovery"]),
+    ):
+        (root / filename).write_text(json.dumps(document))
+    (root / "candle-endpoint-recovery-latest-completed.json").write_text("invalid json")
+    mapping = tmp_path / "mapping.json"
+    mapping.write_text(json.dumps(data["mapping"]))
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return NOW
+
+    monkeypatch.setitem(UTILITY["main"].__globals__, "datetime", Clock)
+    monkeypatch.setitem(UTILITY["main"].__globals__, "get_health", lambda _url: data["ranking"])
+    args = ["--market-state-dir", str(tmp_path), "--mapping", str(mapping), "--json"]
+    assert UTILITY["main"](args) == 0
+    capsys.readouterr()
+    assert UTILITY["main"]([*args, "--require-complete-recovery"]) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert "endpointRecovery_acceptance_unverified" in report["operationalFailures"]

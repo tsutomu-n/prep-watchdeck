@@ -1,6 +1,7 @@
 """Read-only, bounded checks for native data and the independent ranking service."""
 
 import argparse
+import hashlib
 import ipaddress
 import json
 import math
@@ -21,6 +22,7 @@ ARTIFACT_MAX_AGE = 120
 RANKING_MAX_AGE = 150
 MAX_IDENTITY_DIAGNOSTICS = 20
 MAX_METRIC_TIMESTAMP_DIAGNOSTICS = 20
+MAX_WARNING_OCCURRENCES = 10000
 IDENTIFIER = re.compile(r"[A-Za-z0-9_:.-]{1,200}\Z")
 VENUES = {"aster", "bitget", "hyperliquid", "mexc"}
 AVAILABILITIES = {"available", "missing", "unsupported", "invalid"}
@@ -163,8 +165,88 @@ def identity(row: dict[str, Any], *, original: bool = False) -> tuple[str, int]:
     return identifier, version
 
 
+def recovery_roster_matches(document: dict[str, Any], name: str, current: dict[str, int]) -> bool:
+    evidence = object_value(document.get("evidence"))
+    expected_scope = "full-candle-window" if name == "candleRecovery" else "metric-endpoints"
+    if (
+        evidence.get("schemaVersion") != 1
+        or evidence.get("scope") != expected_scope
+        or evidence.get("rosterUnchanged") is not True
+    ):
+        return False
+    roster = {}
+    digest_keys = []
+    for value in list_value(evidence.get("roster")):
+        target = object_value(value)
+        identifier = target.get("venueInstrumentId")
+        version = integer(target.get("venueInstrumentVersionId"))
+        definition_hash = target.get("definitionHash")
+        if (
+            not isinstance(identifier, str)
+            or not 1 <= len(identifier) <= 200
+            or IDENTIFIER.fullmatch(identifier) is None
+            or identifier.split(":", 1)[0] not in VENUES
+            or version < 1
+            or identifier in roster
+            or not isinstance(definition_hash, str)
+            or re.fullmatch(r"[0-9a-f]{64}", definition_hash) is None
+        ):
+            return False
+        roster[identifier] = version
+        digest_keys.append((identifier, version, definition_hash))
+    digest = hashlib.sha256(
+        json.dumps(sorted(digest_keys), separators=(",", ":"), ensure_ascii=True).encode()
+    ).hexdigest()
+    return bool(roster) and roster == current and evidence.get("rosterDigest") == digest
+
+
+def select_recovery_evidence(
+    recovery: dict[str, dict[str, Any] | None],
+    completed: dict[str, dict[str, Any] | None],
+    *,
+    now: datetime,
+) -> dict[str, dict[str, Any] | None]:
+    selected: dict[str, dict[str, Any] | None] = {}
+    for name, maximum in (("candleRecovery", 615), ("endpointRecovery", 75)):
+        current, latest = recovery.get(name), completed.get(name)
+        selected[name] = None
+        if current is None:
+            continue
+        try:
+            started = instant(current.get("startedAt"))
+            if current.get("execution") != "running":
+                if latest is not None and latest.get("runId") == current.get("runId"):
+                    if latest != current:
+                        continue
+                # A newer terminal record invalidates a still-visible older state.
+                if (
+                    latest is not None
+                    and latest.get("runId") != current.get("runId")
+                    and instant(latest.get("finishedAt")) >= started
+                ):
+                    continue
+                selected[name] = current
+            elif (
+                latest is not None
+                and current.get("schemaVersion") == 1
+                and current.get("finishedAt") is None
+                and current.get("errorCode") is None
+                and current.get("trigger") in {"startup", "periodic"}
+                and re.fullmatch(r"[0-9a-f]{32}", str(current.get("runId", ""))) is not None
+                and current.get("runId") != latest.get("runId")
+                and current.get("previousCompletedRunId") == latest.get("runId")
+                and instant(latest.get("finishedAt")) <= started
+                and started <= instant(current.get("generatedAt")) <= now
+                and 0 <= (now - started).total_seconds() <= maximum
+            ):
+                selected[name] = latest
+        except InvalidInput:
+            continue
+    return selected
+
+
 def recovery_acceptance_blockers(
-    recovery: dict[str, dict[str, Any] | None], *, now: datetime, native_count: int
+    recovery: dict[str, dict[str, Any] | None], *, now: datetime, current: dict[str, int]
 ) -> list[str]:
     """A normal monitor warning is not proof that a full recovery scan completed.
 
@@ -191,6 +273,8 @@ def recovery_acceptance_blockers(
             scanned = integer(summary.get("scannedTargetCount"))
             missing = integer(summary.get("missingBefore"))
             restored = integer(summary.get("newlyPresent"))
+            integer(summary.get("httpRequests"))
+            integer(summary.get("inserted"))
             complete = (
                 document.get("schemaVersion") == 1
                 and re.fullmatch(r"[0-9a-f]{32}", str(document.get("runId", ""))) is not None
@@ -206,10 +290,11 @@ def recovery_acceptance_blockers(
                 and integer(summary.get("deferredTargets")) == 0
                 and window.get("graceSeconds") == 180
                 and not any(value.second or value.microsecond for value in (start, end))
+                and recovery_roster_matches(document, name, current)
             )
             if name == "candleRecovery":
                 complete = complete and (
-                    target == native_count
+                    target == len(current)
                     and target > 0
                     and end - start == timedelta(hours=6)
                     and timedelta(0) <= cutoff - end <= timedelta(minutes=1)
@@ -217,7 +302,8 @@ def recovery_acceptance_blockers(
                 )
             else:
                 complete = complete and (
-                    start == cutoff - timedelta(minutes=1441)
+                    target <= len(current)
+                    and start == cutoff - timedelta(minutes=1441)
                     and cutoff <= end <= finished.replace(second=0, microsecond=0)
                     and (finished - started).total_seconds() <= 75
                 )
@@ -226,6 +312,54 @@ def recovery_acceptance_blockers(
         except InvalidInput:
             blockers.append(code)
     return blockers
+
+
+def recovery_evidence_report(document: dict[str, Any]) -> dict[str, Any]:
+    """Project validated evidence without echoing arbitrary diagnostics or extra fields."""
+    evidence = document["evidence"]
+    return {
+        "schemaVersion": 1,
+        "runId": document["runId"],
+        **{
+            name: instant(document[name]).isoformat()
+            for name in ("startedAt", "finishedAt", "generatedAt")
+        },
+        "execution": "succeeded",
+        "trigger": document["trigger"],
+        "errorCode": None,
+        "window": {
+            "start": instant(document["window"]["start"]).isoformat(),
+            "end": instant(document["window"]["end"]).isoformat(),
+            "graceSeconds": 180,
+        },
+        "summary": {
+            key: document["summary"][key]
+            for key in (
+                "targetCount",
+                "scannedTargetCount",
+                "httpRequests",
+                "missingBefore",
+                "inserted",
+                "newlyPresent",
+                "remaining",
+                "failedTargets",
+                "deferredTargets",
+            )
+        },
+        "evidence": {
+            "schemaVersion": 1,
+            "scope": evidence["scope"],
+            "rosterUnchanged": True,
+            "rosterDigest": evidence["rosterDigest"],
+            "roster": [
+                {
+                    key: target[key]
+                    for key in ("venueInstrumentId", "venueInstrumentVersionId", "definitionHash")
+                }
+                for target in evidence["roster"]
+            ],
+        },
+    }
 
 
 def check(
@@ -238,9 +372,26 @@ def check(
     *,
     now: datetime,
     require_complete_recovery: bool = False,
+    completed_recovery: dict[str, dict[str, Any] | None] | None = None,
 ) -> dict[str, Any]:
     failures: set[str] = set()
     warnings: set[str] = set()
+    warning_occurrences: list[dict[str, Any]] = []
+    warning_occurrence_count = 0
+
+    def warning_occurrence(code: str, key: str, version: int, metric: str, reason: str) -> None:
+        nonlocal warning_occurrence_count
+        warning_occurrence_count += 1
+        if len(warning_occurrences) < MAX_WARNING_OCCURRENCES:
+            warning_occurrences.append(
+                {
+                    "code": code,
+                    "instrumentId": key if IDENTIFIER.fullmatch(key) else None,
+                    "versionId": version,
+                    "metric": metric,
+                    "reasonCode": reason,
+                }
+            )
 
     def freshness(value: Any, maximum: float, label: str) -> dict[str, Any]:
         age = (now - instant(value)).total_seconds()
@@ -370,6 +521,10 @@ def check(
             if key in originals:
                 raise InvalidInput("duplicate_mapping_identity")
             originals[key] = version
+            if status == "review":
+                warning_occurrence(
+                    "mapping_review_required", key, version, "mapping", "review_required"
+                )
     if integer(mapping.get("sourceInstrumentCount")) != len(originals):
         raise InvalidInput("mapping_count_mismatch")
     roster_age = (now - instant(mapping.get("rosterGeneratedAt"))).total_seconds()
@@ -450,6 +605,9 @@ def check(
                 if reason:
                     entry["reasons"][reason] = entry["reasons"].get(reason, 0) + 1
                     warnings.add("native_metric_unavailable")
+                    warning_occurrence(
+                        "native_metric_unavailable", key, version, f"{name}.{window}", reason
+                    )
                     if reason == "future_timestamp":
                         failures.add("metric_future_timestamp")
                 for field in (
@@ -584,9 +742,17 @@ def check(
         if summary_out["remaining"]:
             warnings.add(f"{name}_native_history_missing")
 
-    recovery_blockers = recovery_acceptance_blockers(recovery, now=now, native_count=len(current))
+    acceptance_evidence = select_recovery_evidence(recovery, completed_recovery or {}, now=now)
+    recovery_blockers = recovery_acceptance_blockers(acceptance_evidence, now=now, current=current)
     if require_complete_recovery:
         failures.update(recovery_blockers)
+        for name, document in recovery.items():
+            if (
+                document is not None
+                and document.get("execution") == "running"
+                and f"{name}_acceptance_unverified" not in recovery_blockers
+            ):
+                warnings.discard(f"{name}_incomplete")
     return {
         "schemaVersion": "data-operations-v1",
         "checkedAt": now.isoformat(),
@@ -619,8 +785,17 @@ def check(
         "ranking": ranking_state,
         "recovery": recovery_states,
         "recoveryAcceptanceBlockers": recovery_blockers,
+        "recoveryAcceptanceEvidence": {
+            name: recovery_evidence_report(document)
+            if document is not None and f"{name}_acceptance_unverified" not in recovery_blockers
+            else None
+            for name, document in acceptance_evidence.items()
+        },
         "operationalFailures": sorted(failures),
         "warnings": sorted(warnings),
+        "warningOccurrences": warning_occurrences,
+        "warningOccurrenceCount": warning_occurrence_count,
+        "warningOccurrencesTruncated": warning_occurrence_count > len(warning_occurrences),
     }
 
 
@@ -650,12 +825,23 @@ def main(argv: list[str] | None = None) -> int:
                 raise InvalidInput("mapping_file_unavailable") from None
             raise
         recovery = {}
+        completed_recovery = {}
         for name, filename in (
             ("candleRecovery", "candle-recovery-state.json"),
             ("endpointRecovery", "candle-endpoint-recovery-state.json"),
         ):
             path = root / filename
             recovery[name] = read_document(path) if path.exists() or path.is_symlink() else None
+            completed_path = root / filename.replace("-state.json", "-latest-completed.json")
+            try:
+                completed_recovery[name] = (
+                    read_document(completed_path)
+                    if completed_path.exists() or completed_path.is_symlink()
+                    else None
+                )
+            except InvalidInput:
+                # Invalid new evidence blocks acceptance, not the legacy monitor contract.
+                completed_recovery[name] = {}
         try:
             ranking = get_health(url)
         except (urllib.error.URLError, TimeoutError, OSError):
@@ -670,6 +856,7 @@ def main(argv: list[str] | None = None) -> int:
             recovery,
             now=now,
             require_complete_recovery=args.require_complete_recovery,
+            completed_recovery=completed_recovery,
         )
         code = 1 if result["operationalFailures"] else 0
     except InvalidInput as error:

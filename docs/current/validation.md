@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-10(土)_10:53 JST"
+timestamp="2026-10-10(土)_22:14 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T10:53:42+09:00`
+- 更新: `2026-10-10T22:14:35+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -323,6 +323,16 @@ Web healthや短い公開API到達、fixture成功をこの受入へ読み替え
 目標は768MiBの80%以下で、超過時はprofile後に進む。回収可能file cache込み総量だけで失格にしない。
 100件24時間のSQLite/WAL/immutable/Market増分から30日予測を作り、予測増分＋50GiB空きを容量gateとする。
 加速replayは通常運転の実測時間に数えず、30日予測を30日実測と呼ばない。
+
+測定の最終監査は正常な親/子process終了、signalなし、元receiptの完了状態、policy/supervisor/source hash、
+acceptanceとraw全量3fileのhashを確認する。observer/fundingの実経過7200秒とraw streamの期間、
+partial tailなしも必要。最終auditで後から正常終了を書き足して異常終了を合格へ昇格させない。
+警告例外の実使用があれば`PASS_WITH_REVIEWED_EXCEPTIONS`とし、理由/対象/版/期間/上限/根拠を保持する。
+
+関連pytestは時計進行中のendpoint完了、同件数での版差替え、欠落proof、後続失敗、未知/増加warning、
+異常終了・policy不一致を拒否することを確認する。固定期間監査は隔離Postgresでread-only/RR、
+旧版欠損、分途中の版境界、同じ欠損キーの再scanを検証する。これらのsource検証だけでは
+本番配置・新しい7200秒測定・Providerが返さない足の回復を完了扱いにしない。
 
 ## Research remediation
 

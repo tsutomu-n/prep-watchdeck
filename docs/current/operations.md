@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_21:40 JST"
+timestamp="2026-10-10(土)_22:14 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T21:40:21+09:00`
+- 更新: `2026-10-10T22:14:35+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -526,12 +526,22 @@ Asterの上場境界`onboardDate`を確認できる`PERPETUAL`では、`createTi
 通常監視の終了codeは維持するが、この明示optionでは`recoveryAcceptanceBlockers`も終了1の理由に含める。
 両recoveryについて完了時刻・鮮度、全対象scan、既知の欠損件数、failed/deferred/remaining=0を確認する。
 通常candleの6時間窓と現行全件数、endpointの24時間指標を含む窓を別々に照合する。
-手動の狭いscan、running/null、未走査、古い成功、scope違いを受入開始へ流用しない。
+手動の狭いscan、未走査、古い成功、scope違い、全対象の版証拠がない旧artifactを受入開始へ流用しない。
+実行中の場合は`previousCompletedRunId`が指す直前terminal結果だけを検査する。
+current実行の経過上限はcandle615秒/endpoint75秒、完了証拠の鮮度上限は1080秒/180秒。
+後続partial/failed、ID/version変更、証拠不整合、期限超過では拒否する。
+採用した完了証拠は`recoveryAcceptanceEvidence`へ返し、map採用後の時刻確認にもこちらを使う。
+このcheckerはUniverseのID/version一致とhashを含むdigestの内部整合を確認する。
+UniverseにdefinitionHashは含まれないため、独立したDB definitionHash照合は測定helperの開始/終了gateで行う。
 scan終了時のDB処理待ちには15秒の余裕を持ち、candle窓を作ってからrunが始まる分境界を1分まで許容する。
 `runId`・`startedAt`・`finishedAt`・`window`も返すため、測定側では採用map反映後のrunであることを確認できる。
-終了0だけで受入完了にはしない。最新通常maintenance/dataops invocation、全rosterのDB照合、
+終了0だけで受入完了にはしない。最新通常maintenance/dataops invocation、全rosterのDB照合（ID/version/definitionHash）、
 個別warningの審査と期間内判定は測定側でも必要。例外をwarning名全体で一括承認しない。
-
+`native_metric_unavailable`と`mapping_review_required`には`warningOccurrences`として
+code、instrumentId、versionId、metric、reasonCodeを付ける。最大10,000件で、切詰めの有無と元件数も返す。
+受入用`acceptance_evidence`は、この組に一致する承認済み例外の有効期間、最大件数、根拠file/hashを確認する。
+詳細不在、未知warning、新理由/対象、上限超過は拒否する。使用した例外は判定へ残し、
+`PASS_WITH_REVIEWED_EXCEPTIONS`を無条件のPASSと区別する。
 
 `config/systemd/prep-watchdeck-data-operations.service.in`と対応timerはread-only確認の任意template。
 `@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用state、`@RANKING_MAP@`と
@@ -539,6 +549,13 @@ scan終了時のDB処理待ちには15秒の余裕を持ち、candle窓を作っ
 配置した場合だけ、timerを明示的にenable/startする。5分ごとに確認し、結果は
 `journalctl --user -u prep-watchdeck-data-operations.service`で読む。
 timer停止は監視だけを止める。回復を止める場合は上記の有効化設定をfalseへ戻す。
+
+受入測定中に周期journalでも最新完了証拠を利用する場合は、任意template
+`config/systemd/prep-watchdeck-data-operations-acceptance.conf.in`を同じ値で展開し、
+当該serviceのdrop-inにする。ExecStartを`--require-complete-recovery`付きへ置換する。
+通常modeのrunning warningを測定helper側で黙って除外しない。strictでは版・証拠・鮮度等の未達も
+service失敗となるため、配置/撤去とdaemon-reloadは本番操作の承認対象。既定templateには適用しない。
+新release/採用map/policyと合わせて、周期journalの新しいreportを確認してから測定する。
 
 自動600秒・手動4時間の上限は事前scanと取得後rescanにも適用する。上限後は新しい検査を開始せず、
 未検査の欠損件数は`null`と記録する。進行中のDB処理はstatement timeoutの範囲で終了を待つ。
@@ -567,6 +584,20 @@ Core用の固定証拠は`watchdeck-market export-fixture --instrument <ID> --ve
 監査run、Reference bundle、Fixture bundleを自動削除しない。Recoveryで追加した行の削除は
 run_idを特定した別の修復判断とする。本番でのbackup、exact sourceの配置、実ProviderとUIの確認は
 [作業計画](../plans/active/prep-quality-completion/GOAL.md)の受入台帳を通して行う。
+
+### 固定期間の履歴を保存・追跡する
+
+`scripts/market/audit-candle-history.py`は専用Market DBをread-only / repeatable-readで読み、
+明示した半開UTC期間（分境界、最大24時間）とID群について、期間に交差する全契約版の足を照合する。
+実行例はRepo rootで
+`uv run --package prep-watchdeck-market python scripts/market/audit-candle-history.py --since <ISO時刻> --until <ISO時刻> --roster <ID文字列配列JSON> --output <新規JSON>`。
+単独対象は`--instrument-id venue:symbol`でも指定できる。DB設定は既存のMarket設定を用いる。
+Provider照会、保存足の挿入、現役service操作はしない。窓移動では未解決を消さず、同一scopeの再検査には
+`--previous <前回JSON>`と別outputを渡す。異なる期間/ID群/DBの証拠、hash不一致、output上書きを拒否する。
+欠損はID/version/definitionHash/bucketで追跡し、同じ版とhashの保存足が見つかった場合だけrecoveredになる。
+分途中の版切替は`boundary_unresolved`、catalogで覆えない期間は`catalog_unavailable`として残し、
+後のcatalog変化だけでは解消しない。終了0はこのscopeの完全、1は未解決あり、2は入力・DB・出力等の失敗。
+Provider可用性や将来の全履歴保証とは別の診断である。
 
 ## Attention Coreの隔離実行と運用
 

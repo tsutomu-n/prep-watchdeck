@@ -11,9 +11,9 @@ from uuid import uuid4
 import aiohttp
 import psycopg
 
-from prep_watchdeck_market.artifacts import write_artifact_atomic
 from prep_watchdeck_market.candle_recovery_state import (
     CandleRecoveryState,
+    RecoveryEvidence,
     RecoveryExecution,
     RecoverySummary,
     RecoveryTargetDetail,
@@ -34,6 +34,11 @@ from prep_watchdeck_market.candle_recovery_store import (
 )
 from prep_watchdeck_market.candles import Candle1m, CandleParseError, require_utc_datetime
 from prep_watchdeck_market.models import Venue
+from prep_watchdeck_market.recovery_evidence import (
+    previous_completed_run_id,
+    roster_evidence,
+    write_recovery_state,
+)
 from prep_watchdeck_market.retention import NORMALIZED_RETENTION
 from prep_watchdeck_market.runtime_lock import exclusive_runtime_lock
 from prep_watchdeck_market.sources.candle_history import (
@@ -148,6 +153,8 @@ def _state(
     deferred_targets: int,
     details: list[RecoveryTargetDetail],
     error_code: str | None,
+    evidence: RecoveryEvidence | None = None,
+    previous_completed_id: str | None = None,
 ) -> CandleRecoveryState:
     return CandleRecoveryState(
         run_id=run_id,
@@ -171,6 +178,8 @@ def _state(
         details=bounded_recovery_details(details),
         details_truncated=len(details) > 128,
         error_code=error_code,
+        evidence=evidence,
+        previous_completed_run_id=previous_completed_id,
     )
 
 
@@ -247,6 +256,7 @@ class CandleRecovery:
         run_id = uuid4()
         connection = await _open_connection(self._database_url, apply=apply)
         state_path = self._state_dir / "artifacts" / "candle-recovery-state.json"
+        previous_completed_id = previous_completed_run_id(state_path) if apply else None
         run_started = False
         finalized = False
         targets: tuple[RecoveryTarget, ...] = ()
@@ -268,7 +278,7 @@ class CandleRecovery:
                         "windowEnd": window.end.isoformat(),
                     },
                 )
-                write_artifact_atomic(
+                write_recovery_state(
                     state_path,
                     _state(
                         run_id=run_id.hex,
@@ -288,6 +298,7 @@ class CandleRecovery:
                         deferred_targets=0,
                         details=[],
                         error_code=None,
+                        previous_completed_id=previous_completed_id,
                     ),
                 )
             targets = await _thread_call(
@@ -474,11 +485,22 @@ class CandleRecovery:
                 )
                 for target in targets
             ]
+            final_targets = await _thread_call(
+                load_recovery_targets, connection, venue=venue, instrument_id=instrument_id
+            )
+            final_targets = tuple(
+                target for target in final_targets if target.venue in self._enabled_venues
+            )
+            roster_unchanged = targets == final_targets
             execution: RecoveryExecution = (
-                "succeeded" if remaining == 0 and not errors and not deferred else "partial"
+                "succeeded"
+                if remaining == 0 and not errors and not deferred and roster_unchanged
+                else "partial"
             )
             error_code = (
-                "recovery_rescan_failed"
+                "recovery_roster_changed"
+                if not roster_unchanged
+                else "recovery_rescan_failed"
                 if after_failed
                 else "recovery_target_failed"
                 if errors
@@ -507,6 +529,10 @@ class CandleRecovery:
                 deferred_targets=len(deferred),
                 details=details,
                 error_code=error_code,
+                evidence=roster_evidence(
+                    targets, scope="full-candle-window", unchanged=roster_unchanged
+                ),
+                previous_completed_id=previous_completed_id,
             )
             await _thread_call(
                 finish_recovery_run,
@@ -531,7 +557,7 @@ class CandleRecovery:
                 },
             )
             finalized = True
-            write_artifact_atomic(state_path, state)
+            write_recovery_state(state_path, state)
             return state
         except BaseException:
             if apply and run_started and not finalized:
@@ -551,7 +577,7 @@ class CandleRecovery:
                             "windowEnd": window.end.isoformat(),
                         },
                     )
-                    write_artifact_atomic(
+                    write_recovery_state(
                         state_path,
                         _state(
                             run_id=run_id.hex,
@@ -585,6 +611,7 @@ class CandleRecovery:
                                 for target in targets
                             ],
                             error_code="recovery_run_failed",
+                            previous_completed_id=previous_completed_id,
                         ),
                     )
                 except Exception:

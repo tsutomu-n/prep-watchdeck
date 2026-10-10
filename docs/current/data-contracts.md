@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_21:40 JST"
+timestamp="2026-10-10(土)_22:14 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T21:40:21+09:00`
+- 更新: `2026-10-10T22:14:35+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -422,6 +422,12 @@ schemaに加え、重複identity、窓の長さ・順序・共通cutoff、現在
 対象の現行ID・version・definitionHash、半開UTC窓、scan/insert/rescan件数、失敗と未処理を分ける。
 `execution=running|succeeded|partial|failed`で、部分成功を全契約成功へ昇格しない。
 手動scanだけではartifactを更新しない。
+`evidence`は表示detailsとは別に、全対象のID/version/definitionHash、scope、整列済みrosterのSHA-256、
+run開始/終了のroster一致を保持する。旧artifactは読めるが、この証拠がない結果はstrict受入へ使わない。
+`candle-recovery-latest-completed.json`と`candle-endpoint-recovery-latest-completed.json`は
+同じschemaで直近terminal結果を保持する。成功に限定せずpartial/failedでも更新し、過去成功を失効させる。
+running側の`previousCompletedRunId`が直前完了runを指す。finishedAtは一度確定し、DB auditとartifactで
+共用する。generatedAtはそれ以降の時刻にする。
 診断detailsの上限128件は維持し、失敗・残欠損・未確認を正常対象より先に表示する。
 `detailsTruncated=true`の結果だけでは全欠損を列挙したことにならない。完全な診断は固定窓・契約版で全件scanする。
 同じschemaを使う`candle-endpoint-recovery-state.json`は指標のexact endpointだけを回復した

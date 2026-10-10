@@ -1,0 +1,4 @@
+# Optional acceptance mode; install and remove only with operational authorization.
+[Service]
+ExecStart=
+ExecStart=@REPO_ROOT@/.venv/bin/python @REPO_ROOT@/scripts/market/check-data-operations.py --market-state-dir @MARKET_STATE_ROOT@ --mapping @RANKING_MAP@ --ranking-url http://127.0.0.1:@RANKING_PORT@ --json --require-complete-recovery
