@@ -1,8 +1,8 @@
 # MEXC 10 → 50 → 100 銘柄の最適化と段階受入
 
-timestamp="2026-10-10(土)_13:37 JST"
+timestamp="2026-10-10(土)_13:41 JST"
 - 作成: `2026-10-10T10:30:00+09:00`
-- 更新: `2026-10-10T13:37:39+09:00`
+- 更新: `2026-10-10T13:41:18+09:00`
 - 検証: `未検証`
 - 状態: `実装計画`
 
@@ -161,3 +161,4 @@ MEXC取得停止→直前段階registryへ→単一writerでcurrent catalog→�
 - 13:22 JST: 最新Funding記録で13:15 JSTの3version変更と約54秒のl1_missingを確認。12:46開始の観測は昇格証拠に不採用とし、100切替driverは起動していない。KAIA9976→9978/MAGIC9975→9979/US9974→9980のREAD ONLY全6定義でnormalized差分0、raw差分はisHotとtagIdListのみ。公式契約タグ定義と照合し、valid tagIdListだけのsemantic投影を修正、unit27＋隔離DB1・Ruff/Pyrefly・実3組replayが成功。現version3件の再資格mapと修正版50releaseを準備し、新7200秒観測をやり直す。2501b13の100件candidateはbuild済みだが、この修正を含む次候補へ置換予定。100件24h・最終容量は未実施。
 - 13:31 JST: commit/push済みc805056のtracked50releaseと再資格map445f6cdfe65120105530afa1を全6unitへ採用。直前READ ONLY capture1147/50整合、37map files byte一致、他1144 originals/47資格/旧history全保持。旧ID復元・catalog persist・migrationなし、selection/workspace/manual decisions保全。起動直後39秒の観測はAttention staleのため不採用。ready/partial復帰後の13:33:05 JSTから新performance/Funding7200秒観測を開始（完了見込み15:33:05 JST）。最初の標本は価格/OI/Funding50件、performance違反・未観測項目なし。100件candidateの最終source gateはタグ修正を含めて実行中。
 - 13:34 JST: タグ修正込み100件sourceの横断gateがexit0（Market384/Ranking176/Attention78/Web266、E2E157成功/既定1skip、必須静的/schema/type/docs/build成功）。初期9 API標本のdetail p95=2655.876msは、同rawを保持した29標本再計算で88.547msへ復帰。同期世代更新と1件の409遅延が一致しており、期間全体のp95で最終判定する。単一SQLite connectionを持つためworker化は接続責務の変更を伴う。現時点で範囲を広げず、終端p95超過なら再検討する。新期間のWSは2×25 ACK・失敗/再接続/gap0、自然dataops成功・identity診断0、既知warning4件だけ。100昇格と24h/容量受入は引き続き未実施。
+- 13:40 JST: 100件source d81614eをcommit/pushしtracked release build/hash比較PASS。source gate後はdocs checkpointだけ更新する。条件付き継続処理をPID1820215で開始し、receiptは`/home/tn/watchdeck-local-archive/mexc-100-scale-20261010-1025/finite-acceptance-tag-run/receipt.json`。開始時PENDING/waiting_stage50、昇格承認fileなしを確認。policy SHA bc4a2d9508b2de0861e654435b816f5ea1880816e8172b828dce9fe2a1c59ecdはrelease/map/6unit設定/保護対象/観測先/審査済み例外を固定し、未来の実測を承認済みにしない。新50観測の7200秒終端とFunding/WS/成熟candle全件/dataops/通常maintenance/現roster/保護対象が合格した場合だけ、100配置と86400秒性能・Funding・容量観測へ進む。途中の累積API p95だけは期間終端まで保留し、その他の失敗と終端gateは維持。未達はATTENTION_REQUIRED/NOT_ACCEPTEDを保存し、100配置後の測定失敗では健康なserviceを維持する。最大28時間の有限処理で通知・再帰Codex・新daemonなし。最終受入は現時点PARTIAL、100件24h・30日予測＋50GiB容量条件は未実施。
