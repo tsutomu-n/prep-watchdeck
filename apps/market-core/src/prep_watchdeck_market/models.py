@@ -144,10 +144,32 @@ class CatalogInstrument:
                 "regularMaxLeverage",
                 "isMaxLeverage",
                 "tempMaxLeverageLimited",
+                "maxVol",
+                "limitMaxVol",
+                "riskBaseVol",
+                "riskIncrVol",
             }
         raw_definition = {
             name: value for name, value in self.raw_definition.items() if name not in ignored
         }
+        risk_tiers = raw_definition.get("riskLimitCustom")
+        if self.venue == "mexc" and isinstance(risk_tiers, list):
+            projected_tiers = []
+            for tier in risk_tiers:
+                if isinstance(tier, dict):
+                    tier = dict(tier)
+                    cap = tier.get("maxVol")
+                    if (
+                        isinstance(cap, (int, float))
+                        and not isinstance(cap, bool)
+                        and cap >= 0
+                        and Decimal(str(cap)).is_finite()
+                    ):
+                        # Hash-only marker: keep cap presence and all tier structure,
+                        # while retaining actual order/risk caps in immutable raw data.
+                        tier["maxVol"] = 0
+                projected_tiers.append(tier)
+            raw_definition["riskLimitCustom"] = projected_tiers
         return replace(self, raw_definition=raw_definition).definition_sha256()
 
 

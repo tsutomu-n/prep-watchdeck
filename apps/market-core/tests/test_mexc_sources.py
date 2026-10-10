@@ -1,3 +1,4 @@
+import copy
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
@@ -82,6 +83,97 @@ def test_semantic_version_keeps_contract_change_unknown_fields_ignores_display_f
     assert changed.semantic_definition_sha256() != item.semantic_definition_sha256()
     unknown = replace(item, raw_definition={**item.raw_definition, "newField": 1})
     assert unknown.semantic_definition_sha256() != item.semantic_definition_sha256()
+
+
+RISK_TIERS = [
+    {"imr": 0.00333333, "mmr": 0.0023, "level": 1, "maxVol": 170000, "maxLeverage": 300},
+    {"imr": 0.005, "mmr": 0.004, "level": 2, "maxVol": 360000, "maxLeverage": 200},
+]
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        pytest.param(
+            {"limitMaxVol": 17400, "maxVol": 17400, "riskBaseVol": 17400},
+            {"limitMaxVol": 51700, "maxVol": 51700, "riskBaseVol": 51700},
+            id="KAIA-9940-9976",
+        ),
+        pytest.param(
+            {"limitMaxVol": 700, "maxVol": 700, "riskBaseVol": 700, "riskIncrVol": 5500},
+            {"limitMaxVol": 1900, "maxVol": 1900, "riskBaseVol": 1900, "riskIncrVol": 0},
+            id="MAGIC-9939-9975",
+        ),
+        pytest.param(
+            {"riskBaseVol": 360000, "riskLimitCustom": RISK_TIERS},
+            {
+                "riskBaseVol": 433500,
+                "riskLimitCustom": [RISK_TIERS[0], {**RISK_TIERS[1], "maxVol": 433500}],
+            },
+            id="TAO-9943-9977",
+        ),
+        pytest.param(
+            {"limitMaxVol": 2900, "maxVol": 2900, "riskBaseVol": 2900},
+            {"limitMaxVol": 10300, "maxVol": 10300, "riskBaseVol": 10300},
+            id="US-9934-9974",
+        ),
+    ],
+)
+def test_semantic_identity_ignores_observed_mexc_caps_without_mutating_raw(before, after):
+    # These exact deltas came from the separately retained read-only stage50 audit.
+    original = instrument()
+    left = replace(original, raw_definition={**original.raw_definition, **copy.deepcopy(before)})
+    right = replace(original, raw_definition={**original.raw_definition, **copy.deepcopy(after)})
+    retained = copy.deepcopy((left.raw_definition, right.raw_definition))
+    full_hashes = (left.definition_sha256(), right.definition_sha256())
+    assert full_hashes[0] != full_hashes[1]
+    assert left.semantic_definition_sha256() == right.semantic_definition_sha256()
+    assert (left.raw_definition, right.raw_definition) == retained
+    assert (left.definition_sha256(), right.definition_sha256()) == full_hashes
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"price_tick": Decimal("0.2")},
+        {"amount_step": Decimal("2")},
+        {"contract_multiplier": Decimal("0.001")},
+        {"active": False},
+        {"market_type": "future"},
+    ],
+)
+def test_mexc_cap_projection_keeps_price_quantity_and_lifecycle_changes(change):
+    original = instrument()
+    item = replace(
+        original, raw_definition={**original.raw_definition, "riskLimitCustom": RISK_TIERS}
+    )
+    assert replace(item, **change).semantic_definition_sha256() != item.semantic_definition_sha256()
+
+
+@pytest.mark.parametrize(
+    "change", ["unknown", "margin", "order", "count", "shape", "missing_cap", "unknown_cap"]
+)
+def test_mexc_risk_tier_projection_preserves_other_fields_and_structure(change):
+    original = instrument()
+    raw = {**original.raw_definition, "riskLimitCustom": copy.deepcopy(RISK_TIERS)}
+    item = replace(original, raw_definition=copy.deepcopy(raw))
+    tiers = raw["riskLimitCustom"]
+    if change == "unknown":
+        tiers[1]["unknownProviderField"] = {"flag": True}
+    elif change == "margin":
+        tiers[1]["mmr"] = 0.02
+    elif change == "order":
+        tiers.reverse()
+    elif change == "count":
+        tiers.pop()
+    elif change == "shape":
+        raw["riskLimitCustom"] = {"tier": tiers[0]}
+    elif change == "missing_cap":
+        del tiers[1]["maxVol"]
+    elif change == "unknown_cap":
+        tiers[1]["maxVol"] = {"contracts": 360000, "newMeaning": True}
+    changed = replace(item, raw_definition=raw)
+    assert changed.semantic_definition_sha256() != item.semantic_definition_sha256()
 
 
 def test_l1_converts_oi_without_scaling_prices_or_fixing_funding_period():

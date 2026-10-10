@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_12:22 JST"
+timestamp="2026-10-10(土)_12:41 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T12:22:30+09:00`
+- 更新: `2026-10-10T12:41:52+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -62,7 +62,10 @@ MEXC Catalogのquantityは`contracts`、`contract_multiplier=Decimal(contractSiz
 変換し、価格には掛けない。係数違いのL1・candle・selected観測を別versionへ流用しない。
 Fundingの符号、実際の`collectCycle`、次回時刻を保持し、8時間固定にしない。`amount24`等のquote売買代金を
 base数量から再推計しない。Webの直接取得足は係数を確認できないためbase volumeをnullにし、quote volumeを保持する。
-MEXCの完全raw Catalogを保存し、意味が変わらないと確認した表示・fee・leverage項目だけを版の比較から除外する。
+MEXCの完全raw Catalogを保存し、意味が変わらないと確認した表示・fee・leverage項目を版の比較から除外する。
+取引数量上限の`maxVol`・`limitMaxVol`、リスク枠の`riskBaseVol`・`riskIncrVol`、
+`riskLimitCustom`各entryの`maxVol`も、資産・価格単位・数量換算とは独立した設定として版の比較から除外する。
+完全rawと既存versionのhashは保持し、risk tierのlevel・件数・順序・その他のfieldは比較を続ける。
 未知項目や資産・価格刻み・数量係数・上場lifecycleの変更は版を分ける。
 MEXC Fundingの取得失敗・期限切れ・決済通過・定義変更はFunding4値だけをnullにする。
 必須Ticker値・時刻・exact数量換算が正常な場合だけ`funding_only_partial:<reason>`を設定し、

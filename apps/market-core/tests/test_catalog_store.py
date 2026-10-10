@@ -27,9 +27,32 @@ TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 
 
 @pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated test PostgreSQL")
-def test_mexc_hot_tag_preserves_version_and_original_raw_definition() -> None:
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [
+        pytest.param({"isHot": False}, {"isHot": True}, id="hot-tag"),
+        pytest.param(
+            {
+                "maxVol": 700,
+                "limitMaxVol": 700,
+                "riskBaseVol": 700,
+                "riskIncrVol": 5500,
+                "riskLimitCustom": [{"level": 1, "maxVol": 360000, "mmr": 0.004}],
+            },
+            {
+                "maxVol": 1900,
+                "limitMaxVol": 1900,
+                "riskBaseVol": 1900,
+                "riskIncrVol": 0,
+                "riskLimitCustom": [{"level": 1, "maxVol": 433500, "mmr": 0.004}],
+            },
+            id="order-risk-caps",
+        ),
+    ],
+)
+def test_mexc_metadata_preserves_version_and_original_raw_definition(before, after) -> None:
     assert TEST_DATABASE_URL is not None
-    schema = "mexc_hot_tag_" + uuid.uuid4().hex
+    schema = "mexc_metadata_" + uuid.uuid4().hex
     first_at = datetime(2026, 10, 10, tzinfo=UTC)
     definition = {
         "symbol": "BTC_USDT",
@@ -41,7 +64,7 @@ def test_mexc_hot_tag_preserves_version_and_original_raw_definition() -> None:
         "contractSize": "0.0001",
         "priceUnit": "0.1",
         "volUnit": 1,
-        "isHot": False,
+        **before,
     }
     with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
         connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
@@ -56,8 +79,9 @@ def test_mexc_hot_tag_preserves_version_and_original_raw_definition() -> None:
                 "SELECT venue_instrument_version_id, definition_hash, raw_definition, valid_from "
                 "FROM venue_instrument_versions WHERE valid_to IS NULL"
             ).fetchone()
+            changed_definition = {**definition, **after}
             changed = parse_mexc_catalog(
-                {"success": True, "code": 0, "data": [{**definition, "isHot": True}]},
+                {"success": True, "code": 0, "data": [changed_definition]},
                 observed_at=first_at + timedelta(minutes=1),
             )
             result = persist_catalog(
@@ -77,10 +101,10 @@ def test_mexc_hot_tag_preserves_version_and_original_raw_definition() -> None:
                 "SELECT count(*) FROM venue_instrument_versions"
             ).fetchone() == (1,)
             assert connection.execute(
-                "SELECT payload->'data'->0->'isHot' FROM raw_catalog_payloads "
+                "SELECT payload->'data'->0 FROM raw_catalog_payloads "
                 "WHERE raw_catalog_payload_id = %s",
                 (result.raw_payload_id,),
-            ).fetchone() == (True,)
+            ).fetchone() == (changed_definition,)
         finally:
             connection.execute("RESET search_path")
             connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
