@@ -96,7 +96,7 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
 
   async latestUniverse(): Promise<UniverseSnapshotArtifact> {
     for (let attempt = 0; attempt < MAX_UNIVERSE_READ_ATTEMPTS; attempt += 1) {
-      if (attempt > 0) await delay(UNIVERSE_READ_RETRY_DELAY_MS);
+      if (attempt > 0) await waitForUniverseReadRetry();
       const serviceBefore = await readArtifact<MarketServiceStateArtifact>(
         this.paths.serviceStatePath,
         "service-state",
@@ -141,6 +141,10 @@ function assertFresh(
   if (!Number.isFinite(ageMs) || Math.abs(ageMs) > maxAgeMs) {
     throw new Error(`${name} is stale`);
   }
+}
+
+function waitForUniverseReadRetry(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, UNIVERSE_READ_RETRY_DELAY_MS));
 }
 
 export function createMarketArtifactRepository(): MarketArtifactRepository {
