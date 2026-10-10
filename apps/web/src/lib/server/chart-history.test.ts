@@ -30,6 +30,30 @@ describe("native chart history", () => {
     }
   });
 
+  test("uses the published universe without requiring an active selected venue", async () => {
+    const bundle = fixture("mexc");
+    bundle.universe.items[0].sourceSymbol = "BTC_USDT";
+    bundle.universe.items[0].venueInstrumentId = "mexc:BTC_USDT";
+    const fetcher = vi.fn(async () => json({ success: true, code: 0, data: {
+      time: [START / 1000], open: [100], high: [105], low: [95], close: [102],
+      vol: [20_000], amount: [204]
+    } }));
+    const service = new ChartHistoryService({
+      artifacts: {
+        latest: async () => { throw new Error("selected venue unavailable"); },
+        latestUniverse: async () => bundle.universe
+      },
+      fetch: fetcher as typeof fetch,
+      now: () => NOW,
+      monotonicNow: () => 0,
+      wait: async (_milliseconds, signal) => signal.throwIfAborted()
+    });
+
+    await expect(service.history(query("mexc:BTC_USDT", "24h")))
+      .resolves.toMatchObject({ venueInstrumentId: "mexc:BTC_USDT", bars: [{ close: 102 }] });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+
   test("resolves only active grouped linear instruments from a fresh universe before fetching", async () => {
     const fetcher = vi.fn(async () => json([]));
     const bundle = fixture("aster");

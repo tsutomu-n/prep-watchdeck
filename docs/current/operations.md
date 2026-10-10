@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_09:21 JST"
+timestamp="2026-10-10(土)_09:30 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T09:21:13+09:00`
+- 更新: `2026-10-10T09:30:00+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -583,6 +583,7 @@ MEXCを含むsourceを配置するときは、先にMarket artifact、Ranking or
 `PREP_WATCHDECK_MARKET_MEXC_ENABLED=true`で、reader先行配置では明示的に`false`を設定する。
 この設定はMarket CoreのMEXC Catalog/L1/candle/recovery/funding/selected収集を止め、既存stateを削除しない。
 Webから明示要求する表示用Chart履歴・約定騰落率の公開API読取は別経路であり、この設定では停止しない。
+このWeb readはfreshなUniverseと対応するservice manifestだけを必要とし、Venueのactive selectionや`selected-market.json`の利用可否には依存しない。
 
 採用範囲は審査済みregistryの10 USDT perpetualだけで、未審査catalogの全件収集ではない。
 同梱Ranking mapのMEXC versionは隔離DBのcatalog captureに基づく。本番DBのcurrent instrument/versionを

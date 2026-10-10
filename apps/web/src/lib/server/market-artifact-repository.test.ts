@@ -42,6 +42,31 @@ describe("market artifact and local selection repositories", () => {
     }
   });
 
+  test("keeps native chart identity reads available when no venue selection is active", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-market-unselected-universe-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    bundle.selected.generatedAt = "2026-08-14T11:00:00Z";
+    const selectedState = bundle.service.artifacts.find(
+      (item) => item.name === "selected-market.json"
+    );
+    if (!selectedState) throw new Error("selected artifact state missing from fixture");
+    selectedState.status = "unavailable";
+    selectedState.generatedAt = bundle.selected.generatedAt;
+    try {
+      await writeArtifacts(paths, bundle);
+      const repository = new LocalFileMarketArtifactRepository(
+        paths,
+        () => new Date("2026-08-14T12:00:10Z")
+      );
+
+      await expect(repository.latestUniverse()).resolves.toEqual(bundle.universe);
+      await expect(repository.latest()).rejects.toThrow(/selected-market is stale/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   test("retries one in-progress published generation before returning a coherent bundle", async () => {
     const root = await mkdtemp(join(tmpdir(), "watchdeck-market-generation-race-"));
     const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });

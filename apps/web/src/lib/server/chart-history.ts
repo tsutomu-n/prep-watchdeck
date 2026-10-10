@@ -121,7 +121,9 @@ export class ChartHistoryService {
   async resolveInstrument(id: string, now: number): Promise<UniverseInstrumentArtifact> {
     let universe;
     try {
-      universe = (await this.artifacts.latest()).universe;
+      universe = this.artifacts.latestUniverse
+        ? await this.artifacts.latestUniverse()
+        : (await this.artifacts.latest()).universe;
     } catch {
       throw new ChartHistoryError(503, "chart_market_unavailable");
     }

@@ -19,6 +19,7 @@ export type MarketArtifactBundle = {
 
 export interface MarketArtifactRepository {
   latest(): Promise<MarketArtifactBundle>;
+  latestUniverse?(): Promise<UniverseSnapshotArtifact>;
 }
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
@@ -89,6 +90,39 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
       return { universe, chart, selected, service: serviceAfter };
     }
     throw new Error("market artifacts changed while being read");
+  }
+
+  async latestUniverse(): Promise<UniverseSnapshotArtifact> {
+    for (let attempt = 0; attempt < MAX_GENERATION_READ_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) await delay(GENERATION_RETRY_DELAY_MS);
+      const serviceBefore = await readArtifact<MarketServiceStateArtifact>(
+        this.paths.serviceStatePath,
+        "service-state",
+        validators.service
+      );
+      assertFresh(serviceBefore.generatedAt, this.now(), "service-state");
+      const universe = await readArtifact<UniverseSnapshotArtifact>(
+        this.paths.universeSnapshotPath,
+        "universe-snapshot",
+        validators.universe
+      );
+      const serviceAfter = await readArtifact<MarketServiceStateArtifact>(
+        this.paths.serviceStatePath,
+        "service-state",
+        validators.service
+      );
+
+      if (serviceBefore.generatedAt !== serviceAfter.generatedAt) continue;
+      assertFresh(serviceAfter.generatedAt, this.now(), "service-state");
+      assertFresh(universe.generatedAt, this.now(), "universe-snapshot");
+      const universeState = serviceAfter.artifacts.find(
+        (artifact) => artifact.name === "universe-snapshot.json"
+      );
+      if (universeState?.status === "ready" && universeState.generatedAt === universe.generatedAt) {
+        return universe;
+      }
+    }
+    throw new Error("market universe changed while being read");
   }
 }
 
