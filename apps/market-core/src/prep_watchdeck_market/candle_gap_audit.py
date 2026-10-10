@@ -292,8 +292,17 @@ def _check_previous(previous: HistoryAudit, scope: AuditScope, database_identity
 
 
 def _check_deadline(deadline: float) -> None:
-    if time.monotonic() > deadline:
+    if time.monotonic() >= deadline:
         raise ValueError("audit exceeds time budget")
+
+
+def _set_statement_timeout(connection: Connection[Any], deadline: float) -> None:
+    milliseconds = int(min(15.0, deadline - time.monotonic()) * 1000)
+    if milliseconds <= 0:
+        raise ValueError("audit exceeds time budget")
+    # Zero disables PostgreSQL's timeout: never round a positive remainder up or to zero.
+    connection.execute("SELECT set_config('statement_timeout', %s, true)", (f"{milliseconds}ms",))
+    _check_deadline(deadline)
 
 
 def build_audit(
@@ -381,6 +390,7 @@ def build_audit(
                 UnavailableRange(instrument_id=identity, since=uncovered_start, until=scope.until)
             )
 
+    _check_deadline(deadline)
     tracking = {_key(item): item for item in missing}
     if previous is not None:
         tracking.update({_key(item): item for item in previous.missing})
@@ -405,7 +415,9 @@ def build_audit(
         raise ValueError("gap evidence exceeds budget; narrow the explicit scope")
     versions = {item.version_id: item for item in ranges}
     tracked = []
-    for key in sorted(tracking):
+    for index, key in enumerate(sorted(tracking)):
+        if index % 256 == 0:
+            _check_deadline(deadline)
         item = tracking[key]
         version = versions.get(item.version_id)
         if version is None or version.instrument_id != item.instrument_id:
@@ -421,6 +433,7 @@ def build_audit(
         else:
             status = "missing"
         tracked.append(TrackedGap(key=item, status=status))
+    _check_deadline(deadline)
     report = HistoryAudit(
         scope=scope,
         scope_hash=_hash(scope.model_dump(mode="json", by_alias=True)),
@@ -455,10 +468,13 @@ def audit_connection(
         raise ValueError("audit requires a fresh autocommit connection")
     deadline = time.monotonic() + 60
     with connection.transaction():
+        _check_deadline(deadline)
         connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY")
-        connection.execute("SET LOCAL statement_timeout = '15s'")
+        _set_statement_timeout(connection, deadline)
         connection.execute("SET LOCAL lock_timeout = '2s'")
+        _check_deadline(deadline)
         connection.execute("SET LOCAL idle_in_transaction_session_timeout = '30s'")
+        _set_statement_timeout(connection, deadline)
         meta = connection.execute(
             "SELECT statement_timestamp(), pg_current_snapshot()::text, "
             "current_setting('transaction_read_only'), current_database(), "
@@ -466,6 +482,7 @@ def audit_connection(
             "(SELECT oid FROM pg_database WHERE datname=current_database()), "
             "'venue_instrument_versions'::regclass::oid, 'candle_1m'::regclass::oid"
         ).fetchone()
+        _check_deadline(deadline)
         if meta is None or meta[2] != "on":
             raise ValueError("read-only snapshot could not be established")
         database_identity = _hash(list(meta[3:]))
@@ -481,6 +498,7 @@ def audit_connection(
                 | {item.version_id for item in previous.missing}
             )
         )
+        _set_statement_timeout(connection, deadline)
         rows = connection.execute(
             "SELECT venue || ':' || source_symbol, venue_instrument_version_id, "
             "definition_hash, valid_from, valid_to FROM venue_instrument_versions "
@@ -490,6 +508,7 @@ def audit_connection(
             "ORDER BY venue, source_symbol, valid_from LIMIT %s",
             (list(scope.instrument_ids), scope.until, scope.since, previous_ids, MAX_VERSIONS + 1),
         ).fetchall()
+        _check_deadline(deadline)
         if len(rows) > MAX_VERSIONS:
             raise ValueError("contract scan exceeds budget")
         ranges = tuple(
@@ -502,23 +521,33 @@ def audit_connection(
             )
             for row in rows
         )
+        _check_deadline(deadline)
         present: dict[int, set[datetime]] = defaultdict(set)
         # A server cursor bounds client transfer batches; SQL has an independent total bound.
         with connection.cursor(name="candle_gap_audit") as cursor:
+            _set_statement_timeout(connection, deadline)
             cursor.execute(
                 "SELECT venue_instrument_version_id, bucket_at FROM candle_1m "
                 "WHERE venue_instrument_version_id = ANY(%s) AND bucket_at >= %s "
                 "AND bucket_at < %s LIMIT %s",
                 ([item.version_id for item in ranges], scope.since, scope.until, MAX_BUCKETS + 1),
             )
-            for count, (version_id, bucket) in enumerate(cursor, 1):
+            _check_deadline(deadline)
+            count = 0
+            while True:
+                # ServerCursor.fetchmany emits FETCH, a separate timed SQL statement.
+                _set_statement_timeout(connection, deadline)
+                rows = cursor.fetchmany(100)
+                _check_deadline(deadline)
+                if not rows:
+                    break
+                count += len(rows)
                 if count > MAX_BUCKETS:
                     raise ValueError("candle scan exceeds budget")
-                if count % 2000 == 0 and time.monotonic() > deadline:
-                    raise ValueError("candle scan exceeds time budget")
-                present[version_id].add(bucket)
-        if time.monotonic() > deadline:
-            raise ValueError("audit exceeds time budget")
+                for version_id, bucket in rows:
+                    present[version_id].add(bucket)
+                _check_deadline(deadline)
+        _check_deadline(deadline)
         return build_audit(
             scope,
             ranges,

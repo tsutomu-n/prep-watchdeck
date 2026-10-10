@@ -1,8 +1,8 @@
 # Identity・履歴診断・50件開始gateの根本修正
 
-timestamp="2026-10-10(土)_22:32 JST"
+timestamp="2026-10-11(日)_07:05 JST"
 - 作成: `2026-10-10T21:25:20+09:00`
-- 更新: `2026-10-10T22:32:13+09:00`
+- 更新: `2026-10-11T06:54:18+09:00`
 - 検証: `2026-10-10T22:32:13+09:00`
 - 状態: `実装計画`
 
@@ -223,3 +223,29 @@ PEARL旧版欠損1本/境界1件と`imn`意味不明は前回22:05時点の保�
   helperは上記new copyでGit管理外のmanifestに紐付く。
 - Source検証はPASS。本番配置・実unit lifecycle・新50件7200秒観測・実データ受入は未完了。
   push/PR/CI、本番DB書込、Provider回復、100件昇格は未実施。
+
+
+## 追加2件の修正・受入準備の実装（229c289後）
+
+ユーザーの「修正、実装」により、前回reviewの2件の不具合と2件の改善をlocalで実装する。
+branchは`ai/acceptance-closeout-20261011-0653`。元checkoutのdirty4と旧evidence/helperを保全する。
+
+- [x] C1 反復cancelでもDB thread完了前にconnection/復旧lockを解放しない。接続中cancelも安全に終了。
+- [x] C2 台帳SQLの取得batchごとに残時間を確認し、SQL timeoutを残時間以下へ制限する。
+- [x] C3 v1旧証拠とv2同scope baselineの比較manifest。旧未解決キー/境界を消去せず対応・未確認を残す。
+- [ ] C4 source/helper/map/policyを揃えた再生成可能なlocal受入bundleとhash/検証結果。
+- [ ] C5 統合差分review・関連最小回帰・必須lint/type/docs確認・対象差分だけlocal commit。
+
+C3はread-only file比較だけでDB/Provider取得・v1自動変換・解決の自動承認を行わない。
+C4はtracked sourceだけを収録し、helperの外部参照も固定する。policyは未承認のまま、
+本番bindingとmap採用後のrecoveryNotBeforeを実運用時に確定する。旧測定の時間は合算しない。
+本番配置・unit操作・live DB変更・Provider回復・新2h観測・CI/push/PRは今回の対象外。
+rollbackは今回commitと新bundleだけに限定し、元source/DB/旧証拠は保全する。
+検証は各不具合のRED→GREEN、旧証拠の保持と差替え拒否、bundleの実生成/hash/CLI確認、
+Market関連pytestとRuff/Pyrefly、変更docsのmetadata/linksを基本とする。
+
+Local source検証: Market全pytestは隔離Postgres17/専用port32817で517 PASS。
+追加のbundle dependency欠落拒否はfocused7 PASS。Ruff/format/Pyrefly PASS。
+C1はfake DB/Providerと実thread/lock、C2は時計を置換した実Postgres FETCH timeoutで検証した。
+C3の同scope実read-only再scanでは旧PEARL欠損1/境界1が残る。比較manifestも両方を保全し、
+全履歴合格はnot_assessedのまま。C4のソース実装は完了し、immutable commitからの実bundle buildを次に検証する。

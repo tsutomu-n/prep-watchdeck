@@ -5,6 +5,7 @@ import json
 import os
 import subprocess
 import sys
+from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urlsplit
 from uuid import uuid4
@@ -308,6 +309,96 @@ def test_audit_build_enforces_its_time_budget(monkeypatch):
         audit()
 
 
+class DeadlineAuditConnection:
+    """Model server timeouts separately from client transfer/decode time."""
+
+    autocommit = True
+
+    def __init__(self, *, fetch_seconds=0.0, transfer_seconds=0.0):
+        self.now = 0.0
+        self.fetch_seconds = fetch_seconds
+        self.transfer_seconds = transfer_seconds
+        self.statement_timeout = 15.0
+        self.transfers = 0
+        self.position = 0
+
+    def transaction(self):
+        return nullcontext()
+
+    def execute(self, query, params=None):
+        if query.startswith("SELECT set_config('statement_timeout'") or query.startswith(
+            "SET LOCAL statement_timeout"
+        ):
+            value = params[0] if params is not None else query.partition("=")[2].strip(" '")
+            self.statement_timeout = (
+                float(value.removesuffix("ms")) / 1000
+                if value.endswith("ms")
+                else float(value.removesuffix("s"))
+            )
+        if query.startswith("SELECT statement_timestamp()"):
+            self.result = (
+                END,
+                "1:2:",
+                "on",
+                "unit_fixture",
+                "127.0.0.1",
+                12345,
+                1,
+                2,
+                3,
+            )
+        elif query.startswith("SELECT venue"):
+            self.result = [("aster:PEARLUSDT", 9921, "a" * 64, START, None)]
+        return self
+
+    def fetchone(self):
+        return self.result
+
+    def fetchall(self):
+        self.now += self.transfer_seconds
+        return self.result
+
+    def cursor(self, *, name):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        return False
+
+    def fetchmany(self, size=100):
+        self.transfers += 1
+        duration = min(self.fetch_seconds, self.statement_timeout)
+        self.now += duration
+        if self.fetch_seconds >= self.statement_timeout:
+            raise psycopg.errors.QueryCanceled("fixture statement timeout")
+        count = min(size, 2000 - self.position)
+        self.position += count
+        return [(9921, START)] * count
+
+    def __iter__(self):
+        while batch := self.fetchmany(100):
+            yield from batch
+
+
+def test_audit_stops_slow_fetches_within_shared_database_budget(monkeypatch):
+    connection = DeadlineAuditConnection(fetch_seconds=14.9)
+    monkeypatch.setattr(candle_gap_audit.time, "monotonic", lambda: connection.now)
+    with pytest.raises((ValueError, psycopg.errors.QueryCanceled)):
+        audit_connection(connection, scope())
+    assert connection.now <= 60.0
+    assert connection.position < 2000
+
+
+def test_audit_stops_before_candle_fetch_when_catalog_transfer_exhausts_budget(monkeypatch):
+    connection = DeadlineAuditConnection(transfer_seconds=60.0)
+    monkeypatch.setattr(candle_gap_audit.time, "monotonic", lambda: connection.now)
+    with pytest.raises(ValueError, match="time budget"):
+        audit_connection(connection, scope())
+    assert connection.transfers == 0
+
+
 @pytest.mark.parametrize("source", ["previous", "roster"])
 def test_cli_input_fifo_is_rejected_without_waiting_for_a_writer(tmp_path, source):
     fifo = tmp_path / "input.json"
@@ -338,6 +429,56 @@ else:
         pytest.fail("invalid FIFO input blocked before validation")
     assert result.returncode == 2
     assert not (tmp_path / "never.json").exists()
+
+
+@pytest.mark.skipif(not os.environ.get("TEST_DATABASE_URL"), reason="isolated PostgreSQL required")
+def test_postgres_audit_limits_fetch_to_remaining_time(monkeypatch):
+    url = os.environ["TEST_DATABASE_URL"]
+    target = urlsplit(url)
+    if (
+        target.hostname != "127.0.0.1"
+        or target.port in {None, 5432, 55432}
+        or target.path != "/prep_watchdeck_test"
+        or target.username != "prep_watchdeck_test"
+    ):
+        pytest.fail("isolated TEST_DATABASE_URL required")
+    schema = "gap_deadline_" + uuid4().hex
+    with psycopg.connect(url, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        try:
+            connection.execute(
+                "CREATE TABLE venue_instrument_versions (venue text, source_symbol text, "
+                "venue_instrument_version_id bigint, definition_hash text, "
+                "valid_from timestamptz, valid_to timestamptz)"
+            )
+            connection.execute(
+                "INSERT INTO venue_instrument_versions VALUES "
+                "('aster', 'PEARLUSDT', 9921, %s, %s, NULL)",
+                ("a" * 64, START),
+            )
+            connection.execute(
+                sql.SQL(
+                    "CREATE VIEW candle_1m AS SELECT 9921::bigint AS "
+                    "venue_instrument_version_id, {}::timestamptz AS bucket_at "
+                    "FROM pg_sleep(0.2)"
+                ).format(sql.Literal(START))
+            )
+            now = [0.0]
+            execute = psycopg.ServerCursor.execute
+
+            def consume_budget_at_declaration(cursor, query, params=None, **kwargs):
+                result = execute(cursor, query, params, **kwargs)
+                now[0] = 59.95
+                return result
+
+            monkeypatch.setattr(psycopg.ServerCursor, "execute", consume_budget_at_declaration)
+            monkeypatch.setattr(candle_gap_audit.time, "monotonic", lambda: now[0])
+            with pytest.raises(psycopg.errors.QueryCanceled):
+                audit_connection(connection, scope())
+        finally:
+            connection.execute("RESET search_path")
+            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 @pytest.mark.skipif(not os.environ.get("TEST_DATABASE_URL"), reason="isolated PostgreSQL required")

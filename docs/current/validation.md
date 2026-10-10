@@ -1,6 +1,6 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-10(土)_22:26 JST"
+timestamp="2026-10-11(日)_07:05 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
 - 更新: `2026-10-10T22:26:15+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
@@ -337,6 +337,13 @@ metricの未来時刻はartifact生成時刻を基準に検査し、時間経過
 異常終了・policy不一致を拒否することを確認する。固定期間監査は隔離Postgresでread-only/RR、
 旧版欠損、分途中の版境界、同じ欠損キーの再scanを検証する。これらのsource検証だけでは
 本番配置・新しい7200秒測定・Providerが返さない足の回復を完了扱いにしない。
+
+反復cancelの回帰は実asyncio/thread/file lockとfake DB/Providerでresourceの終了順を検証する。
+履歴監査のSQL期限は隔離Postgresの実FETCHで残時間timeoutを確認する。時計を置換した試験を
+実時間60秒の継続測定とは呼ばない。v1→v2比較は旧未解決キー/境界/catalog不明区間の保持、
+来歴unknown、scope不一致・入力改変・特殊file・出力上書きの拒否を確認する。
+local受入bundleはtracked-only source、helper/map/policy hash、実build、source modeと改変拒否を検査する。
+`comparison_complete`やbundleの`sourceStatus=PASS`から、履歴全体・本番運用を合格へ昇格しない。
 
 ## Research remediation
 

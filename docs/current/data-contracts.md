@@ -1,6 +1,6 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_22:26 JST"
+timestamp="2026-10-11(日)_07:05 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
 - 更新: `2026-10-10T22:26:15+09:00`
@@ -429,6 +429,8 @@ run開始/終了のroster一致を保持する。旧artifactは読めるが、�
 running側の`previousCompletedRunId`が直前完了runを指す。finishedAtは一度確定し、DB auditとartifactで
 共用する。generatedAtはそれ以降の時刻にする。
 接続前にrunningを発行し、DB接続/開始/終了記録の失敗やcancelでもfailed artifactを独立して発行する。
+DB threadの待機中にcancelが重なってもthread完了までjoinし、接続closeと復旧lock解放を後に行う。
+接続確立中のcancelでは、遅れて得られたconnectionも閉じてから終了する。
 片方の状態fileの書込が失敗しても他方を試す。両方が書込不能の場合は実行例外を維持する。
 latest-completedが同じrunのterminalへ先に置換された瞬間は、run ID・開始時刻・trigger・前任runの
 一致を確認してその完了証拠を検査する。不一致のterminal同士は受入へ使用しない。

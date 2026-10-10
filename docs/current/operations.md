@@ -1,6 +1,6 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_22:26 JST"
+timestamp="2026-10-11(日)_07:05 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
 - 更新: `2026-10-10T22:26:15+09:00`
@@ -604,8 +604,37 @@ Provider可用性や将来の全履歴保証とは別の診断である。
 recoveredの整合も検査する。hash一致は署名や真正性の保証ではない。
 旧v1台帳は`--previous`へ流用しない。自動変換・自動baseline更新は行わず旧証拠を保全する。
 新形式のbaselineを用意する際も、旧未解決キー/境界を解消扱いにせず別途照合して引き継ぐ。
-60秒予算はSQL取得と台帳計算を通して適用する。previous/rosterはregular fileだけを容量制限付きで読み、
+60秒予算はSQL取得と台帳計算を通して適用する。100行FETCHの前後ごとに残時間を確認し、
+各SQLのstatement timeoutを残時間以下へ縮める。previous/rosterはregular fileだけを容量制限付きで読み、
 FIFO等の特殊fileは待機せず拒否する。
+
+### 旧台帳との比較manifest
+
+新しいv2 baselineを保存してから、Repo rootで
+`uv run --package prep-watchdeck-market python scripts/market/reconcile-candle-history.py --legacy <旧v1 JSON> --baseline <同scope v2 JSON> --output <新規JSON>`
+を実行する。`--legacy`は複数指定できる。DBやProviderへ接続せず、元fileを変更しない。
+`candle-gap-reconciliation-v1`は旧raw SHA・scope・未解決のexact key・境界・catalog不明区間を保持する。
+終了0の`comparison_complete`は比較出力の成功だけを表す。旧v1のDB来歴とv2のrelation bindingの
+対応は未証明なので、v2でrecoveredでも比較ではunknownとなり、
+`allLegacyUnresolvedRecovered=false`、`globalHistoryAcceptance=not_assessed`を保持する。
+新baselineにキーがないことを回復へ読み替えない。symlink/FIFO/上書き・異なるscopeを拒否する。
+
+### 本番受入前のlocal bundle
+
+Repo rootの`uv run --package prep-watchdeck-market python scripts/market/prepare-acceptance-bundle.py`
+に`--repository <Repo> --ref <commit> --helper-manifest <source-manifest.json> --map-directory <候補DIR> --reconciliation <保存比較JSON> --output <新規DIR> --build`を渡す。
+Git archiveのtracked sourceだけを収録し、locked dependenciesとWebをlocalでbuildする。
+`--build`なしは`NOT_RUN`となる。`--verify <作成DIR>`でhash・source mode・source/helper/map/policyの束縛を再検査できる。
+実build時はWeb出力とvenv設定/CLI entryも固定する。site-packages全体の真正性は主張しない。
+staged venvのeditable参照とshebangは絶対pathを持つため、本番先で環境を再構築・再bindingする。
+元helper/証拠は保全し、copied launcherの出力BASEだけをbundle内へ合わせる。
+
+`BUNDLE.json`とstaged releaseはlocal成果物で、本番配置先とは別である。policyはapproved=false、
+警告例外は空、settlement例外は無効、recoveryNotBeforeは未確定のまま。
+unit bindingのdrop-in hashもdraftで、build/hash成功はmap資格・運用承認・本番反映・新2時間測定を代替しない。
+履歴比較manifestは束縛するが、履歴全体の合格を自動認定するgateへ昇格しない。
+本番release/map採用とunit binding・protected controlsの確認、採用後のrecoveryNotBefore、
+未解決履歴/map資格の審査、新7200秒観測は別の運用受入とする。
 
 ## Attention Coreの隔離実行と運用
 

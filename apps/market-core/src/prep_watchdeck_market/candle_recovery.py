@@ -49,6 +49,7 @@ from prep_watchdeck_market.sources.candle_history import (
     HistoryRateLimited,
     NativeCandleHistoryClient,
 )
+from prep_watchdeck_market.thread_tasks import await_thread_task
 
 DATABASE_TIMEOUT_OPTIONS = "-c statement_timeout=5000 -c lock_timeout=2000"
 AUTOMATIC_RUN_SECONDS = 600
@@ -96,11 +97,7 @@ def recovery_window(
 async def _thread_call[T](function: Callable[..., T], *args: object, **kwargs: object) -> T:
     """Join a DB thread even when its awaiting task is cancelled."""
     task = asyncio.create_task(asyncio.to_thread(function, *args, **kwargs))
-    try:
-        return await asyncio.shield(task)
-    except asyncio.CancelledError:
-        await asyncio.gather(task, return_exceptions=True)
-        raise
+    return await await_thread_task(task)
 
 
 async def _open_connection(database_url: str, *, apply: bool) -> psycopg.Connection[Any]:
@@ -118,12 +115,10 @@ async def _open_connection(database_url: str, *, apply: bool) -> psycopg.Connect
         )
     )
     try:
-        return await asyncio.shield(task)
+        return await await_thread_task(task)
     except asyncio.CancelledError:
-        results = await asyncio.gather(task, return_exceptions=True)
-        connection = results[0]
-        if isinstance(connection, psycopg.Connection):
-            await _thread_call(connection.close)
+        if not task.cancelled() and task.exception() is None:
+            await _thread_call(task.result().close)
         raise
 
 
