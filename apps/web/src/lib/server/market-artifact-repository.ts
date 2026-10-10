@@ -35,6 +35,8 @@ const validators = {
   selected: ajv.compile(selectedMarketSchema),
   service: ajv.compile(marketServiceStateSchema)
 };
+const MAX_UNIVERSE_READ_ATTEMPTS = 5;
+const UNIVERSE_READ_RETRY_DELAY_MS = 50;
 
 export class LocalFileMarketArtifactRepository implements MarketArtifactRepository {
   constructor(
@@ -93,8 +95,8 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
   }
 
   async latestUniverse(): Promise<UniverseSnapshotArtifact> {
-    for (let attempt = 0; attempt < MAX_GENERATION_READ_ATTEMPTS; attempt += 1) {
-      if (attempt > 0) await delay(GENERATION_RETRY_DELAY_MS);
+    for (let attempt = 0; attempt < MAX_UNIVERSE_READ_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) await delay(UNIVERSE_READ_RETRY_DELAY_MS);
       const serviceBefore = await readArtifact<MarketServiceStateArtifact>(
         this.paths.serviceStatePath,
         "service-state",
