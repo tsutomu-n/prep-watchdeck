@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_12:46 JST"
+timestamp="2026-10-10(土)_13:27 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T12:46:57+09:00`
+- 更新: `2026-10-10T13:27:31+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -22,11 +22,11 @@ timestamp="2026-10-10(土)_12:46 JST"
 - `mappingMethod=exact_base_heuristic`は、active、crypto、linear perpetual、base完全一致、base数量、
   multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する
 - MEXCの`mappingMethod=verified_native_contract`は確認済みregistryとnative定義が一致する契約だけに設定する。
-  source registryは既存10件とnative-only追加90件、計100件の固定採用。`typeLabel=0`だけでcryptoと判定しない
+  source registryは既存10件とnative-only追加40件、計50件の固定採用。`typeLabel=0`だけでcryptoと判定しない
 - native資産は確認済みでも他Venueとの同一性が未確認の場合、registry evidenceの`identity_scope=native_only`を保持し、
   `groupId=native:mexc:<exact source symbol>:linear-perp`の単独groupを使う。取得可否を切り替えるflagではない。
   他Venueの参考mark中央値・乖離率から分離し、単独の価格・OI・Chart・手動selection・板・約定は利用できる。
-  審査済み10/50/100件registryはdata bundleとして保持し、sourceの実効100件と稼働配置・受入段階を区別する。
+  審査済み10/50/100件registryはdata bundleとして保持し、sourceの実効50件と稼働配置・受入段階を区別する。
 
 現行Perp coreではalias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQを
 自動group化しない。
@@ -65,6 +65,8 @@ base数量から再推計しない。Webの直接取得足は係数を確認で�
 MEXCの完全raw Catalogを保存し、意味が変わらないと確認した表示・fee・leverage項目を版の比較から除外する。
 取引数量上限の`maxVol`・`limitMaxVol`、リスク枠の`riskBaseVol`・`riskIncrVol`、
 `riskLimitCustom`各entryの`maxVol`も、資産・価格単位・数量換算とは独立した設定として版の比較から除外する。
+`tagIdList`は非負整数だけの配列の場合、fieldの存在を保持してhash内で空配列へ投影する。
+表示タグ値の変更で版を分けず、欠損・不正な型・未知fieldは区別する。
 完全rawと既存versionのhashは保持し、risk tierのlevel・件数・順序・その他のfieldは比較を続ける。
 未知項目や資産・価格刻み・数量係数・上場lifecycleの変更は版を分ける。
 MEXC Fundingの取得失敗・期限切れ・決済通過・定義変更はFunding4値だけをnullにする。

@@ -152,6 +152,14 @@ class CatalogInstrument:
         raw_definition = {
             name: value for name, value in self.raw_definition.items() if name not in ignored
         }
+        tag_ids = raw_definition.get("tagIdList")
+        if (
+            self.venue == "mexc"
+            and isinstance(tag_ids, list)
+            and all(type(tag_id) is int and tag_id >= 0 for tag_id in tag_ids)
+        ):
+            # Hash-only projection of documented contract tags; preserve field presence.
+            raw_definition["tagIdList"] = []
         risk_tiers = raw_definition.get("riskLimitCustom")
         if self.venue == "mexc" and isinstance(risk_tiers, list):
             projected_tiers = []

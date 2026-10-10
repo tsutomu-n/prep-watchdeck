@@ -1,8 +1,8 @@
 # prep-watchdeck 現行概要
 
-timestamp="2026-10-10(土)_12:46 JST"
+timestamp="2026-10-10(土)_13:27 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T12:46:57+09:00`
+- 更新: `2026-10-10T13:27:31+09:00`
 - 検証: `2026-09-14T18:18:00+09:00`
 - 状態: `現行`
 
@@ -15,7 +15,7 @@ local-first market intelligence workspaceである。
 
 Repositoryの現行surfaceはBitget、Hyperliquid Core、Aster、MEXCのactive crypto linear perpetualを扱う
 Perp Universe Explorerと、確認済みの外部参照を使うデイトレランキング、候補比較・判断記録である。
-MEXCは既存10件と追加90件の審査済みUSDT perpetual、計100銘柄を固定採用する。追加90件はMEXC単独で扱い、
+MEXCは既存10件と追加40件の審査済みUSDT perpetual、計50銘柄を固定採用する。追加40件はMEXC単独で扱い、
 未審査の契約や株式・金属・FXを含む全catalogの対応を意味しない。稼働配置は運用記録で確認する。
 これは現行実装範囲であり、将来のasset class、Venue、データ源、ranking、
 forecast、Chart、保存方式の上限ではない。

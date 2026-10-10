@@ -32,6 +32,11 @@ TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
     [
         pytest.param({"isHot": False}, {"isHot": True}, id="hot-tag"),
         pytest.param(
+            {"isHot": False, "tagIdList": [8]},
+            {"isHot": True, "tagIdList": [7, 8]},
+            id="tag-id-list",
+        ),
+        pytest.param(
             {
                 "maxVol": 700,
                 "limitMaxVol": 700,

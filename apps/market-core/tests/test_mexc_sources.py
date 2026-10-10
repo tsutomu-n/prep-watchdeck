@@ -117,9 +117,14 @@ RISK_TIERS = [
             {"limitMaxVol": 10300, "maxVol": 10300, "riskBaseVol": 10300},
             id="US-9934-9974",
         ),
+        pytest.param(
+            {"isHot": False, "tagIdList": [8]},
+            {"isHot": True, "tagIdList": [7, 8]},
+            id="KAIA-9976-9978_MAGIC-9975-9979_US-9974-9980-tags",
+        ),
     ],
 )
-def test_semantic_identity_ignores_observed_mexc_caps_without_mutating_raw(before, after):
+def test_semantic_identity_ignores_observed_mexc_metadata_without_mutating_raw(before, after):
     # These exact deltas came from the separately retained read-only stage50 audit.
     original = instrument()
     left = replace(original, raw_definition={**original.raw_definition, **copy.deepcopy(before)})
@@ -142,12 +147,39 @@ def test_semantic_identity_ignores_observed_mexc_caps_without_mutating_raw(befor
         {"market_type": "future"},
     ],
 )
-def test_mexc_cap_projection_keeps_price_quantity_and_lifecycle_changes(change):
+def test_mexc_metadata_projection_keeps_price_quantity_and_lifecycle_changes(change):
     original = instrument()
     item = replace(
-        original, raw_definition={**original.raw_definition, "riskLimitCustom": RISK_TIERS}
+        original,
+        raw_definition={
+            **original.raw_definition,
+            "riskLimitCustom": RISK_TIERS,
+            "tagIdList": [8],
+        },
     )
-    assert replace(item, **change).semantic_definition_sha256() != item.semantic_definition_sha256()
+    changed = replace(item, raw_definition={**item.raw_definition, "tagIdList": [7, 8]}, **change)
+    assert changed.semantic_definition_sha256() != item.semantic_definition_sha256()
+
+
+@pytest.mark.parametrize(
+    "raw_change",
+    [
+        pytest.param({}, id="missing"),
+        pytest.param({"tagIdList": None}, id="null"),
+        pytest.param({"tagIdList": {"id": 8}}, id="object"),
+        pytest.param({"tagIdList": [True, 8]}, id="boolean"),
+        pytest.param({"tagIdList": ["7", 8]}, id="string"),
+        pytest.param({"tagIdList": [7.0, 8]}, id="float"),
+        pytest.param({"tagIdList": [-1, 8]}, id="negative"),
+        pytest.param({"tagIdList": [{"id": 7}, 8]}, id="nested"),
+        pytest.param({"tagIdList": [7, 8], "unknownTagMeaning": True}, id="unknown-field"),
+    ],
+)
+def test_mexc_tag_projection_preserves_presence_schema_and_unknown_fields(raw_change):
+    original = instrument()
+    item = replace(original, raw_definition={**original.raw_definition, "tagIdList": [8]})
+    changed = replace(original, raw_definition={**original.raw_definition, **raw_change})
+    assert changed.semantic_definition_sha256() != item.semantic_definition_sha256()
 
 
 @pytest.mark.parametrize(
