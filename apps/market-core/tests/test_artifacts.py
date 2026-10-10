@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+import runpy
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -27,9 +29,77 @@ from prep_watchdeck_market.artifacts import (
     write_artifact_atomic,
 )
 from prep_watchdeck_market.database import apply_migrations
+from prep_watchdeck_market.identity import resolve_market_groups
 from prep_watchdeck_market.models import Venue
+from prep_watchdeck_market.sources import mexc
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+def test_native_only_mexc_retains_prices_and_oi_without_entering_other_venue_median(
+    monkeypatch,
+) -> None:
+    directory = Path(__file__).resolve().parents[1] / "data/mexc-reviewed-20261010"
+    registry = runpy.run_path(str(directory / "registry-100.py"))["MEXC_REVIEWED_IDENTITIES"]
+    monkeypatch.setattr(mexc, "MEXC_REVIEWED_IDENTITIES", registry)
+    now = datetime(2026, 10, 10, tzinfo=UTC)
+    batch = mexc.parse_mexc_catalog(
+        json.loads((directory / "catalog.json").read_text()), observed_at=now
+    )
+    native = next(item for item in batch.instruments if item.source_symbol == "ZEC_USDT")
+    peers = [
+        replace(
+            native,
+            venue=venue,
+            source_symbol="ZECUSDT",
+            quantity_unit="base",
+            contract_multiplier=Decimal("1"),
+            raw_definition={},
+        )
+        for venue in ("bitget", "aster")
+    ]
+    instruments = [*peers, native]
+    groups = resolve_market_groups(instruments)
+    records = [
+        replace(
+            _universe_record(
+                venue=instrument.venue,
+                symbol=instrument.source_symbol,
+                base="ZEC",
+                quote="USDT",
+                group_id=resolution.group_id,
+                cycle_at=now,
+                observed_at=now,
+                mark=mark,
+            ),
+            source_at=now,
+            reference_price=Decimal(mark),
+            best_bid=Decimal(mark) - 1,
+            best_ask=Decimal(mark) + 1,
+            open_interest_raw=Decimal("100"),
+            open_interest_raw_unit="contracts" if instrument.venue == "mexc" else "base",
+            open_interest_base=Decimal("1"),
+            open_interest_notional=Decimal(mark),
+            volume_24h_raw=Decimal("1000"),
+            volume_24h_unit="quote",
+        )
+        for instrument, resolution, mark in zip(
+            instruments, groups, ("100", "102", "900"), strict=True
+        )
+    ]
+    items = build_universe_snapshot(records, generated_at=now).items
+    for item in items:
+        if item.venue == "mexc":
+            assert item.group_id == "native:mexc:ZEC_USDT:linear-perp"
+            assert item.mark_price == 900
+            assert item.open_interest_base == 1
+            assert item.open_interest_notional == 900
+            assert item.reference_mark_median.status == "unavailable"
+            assert item.reference_mark_median.value is None
+        else:
+            assert item.reference_mark_median.value == 101
+            assert item.reference_mark_median.venue_count == 2
+            assert set(item.reference_mark_median.venues) == {"bitget", "aster"}
 
 
 def test_universe_median_is_strict_and_stale_values_are_not_published() -> None:
@@ -348,3 +418,130 @@ def _assert_objects_are_closed(node: object) -> None:
     elif isinstance(node, list):
         for value in node:
             _assert_objects_are_closed(value)
+
+
+def test_mexc_funding_only_partial_joins_median_but_invalid_ticker_does_not():
+    from dataclasses import replace
+
+    now = datetime(2026, 10, 10, tzinfo=UTC)
+    common = dict(
+        base="BTC",
+        quote="USDT",
+        group_id="crypto:BTC:linear-perp",
+        cycle_at=now,
+        observed_at=now,
+        mark="100",
+    )
+    mexc = replace(
+        _universe_record(venue="mexc", symbol="BTC_USDT", **common),
+        status="partial",
+        error_code="funding_only_partial:funding_fetch_failed",
+        source_at=now,
+        reference_price=Decimal("101"),
+        best_bid=Decimal("99"),
+        best_ask=Decimal("100"),
+        open_interest_raw=Decimal("10000"),
+        open_interest_raw_unit="contracts",
+        open_interest_base=Decimal("1"),
+        open_interest_notional=Decimal("100"),
+        volume_24h_raw=Decimal("4567"),
+        volume_24h_unit="quote",
+    )
+    peer = _universe_record(venue="bitget", symbol="BTCUSDT", **common)
+    items = build_universe_snapshot([mexc, peer], generated_at=now).items
+    assert all(item.reference_mark_median.venue_count == 2 for item in items)
+    invalid = replace(mexc, best_bid=None)
+    assert all(
+        item.reference_mark_median.status == "unavailable"
+        for item in build_universe_snapshot([invalid, peer], generated_at=now).items
+    )
+    other_partial = replace(mexc, error_code="incomplete_source_row")
+    assert all(
+        item.reference_mark_median.status == "unavailable"
+        for item in build_universe_snapshot([other_partial, peer], generated_at=now).items
+    )
+
+
+def test_mexc_publisher_enforces_funding_ttl_even_with_overlong_valid_until():
+    from dataclasses import replace
+
+    observed = datetime(2026, 10, 10, tzinfo=UTC)
+    now = observed + timedelta(seconds=91)
+    record = replace(
+        _universe_record(
+            venue="mexc",
+            symbol="BTC_USDT",
+            base="BTC",
+            quote="USDT",
+            group_id=None,
+            cycle_at=observed,
+            observed_at=now,
+            mark="100",
+        ),
+        funding_rate_raw=Decimal("0.001"),
+        funding_interval_seconds=14400,
+        funding_rate_per_hour=Decimal("0.00025"),
+        next_funding_at=observed + timedelta(hours=4),
+        funding_source_at=observed,
+        funding_observed_at=observed,
+        funding_valid_until=observed + timedelta(hours=1),
+    )
+    item = build_universe_snapshot([record], generated_at=now).items[0]
+    assert item.mark_price == 100
+    assert (
+        item.funding_rate_raw,
+        item.funding_interval_seconds,
+        item.funding_rate_per_hour,
+        item.next_funding_at,
+    ) == (None, None, None, None)
+    assert "funding_expired" in item.quality_reasons
+
+
+def test_implicit_publication_time_is_after_db_reads(monkeypatch, tmp_path):
+    from dataclasses import replace
+
+    import prep_watchdeck_market.artifacts as module
+
+    started = datetime(2026, 10, 10, tzinfo=UTC)
+    completed = started + timedelta(seconds=91)
+    row = replace(
+        _universe_record(
+            venue="mexc",
+            symbol="BTC_USDT",
+            base="BTC",
+            quote="USDT",
+            group_id=None,
+            cycle_at=started,
+            observed_at=started,
+            mark="100",
+        ),
+        funding_rate_raw=Decimal("0.001"),
+        funding_interval_seconds=14400,
+        funding_rate_per_hour=Decimal("0.00025"),
+        next_funding_at=started + timedelta(hours=4),
+        funding_source_at=started,
+        funding_observed_at=started,
+        funding_valid_until=started + timedelta(seconds=90),
+    )
+    wall_clock = started
+
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return wall_clock
+
+    def records(connection):
+        nonlocal wall_clock
+        wall_clock = completed
+        return (row,)
+
+    monkeypatch.setattr(module, "datetime", Clock)
+    monkeypatch.setattr(module, "read_selected_market", lambda *args, **kwargs: None)
+    monkeypatch.setattr(module, "read_universe_records", records)
+    monkeypatch.setattr(module, "read_chart_records", lambda *args, **kwargs: ())
+    monkeypatch.setattr(module, "read_collector_runs", lambda *args, **kwargs: ())
+    publish_artifacts(None, tmp_path)
+    payload = json.loads((tmp_path / "universe-snapshot.json").read_text())
+    assert payload["generatedAt"] == "2026-10-10T00:01:31Z"
+    assert payload["items"][0]["fundingRateRaw"] is None
+    assert payload["items"][0]["markPrice"] == 100

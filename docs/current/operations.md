@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_09:30 JST"
+timestamp="2026-10-10(土)_10:53 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T09:30:00+09:00`
+- 更新: `2026-10-10T10:53:42+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -564,6 +564,8 @@ Repositoryには`watchdeck-attention` CLIがあるが、production unitのinstal
 
 Discoveryの全件取得と比較取得を重ねたwarm負荷ではPython RSSだけで500 MiBを超えるため、旧512 MiB上限は使わない。容量受入では保持済みDBと複数世代・実HTTP取得を含め、RSS、cgroupのanonymous/file内訳、OOMと再起動回数を確認する。短時間のOOMなしだけでは容量余裕を証明しない。
 
+Attention `/health`の`lastCycleDurationMs`と`maxCycleDurationMs`は、generation lock取得後から入力読取・保存・Discovery更新までをmonotonic clockで計測する。失敗した試行も含み、起動後未試行はnull、maxはprocess lifetimeの最大値。世代間の時刻差を処理時間の代用にしない。
+
 配置前は旧WebのWorkingDirectory/drop-inとunitの有無を保存し、tracked sourceから独立releaseを作る。配置後は`/health`、`/attention`、Webの`/api/attention`と`/attention`、少なくとも2回の世代更新を確認する。`partial`は欠損を含む有効応答であり、全銘柄の全成分が有効という意味ではない。確認ではcoverageとquality reason、元の2 collectorのPID/更新継続も記録する。
 
 容量は専用stateのSQLite、WAL、immutable artifactsを合計する。2026-10-09の577銘柄の短時間観測では、outcome未保存で約5.1 GiB/日、30日換算約153 GiBと推定した。これは長期実測や容量保証ではない。自動削除は未実装であり、outcome・訂正版と他serviceの増加分を含むretention/archive受入は別checkpointに残す。空き容量50 GiB未満、または直近の実測増加から7日分を確保できない場合はAttentionの新規蓄積を停止し、保存済みstateを保持して容量方針を再判断する。停止はこの条件を確認した運用操作であり、自動監視機能ではない。
@@ -597,8 +599,26 @@ catalogを一度だけ保存する。単独MEXC catalogは一時的に全件cove
 配置して通常serviceを再開した後、全Venue catalog成功・件数整合・version一致を確認する。
 maintenance writerとdata-operations readerのrelease/mapも配置対象に含める。
 
+最適化版の配置ではMigration 0006とFunding時刻3列を理解する互換releaseを使う。
+Web/Attention等のreaderを先行させ、maintenanceの次回起動を制御してからmigration、Market writerを
+切り替える。旧行のFundingは未知のままにし、schema5専用binaryへは戻さない。
+審査済みregistryを10→50→100と固定して順に配置し、本番のcurrent SCD2 versionでmapを再作成する。
+追加mapの再実行では既存根拠とreview日時を保ち、同じ入力でversionを変えない。
+参照未確認のnative-onlyもrosterへ残し、Ranking/Widgetの資格gateは弱めない。
+段階rollbackはMEXC取得停止→直前registry→単一writer catalog→current versionでmap再資格→再開とする。
+履歴削除・古いversion ID mapの単純復元は行わない。
+
+共有予算は`PREP_WATCHDECK_MEXC_BUDGET_DB`に絶対pathで指定し、business DBとは別のSQLiteにする。
+親directoryを先に作成し、Market/Web/maintenanceの専用budget-only環境file
+`~/.config/prep-watchdeck-market/mexc-budget.env`へ同じ値を設定する。templateはこのfileをoptionalで読み、
+未設定ならMEXC HTTPはfail closedになる。WebにPostgres credential fileを読ませない。
+CLIのrecovery/maintenanceと実Providerを使う隔離検証にも同じ変数を明示して渡す。
+予算・429待機の共有以外は隔離DB/state/portを使う。Candle shardの接続数・ACK失敗・再接続・
+無更新時間・観測したforward gapはMarket journalの`MEXC candle shard=`で確認できる。
+このgap counterだけでは全欠損を証明できないため、保存足coverageも確認する。
+
 Discoveryは既存Attention serviceのwriterで動き、専用の新serviceを追加しない。
-Webの`/api/discovery`、`/api/decisions`と比較操作は対応Webのbuildで提供する。
+Webの`/api/discovery-summary`、`/api/discovery`、`/api/decisions`と比較操作は対応Webのbuildで提供する。
 配置確認では実際のsource版とstateを特定し、固定条件、連続世代、欠測時の中断、保存候補、
 明示確認以外でselectionが変わらないことを、source testと別に確認する。
 

@@ -120,6 +120,9 @@ class UniverseInstrumentArtifact(ArtifactModel):
     funding_interval_seconds: int | None = Field(default=None, gt=0)
     funding_rate_per_hour: float | None
     next_funding_at: datetime | None
+    funding_source_at: datetime | None = None
+    funding_observed_at: datetime | None = None
+    funding_valid_until: datetime | None = None
     open_interest_raw: float | None
     open_interest_raw_unit: str | None
     open_interest_base: float | None
@@ -334,6 +337,9 @@ class UniverseRecord:
     volume_24h_unit: str | None
     l1_source_payload_hash: str | None
     error_code: str | None
+    funding_source_at: datetime | None = None
+    funding_observed_at: datetime | None = None
+    funding_valid_until: datetime | None = None
 
     @property
     def venue_instrument_id(self) -> str:
@@ -434,6 +440,41 @@ def _universe_item(
 ) -> UniverseInstrumentArtifact:
     quality, age_seconds, reasons = _market_quality(record, now)
     publish_values = quality in {"ready", "partial"}
+    funding_valid = publish_values
+    if record.venue == "mexc":
+        funding_times = (
+            record.funding_source_at,
+            record.funding_observed_at,
+            record.funding_valid_until,
+        )
+        reason = None
+        if any(value is None for value in funding_times):
+            reason = "funding_metadata_missing"
+        elif (record.funding_source_at is not None and record.funding_source_at > now) or (
+            record.funding_observed_at is not None and record.funding_observed_at > now
+        ):
+            reason = "funding_invalid"
+        elif record.next_funding_at is not None and now >= record.next_funding_at:
+            reason = "funding_settlement_passed"
+        elif (
+            (record.funding_valid_until is not None and now >= record.funding_valid_until)
+            or (
+                record.funding_source_at is not None
+                and (now - record.funding_source_at).total_seconds() >= 90
+            )
+            or (
+                record.funding_observed_at is not None
+                and (now - record.funding_observed_at).total_seconds() >= 90
+            )
+        ):
+            reason = "funding_expired"
+        elif record.next_funding_at is None:
+            reason = "funding_missing"
+        if reason is not None:
+            funding_valid = False
+            reasons.append(reason)
+            if quality == "ready":
+                quality = "partial"
     numeric_inputs = (
         record.mark_price,
         record.reference_price,
@@ -490,12 +531,15 @@ def _universe_item(
         reference_price_kind=record.reference_price_kind,
         best_bid=number(record.best_bid),
         best_ask=number(record.best_ask),
-        funding_rate_raw=number(record.funding_rate_raw),
-        funding_interval_seconds=(record.funding_interval_seconds if publish_values else None),
-        funding_rate_per_hour=number(record.funding_rate_per_hour),
+        funding_rate_raw=number(record.funding_rate_raw) if funding_valid else None,
+        funding_interval_seconds=(record.funding_interval_seconds if funding_valid else None),
+        funding_rate_per_hour=number(record.funding_rate_per_hour) if funding_valid else None,
         next_funding_at=(
-            _optional_utc(record.next_funding_at, "next_funding_at") if publish_values else None
+            _optional_utc(record.next_funding_at, "next_funding_at") if funding_valid else None
         ),
+        funding_source_at=_optional_utc(record.funding_source_at, "funding_source_at"),
+        funding_observed_at=_optional_utc(record.funding_observed_at, "funding_observed_at"),
+        funding_valid_until=_optional_utc(record.funding_valid_until, "funding_valid_until"),
         open_interest_raw=number(record.open_interest_raw),
         open_interest_raw_unit=record.open_interest_raw_unit if publish_values else None,
         open_interest_base=number(record.open_interest_base),
@@ -542,7 +586,7 @@ def _reference_medians(
         for member in members:
             if (
                 not member.active
-                or member.status != "ready"
+                or not _price_comparison_eligible(member)
                 or member.cycle_at is None
                 or member.observed_at is None
                 or member.mark_price is None
@@ -603,6 +647,37 @@ def _reference_medians(
             parity_assumption_code="usd_usdc_usdt_reference_only",
         )
     return results
+
+
+def _price_comparison_eligible(record: UniverseRecord) -> bool:
+    if record.status == "ready":
+        return True
+    if (
+        record.venue != "mexc"
+        or record.status != "partial"
+        or record.error_code is None
+        or not record.error_code.startswith("funding_only_partial:")
+    ):
+        return False
+    positive = (record.mark_price, record.reference_price, record.best_bid, record.best_ask)
+    non_negative = (
+        record.open_interest_raw,
+        record.open_interest_base,
+        record.open_interest_notional,
+        record.volume_24h_raw,
+    )
+    return (
+        all(value is not None and value.is_finite() and value > 0 for value in positive)
+        and all(value is not None and value.is_finite() and value >= 0 for value in non_negative)
+        and record.source_at is not None
+        and record.observed_at is not None
+        and 0 <= (record.observed_at - record.source_at).total_seconds() <= 120
+        and record.best_bid is not None
+        and record.best_ask is not None
+        and record.best_bid <= record.best_ask
+        and record.open_interest_raw_unit == "contracts"
+        and record.volume_24h_unit == "quote"
+    )
 
 
 def _unavailable_median(reason: str) -> ReferenceMarkMedianArtifact:
@@ -1051,7 +1126,9 @@ def read_universe_records(connection: Connection[Any]) -> tuple[UniverseRecord, 
                            state.reference_price, state.reference_price_kind,
                            state.best_bid, state.best_ask, state.funding_rate_raw,
                            state.funding_interval_seconds, state.funding_rate_per_hour,
-                           state.next_funding_at, state.open_interest_raw,
+                           state.next_funding_at, state.funding_source_at,
+                           state.funding_observed_at, state.funding_valid_until,
+                           state.open_interest_raw,
                            state.open_interest_raw_unit, state.open_interest_base,
                            state.open_interest_notional, state.volume_24h_raw,
                            state.volume_24h_unit,
@@ -1138,6 +1215,15 @@ def _universe_record_from_row(row: dict[str, Any]) -> UniverseRecord:
         ),
         funding_rate_per_hour=_database_decimal(row["funding_rate_per_hour"]),
         next_funding_at=_database_optional_datetime(row["next_funding_at"], "next_funding_at"),
+        funding_source_at=_database_optional_datetime(
+            row.get("funding_source_at"), "funding_source_at"
+        ),
+        funding_observed_at=_database_optional_datetime(
+            row.get("funding_observed_at"), "funding_observed_at"
+        ),
+        funding_valid_until=_database_optional_datetime(
+            row.get("funding_valid_until"), "funding_valid_until"
+        ),
         open_interest_raw=_database_decimal(row["open_interest_raw"]),
         open_interest_raw_unit=(
             None if row["open_interest_raw_unit"] is None else str(row["open_interest_raw_unit"])
@@ -1265,21 +1351,25 @@ def publish_artifacts(
     connection: Connection[Any],
     artifact_root: Path,
     *,
-    generated_at: datetime,
+    generated_at: datetime | None = None,
 ) -> ArtifactPublishResult:
-    now = _utc(generated_at, "generated_at")
-    selected_view = read_selected_market(connection, now=now)
+    cutoff = _utc(generated_at, "generated_at") if generated_at is not None else datetime.now(UTC)
+    selected_view = read_selected_market(connection, now=cutoff)
+    records = read_universe_records(connection)
     primary_id = None if selected_view is None else selected_view.primary_venue_instrument_id
+    chart_records = read_chart_records(connection, primary_id, now=cutoff)
+    runs = read_collector_runs(connection)
+    now = _utc(generated_at, "generated_at") if generated_at is not None else datetime.now(UTC)
     payloads: tuple[tuple[str, ArtifactModel], ...] = (
         (
             "universe-snapshot.json",
-            build_universe_snapshot(read_universe_records(connection), generated_at=now),
+            build_universe_snapshot(records, generated_at=now),
         ),
         (
             "market-chart.json",
             build_market_chart(
                 primary_id,
-                read_chart_records(connection, primary_id, now=now),
+                chart_records,
                 generated_at=now,
             ),
         ),
@@ -1308,7 +1398,7 @@ def publish_artifacts(
                 )
             )
     service_state = build_market_service_state(
-        read_collector_runs(connection),
+        runs,
         file_states,
         generated_at=now,
     )

@@ -1,0 +1,321 @@
+{
+  "$defs": {
+    "DiscoveryPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "const": "discovery-reference-turnover-15m-v1",
+          "default": "discovery-reference-turnover-15m-v1",
+          "title": "Id",
+          "type": "string"
+        },
+        "turnoverRatioThreshold": {
+          "const": 3,
+          "default": 3,
+          "title": "Turnoverratiothreshold",
+          "type": "integer"
+        },
+        "returnThresholdPct": {
+          "const": 2,
+          "default": 2,
+          "title": "Returnthresholdpct",
+          "type": "integer"
+        },
+        "windowMinutes": {
+          "const": 15,
+          "default": 15,
+          "title": "Windowminutes",
+          "type": "integer"
+        },
+        "browserSettingsIndependent": {
+          "const": true,
+          "default": true,
+          "title": "Browsersettingsindependent",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "turnoverRatioThreshold",
+        "returnThresholdPct",
+        "windowMinutes",
+        "browserSettingsIndependent"
+      ],
+      "title": "DiscoveryPolicy",
+      "type": "object"
+    },
+    "DiscoverySummaryRow": {
+      "additionalProperties": false,
+      "description": "List labels and exact identity only; frozen evidence remains in the detail contract.",
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referencekey"
+        },
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/OriginalReference"
+          },
+          "title": "Originals",
+          "type": "array"
+        },
+        "identityKey": {
+          "title": "Identitykey",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "matched",
+            "not_matched",
+            "unknown"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reason"
+        },
+        "direction": {
+          "enum": [
+            "up",
+            "down",
+            "turnover",
+            "unknown"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "confirmation": {
+          "anyOf": [
+            {
+              "enum": [
+                "new",
+                "initial_confirmation",
+                "reconfirmation",
+                "continuing"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confirmation"
+        },
+        "episodeId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Episodeid"
+        }
+      },
+      "required": [
+        "assetId",
+        "asset",
+        "referenceKey",
+        "originals",
+        "identityKey",
+        "state",
+        "reason",
+        "direction",
+        "confirmation",
+        "episodeId"
+      ],
+      "title": "DiscoverySummaryRow",
+      "type": "object"
+    },
+    "OriginalReference": {
+      "additionalProperties": false,
+      "properties": {
+        "instrumentId": {
+          "title": "Instrumentid",
+          "type": "string"
+        },
+        "versionId": {
+          "exclusiveMinimum": 0,
+          "title": "Versionid",
+          "type": "integer"
+        },
+        "venue": {
+          "title": "Venue",
+          "type": "string"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Groupid"
+        },
+        "multiplier": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Multiplier"
+        },
+        "current": {
+          "default": true,
+          "title": "Current",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "instrumentId",
+        "versionId",
+        "venue",
+        "groupId",
+        "multiplier",
+        "current"
+      ],
+      "title": "OriginalReference",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "discovery-summary-v1",
+      "default": "discovery-summary-v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/DiscoveryPolicy",
+      "default": {
+        "id": "discovery-reference-turnover-15m-v1",
+        "turnoverRatioThreshold": 3,
+        "returnThresholdPct": 2,
+        "windowMinutes": 15,
+        "browserSettingsIndependent": true
+      }
+    },
+    "generationId": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Generationid"
+    },
+    "decisionAt": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Decisionat"
+    },
+    "rankingCutoff": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Rankingcutoff"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "stale",
+        "unavailable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "historyAvailableFrom": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Historyavailablefrom"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/DiscoverySummaryRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "policy",
+    "generationId",
+    "decisionAt",
+    "rankingCutoff",
+    "status",
+    "reason",
+    "historyAvailableFrom",
+    "rows"
+  ],
+  "title": "DiscoverySummary",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

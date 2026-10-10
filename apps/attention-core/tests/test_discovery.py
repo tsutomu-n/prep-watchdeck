@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import sqlite3
 import tracemalloc
 from datetime import UTC, datetime
 
@@ -9,7 +10,8 @@ from prep_watchdeck_ranking.models import Indicator, TurnoverComparison, Turnove
 from test_inputs import MS, NOW, bundle, metric_row, ranked, ranking
 
 from prep_watchdeck_attention.discovery import build_discovery_rows
-from prep_watchdeck_attention.discovery_models import DiscoveryResponse
+from prep_watchdeck_attention.discovery_models import DiscoveryResponse, DiscoverySummary
+from prep_watchdeck_attention.discovery_storage import DiscoveryGenerationChanged
 from prep_watchdeck_attention.features import build_feature_generation
 from prep_watchdeck_attention.models import MINUTE, RawFeatureValue, canonical_json, content_digest
 from prep_watchdeck_attention.service import AttentionService, application
@@ -311,6 +313,21 @@ def test_discovery_get_is_read_only_filtered_and_validates_queries(tmp_path):
             assert initial.status == 503
             DiscoveryResponse.model_validate(await initial.json())
             assert await service.generate_once(now=NOW)
+            summary_result = await client.get("/discovery-summary")
+            assert summary_result.status == 200
+            summary = DiscoverySummary.model_validate(await summary_result.json())
+            assert summary.rows[0].asset_id == "asset:BTC"
+            matching = await client.get(
+                "/discovery",
+                params={
+                    "assetId": "asset:BTC",
+                    "generationId": summary.generation_id,
+                },
+            )
+            assert matching.status == 200
+            conflict = await client.get("/discovery?assetId=asset:BTC&generationId=old")
+            assert conflict.status == 409
+            assert await conflict.json() == {"error": "discovery_generation_changed"}
             writes = store.connection.total_changes
             for path in (
                 "/discovery",
@@ -332,6 +349,9 @@ def test_discovery_get_is_read_only_filtered_and_validates_queries(tmp_path):
                 "limit=1&limit=2",
                 "assetId=a&assetId=b&assetId=c&assetId=d&assetId=e",
                 "foo=x",
+                "generationId=old",
+                "assetId=asset:BTC&generationId=",
+                "assetId=asset:BTC&generationId=a&generationId=b",
                 "assetId=a&assetId=a",
                 "cursor="
                 + base64.urlsafe_b64encode(
@@ -352,3 +372,101 @@ def test_discovery_get_is_read_only_filtered_and_validates_queries(tmp_path):
             store.close()
 
     asyncio.run(run())
+
+
+def test_summary_is_small_and_detail_uses_asset_index_with_one_generation(tmp_path):
+    store = AttentionStore(tmp_path / "attention")
+    try:
+        inputs, rows = discovery_generation()
+        expanded = tuple(
+            rows[0].model_copy(update={"asset_id": f"asset:{index}"}) for index in range(100)
+        )
+        store.save_discovery(inputs, expanded)
+        summary = store.discovery_summary()
+        full = store.discovery_response()
+        summary_bytes = summary.model_dump_json(by_alias=True).encode()
+        assert len(summary.rows) == 100
+        assert len(summary_bytes) < len(full.model_dump_json(by_alias=True).encode()) / 10
+        assert b'"raw"' not in summary_bytes and b'"native"' not in summary_bytes
+        assert b'"turnoverComparison"' not in summary_bytes
+        queries = []
+        store.connection.set_trace_callback(queries.append)
+        detail = store.discovery_response(
+            asset_ids=("asset:1", "asset:3", "asset:5", "asset:7"),
+            generation_id=summary.generation_id,
+        )
+        store.connection.set_trace_callback(None)
+        assert len(detail.rows) == 4 and detail.generation_id == summary.generation_id
+        assert not any("json_each" in query or "discovery_latest" in query for query in queries)
+        plan = store.connection.execute(
+            "EXPLAIN QUERY PLAN SELECT payload FROM discovery_details WHERE asset_id IN (?,?)",
+            ("asset:1", "asset:3"),
+        ).fetchall()
+        assert any("SEARCH" in record[3] and "INDEX" in record[3] for record in plan)
+        store.save_discovery(*discovery_generation(MS + MINUTE))
+        with pytest.raises(DiscoveryGenerationChanged):
+            store.discovery_response(asset_ids=("asset:1",), generation_id=summary.generation_id)
+    finally:
+        store.close()
+
+
+def test_additive_projection_upgrade_preserves_old_bytes_history_and_rollback_writes(tmp_path):
+    state = tmp_path / "attention"
+    store = AttentionStore(state)
+    store.save_discovery(*discovery_generation())
+    old_payload = store.connection.execute("SELECT payload FROM discovery_latest").fetchone()[0]
+    episodes = store.connection.execute("SELECT * FROM discovery_episodes").fetchall()
+    store.close()
+    # Simulate the pre-upgrade schema while keeping all old saved content.
+    with sqlite3.connect(state / "attention.sqlite3") as connection:
+        for table in ("discovery_metadata", "discovery_summary", "discovery_details"):
+            connection.execute(f"DROP TABLE {table}")
+    upgraded = AttentionStore(state)
+    assert upgraded.discovery_response(asset_ids=("asset:BTC",)).rows[0].state == "matched"
+    assert (
+        upgraded.connection.execute("SELECT payload FROM discovery_latest").fetchone()[0]
+        == old_payload
+    )
+    assert upgraded.connection.execute("SELECT * FROM discovery_episodes").fetchall() == episodes
+    # Old reader/writer can still use the retained legacy table after rollback;
+    # startup must refresh the new indexes even for a same-generation raw refresh.
+    legacy = upgraded.discovery_response().model_copy(
+        update={"status": "stale", "reason": "legacy"}
+    )
+    upgraded.close()
+    with sqlite3.connect(state / "attention.sqlite3") as connection:
+        connection.execute(
+            "UPDATE discovery_latest SET payload=?", (legacy.model_dump_json(by_alias=True),)
+        )
+    resumed = AttentionStore(state)
+    try:
+        assert resumed.discovery_summary().reason == "legacy"
+        assert resumed.discovery_response(asset_ids=("asset:BTC",)).status == "stale"
+        assert resumed.connection.execute("SELECT * FROM discovery_episodes").fetchall() == episodes
+    finally:
+        resumed.close()
+
+
+def test_projection_failure_rolls_back_summary_detail_generation_and_episode_history(tmp_path):
+    store = AttentionStore(tmp_path / "attention")
+    try:
+        store.save_discovery(*discovery_generation())
+        original_detail = store.discovery_response(asset_ids=("asset:BTC",))
+        original_summary = store.discovery_summary()
+        legacy_bytes = store.connection.execute("SELECT payload FROM discovery_latest").fetchone()[
+            0
+        ]
+        store.connection.execute("""
+            CREATE TRIGGER fail_summary BEFORE INSERT ON discovery_summary
+            BEGIN SELECT RAISE(ABORT, 'injected summary failure'); END
+        """)
+        with pytest.raises(sqlite3.IntegrityError, match="injected summary failure"):
+            store.save_discovery(*discovery_generation(MS + MINUTE))
+        assert store.discovery_summary() == original_summary
+        assert store.discovery_response(asset_ids=("asset:BTC",)) == original_detail
+        assert (
+            store.connection.execute("SELECT payload FROM discovery_latest").fetchone()[0]
+            == legacy_bytes
+        )
+    finally:
+        store.close()

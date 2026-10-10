@@ -5,7 +5,7 @@ import type { MarketArtifactBundle } from "../../src/lib/server/market-artifact-
 import type { UniverseInstrumentArtifact } from "../../src/lib/generated/universe-snapshot";
 import type { UserWorkspace } from "../../src/lib/server/user-workspace-repository";
 import type { DecisionHistory } from "../../src/lib/market/decisions";
-import { discoveryFixture } from "../../src/lib/discovery/discovery-test-fixture";
+import { discoveryFixture, discoverySummaryFixture } from "../../src/lib/discovery/discovery-test-fixture";
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
 function marketBundle(now: number): MarketArtifactBundle {
@@ -38,19 +38,41 @@ function marketBundle(now: number): MarketArtifactBundle {
 }
 
 test("候補4件を解除・再読込後も保持し、判断根拠を固定して明示確認でのみ実Venueへ移る", async ({ page }, testInfo) => {
-  let now = Date.now();
+  // Align the simulated observation timeline independently of the wall-clock minute.
+  let now = Math.floor(Date.now() / 60_000) * 60_000 + 10_000;
   await page.clock.install({ time: new Date(now) });
   let source = discoveryFixture(now);
   let workspace: UserWorkspace = { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] };
   let history: DecisionHistory = { schemaVersion: 1, revision: 0, decisions: [] };
   let selected = "bitget:ETHUSDT";
+  let generationConflicts = 0;
+  let detailFailures = 0;
+  const detailQueries: string[][] = [];
   const selectionPosts: unknown[] = [];
   const pageErrors: string[] = [];
   page.on("pageerror", cause => pageErrors.push(cause.message));
   await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
   await page.route("**/api/rankings?**", route => route.fulfill({ json: rankingFixture(new URL(route.request().url()).searchParams, source.rankingCutoff!) }));
+  await page.route("**/api/discovery-summary", route => route.fulfill({ json: {
+    schemaVersion: "discovery-summary-v1", policy: source.policy, generationId: source.generationId,
+    decisionAt: source.decisionAt, rankingCutoff: source.rankingCutoff, status: source.status,
+    reason: source.reason, historyAvailableFrom: source.historyAvailableFrom,
+    rows: source.rows.map(({ raw: _raw, native: _native, turnoverComparison: _comparison, ...row }) => row)
+  } }));
   await page.route("**/api/discovery?**", route => {
-    const ids = new URL(route.request().url()).searchParams.getAll("assetId");
+    const query = new URL(route.request().url()).searchParams;
+    const ids = query.getAll("assetId");
+    detailQueries.push(ids);
+    if (generationConflicts > 0) {
+      generationConflicts--;
+      return route.fulfill({ status: 409, json: { error: "discovery_generation_changed" } });
+    }
+    if (detailFailures > 0) {
+      detailFailures--;
+      return route.fulfill({ status: 503, json: { error: "discovery_unavailable" } });
+    }
+    expect(ids.length).toBeGreaterThan(0); expect(ids.length).toBeLessThanOrEqual(4);
+    expect(query.get("generationId")).toBe(source.generationId);
     return route.fulfill({ json: { ...source, rows: ids.length ? source.rows.filter(row => ids.includes(row.assetId)) : source.rows } });
   });
   await page.route("**/api/user-workspace", route => {
@@ -104,7 +126,19 @@ test("候補4件を解除・再読込後も保持し、判断根拠を固定し�
   await panel.getByLabel("判断理由").fill("板が薄いので見送り");
   const oldClose = source.rows.find(row => row.asset === "BTC")!.raw.referenceClose.value;
   source.rows.find(row => row.asset === "BTC")!.raw.referenceClose.value = 105;
+  const savedPins = structuredClone(workspace.pins);
+  generationConflicts = 2;
   now += 15000; await page.clock.fastForward(15000);
+  await expect(panel.getByRole("status")).toContainText("更新待ち");
+  await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
+  await expect(btc.getByRole("button", { name: "この実Venueを確認" })).toBeDisabled();
+  expect(workspace.pins).toEqual(savedPins); expect(history.decisions).toHaveLength(0);
+  detailFailures = 1;
+  now += 15000; await page.clock.fastForward(15000);
+  await expect(panel.getByRole("status")).toContainText("更新待ち");
+  await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
+  now += 15000; await page.clock.fastForward(15000);
+  await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeEnabled();
   await panel.getByRole("button", { name: "判断を保存", exact: true }).click();
   expect((history.decisions[0].snapshot.row as typeof source.rows[0]).raw.referenceClose.value).toBe(oldClose);
   await expect(btc).toContainText("この成立は見送り済み");
@@ -118,9 +152,9 @@ test("候補4件を解除・再読込後も保持し、判断根拠を固定し�
   now += 15000; await page.clock.fastForward(15000);
   await expect(btc).toContainText("要再確認");
   expect(workspace.pins[0].target.kind === "reference" && workspace.pins[0].target.originals).toEqual(["bitget:BTCUSDT:1"]);
-  source.rows.find(row => row.asset === "BTC")!.originals[0].versionId = 1;
-  source.rows.find(row => row.asset === "BTC")!.native[0].versionId = 1;
-  now += 15000; await page.clock.fastForward(15000);
+  // The extra conflict/outage cycles age the frozen fixture beyond its freshness gate.
+  // Publish a genuinely newer provider generation before confirming a native selection.
+  now += 15000; source = discoveryFixture(now); await page.clock.fastForward(15000);
   await btc.locator("summary").filter({ hasText: "実Venue:" }).click();
   await btc.getByRole("button", { name: "この実Venueを確認" }).click();
   expect(selectionPosts).toHaveLength(0);
@@ -139,11 +173,55 @@ test("候補4件を解除・再読込後も保持し、判断根拠を固定し�
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("discovery-confirmed-native.png") });
   expect(pageErrors).toEqual([]);
+  expect(detailQueries.every(ids => ids.length > 0 && ids.length <= 4)).toBe(true);
+});
+
+test("条件履歴を再展開すると最新状態を取り込み、既読ページと続き位置を保持する", async ({ page }) => {
+  const now = Date.now();
+  await page.clock.install({ time: new Date(now) });
+  const source = discoveryFixture(now);
+  const [first, older, newest, oldest] = source.episodes;
+  let refreshed = false;
+  const historyQueries: string[] = [];
+  await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
+  await page.route("**/api/rankings?**", route => route.fulfill({ json: rankingFixture(new URL(route.request().url()).searchParams, source.rankingCutoff!) }));
+  await page.route("**/api/discovery-summary", route => route.fulfill({ json: discoverySummaryFixture(now) }));
+  await page.route("**/api/user-workspace", route => route.fulfill({ json: { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] } }));
+  await page.route("**/api/decisions", route => route.fulfill({ json: { schemaVersion: 1, revision: 0, decisions: [] } }));
+  await page.route("**/api/discovery?**", route => {
+    const query = new URL(route.request().url()).searchParams;
+    expect(query.getAll("assetId")).toEqual([]);
+    const cursor = query.get("cursor") ?? "";
+    historyQueries.push(cursor);
+    const episodes = cursor === "older-page" ? [older] : cursor === "oldest-page" ? [oldest]
+      : refreshed ? [{ ...first, state: "ended", endedAt: now, endReason: "condition_not_matched" }, newest] : [first];
+    return route.fulfill({ json: { ...source, episodes,
+      nextCursor: cursor === "oldest-page" ? null : cursor === "older-page" ? "oldest-page" : "older-page" } });
+  });
+  await page.goto("/");
+  const panel = page.getByTestId("discovery-workflow");
+  const toggle = panel.locator("summary").filter({ hasText: /^条件履歴/ });
+  const historyPanel = toggle.locator("..");
+  await toggle.click();
+  await expect(historyPanel).toContainText(`${first.asset} · 新規成立 · active`);
+  await historyPanel.getByRole("button", { name: "条件履歴をさらに読む" }).click();
+  await expect(historyPanel).toContainText(`${older.asset} · 新規成立 · active`);
+  await toggle.click();
+  refreshed = true;
+  await page.clock.fastForward(15_000);
+  expect(historyQueries).toEqual(["", "older-page"]);
+  await toggle.click();
+  await expect(historyPanel).toContainText(`${first.asset} · 新規成立 · ended`);
+  await expect(historyPanel).toContainText(`${newest.asset} · 新規成立 · active`);
+  await expect(historyPanel).toContainText(`${older.asset} · 新規成立 · active`);
+  await historyPanel.getByRole("button", { name: "条件履歴をさらに読む" }).click();
+  await expect(historyPanel).toContainText(`${oldest.asset} · 新規成立 · active`);
+  expect(historyQueries).toEqual(["", "older-page", "", "oldest-page"]);
 });
 
 test("旧Attentionの候補APIが未対応でもMarketsのランキングを利用できる", async ({ page }) => {
   await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
-  await page.route("**/api/discovery?**", route => route.fulfill({ status: 503, json: { error: "discovery_unavailable" } }));
+  await page.route("**/api/discovery-summary", route => route.fulfill({ status: 503, json: { error: "discovery_unavailable" } }));
   await page.route("**/api/user-workspace", route => route.fulfill({ json: { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] } }));
   await page.route("**/api/decisions", route => route.fulfill({ json: { schemaVersion: 1, revision: 0, decisions: [] } }));
   await page.route("**/api/rankings?**", route => route.fulfill({ json: rankingFixture(new URL(route.request().url()).searchParams) }));

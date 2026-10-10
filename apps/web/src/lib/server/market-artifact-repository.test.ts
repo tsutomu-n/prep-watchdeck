@@ -10,6 +10,41 @@ import { resolveMarketStatePaths } from "./market-state-paths";
 import { LocalFileSelectionCommandRepository } from "./selection-command-repository";
 
 describe("market artifact and local selection repositories", () => {
+  test("expires only MEXC Funding at read time without changing stored Ticker data", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-funding-expiry-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    const item = bundle.universe.items[0];
+    Object.assign(item, {
+      venue: "mexc", venueInstrumentId: "mexc:BTC_USDT", sourceSymbol: "BTC_USDT",
+      fundingSourceAt: "2026-08-14T11:59:00Z",
+      fundingObservedAt: "2026-08-14T11:59:01Z",
+      fundingValidUntil: "2026-08-14T12:00:05Z",
+      nextFundingAt: "2026-08-14T20:00:00Z"
+    });
+    try {
+      await writeArtifacts(paths, bundle);
+      let now = new Date("2026-08-14T12:00:04Z");
+      const repository = new LocalFileMarketArtifactRepository(paths, () => now);
+      expect((await repository.latestUniverse()).items[0].fundingRateRaw).toBe(item.fundingRateRaw);
+      now = new Date("2026-08-14T12:00:05Z");
+      const expired = (await repository.latest()).universe.items[0];
+      expect(expired.markPrice).toBe(item.markPrice);
+      expect(expired.openInterestBase).toBe(item.openInterestBase);
+      expect(expired.fundingRateRaw).toBeNull();
+      expect(expired.fundingRatePerHour).toBeNull();
+      expect(expired.fundingIntervalSeconds).toBeNull();
+      expect(expired.nextFundingAt).toBeNull();
+      expect(expired.qualityReasons).toContain("funding_expired");
+      expect(JSON.parse(await readFile(paths.universeSnapshotPath, "utf-8"))).toEqual(bundle.universe);
+      item.fundingObservedAt = null;
+      await writeArtifacts(paths, bundle);
+      expect((await repository.latestUniverse()).items[0].qualityReasons).toContain("funding_metadata_missing");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   test("accepts one coherent four-file generation and rejects an invalid artifact", async () => {
     const root = await mkdtemp(join(tmpdir(), "watchdeck-market-artifacts-"));
     const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });

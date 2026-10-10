@@ -1,9 +1,23 @@
 import Ajv from "ajv";
+import summarySchema from "../../../../../schemas/discovery-summary.schema.json";
+import type { DiscoverySummary, DiscoverySummaryRow } from "$lib/generated/discovery-summary";
 import schema from "../../../../../schemas/discovery-response.schema.json";
 import type { DiscoveryResponse, DiscoveryRow, RawFeatureValue } from "$lib/generated/discovery-response";
 import type { ComparisonPin, FavoriteTarget } from "$lib/server/user-workspace-repository";
 
 const validate = new Ajv({ allErrors: false, strict: false, strictNumbers: true }).compile<DiscoveryResponse>(schema);
+const validateSummary = new Ajv({ allErrors: false, strict: false, strictNumbers: true }).compile<DiscoverySummary>(summarySchema);
+export function parseDiscoverySummary(value: unknown, now = Date.now()): DiscoverySummary {
+  if (!validateSummary(value)) throw new Error("候補一覧の形式が不正です");
+  if ((value.decisionAt !== null && (!Number.isSafeInteger(value.decisionAt) || value.decisionAt > now + 1000)) ||
+      (value.rankingCutoff !== null && (!Number.isSafeInteger(value.rankingCutoff) || value.decisionAt === null || value.rankingCutoff > value.decisionAt)) ||
+      new Set(value.rows.map(row => row.assetId)).size !== value.rows.length ||
+      value.rows.some(row => new Set(row.originals.map(item => `${item.instrumentId}:${item.versionId}`)).size !== row.originals.length)) {
+    throw new Error("候補一覧の時刻・対象が不正です");
+  }
+  return value.rankingCutoff !== null && now - value.rankingCutoff > 150_000 && value.status !== "unavailable"
+    ? { ...value, status: "stale", reason: value.reason ?? "discovery_stale" } : value;
+}
 export function parseDiscovery(value: unknown, now = Date.now()): DiscoveryResponse {
   if (!validate(value)) throw new Error("候補データの形式が不正です");
   if ((value.decisionAt !== null && value.decisionAt > now + 1000) ||
@@ -39,7 +53,7 @@ function featureValid(feature: RawFeatureValue, decisionAt: number) {
     feature.observations.every(observation => [observation.startAt, observation.endAt, observation.observedAt,
       observation.sourceAt].every(time => time === null || Number.isSafeInteger(time) && time <= decisionAt));
 }
-export function discoveryTarget(row: DiscoveryRow): FavoriteTarget | null {
+export function discoveryTarget(row: DiscoveryRow | DiscoverySummaryRow): FavoriteTarget | null {
   return row.referenceKey && row.originals.length && row.originals.every(original => original.current)
     ? { kind: "reference", id: row.assetId, referenceKey: row.referenceKey,
       originals: row.originals.map(original => `${original.instrumentId}:${original.versionId}`).sort() } : null;

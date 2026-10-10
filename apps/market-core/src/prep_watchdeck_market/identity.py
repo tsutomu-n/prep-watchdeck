@@ -32,7 +32,7 @@ class IdentityResolution:
 
 
 def resolve_market_groups(instruments: Iterable[CatalogInstrument]) -> list[IdentityResolution]:
-    """Resolve conservative exact-base groups while retaining every instrument."""
+    """Keep native-only identities separate from conservative exact-base groups."""
     ordered = list(instruments)
     individual_reasons = [_individual_unmapped_reason(instrument) for instrument in ordered]
     eligible = [
@@ -40,14 +40,19 @@ def resolve_market_groups(instruments: Iterable[CatalogInstrument]) -> list[Iden
         for instrument, reason in zip(ordered, individual_reasons, strict=True)
         if reason is None
     ]
-    candidate_counts = Counter((instrument.base_asset, instrument.venue) for instrument in eligible)
+    candidate_counts = Counter(
+        (instrument.base_asset, instrument.venue)
+        for instrument in eligible
+        if not _native_only_identity(instrument)
+    )
     collision_bases = {
         base_asset for (base_asset, _venue), count in candidate_counts.items() if count > 1
     }
 
     resolutions: list[IdentityResolution] = []
     for instrument, reason in zip(ordered, individual_reasons, strict=True):
-        if reason is None and instrument.base_asset in collision_bases:
+        native_only = _native_only_identity(instrument)
+        if reason is None and not native_only and instrument.base_asset in collision_bases:
             reason = "same_venue_collision"
 
         if reason is not None:
@@ -64,7 +69,11 @@ def resolve_market_groups(instruments: Iterable[CatalogInstrument]) -> list[Iden
         resolutions.append(
             IdentityResolution(
                 venue_instrument_id=instrument.venue_instrument_id,
-                group_id=f"crypto:{instrument.base_asset}:linear-perp",
+                group_id=(
+                    f"native:{instrument.venue_instrument_id}:linear-perp"
+                    if native_only
+                    else f"crypto:{instrument.base_asset}:linear-perp"
+                ),
                 mapping_method=(
                     "verified_native_contract"
                     if instrument.venue == "mexc"
@@ -74,6 +83,15 @@ def resolve_market_groups(instruments: Iterable[CatalogInstrument]) -> list[Iden
             )
         )
     return resolutions
+
+
+def _native_only_identity(instrument: CatalogInstrument) -> bool:
+    evidence = instrument.raw_definition.get("watchdeckIdentityEvidence")
+    return (
+        instrument.venue == "mexc"
+        and isinstance(evidence, dict)
+        and evidence.get("identity_scope") == "native_only"
+    )
 
 
 def _individual_unmapped_reason(instrument: CatalogInstrument) -> UnmappedReason | None:

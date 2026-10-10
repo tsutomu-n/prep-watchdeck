@@ -51,3 +51,14 @@ test("overflowing JSON numbers are rejected before projection or immutable decis
         generationId: fixture.generationId, decisionAt: fixture.decisionAt, rankingCutoff: fixture.rankingCutoff } })).toBe(false);
   }
 });
+
+test("summary forbids raw subtrees and preserves exact target identity", async () => {
+  const { discoverySummaryFixture } = await import("./discovery-test-fixture");
+  const { parseDiscoverySummary } = await import("./contract");
+  const summary = discoverySummaryFixture(now);
+  expect(parseDiscoverySummary(summary, now)).toEqual(summary);
+  expect(discoveryTarget(summary.rows[0])).toEqual(discoveryTarget(discoveryFixture(now).rows[0]));
+  expect(() => parseDiscoverySummary({ ...summary, rows: [{ ...summary.rows[0], raw: {} }] }, now)).toThrow();
+  expect(() => parseDiscoverySummary({ ...summary, decisionAt: now + 10_000 }, now)).toThrow();
+  expect(parseDiscoverySummary(summary, now + 300_000).status).toBe("stale");
+});

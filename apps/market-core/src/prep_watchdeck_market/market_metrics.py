@@ -9,6 +9,7 @@ import os
 import stat
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -155,7 +156,16 @@ def _change(
         stamp is not None and stamp > now
         for stamp in (source_at, observed_at, start_source_at, start_observed_at)
     ):
-        return _missing("future_timestamp", start_at, end_at)
+        return _missing("future_timestamp", start_at, end_at).model_copy(
+            update={
+                "start_source_at": start_source_at,
+                "start_observed_at": start_observed_at,
+                "end_source_at": source_at,
+                "end_observed_at": observed_at,
+                "end_finality": finality,
+                "unit": unit,
+            }
+        )
     if (now - end_at).total_seconds() > maximum_age_seconds or (
         source_at is not None and (now - source_at).total_seconds() > maximum_age_seconds
     ):
@@ -180,8 +190,10 @@ def _change(
     )
 
 
-def build_market_metrics(rows: list[dict[str, Any]], *, now: datetime) -> MarketMetricsArtifact:
-    cutoff = candle_cutoff(now)
+def build_market_metrics(
+    rows: list[dict[str, Any]], *, now: datetime, cutoff: datetime | None = None
+) -> MarketMetricsArtifact:
+    cutoff = candle_cutoff(now) if cutoff is None else cutoff
     results: list[MarketMetricRow] = []
     for row in rows:
         instrument_id = f"{row['venue']}:{row['source_symbol']}"
@@ -294,13 +306,18 @@ ORDER BY vi.venue, vi.source_symbol
 """
 
 
-def read_market_metrics(connection: Connection[Any], *, now: datetime) -> MarketMetricsArtifact:
+def read_market_metrics(
+    connection: Connection[Any], *, now: datetime, clock: Callable[[], datetime] | None = None
+) -> MarketMetricsArtifact:
     cutoff = candle_cutoff(now)
     with connection.transaction():
         connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
         with connection.cursor(row_factory=dict_row) as cursor:
             rows = cursor.execute(METRICS_SQL, (cutoff,) * 4).fetchall()
-        artifact = build_market_metrics(rows, now=now)
+        # The query may see receipts newer than its caller's start clock. Validate
+        # after fetching, but keep the cutoff that selected these exact candles.
+        completed_at = datetime.now(UTC) if clock is None else clock()
+        artifact = build_market_metrics(rows, now=completed_at, cutoff=cutoff)
     return artifact
 
 

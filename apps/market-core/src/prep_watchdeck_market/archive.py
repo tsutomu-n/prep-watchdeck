@@ -54,6 +54,9 @@ _PARQUET_COLUMN_TYPES = {
     "first_observed_at": pl.Datetime("us", "UTC"),
     "last_observed_at": pl.Datetime("us", "UTC"),
     "source_at": pl.Datetime("us", "UTC"),
+    "funding_source_at": pl.Datetime("us", "UTC"),
+    "funding_observed_at": pl.Datetime("us", "UTC"),
+    "funding_valid_until": pl.Datetime("us", "UTC"),
     "sample_count": pl.Int64,
     "reference_price_kind": pl.String,
     "funding_interval_seconds": pl.Int64,
@@ -245,6 +248,9 @@ def _fetch_partition(
                 "open_interest_notional",
                 "volume_24h_raw",
                 "volume_24h_unit",
+                "funding_source_at",
+                "funding_observed_at",
+                "funding_valid_until",
             )
             cursor.execute(
                 """
@@ -257,7 +263,8 @@ def _fetch_partition(
                            state.funding_rate_per_hour, state.open_interest_raw,
                            state.open_interest_raw_unit, state.open_interest_base,
                            state.open_interest_notional, state.volume_24h_raw,
-                           state.volume_24h_unit
+                           state.volume_24h_unit, state.funding_source_at,
+                           state.funding_observed_at, state.funding_valid_until
                     FROM market_state_1m AS state
                     JOIN venue_instrument_versions AS instrument
                       USING (venue_instrument_version_id)

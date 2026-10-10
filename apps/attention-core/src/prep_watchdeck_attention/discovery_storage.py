@@ -6,11 +6,22 @@ import json
 import sqlite3
 from collections.abc import Sequence
 
-from .discovery_models import POLICY_ID, DiscoveryEpisode, DiscoveryResponse, DiscoveryRow
+from .discovery_models import (
+    POLICY_ID,
+    DiscoveryEpisode,
+    DiscoveryResponse,
+    DiscoveryRow,
+    DiscoverySummary,
+    DiscoverySummaryRow,
+)
 from .models import MINUTE, InputReference, canonical_json, content_digest
 
 HISTORY_RETENTION_MS = 7 * 24 * 60 * MINUTE
 MAX_ENDED_EPISODES = 10_000
+
+
+class DiscoveryGenerationChanged(ValueError):
+    """The requested detail no longer belongs to the displayed summary."""
 
 
 class DiscoveryStorage:
@@ -20,6 +31,15 @@ class DiscoveryStorage:
         self.connection.executescript("""
             CREATE TABLE IF NOT EXISTS discovery_latest (
                 singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS discovery_metadata (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS discovery_summary (
+                singleton INTEGER PRIMARY KEY CHECK(singleton=1), payload TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS discovery_details (
+                asset_id TEXT PRIMARY KEY, ordinal INTEGER NOT NULL, payload TEXT NOT NULL
             );
             CREATE TABLE IF NOT EXISTS discovery_states (
                 asset_id TEXT PRIMARY KEY, payload TEXT NOT NULL
@@ -32,6 +52,15 @@ class DiscoveryStorage:
                 ON discovery_episodes(first_observed_at DESC,id DESC);
             CREATE INDEX IF NOT EXISTS discovery_episode_end ON discovery_episodes(ended_at);
         """)
+
+        # Rebuild the additive indexes on startup, including after an older writer
+        # ran during rollback. Preserve its exact legacy bytes and all saved history.
+        old = self.connection.execute("SELECT payload FROM discovery_latest").fetchone()
+        if old:
+            with self.connection:
+                self._write_projection(
+                    DiscoveryResponse.model_validate_json(old[0]), write_legacy=False
+                )
 
     def _write_episode(self, episode: DiscoveryEpisode) -> None:
         episode = DiscoveryEpisode.model_validate_json(episode.model_dump_json())
@@ -58,31 +87,98 @@ class DiscoveryStorage:
     def _latest_discovery(
         self, *, asset_ids: tuple[str, ...] = (), include_rows: bool = True
     ) -> DiscoveryResponse | None:
-        projection = "payload"
+        if not asset_ids and include_rows:
+            row = self.connection.execute(
+                "SELECT payload FROM discovery_latest WHERE singleton=1"
+            ).fetchone()
+            return DiscoveryResponse.model_validate_json(row[0]) if row else None
         if not include_rows:
-            projection = "json_set(payload,'$.rows',json('[]'))"
-        elif asset_ids:
-            # Filter inside SQLite: a four-asset read must not deserialize every native
-            # observation in the full-universe projection into Python objects.
-            placeholders = ",".join("?" for _ in asset_ids)
-            projection = (
-                "json_set(payload,'$.rows',json((SELECT json_group_array(json(value)) "
-                "FROM json_each(payload,'$.rows') WHERE json_extract(value,'$.assetId') "
-                f"IN ({placeholders}))))"
-            )
-        row = self.connection.execute(
-            f"SELECT {projection} FROM discovery_latest WHERE singleton=1",
-            asset_ids if include_rows else (),
-        ).fetchone()
-        return DiscoveryResponse.model_validate_json(row[0]) if row else None
+            row = self.connection.execute(
+                "SELECT payload FROM discovery_metadata WHERE singleton=1"
+            ).fetchone()
+            return DiscoveryResponse.model_validate_json(row[0]) if row else None
+        placeholders = ",".join("?" for _ in asset_ids)
+        # One SQL statement is one read snapshot: metadata cannot race indexed details.
+        records = self.connection.execute(
+            "SELECT metadata.payload, detail.payload FROM discovery_metadata AS metadata "
+            "LEFT JOIN discovery_details AS detail "
+            f"ON detail.asset_id IN ({placeholders}) "
+            "WHERE metadata.singleton=1 ORDER BY detail.ordinal",
+            asset_ids,
+        ).fetchall()
+        if not records:
+            return None
+        response = DiscoveryResponse.model_validate_json(records[0][0])
+        return response.model_copy(
+            update={
+                "rows": tuple(
+                    DiscoveryRow.model_validate_json(record[1])
+                    for record in records
+                    if record[1] is not None
+                )
+            }
+        )
 
-    def _write_projection(self, response: DiscoveryResponse) -> str:
+    def discovery_summary(self) -> DiscoverySummary:
+        row = self.connection.execute(
+            "SELECT payload FROM discovery_summary WHERE singleton=1"
+        ).fetchone()
+        if row:
+            return DiscoverySummary.model_validate_json(row[0])
+        return DiscoverySummary(
+            generation_id=None,
+            decision_at=None,
+            ranking_cutoff=None,
+            status="unavailable",
+            reason="generation_pending",
+            history_available_from=None,
+            rows=(),
+        )
+
+    def _write_projection(self, response: DiscoveryResponse, *, write_legacy: bool = True) -> str:
         response = DiscoveryResponse.model_validate_json(response.model_dump_json())
         payload = response.model_dump_json(by_alias=True)
+        if write_legacy:
+            self.connection.execute(
+                "INSERT INTO discovery_latest VALUES (1,?) ON CONFLICT(singleton) DO UPDATE "
+                "SET payload=excluded.payload",
+                (payload,),
+            )
+        metadata = response.model_copy(update={"rows": ()}).model_dump_json(by_alias=True)
         self.connection.execute(
-            "INSERT INTO discovery_latest VALUES (1,?) ON CONFLICT(singleton) DO UPDATE "
+            "INSERT INTO discovery_metadata VALUES (1,?) ON CONFLICT(singleton) DO UPDATE "
             "SET payload=excluded.payload",
-            (payload,),
+            (metadata,),
+        )
+        # This table is replaceable latest data only. Episodes and evidence are untouched.
+        self.connection.execute("DELETE FROM discovery_details")
+        self.connection.executemany(
+            "INSERT INTO discovery_details VALUES (?,?,?)",
+            (
+                (row.asset_id, index, row.model_dump_json(by_alias=True))
+                for index, row in enumerate(response.rows)
+            ),
+        )
+        summary = DiscoverySummary(
+            generation_id=response.generation_id,
+            decision_at=response.decision_at,
+            ranking_cutoff=response.ranking_cutoff,
+            status=response.status,
+            reason=response.reason,
+            history_available_from=self.connection.execute(
+                "SELECT MIN(first_observed_at) FROM discovery_episodes"
+            ).fetchone()[0],
+            rows=tuple(
+                DiscoverySummaryRow.model_validate(
+                    row.model_dump(include=set(DiscoverySummaryRow.model_fields))
+                )
+                for row in response.rows
+            ),
+        )
+        self.connection.execute(
+            "INSERT INTO discovery_summary VALUES (1,?) ON CONFLICT(singleton) DO UPDATE "
+            "SET payload=excluded.payload",
+            (summary.model_dump_json(by_alias=True),),
         )
         return payload
 
@@ -460,10 +556,15 @@ class DiscoveryStorage:
         asset_ids: tuple[str, ...] = (),
         limit: int = 50,
         cursor: str | None = None,
+        generation_id: str | None = None,
     ) -> DiscoveryResponse:
         """A pure DB read; keyset cursor is bound to the selected asset IDs."""
         if len(asset_ids) > 4 or len(set(asset_ids)) != len(asset_ids) or not 1 <= limit <= 50:
             raise ValueError("invalid discovery query")
+        # Indexed detail and metadata are loaded from one SQLite read snapshot.
+        latest = self._latest_discovery(asset_ids=asset_ids)
+        if generation_id is not None and (latest is None or latest.generation_id != generation_id):
+            raise DiscoveryGenerationChanged("discovery_generation_changed")
         scope = content_digest(sorted(asset_ids))
         conditions = []
         params: list[object] = []
@@ -505,7 +606,7 @@ class DiscoveryStorage:
             next_cursor = base64.urlsafe_b64encode(
                 canonical_json([tail.first_observed_at, tail.id, scope]).encode()
             ).decode()
-        latest = self._latest_discovery(asset_ids=asset_ids) or DiscoveryResponse(
+        latest = latest or DiscoveryResponse(
             generation_id=None,
             decision_at=None,
             ranking_cutoff=None,

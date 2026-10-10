@@ -4,7 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
-from prep_watchdeck_attention.discovery_models import DiscoveryResponse
+from prep_watchdeck_attention.discovery_models import DiscoveryResponse, DiscoverySummary
 from prep_watchdeck_attention.models import (
     AttentionEvaluationReport,
     AttentionResponse,
@@ -27,6 +27,7 @@ def main() -> None:
         ("attention-evaluation", AttentionEvaluationReport),
         ("attention-shadow-allocation", ShadowAllocation),
         ("discovery-response", DiscoveryResponse),
+        ("discovery-summary", DiscoverySummary),
     ):
         schema = model.model_json_schema(by_alias=True, mode="serialization")
         schema["$schema"] = "http://json-schema.org/draft-07/schema#"

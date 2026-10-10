@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-10-10T01:31:41.217621+00:00",
+  "sources": {
+    "catalog": {
+      "url": "https://api.mexc.com/api/v1/contract/detail/country",
+      "observedAt": "2026-10-10T01:31:41.541325+00:00",
+      "status": 200,
+      "count": 1168,
+      "rawSha256": "2f886d5181ae51bf072fba64412472a13e5122012ff08fc2474e9f556c8312b4",
+      "rawBytes": 2252364,
+      "file": "catalog.json"
+    },
+    "ticker": {
+      "url": "https://api.mexc.com/api/v1/contract/ticker",
+      "observedAt": "2026-10-10T01:31:42.750972+00:00",
+      "status": 200,
+      "count": 1207,
+      "rawSha256": "4a39b6e85d7d98abe6bd6bd12d13bc8cc21d9f10f0607c32ed19da194d45fdf6",
+      "rawBytes": 627190,
+      "file": "ticker.json"
+    }
+  }
+}

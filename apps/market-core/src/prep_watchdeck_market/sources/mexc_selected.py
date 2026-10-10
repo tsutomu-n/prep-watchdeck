@@ -238,6 +238,7 @@ async def produce_mexc_selected(
     from prep_watchdeck_market.sources.mexc_stream_common import (
         MexcStreamFailure,
         decode_message,
+        mexc_subscription_pacer,
         source_call,
         source_connection,
     )
@@ -255,6 +256,7 @@ async def produce_mexc_selected(
         synchronized = False
         try:
             async with source_connection(connect) as websocket:
+                await mexc_subscription_pacer().acquire()
                 await source_call(
                     websocket.send_json(
                         {
@@ -263,6 +265,7 @@ async def produce_mexc_selected(
                         }
                     )
                 )
+                await mexc_subscription_pacer().acquire()
                 await source_call(
                     websocket.send_json(
                         {

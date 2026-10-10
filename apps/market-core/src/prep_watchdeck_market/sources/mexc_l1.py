@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Collection, Mapping
 from datetime import datetime
 
@@ -23,8 +22,13 @@ from prep_watchdeck_market.sources.common import (
     timestamp_from_milliseconds,
 )
 from prep_watchdeck_market.sources.mexc import fetch_mexc_json, mexc_data, mexc_quantity_multiplier
+from prep_watchdeck_market.sources.mexc_funding import (
+    MexcFundingSnapshot,
+    funding_reason,
+    funding_snapshot,
+)
 
-MEXC_L1_ENDPOINT = "/api/v1/contract/ticker+funding_rate/{symbol}"
+MEXC_L1_ENDPOINT = "/api/v1/contract/ticker"
 
 
 async def fetch_mexc_l1(
@@ -33,26 +37,13 @@ async def fetch_mexc_l1(
     *,
     cycle_at: datetime,
     observed_at: datetime | None = None,
+    funding_snapshots: Mapping[str, MexcFundingSnapshot] | None = None,
 ) -> MarketBatch:
     selected = [i for i in instruments if i.venue == "mexc" and i.active]
     ticker = await fetch_mexc_json(session, "/api/v1/contract/ticker")
-    # Bounded parallel public funding requests; future catalog growth cannot burst unboundedly.
-    limiter = asyncio.Semaphore(4)
-
-    async def funding(item: CatalogInstrument) -> object:
-        async with limiter:
-            return await fetch_mexc_json(
-                session, "/api/v1/contract/funding_rate/" + item.source_symbol
-            )
-
-    results = await asyncio.gather(*(funding(i) for i in selected), return_exceptions=True)
     return parse_mexc_l1(
         ticker,
-        {
-            i.source_symbol: r
-            for i, r in zip(selected, results, strict=True)
-            if not isinstance(r, BaseException)
-        },
+        funding_snapshots or {},
         selected,
         cycle_at=cycle_at,
         observed_at=observed_at or observed_now(),
@@ -61,7 +52,7 @@ async def fetch_mexc_l1(
 
 def parse_mexc_l1(
     ticker_payload: object,
-    funding_payloads: Mapping[str, object],
+    funding_payloads: Mapping[str, object | MexcFundingSnapshot],
     instruments: Collection[CatalogInstrument],
     *,
     cycle_at: datetime,
@@ -69,21 +60,34 @@ def parse_mexc_l1(
 ) -> MarketBatch:
     rows = require_list(mexc_data(ticker_payload), field_name="MEXC tickers")
     by_symbol = {r.get("symbol"): r for r in rows if isinstance(r, dict)}
-    raw = {"ticker": ticker_payload, "funding": dict(funding_payloads)}
+    provenance: dict[str, object] = {}
+    raw = {
+        "fundingProvenance": provenance,
+        "ticker": ticker_payload,
+        "funding": {
+            key: value.payload if isinstance(value, MexcFundingSnapshot) else value
+            for key, value in funding_payloads.items()
+        },
+    }
     observations = []
     for item in instruments:
         if item.venue != "mexc" or not item.active:
             continue
         row = by_symbol.get(item.source_symbol, {})
+        value = funding_payloads.get(item.source_symbol)
+        snapshot = (
+            value
+            if isinstance(value, MexcFundingSnapshot)
+            else funding_snapshot(value, item, observed_at=observed_at)
+            if value is not None
+            else None
+        )
+        reason = funding_reason(snapshot, item, observed_at)
         funding = (
-            require_mapping(
-                mexc_data(funding_payloads[item.source_symbol]), field_name="MEXC funding"
-            )
-            if item.source_symbol in funding_payloads
+            require_mapping(mexc_data(snapshot.payload), field_name="MEXC funding")
+            if snapshot is not None and reason is None
             else {}
         )
-        if funding and funding.get("symbol") != item.source_symbol:
-            funding = {}
         interval_hours = positive_int(funding.get("collectCycle"))
         interval = None if interval_hours is None else interval_hours * 3600
         rate = finite_decimal(funding.get("fundingRate"))
@@ -97,16 +101,38 @@ def parse_mexc_l1(
         volume = non_negative_decimal(row.get("amount24"))
         next_at = timestamp_from_milliseconds(funding.get("nextSettleTime"))
         ticker_at = timestamp_from_milliseconds(row.get("timestamp"))
-        funding_at = timestamp_from_milliseconds(funding.get("timestamp"))
-        source_at = min(ticker_at, funding_at) if ticker_at and funding_at else None
-        complete = all(
-            v is not None
-            for v in (mark, reference, bid, ask, oi, volume, rate, interval, next_at, source_at)
+        source_at = ticker_at
+        ticker_complete = (
+            all(v is not None for v in (mark, reference, bid, ask, oi, base, volume, source_at))
+            and source_at is not None
+            and 0 <= (observed_at - source_at).total_seconds() <= 120
         )
+        complete = ticker_complete and reason is None
         row_raw: dict[str, object] = {
             "ticker": row,
-            "funding": funding,
+            "funding": None if snapshot is None else snapshot.payload,
+            "fundingSourceAt": None
+            if snapshot is None or snapshot.source_at is None
+            else snapshot.source_at.isoformat(),
+            "fundingObservedAt": None
+            if snapshot is None or snapshot.observed_at is None
+            else snapshot.observed_at.isoformat(),
+            "fundingValidUntil": None
+            if snapshot is None or snapshot.valid_until is None
+            else snapshot.valid_until.isoformat(),
+            "fundingErrorCode": reason,
+            "fundingContractVersion": None if snapshot is None else snapshot.contract_version,
             "watchdeckBasePerContract": format(mexc_quantity_multiplier(item), "f"),
+        }
+        provenance[item.source_symbol] = {
+            key: row_raw[key]
+            for key in (
+                "fundingSourceAt",
+                "fundingObservedAt",
+                "fundingValidUntil",
+                "fundingErrorCode",
+                "fundingContractVersion",
+            )
         }
         observations.append(
             MarketObservation(
@@ -134,8 +160,17 @@ def parse_mexc_l1(
                 item.quote_asset,
                 item.collateral_asset,
                 canonical_json_sha256(row_raw),
-                None if complete else "incomplete_source_row",
+                None
+                if complete
+                else (
+                    "funding_only_partial:" + str(reason)
+                    if ticker_complete
+                    else "incomplete_source_row"
+                ),
                 row_raw,
+                funding_source_at=None if snapshot is None else snapshot.source_at,
+                funding_observed_at=None if snapshot is None else snapshot.observed_at,
+                funding_valid_until=None if snapshot is None else snapshot.valid_until,
             )
         )
     return MarketBatch(

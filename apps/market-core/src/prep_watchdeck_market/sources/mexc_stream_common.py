@@ -5,6 +5,7 @@ import json
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager, suppress
 from typing import Any
+from weakref import WeakKeyDictionary
 
 import aiohttp
 
@@ -49,3 +50,32 @@ def decode_message(message: Any) -> dict[str, object]:
     if not isinstance(payload, dict):
         raise MexcStreamFailure("MEXC native stream envelope invalid")
     return payload
+
+
+class MexcSubscriptionPacer:
+    """Design budget: five subscription commands/second across all local connections."""
+
+    def __init__(self, interval_seconds: float = 0.2) -> None:
+        self.interval_seconds = interval_seconds
+        self.lock = asyncio.Lock()
+        self.next_at = 0.0
+
+    async def acquire(self) -> None:
+        async with self.lock:
+            loop = asyncio.get_running_loop()
+            delay = self.next_at - loop.time()
+            if delay > 0:
+                await asyncio.sleep(delay)
+            self.next_at = loop.time() + self.interval_seconds
+
+
+_subscription_pacers: WeakKeyDictionary[asyncio.AbstractEventLoop, MexcSubscriptionPacer] = (
+    WeakKeyDictionary()
+)
+
+
+def mexc_subscription_pacer() -> MexcSubscriptionPacer:
+    loop = asyncio.get_running_loop()
+    if loop not in _subscription_pacers:
+        _subscription_pacers[loop] = MexcSubscriptionPacer()
+    return _subscription_pacers[loop]

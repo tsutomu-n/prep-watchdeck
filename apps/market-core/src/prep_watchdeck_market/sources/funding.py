@@ -119,6 +119,7 @@ async def fetch_funding_history(
                 session,
                 "/api/v1/contract/funding_rate/history",
                 params={"symbol": instrument.source_symbol, "page_size": "100", "page_num": "1"},
+                lane="recovery",
             )
             data = require_mapping(mexc_data(payload), field_name="MEXC funding history")
             rows = require_list(data.get("resultList"), field_name="MEXC funding events")

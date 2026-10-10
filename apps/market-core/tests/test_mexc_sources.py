@@ -237,7 +237,8 @@ def test_single_version_depth_and_ws_finality_delay():
     assert candle.finalized_at == NOW + timedelta(minutes=1, seconds=5)
 
 
-def test_native_recovery_routes_mexc_and_preserves_exact_multiplier():
+def test_native_recovery_routes_mexc_and_preserves_exact_multiplier(monkeypatch, tmp_path):
+    monkeypatch.setenv("PREP_WATCHDECK_MEXC_BUDGET_DB", str(tmp_path / "budget.sqlite3"))
     import asyncio
     from typing import cast
 
@@ -594,11 +595,18 @@ def test_candles_reconnect_on_native_malformed_payload_then_resume(malformed):
     class WS:
         def __init__(self, value):
             self.value = value
+            self.acked = False
 
         async def send_json(self, payload):
             pass
 
         async def receive(self):
+            if not self.acked:
+                self.acked = True
+                return SimpleNamespace(
+                    type=aiohttp.WSMsgType.TEXT,
+                    data=json.dumps({"channel": "rs.sub.kline", "data": "success"}),
+                )
             return SimpleNamespace(
                 type=aiohttp.WSMsgType.TEXT,
                 data=json.dumps({"channel": "push.kline", "data": self.value}),

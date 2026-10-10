@@ -17,7 +17,8 @@ from .allocation import allocate_shadow_hotset
 from .components import ComponentPolicy, score_attention
 from .config import AttentionSettings
 from .discovery import build_discovery_rows
-from .discovery_models import DiscoveryResponse
+from .discovery_models import DiscoveryResponse, DiscoverySummary
+from .discovery_storage import DiscoveryGenerationChanged
 from .features import build_feature_generation
 from .market_input import MarketInputBundle, MarketInputError, read_market_inputs, utc_ms
 from .models import MINUTE, AllocationPolicy, AttentionResponse, InputReference
@@ -87,6 +88,8 @@ class AttentionService:
         )
         self.last_attempt_at: int | None = None
         self.cycles = 0
+        self.last_cycle_duration_ms: float | None = None
+        self.max_cycle_duration_ms: float | None = None
         self._task: asyncio.Task[None] | None = None
         self._generation_lock = asyncio.Lock()
         self._discovery_restarted = True
@@ -100,66 +103,72 @@ class AttentionService:
 
     async def generate_once(self, *, now: datetime | None = None) -> bool:
         async with self._generation_lock:
-            now = now or datetime.fromtimestamp(self.clock() / 1000, UTC)
-            self.last_attempt_at = utc_ms(now)
+            started = time.perf_counter()
             try:
-                ranking = await self.ranking_reader.read(now_ms=utc_ms(now))
-            except (RankingInputError, OSError, TimeoutError):
-                self._observation_failed("ranking_unavailable")
-                return False
-            try:
-                market = self.market_reader(self.settings.market_state_dir, now=now)
-                inputs, features = build_feature_generation(market, ranking, decision_at=now)
-            except (MarketInputError, ValueError, OSError):
-                self._observation_failed("market_input_unavailable")
-                return False
-            if self.current and _input_key(inputs) == _input_key(self.current.inputs):
-                if self._discovery_restarted:
-                    self._observation_failed("awaiting_new_cutoff")
-                    if self.last_error == "storage_unavailable":
-                        return False
-                self.last_error = None
-                return False
-            try:
-                candidate = score_attention(
-                    inputs, features, policy=self.policy, previous=self.current
-                )
-                allocations = tuple(
-                    allocate_shadow_hotset(
-                        candidate,
-                        policy=policy,
-                        previous=self.store.latest_allocation(policy.id),
-                        manual_selection_id=self.manual_selection_id,
+                now = now or datetime.fromtimestamp(self.clock() / 1000, UTC)
+                self.last_attempt_at = utc_ms(now)
+                try:
+                    ranking = await self.ranking_reader.read(now_ms=utc_ms(now))
+                except (RankingInputError, OSError, TimeoutError):
+                    self._observation_failed("ranking_unavailable")
+                    return False
+                try:
+                    market = self.market_reader(self.settings.market_state_dir, now=now)
+                    inputs, features = build_feature_generation(market, ranking, decision_at=now)
+                except (MarketInputError, ValueError, OSError):
+                    self._observation_failed("market_input_unavailable")
+                    return False
+                if self.current and _input_key(inputs) == _input_key(self.current.inputs):
+                    if self._discovery_restarted:
+                        self._observation_failed("awaiting_new_cutoff")
+                        if self.last_error == "storage_unavailable":
+                            return False
+                    self.last_error = None
+                    return False
+                try:
+                    candidate = score_attention(
+                        inputs, features, policy=self.policy, previous=self.current
                     )
-                    for policy in self.allocation_policies
-                )
-                candidate = candidate.model_copy(update={"shadow_allocations": allocations})
-                self.store.save_generation(
-                    inputs,
-                    features,
-                    candidate,
-                    evidence=(
-                        inputs.ranking_cutoff % (5 * MINUTE) == 0
-                        and not self.store.has_evidence_cutoff(inputs.ranking_cutoff)
-                    ),
-                )
-                saved = self.store.latest_response()
-                if saved is None or saved != candidate:
-                    raise ValueError("committed generation readback differs")
-                evaluated = self.store.save_discovery(
-                    inputs,
-                    build_discovery_rows(market, ranking, inputs, features),
-                    restarted=self._discovery_restarted,
-                )
-                if evaluated:
-                    self._discovery_restarted = False
-            except (sqlite3.Error, OSError, ValueError, RuntimeError):
-                self._observation_failed("storage_unavailable")
-                return False
-            self.current = saved
-            self.last_error = None
-            self.cycles += 1
-            return True
+                    allocations = tuple(
+                        allocate_shadow_hotset(
+                            candidate,
+                            policy=policy,
+                            previous=self.store.latest_allocation(policy.id),
+                            manual_selection_id=self.manual_selection_id,
+                        )
+                        for policy in self.allocation_policies
+                    )
+                    candidate = candidate.model_copy(update={"shadow_allocations": allocations})
+                    self.store.save_generation(
+                        inputs,
+                        features,
+                        candidate,
+                        evidence=(
+                            inputs.ranking_cutoff % (5 * MINUTE) == 0
+                            and not self.store.has_evidence_cutoff(inputs.ranking_cutoff)
+                        ),
+                    )
+                    saved = self.store.latest_response()
+                    if saved is None or saved != candidate:
+                        raise ValueError("committed generation readback differs")
+                    evaluated = self.store.save_discovery(
+                        inputs,
+                        build_discovery_rows(market, ranking, inputs, features),
+                        restarted=self._discovery_restarted,
+                    )
+                    if evaluated:
+                        self._discovery_restarted = False
+                except (sqlite3.Error, OSError, ValueError, RuntimeError):
+                    self._observation_failed("storage_unavailable")
+                    return False
+                self.current = saved
+                self.last_error = None
+                self.cycles += 1
+                return True
+            finally:
+                duration = (time.perf_counter() - started) * 1000
+                self.last_cycle_duration_ms = duration
+                self.max_cycle_duration_ms = max(self.max_cycle_duration_ms or 0, duration)
 
     def current_response(self) -> AttentionResponse | None:
         if self.current is None:
@@ -173,14 +182,50 @@ class AttentionService:
             return self.current.model_copy(update={"status": "stale", "reason": error})
         return self.current
 
+    def discovery_summary(self) -> DiscoverySummary:
+        response = self.store.discovery_summary()
+        if response.ranking_cutoff is None:
+            return response.model_copy(update={"reason": self.last_error or response.reason})
+        age = self.clock() - response.ranking_cutoff
+        error = self.last_error or (
+            "awaiting_new_cutoff"
+            if self._discovery_restarted
+            else "discovery_stale"
+            if age > 150_000
+            else "clock_before_generation"
+            if age < 0
+            else None
+        )
+        if error:
+            return response.model_copy(
+                update={
+                    "status": "stale",
+                    "reason": error,
+                    "rows": tuple(
+                        row.model_copy(
+                            update={
+                                "state": "unknown",
+                                "reason": error,
+                                "confirmation": None,
+                            }
+                        )
+                        for row in response.rows
+                    ),
+                }
+            )
+        return response
+
     def discovery_response(
         self,
         *,
         asset_ids: tuple[str, ...] = (),
         limit: int = 50,
         cursor: str | None = None,
+        generation_id: str | None = None,
     ) -> DiscoveryResponse:
-        response = self.store.discovery_response(asset_ids=asset_ids, limit=limit, cursor=cursor)
+        response = self.store.discovery_response(
+            asset_ids=asset_ids, limit=limit, cursor=cursor, generation_id=generation_id
+        )
         if response.ranking_cutoff is None:
             return response.model_copy(update={"reason": self.last_error or response.reason})
         age = self.clock() - response.ranking_cutoff
@@ -231,6 +276,8 @@ class AttentionService:
             "generationId": response.generation_id if response else None,
             "lastAttemptAt": self.last_attempt_at,
             "cycles": self.cycles,
+            "lastCycleDurationMs": self.last_cycle_duration_ms,
+            "maxCycleDurationMs": self.max_cycle_duration_ms,
             "databaseBytes": self.store.size_bytes(),
             "providerRequests": 0,
             "mode": "shadow_only",
@@ -303,8 +350,9 @@ def application(service: AttentionService) -> web.Application:
 
     async def discovery(request: web.Request) -> web.Response:
         try:
-            if set(request.query) - {"assetId", "limit", "cursor"} or any(
-                len(request.query.getall(key, [])) > 1 for key in ("limit", "cursor")
+            if set(request.query) - {"assetId", "limit", "cursor", "generationId"} or any(
+                len(request.query.getall(key, [])) > 1
+                for key in ("limit", "cursor", "generationId")
             ):
                 raise ValueError("unknown or repeated query")
             asset_ids = tuple(request.query.getall("assetId", []))
@@ -313,8 +361,17 @@ def application(service: AttentionService) -> web.Application:
             cursor = request.query.get("cursor")
             if cursor is not None and len(cursor) > 2048:
                 raise ValueError("invalid cursor")
+            generation_id = request.query.get("generationId")
+            if generation_id is not None and (
+                not generation_id or len(generation_id) > 200 or not asset_ids
+            ):
+                raise ValueError("invalid generation ID")
             limit = int(request.query.get("limit", "50"))
-            response = service.discovery_response(asset_ids=asset_ids, limit=limit, cursor=cursor)
+            response = service.discovery_response(
+                asset_ids=asset_ids, limit=limit, cursor=cursor, generation_id=generation_id
+            )
+        except DiscoveryGenerationChanged:
+            return web.json_response({"error": "discovery_generation_changed"}, status=409)
         except ValueError:
             return web.json_response(
                 {"status": "unavailable", "reason": "invalid_discovery_query"}, status=400
@@ -325,8 +382,17 @@ def application(service: AttentionService) -> web.Application:
             status=503 if response.status == "unavailable" else 200,
         )
 
+    async def discovery_summary(_request: web.Request) -> web.Response:
+        response = service.discovery_summary()
+        return web.Response(
+            text=response.model_dump_json(by_alias=True),
+            content_type="application/json",
+            status=503 if response.status == "unavailable" else 200,
+        )
+
     app = web.Application(middlewares=[access], client_max_size=1024)
     app.router.add_get("/attention", attention)
     app.router.add_get("/health", health)
     app.router.add_get("/discovery", discovery)
+    app.router.add_get("/discovery-summary", discovery_summary)
     return app

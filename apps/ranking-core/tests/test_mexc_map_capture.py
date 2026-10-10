@@ -182,3 +182,146 @@ def test_isolated_capture_remains_candidate_only(inputs: tuple[Path, dict, dict]
     assert evidence["mexcAddition"]["captureScope"] == "isolated"
     assert "production versions require requalification" in evidence["mexcAddition"]["versionScope"]
     assert evidence["mexcAddition"]["adoption"] == "candidate_only"
+
+
+def _save_bundle(directory: Path, result: tuple[dict, ...]) -> None:
+    for name, value in zip(
+        ("initial-map.json", "initial-roster.json", "qualification-evidence.json"),
+        result,
+        strict=True,
+    ):
+        (directory / name).write_text(json.dumps(value))
+
+
+def _native_fixture(template: dict, number: int) -> tuple[dict, dict]:
+    """Synthetic identities are used only in this offline scale regression."""
+    item = copy.deepcopy(template)
+    asset = f"SCALE{number:03d}"
+    symbol = asset + "_USDT"
+    item.update(
+        venueInstrumentId="mexc:" + symbol,
+        venueInstrumentVersionId=200_000 + number,
+        sourceSymbol=symbol,
+        baseAsset=asset,
+        groupId=None,
+        mappingMethod="unmapped",
+    )
+    definition = item["normalizedDefinition"]
+    definition.update(sourceSymbol=symbol, baseAsset=asset)
+    raw = definition["rawDefinition"]
+    raw.update(symbol=symbol, baseCoin=asset)
+    raw["watchdeckIdentityEvidence"].update(base_asset=asset, project=asset)
+    item["catalogEntry"].update(symbol=symbol, baseCoin=asset)
+    item["definitionDigest"] = content_digest(definition)
+    review = {
+        "sourceSymbol": symbol,
+        "rankingRowId": "mexc-native:" + symbol,
+        "baseAsset": asset,
+        "assetClass": "crypto",
+        "identityEvidence": ["https://www.mexc.com/price/" + asset],
+        "project": asset,
+        "explicitFuturesLinkPresent": True,
+        "finding": "Synthetic native identity fixture; no cross-market reference reviewed.",
+        "nativeOnly": True,
+        "reason": "fixed_reference_unverified",
+    }
+    return item, review
+
+
+def _extend_capture(capture: dict, reviews: dict, count: int) -> tuple[dict, dict]:
+    enlarged = copy.deepcopy(capture)
+    enlarged_reviews = copy.deepcopy(reviews)
+    for number in range(len(capture["items"]) + 1, count + 1):
+        item, review = _native_fixture(capture["items"][0], number)
+        enlarged["items"].append(item)
+        enlarged_reviews["items"].append(review)
+    audit = enlarged["databaseAudit"]
+    audit["currentRoster"] = [
+        *[item for item in audit["currentRoster"] if item["venue"] != "mexc"],
+        *[{name: item[name] for name in UTILITY["IDENTITY_FIELDS"]} for item in enlarged["items"]],
+    ]
+    audit["currentMexcDefinitions"] = [
+        {
+            "instrumentId": item["venueInstrumentId"],
+            "currentVersion": item["venueInstrumentVersionId"],
+            "validTo": None,
+            "normalizedDefinition": copy.deepcopy(item["normalizedDefinition"]),
+        }
+        for item in enlarged["items"]
+    ]
+    return enlarged, enlarged_reviews
+
+
+def test_addition_is_idempotent_and_preserves_original_review_observation(inputs) -> None:
+    directory, capture, reviews = inputs
+    first = prepare(directory, capture, reviews, capture_scope="production_read_only", now=NOW)
+    _save_bundle(directory, first)
+    repeated = prepare(directory, capture, reviews, capture_scope="production_read_only", now=NOW)
+    assert repeated == first
+
+
+def test_ten_to_fifty_to_one_hundred_preserves_qualified_rows_and_native_only_coverage(
+    inputs,
+) -> None:
+    directory, capture, reviews = inputs
+    first = prepare(directory, capture, reviews, capture_scope="production_read_only", now=NOW)
+    _save_bundle(directory, first)
+    for count in (50, 100):
+        expanded_capture, expanded_reviews = _extend_capture(capture, reviews, count)
+        result = prepare(
+            directory,
+            expanded_capture,
+            expanded_reviews,
+            capture_scope="production_read_only",
+            now=NOW,
+        )
+        mapping, roster, evidence = result
+        assert sum(item["venue"] == "mexc" for item in roster["items"]) == count
+        previous_rows = {row["id"]: row for row in first[0]["rows"]}
+        assert {
+            row["id"]: row for row in mapping["rows"] if row["id"] in previous_rows
+        } == previous_rows
+        for key, qualification in first[2]["mexcQualification"].items():
+            assert evidence["mexcQualification"][key] == qualification
+        assert evidence["quantityUnverified"] == first[2]["quantityUnverified"]
+        native_rows = [row for row in mapping["rows"] if row["id"].startswith("mexc-native:")]
+        assert len(native_rows) == count - 10
+        assert all(
+            row["reference"] is None
+            and row["status"] == "review"
+            and row["reason"] == "fixed_reference_unverified"
+            and row["evidence"]
+            for row in native_rows
+        )
+        _save_bundle(directory, result)
+        assert verify(directory)["review"] == count - 10
+        assert (
+            prepare(
+                directory,
+                expanded_capture,
+                expanded_reviews,
+                capture_scope="production_read_only",
+                now=NOW,
+            )
+            == result
+        )
+
+
+def test_existing_identity_changes_cannot_be_hidden_by_a_fresh_capture(inputs) -> None:
+    directory, capture, reviews = inputs
+    first = prepare(directory, capture, reviews, capture_scope="production_read_only", now=NOW)
+    _save_bundle(directory, first)
+    changed = copy.deepcopy(capture)
+    item = changed["items"][0]
+    item["normalizedDefinition"]["contractMultiplier"] = "123.5"
+    item["normalizedDefinition"]["rawDefinition"]["contractSize"] = "123.5"
+    item["normalizedDefinition"]["rawDefinition"]["watchdeckQuantityEvidence"][
+        "base_per_contract"
+    ] = "123.5"
+    item["catalogEntry"]["contractSize"] = "123.5"
+    item["definitionDigest"] = content_digest(item["normalizedDefinition"])
+    changed["databaseAudit"]["currentMexcDefinitions"][0]["normalizedDefinition"] = copy.deepcopy(
+        item["normalizedDefinition"]
+    )
+    with pytest.raises(ValueError, match="requalification"):
+        prepare(directory, changed, reviews, capture_scope="production_read_only", now=NOW)

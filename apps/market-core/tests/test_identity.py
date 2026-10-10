@@ -130,3 +130,44 @@ def test_resolve_market_groups_is_exact_and_fail_closed(
         )
         for resolution in resolutions
     } == expected
+
+
+@pytest.mark.parametrize("external_collision", [False, True])
+def test_native_only_identity_is_independent_of_same_base_and_collision(external_collision):
+    instruments = [
+        _instrument("bitget", "ZECUSDT", "ZEC"),
+        _instrument("aster", "ZECUSDT", "ZEC"),
+        *[
+            _instrument(
+                "mexc",
+                symbol,
+                "ZEC",
+                quantity_unit="contracts",
+                contract_multiplier=Decimal("0.01"),
+                raw_definition={
+                    "watchdeckIdentityEvidence": {
+                        "base_asset": "ZEC",
+                        "price_unit": "quote_per_base",
+                        "identity_price_multiplier": "1",
+                        "identity_scope": "native_only",
+                    },
+                    "watchdeckQuantityEvidence": {"base_per_contract": "0.01"},
+                },
+            )
+            for symbol in ("ZEC_USDT", "ZEC_USDT_ALT")
+        ],
+    ]
+    if external_collision:
+        instruments.append(_instrument("bitget", "ZECUSDT_ALT", "ZEC"))
+    resolutions = resolve_market_groups(instruments)
+    for result in resolutions:
+        if result.venue_instrument_id.startswith("mexc:"):
+            assert result.group_id == f"native:{result.venue_instrument_id}:linear-perp"
+            assert result.mapping_method == "verified_native_contract"
+            assert result.unmapped_reason is None
+        elif external_collision:
+            assert result.group_id is None
+            assert result.unmapped_reason == "same_venue_collision"
+        else:
+            assert result.group_id == "crypto:ZEC:linear-perp"
+            assert result.unmapped_reason is None

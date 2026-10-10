@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Literal
 
 import aiohttp
 
+from prep_watchdeck_market.mexc_budget import MexcHttpBudget
 from prep_watchdeck_market.models import (
     CatalogBatch,
     CatalogExclusion,
@@ -39,15 +41,43 @@ def mexc_data(payload: object) -> object:
 
 
 async def fetch_mexc_json(
-    session: aiohttp.ClientSession, endpoint: str, *, params: dict[str, str] | None = None
+    session: aiohttp.ClientSession,
+    endpoint: str,
+    *,
+    params: dict[str, str] | None = None,
+    lane: Literal["foreground", "funding", "recovery"] = "foreground",
+    budget: MexcHttpBudget | None = None,
 ) -> object:
     try:
-        async with session.get(
-            MEXC_BASE_URL + endpoint, params=params, timeout=aiohttp.ClientTimeout(total=20)
-        ) as response:
-            response.raise_for_status()
-            return await response.json(content_type=None)
-    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
+        shared_budget = budget if budget is not None else MexcHttpBudget.from_env()
+
+        async def admit_attempt(
+            request: aiohttp.ClientRequest, handler: aiohttp.ClientHandlerType
+        ) -> aiohttp.ClientResponse:
+            # aiohttp invokes request middleware again for its transport-level GET retry.
+            await shared_budget.acquire(lane=lane, timeout_seconds=20)
+            return await handler(request)
+
+        for attempt in range(2):
+            async with session.get(
+                MEXC_BASE_URL + endpoint,
+                params=params,
+                timeout=aiohttp.ClientTimeout(total=20),
+                allow_redirects=False,
+                middlewares=(admit_attempt,),
+            ) as response:
+                if response.status == 429:
+                    try:
+                        retry_after = max(2.0, float(response.headers.get("Retry-After", "2")))
+                    except ValueError:
+                        retry_after = 2.0
+                    await shared_budget.cooldown(retry_after)
+                    if attempt == 0:
+                        continue
+                response.raise_for_status()
+                return await response.json(content_type=None)
+        raise CatalogSourceError("MEXC public fetch failed", error_code="rate_limit")
+    except (aiohttp.ClientError, TimeoutError, ValueError, RuntimeError) as exc:
         raise CatalogSourceError(
             "MEXC public fetch failed", error_code=safe_source_error_code(exc)
         ) from None

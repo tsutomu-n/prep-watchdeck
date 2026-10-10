@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-10(土)_07:08 JST"
+timestamp="2026-10-10(土)_10:53 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T07:08:23+09:00`
+- 更新: `2026-10-10T10:53:42+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -298,13 +298,16 @@ Hosted CIは明示依頼時だけ実行する。workflowへのAttention gate追�
 
 Marketの関連pytestでは、確認済みcryptoの採否、契約係数と価格倍率の分離、exact versionでの数量換算、
 係数変更、WS板の連続性・無効化、約定重複、履歴回復、Funding間隔、MEXC収集無効化を確認する。
+Funding独立取得では遅延時のTicker継続、90秒/決済/定義変更、旧行null、旧archiveを検証する。
+共有予算はPython/Bunの実multiprocessでrolling枠・429・障害時停止を確認し、WSは1 shard障害の隔離を確認する。
+metricsはsnapshot完了後の時刻で未来判定し、開始時cutoffを分境界でも維持する。真のfutureとbounded診断も検証する。
 Rankingは新Venueの読取とexact map/evidence整合を既存schema・根拠checkerで確認する。
 `--require-ranking-qualified`と`--require-reviewed`を別々に扱い、既存の元数量・Widget未確認を成功へ置き換えない。
 現行mapの`bitget:1MCHEEMSUSDT`、`bitget:10000NEXUSDT`、`bitget:1000RATSUSDT`の数量と
 対応Widgetは未確認であり、strictな全確認gateの未達として報告する。
 
 Attentionの`test_discovery.py`は固定条件・source/time・同cutoff重複・連続性・欠測中断・再確認・identity変更・
-履歴上限・cursor・GET無副作用を確認する。Webはworkspace v1読込とv2保存、4件上限、CAS、判断の重複排除と
+履歴上限・cursor・GET無副作用、summaryのraw不存在、詳細index・世代整合・transaction rollback・旧DB再読込を確認する。Webはworkspace v1読込とv2保存、4件上限、CAS、判断の重複排除と
 容量上限、対象再確認、見送りのepisode範囲、MEXCのChart/価格読取を検証する。
 `tests/e2e/discovery.e2e.ts`はDesktop/Mobileで候補保持、再読込、明示確認時だけのselection切替を確認する。
 schema生成・Web型生成後、変更に対応するpackage gateとRepositoryのfull local gateを実行する。CI実行は別の明示依頼が必要。
@@ -313,6 +316,13 @@ schema生成・Web型生成後、変更に対応するpackage gateとRepository�
 Chart・板・約定、60分の更新・欠測・rate limit・再接続・容量を記録する。
 Web healthや短い公開API到達、fixture成功をこの受入へ読み替えない。source検証・隔離実データ・本番配置・
 本人の操作受入を分け、判断時間の短縮や候補の収益性は未測定のまま断定しない。
+
+100銘柄への拡大では保持済みstateを再現した60世代の隔離負荷、最適化済み10件、50件2時間、
+100件24時間（通常maintenanceを含む）を別に判定する。OOM/予期しないrestart0、cycle<60秒、
+入力鮮度150秒以内、Discovery一覧/詳細p95<=1秒を確認する。Attention anonymous+kernel peakの
+目標は768MiBの80%以下で、超過時はprofile後に進む。回収可能file cache込み総量だけで失格にしない。
+100件24時間のSQLite/WAL/immutable/Market増分から30日予測を作り、予測増分＋50GiB空きを容量gateとする。
+加速replayは通常運転の実測時間に数えず、30日予測を30日実測と呼ばない。
 
 ## Research remediation
 
@@ -325,3 +335,5 @@ CCXT capability inspectionはofflineでありProvider受入を代替しない。
 
 source/local検証、commit、live migration/deploy、24時間観測、30日evidence、OI取得契約、
 実約定・統計的独立性・優位性は別の証拠層。詳細は[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)を参照する。
+
+Attentionの周期受入は`/health`の`maxCycleDurationMs`で実処理時間を確認し、generation間隔と区別する。再起動後は値がリセットされるため、observerが稼働PID・再起動回数・各観測値を保存する。

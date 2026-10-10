@@ -14,6 +14,40 @@ UTILITY = runpy.run_path(str(ROOT / "scripts/market/check-data-operations.py"))
 NOW = datetime(2026, 10, 2, 6, 0, tzinfo=UTC)
 
 
+def test_future_metric_diagnostics_keep_field_and_timestamp_with_bounded_output() -> None:
+    data = inputs()
+    fields = (
+        "startAt",
+        "endAt",
+        "startSourceAt",
+        "endSourceAt",
+        "startObservedAt",
+        "endObservedAt",
+    )
+    future = (NOW + timedelta(seconds=1)).isoformat()
+    for windows in ("tradeChange", "oiChange"):
+        for window in data["metrics"]["rows"][0][windows]:
+            data["metrics"]["rows"][0][windows][window] = {
+                "value": None,
+                "availability": "missing",
+                "reasonCode": "future_timestamp",
+                **dict.fromkeys(fields, future),
+            }
+    report = UTILITY["check"](**data, now=NOW + timedelta(seconds=2))
+    diagnostics = report["metricTimestampDiagnostics"]
+    assert "metric_future_timestamp" in report["operationalFailures"]
+    assert len(diagnostics) == UTILITY["MAX_METRIC_TIMESTAMP_DIAGNOSTICS"]
+    assert report["metricTimestampDiagnosticsTruncated"] is True
+    assert diagnostics[0] == {
+        "instrumentId": "bitget:BTCUSDT",
+        "versionId": 7,
+        "metric": "tradeChange.15m",
+        "field": "startAt",
+        "timestamp": future,
+        "validationAt": NOW.isoformat(),
+    }
+
+
 def inputs() -> dict:
     stamp = NOW.isoformat()
     original = {"venue": "bitget", "instrumentId": "bitget:BTCUSDT", "versionId": 7}

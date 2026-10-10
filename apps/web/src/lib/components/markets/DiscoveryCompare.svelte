@@ -2,18 +2,20 @@
   import { onMount, tick } from "svelte";
   import { goto } from "$app/navigation";
   import type { DiscoveryResponse, DiscoveryRow, RawFeatureValue, DiscoveryEpisode } from "$lib/generated/discovery-response";
+  import type { DiscoverySummary, DiscoverySummaryRow } from "$lib/generated/discovery-summary";
+  import { DiscoveryGenerationChanged, readDiscoveryView, requestDiscovery } from "$lib/discovery/client";
   import type { ComparisonPin, UserWorkspace } from "$lib/server/user-workspace-repository";
   import type { DecisionHistory, DecisionInput } from "$lib/market/decisions";
   import { mergeDiscoveryEpisodes } from "$lib/discovery/history";
   import { episodeSkipped } from "$lib/market/decisions";
   import { favoriteKey, readUserWorkspace } from "$lib/market/user-workspace";
-  import { comparisonPin, discoveryTarget, sameTarget, parseDiscovery } from "$lib/discovery/contract";
+  import { comparisonPin, discoveryTarget, sameTarget } from "$lib/discovery/contract";
   import { nativeUniverseFresh } from "$lib/market/ranking-native";
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
   import { formatFinite, formatPrice, formatTimestamp } from "$lib/market/universe-view";
 
   let workspace = $state<UserWorkspace | null>(null);
-  let discovery = $state<DiscoveryResponse | null>(null);
+  let discovery = $state<DiscoverySummary | null>(null);
   let pinnedDiscovery = $state<DiscoveryResponse | null>(null);
   let pinnedRows = $derived(pinnedDiscovery?.rows ?? []);
   let history = $state<DecisionHistory | null>(null);
@@ -27,7 +29,11 @@
   let reasonInput = $state<HTMLTextAreaElement | null>(null);
   let returnFocus: HTMLElement | null = null;
   let episodes = $state<DiscoveryEpisode[]>([]);
-  let historyPaged = $state(false);
+  let historyPaged = false;
+  let updating = $state(false);
+  let loading = false;
+  let pendingLoad = false;
+  let alive = true;
   let cursor = $state<string | null>(null);
   let cursorLoading = $state(false);
   let historyFilter = $state("");
@@ -36,30 +42,52 @@
   let pins = $derived(workspace?.pins ?? []);
 
 
-  async function requestDiscovery(parameters = new URLSearchParams()) {
-    const response = await fetch(`/api/discovery?${parameters}`, { cache: "no-store" });
-    if (!response.ok) throw new Error("候補機能を利用できません。Attentionの対応版と稼働状態を確認してください。");
-    return parseDiscovery(await response.json());
-  }
+  function pinnedIds() { return pins.filter(pin => pin.target.kind === "reference").map(pin => pin.target.id); }
   async function load() {
+    if (loading) { pendingLoad = true; return; }
+    loading = true;
+    const ids = pinnedIds();
     try {
-      const current = await requestDiscovery();
-      discovery = current;
-      episodes = mergeDiscoveryEpisodes(current.episodes, episodes);
-      if (!historyPaged) cursor = current.nextCursor;
-      unavailable = current.status === "unavailable" ? `候補機能は利用不可です: ${current.reason ?? "データ未取得"}` : null;
-      const ids = pins.filter(pin => pin.target.kind === "reference").map(pin => pin.target.id);
-      if (ids.length) {
-        const query = new URLSearchParams(); ids.forEach(id => query.append("assetId", id));
-        pinnedDiscovery = await requestDiscovery(query);
-      } else pinnedDiscovery = null;
+      const view = await readDiscoveryView(ids);
+      if (!alive || JSON.stringify(ids) !== JSON.stringify(pinnedIds())) { pendingLoad = alive; return; }
+      // Keep the previous complete view until both responses are from one generation.
+      discovery = view.summary;
+      pinnedDiscovery = view.detail;
+      updating = false;
+      unavailable = view.summary.status === "unavailable" ? `候補機能は利用不可です: ${view.summary.reason ?? "データ未取得"}` : null;
     } catch (cause) {
-      unavailable = cause instanceof Error ? cause.message : "候補機能を利用できません";
-      // Retained evidence stays visible, with an explicit stale label.
+      if (!alive) return;
+      updating = updating || cause instanceof DiscoveryGenerationChanged;
+      unavailable = updating ? new DiscoveryGenerationChanged().message
+        : cause instanceof Error ? cause.message : "候補機能を利用できません";
+    } finally {
+      loading = false;
+      if (pendingLoad && alive) { pendingLoad = false; void load(); }
     }
   }
+  async function pinAsset(assetId: string) {
+    try {
+      const { detail } = await readDiscoveryView([assetId]);
+      const row = detail?.rows.find(item => item.assetId === assetId);
+      if (!row) throw new Error("比較対象の根拠を取得できません");
+      await pinRow(row);
+    } catch (cause) {
+      if (cause instanceof DiscoveryGenerationChanged) { updating = true; unavailable = cause.message; }
+      error = cause instanceof Error ? cause.message : "候補を追加できません";
+    }
+  }
+  async function loadEpisodes() {
+    if (cursorLoading) return;
+    cursorLoading = true;
+    try {
+      const data = await requestDiscovery();
+      episodes = mergeDiscoveryEpisodes(data.episodes, episodes);
+      if (!historyPaged) cursor = data.nextCursor;
+    } catch { error = "条件履歴を読み込めません"; }
+    finally { cursorLoading = false; }
+  }
   onMount(() => {
-    let alive = true;
+    alive = true;
     void Promise.all([readUserWorkspace(), fetch("/api/decisions", { cache: "no-store" }).then(async response => {
       if (!response.ok) throw new Error("判断履歴を読み込めません"); return await response.json() as DecisionHistory;
     })]).then(([saved, decisions]) => {
@@ -69,17 +97,13 @@
     function compare(event: Event) {
       const detail = (event as CustomEvent<{ assetId: string }>).detail;
       if (!detail?.assetId) return;
-      void requestDiscovery(new URLSearchParams({ assetId: detail.assetId })).then(response => {
-        const row = response.rows.find(item => item.assetId === detail.assetId);
-        if (!row) throw new Error("比較対象の根拠を取得できません");
-        return pinRow(row);
-      }).catch(cause => error = cause instanceof Error ? cause.message : "候補を追加できません");
+      void pinAsset(detail.assetId);
     }
     window.addEventListener("watchdeck:compare", compare);
     return () => { alive = false; clearInterval(timer); window.removeEventListener("watchdeck:compare", compare); };
   });
   function rowFor(pin: ComparisonPin) {
-    return pinnedRows.find(row => row.assetId === pin.target.id) ?? discovery?.rows.find(row => row.assetId === pin.target.id) ?? null;
+    return pinnedRows.find(row => row.assetId === pin.target.id) ?? null;
   }
   function rowStatus(row: DiscoveryRow) {
     return unavailable ? "unavailable" : (pinnedDiscovery?.rows.some(item => item.assetId === row.assetId && item.raw.decisionAt === row.raw.decisionAt)
@@ -127,11 +151,11 @@
       : `未取得 (${value?.reason ?? "missing"})`;
   }
   function time(value: number | null | undefined) { return value ? `${formatTimestamp(new Date(value).toISOString())} JST` : "時刻未取得"; }
-  function direction(row: DiscoveryRow) {
+  function direction(row: DiscoveryRow | DiscoverySummaryRow) {
     return row.direction === "turnover" ? row.state === "matched" ? "売買代金増加" : "価格方向 ±2% 内"
       : ({ up: "上昇", down: "下落", unknown: "方向未確認" })[row.direction];
   }
-  function confirmation(row: DiscoveryRow) {
+  function confirmation(row: DiscoveryRow | DiscoverySummaryRow) {
     return row.confirmation === "new" ? "新規成立" : row.confirmation === "initial_confirmation" ? "初回確認"
       : row.confirmation === "reconfirmation" ? "再確認" : row.confirmation === "continuing" ? "継続"
       : row.state === "not_matched" ? row.episodeId ? "条件解除" : "条件未成立" : "確認不能";
@@ -144,6 +168,7 @@
       ? `${((latest.value / first.value - 1) * 100).toFixed(2)}%` : "未取得 / 比較不能";
   }
   async function askNative(pin: ComparisonPin, row: DiscoveryRow, instrumentId: string, version: number) {
+    if (updating) return;
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     nativeConfirm = { pin, row, instrumentId, version };
     await tick();
@@ -155,10 +180,11 @@
     void tick().then(() => returnFocus?.focus());
   }
   function prepareDecision(pin: ComparisonPin, row: DiscoveryRow, action: "watch" | "skip") {
+    if (updating) return;
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     // Freeze the full evidence currently displayed, including status and the observation time.
     const evidenceResponse = pinnedDiscovery?.rows.some(item => item.assetId === row.assetId && item.raw.decisionAt === row.raw.decisionAt)
-      ? pinnedDiscovery : discovery;
+      ? pinnedDiscovery : null;
     decisionFor = { pin: structuredClone($state.snapshot(pin)), row: structuredClone($state.snapshot(row)), action, id: crypto.randomUUID(), snapshot: {
       row: structuredClone($state.snapshot(row)), displayedStatus: unavailable ? "unavailable" : evidenceResponse?.status ?? "unavailable",
       displayedAt: Date.now(), policy: structuredClone($state.snapshot(evidenceResponse?.policy)), generationId: evidenceResponse?.generationId,
@@ -168,7 +194,7 @@
     void tick().then(() => { reasonInput?.scrollIntoView({ block: "center" }); reasonInput?.focus({ preventScroll: true }); });
   }
   async function saveDecision() {
-    if (!decisionFor || !history || !reason.trim() || busy) return;
+    if (!decisionFor || !history || !reason.trim() || busy || updating) return;
     busy = true; error = null;
     const input: DecisionInput = { id: decisionFor.id, action: decisionFor.action, reason: reason.trim(),
       target: decisionFor.pin.target, episodeId: decisionFor.row.episodeId!, snapshot: decisionFor.snapshot };
@@ -189,10 +215,11 @@
     catch { error = "条件履歴の続きを読み込めません"; } finally { cursorLoading = false; }
   }
   async function confirmNative() {
-    if (!nativeConfirm) return;
+    if (!nativeConfirm || updating) return;
     const { pin, instrumentId, version } = nativeConfirm;
     try {
-      const latest = await requestDiscovery(new URLSearchParams({ assetId: pin.target.id }));
+      const latest = await requestDiscovery(new URLSearchParams({ assetId: pin.target.id,
+        generationId: pinnedDiscovery?.generationId ?? "" }));
       const row = latest.rows.find(item => item.assetId === pin.target.id);
       if (latest.status === "stale" || latest.status === "unavailable" || !row || !current(pin, row) ||
           !row.originals.some(item => item.instrumentId === instrumentId && item.versionId === version && item.current)) {
@@ -207,13 +234,17 @@
       if (!nativeUniverseFresh(market.universe, Date.now()) || matches.length !== 1 || !matches[0].groupId) {
         throw new Error("実Venueの対象・鮮度・対応を再確認してください");
       }
+      if (updating) throw new DiscoveryGenerationChanged();
       const response = await fetch("/api/selection", { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "select", groupId: matches[0].groupId, venueInstrumentId: instrumentId,
           venueInstrumentVersionId: version }) });
       if (!response.ok) throw new Error("実Venueの選択監視を切り替えられませんでした");
       nativeConfirm = null;
       await goto(`/?mode=native&instrument=${encodeURIComponent(instrumentId)}&version=${version}#native-detail`);
-    } catch (cause) { error = cause instanceof Error ? cause.message : "実Venueへ移動できません"; }
+    } catch (cause) {
+      if (cause instanceof DiscoveryGenerationChanged) { updating = true; unavailable = cause.message; void load(); }
+      error = cause instanceof Error ? cause.message : "実Venueへ移動できません";
+    }
   }
 </script>
 
@@ -229,7 +260,7 @@
   {#if error}<p class="warning" role="alert">{error}</p>{/if}
   <div class="candidate-list" aria-label="固定条件の成立候補">
     {#each candidates as row (row.assetId)}
-      <button type="button" disabled={busy || !workspace || !comparisonPin(row) || pins.some(pin => pin.target.id === row.assetId)} onclick={() => pinRow(row)}>
+      <button type="button" disabled={busy || updating || !workspace || !discoveryTarget(row) || pins.some(pin => pin.target.id === row.assetId)} onclick={() => pinAsset(row.assetId)}>
         {row.asset} · {direction(row)} · {confirmation(row)} · 比較へ
       </button>
     {:else}<p class="muted">{discovery ? "現在の成立候補なし / 不足情報は未取得として扱います。" : "候補を取得しています。"}</p>{/each}
@@ -263,23 +294,23 @@
                 <dt>15分OI変化</dt><dd>{@render metric(native.oiChange["15m"], "percent")}</dd></dl>
               <details><summary>実Venueの根拠</summary><p class="muted">source: {native.markPrice.source} · source時刻: {time(native.markPrice.observations[0]?.sourceAt)} · {native.qualityReasons.join(" · ")}</p></details>
             </details>
-            <button class="native-action" type="button" disabled={["stale", "unavailable"].includes(rowStatus(row)) || !row.originals.some(item => item.current && item.instrumentId === native.instrumentId && item.versionId === native.versionId)} onclick={() => askNative(pin, row, native.instrumentId, native.versionId)}>この実Venueを確認<span class="muted"> · {native.venue} {native.sourceSymbol}</span></button>
+            <button class="native-action" type="button" disabled={updating || ["stale", "unavailable"].includes(rowStatus(row)) || !row.originals.some(item => item.current && item.instrumentId === native.instrumentId && item.versionId === native.versionId)} onclick={() => askNative(pin, row, native.instrumentId, native.versionId)}>この実Venueを確認<span class="muted"> · {native.venue} {native.sourceSymbol}</span></button>
           {/each}
-          <div class="actions"><button type="button" disabled={busy || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "watch")}>監視を記録</button><button type="button" disabled={busy || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "skip")}>この成立を見送り</button></div>
+          <div class="actions"><button type="button" disabled={busy || updating || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "watch")}>監視を記録</button><button type="button" disabled={busy || updating || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "skip")}>この成立を見送り</button></div>
         {:else}<p>現在の根拠は未取得です。追加時の対象・根拠を保持しています。</p><details><summary>追加時の根拠</summary><pre>{JSON.stringify(pin.snapshot, null, 2)}</pre></details>{/if}
       </article>
     {:else}<p class="muted">成立候補やランキングの「比較へ」から最大4件を追加してください。追加だけでは実Venueのselectionを変更しません。</p>{/each}
   </div>
   {#if nativeConfirm}
-    <div class="confirmation" bind:this={confirmationRegion} tabindex="-1" role="region" aria-label="実Venueへの移動確認"><p>{nativeConfirm.instrumentId} v{nativeConfirm.version} のnativeデータへ移動します。既存の選択監視をこの契約へ切り替えます。</p><button type="button" onclick={confirmNative}>確認して実Venueへ移動</button><button type="button" onclick={dismissConfirmation}>キャンセル</button></div>
+    <div class="confirmation" bind:this={confirmationRegion} tabindex="-1" role="region" aria-label="実Venueへの移動確認"><p>{nativeConfirm.instrumentId} v{nativeConfirm.version} のnativeデータへ移動します。既存の選択監視をこの契約へ切り替えます。</p><button type="button" disabled={updating} onclick={confirmNative}>確認して実Venueへ移動</button><button type="button" onclick={dismissConfirmation}>キャンセル</button></div>
   {/if}
   {#if decisionFor}
     <form class="confirmation" onsubmit={event => { event.preventDefault(); void saveDecision(); }} aria-label="判断を保存">
       <p>{decisionFor.pin.target.id} · {decisionFor.action === "watch" ? "監視" : "見送り"} · 成立 {decisionFor.row.episodeId}</p><p class="muted">根拠を固定: {time(decisionFor.row.raw.decisionAt)}。この表示snapshotを履歴へ保存します。</p>
-      <label>判断理由<textarea bind:this={reasonInput} bind:value={reason} maxlength="2000" required></textarea></label><button type="submit" disabled={busy || !reason.trim()}>判断を保存</button><button type="button" onclick={dismissConfirmation}>キャンセル</button>
+      <label>判断理由<textarea bind:this={reasonInput} bind:value={reason} maxlength="2000" required></textarea></label><button type="submit" disabled={busy || updating || !reason.trim()}>判断を保存</button><button type="button" onclick={dismissConfirmation}>キャンセル</button>
     </form>
   {/if}
-  <details><summary>条件履歴 ({episodes.length}) · 保持開始 {time(discovery?.historyAvailableFrom)} · 終了履歴7日 / 最大10,000件</summary>
+  <details ontoggle={event => { if (event.currentTarget.open) void loadEpisodes(); }}><summary>条件履歴 ({episodes.length}) · 保持開始 {time(discovery?.historyAvailableFrom)} · 終了履歴7日 / 最大10,000件</summary>
     {#each episodes as episode (episode.id)}<p>{episode.asset} · {episode.startKind === "new" ? "新規成立" : episode.startKind === "reconfirmation" ? "再確認" : "初回確認"} · {episode.state} · 初回観測 {time(episode.firstObservedAt)} · 最終確認 {time(episode.lastConfirmedAt)} · {episode.consecutiveConfirmations}回 · 観測継続 {formatFinite(episode.observedDurationMs / 60000, 1)}分 · {episode.endReason ?? ""}</p>{/each}
     {#if cursor}<button type="button" disabled={cursorLoading} onclick={moreEpisodes}>条件履歴をさらに読む</button>{/if}
   </details>

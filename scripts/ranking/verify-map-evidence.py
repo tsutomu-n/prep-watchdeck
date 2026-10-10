@@ -79,7 +79,7 @@ def verify(directory: Path) -> dict:
             entry = evidence["catalogs"][original.venue].get(original.symbol)
             if entry is None and row.status != "review":
                 raise ValueError(f"original catalog evidence absent: {original.instrument_id}")
-            if original.venue == "mexc" and row.status != "review":
+            if original.venue == "mexc":
                 verify_mexc_original(original, row.reference, evidence)
         if row.reference is None:
             continue

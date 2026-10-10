@@ -20,6 +20,7 @@ MAX_BYTES = 8 * 1024 * 1024
 ARTIFACT_MAX_AGE = 120
 RANKING_MAX_AGE = 150
 MAX_IDENTITY_DIAGNOSTICS = 20
+MAX_METRIC_TIMESTAMP_DIAGNOSTICS = 20
 IDENTIFIER = re.compile(r"[A-Za-z0-9_:.-]{1,200}\Z")
 VENUES = {"aster", "bitget", "hyperliquid", "mexc"}
 AVAILABILITIES = {"available", "missing", "unsupported", "invalid"}
@@ -343,6 +344,8 @@ def check(
         warnings.add("mapping_review_required")
 
     metric_counts: dict[str, dict[str, dict[str, Any]]] = {}
+    timestamp_diagnostics: list[dict[str, Any]] = []
+    timestamp_issue_count = 0
     seen = set()
     for value in list_value(metrics.get("rows")):
         row = object_value(value)
@@ -391,8 +394,24 @@ def check(
                     "startObservedAt",
                     "endObservedAt",
                 ):
-                    if metric.get(field) is not None and instant(metric[field]) > now:
+                    validation_at = (
+                        instant(metrics["generatedAt"]) if reason == "future_timestamp" else now
+                    )
+                    stamp = None if metric.get(field) is None else instant(metric[field])
+                    if stamp is not None and stamp > validation_at:
                         failures.add("metric_future_timestamp")
+                        timestamp_issue_count += 1
+                        if len(timestamp_diagnostics) < MAX_METRIC_TIMESTAMP_DIAGNOSTICS:
+                            timestamp_diagnostics.append(
+                                {
+                                    "instrumentId": key if IDENTIFIER.fullmatch(key) else None,
+                                    "versionId": version,
+                                    "metric": f"{name}.{window}",
+                                    "field": field,
+                                    "timestamp": stamp.isoformat(),
+                                    "validationAt": validation_at.isoformat(),
+                                }
+                            )
     if seen != current.keys():
         failures.add("metric_identity_mismatch")
 
@@ -522,6 +541,8 @@ def check(
             },
         },
         "metricCounts": metric_counts,
+        "metricTimestampDiagnostics": timestamp_diagnostics,
+        "metricTimestampDiagnosticsTruncated": timestamp_issue_count > len(timestamp_diagnostics),
         "ranking": ranking_state,
         "recovery": recovery_states,
         "operationalFailures": sorted(failures),

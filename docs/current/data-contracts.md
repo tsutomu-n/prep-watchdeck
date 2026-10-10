@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-10(土)_08:57 JST"
+timestamp="2026-10-10(土)_11:15 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T08:57:39+09:00`
+- 更新: `2026-10-10T11:15:54+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -22,7 +22,11 @@ timestamp="2026-10-10(土)_08:57 JST"
 - `mappingMethod=exact_base_heuristic`は、active、crypto、linear perpetual、base完全一致、base数量、
   multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する
 - MEXCの`mappingMethod=verified_native_contract`は確認済みregistryとnative定義が一致する契約だけに設定する。
-  審査済み資産はBTC・ETH・SOL・XRP・DOGE・ADA・AVAX・LTC・BNB・TRX。`typeLabel=0`だけでcryptoと判定しない
+  稼働前のsource registryはBTC・ETH・SOL・XRP・DOGE・ADA・AVAX・LTC・BNB・TRXの10件。`typeLabel=0`だけでcryptoと判定しない
+- native資産は確認済みでも他Venueとの同一性が未確認の場合、registry evidenceの`identity_scope=native_only`を保持し、
+  `groupId=native:mexc:<exact source symbol>:linear-perp`の単独groupを使う。取得可否を切り替えるflagではない。
+  他Venueの参考mark中央値・乖離率から分離し、単独の価格・OI・Chart・手動selection・板・約定は利用できる。
+  段階追加用の審査済み50/100件registryはdata bundleとして保持し、実効registryと区別する。
 
 現行Perp coreではalias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQを
 自動group化しない。
@@ -34,6 +38,8 @@ timestamp="2026-10-10(土)_08:57 JST"
 
 - `markPrice`と`referencePrice`を分け、`referencePriceKind=index|oracle|none`を保持する
 - Fundingはraw、interval、nextFundingを保存し、interval確認時だけper-hourを公開する
+- MEXC Current Fundingはnullableな`fundingSourceAt`、`fundingObservedAt`、`fundingValidUntil`を持つ。
+  source/observedの90秒期限と次回決済時刻の最小が有効期限で、Ticker更新で延長しない。
 - OIはraw値とraw unitを保持し、確認できる時だけbase/notionalへ派生する
 - 24h volumeはsource由来値とunitを保持する
 - source timestampがない場合はnullを維持する
@@ -55,6 +61,11 @@ Fundingの符号、実際の`collectCycle`、次回時刻を保持し、8時間�
 base数量から再推計しない。Webの直接取得足は係数を確認できないためbase volumeをnullにし、quote volumeを保持する。
 MEXCの完全raw Catalogを保存し、意味が変わらないと確認した表示・fee・leverage項目だけを版の比較から除外する。
 未知項目や資産・価格刻み・数量係数・上場lifecycleの変更は版を分ける。
+MEXC Fundingの取得失敗・期限切れ・決済通過・定義変更はFunding4値だけをnullにする。
+必須Ticker値・時刻・exact数量換算が正常な場合だけ`funding_only_partial:<reason>`を設定し、
+既存のactive・同cycle・120秒以内・2Venue以上・skew30秒以内等を満たせば参考mark比較に参加できる。
+一般的なpartialは参加しない。Migration 0006はlatest/minute stateへ3時刻列をnullableで追加し、
+旧行をbackfillしない。Parquet/fixtureは追加列を保持し、旧archiveの欠落列は未知のまま扱う。
 
 将来のranking/feature engineeringでは、意味、unit、window、timestamp、identityを確認できるfeatureについて
 正規化、集約、比較できる。比較不能な値を無理にscoreへ入れない。
@@ -158,7 +169,8 @@ group membershipの再購読で延長しない。Venue取得が無効の間はse
 | GET | `/api/chart-history?instrument=<id>&timeframe=<tf>&before=<ISO UTC>` | 選択Venueのnative足。beforeは排他的 |
 | GET | `/api/price-change?instrument=<id>&referenceTime=<HH:mm>` | 指定JST時刻基準の約定騰落率 |
 | GET | `/api/rankings` | 固定参照の独立ランキング。下記の期間・方向・下限で問い合わせ |
-| GET | `/api/discovery` | Attentionの固定条件・最新raw・episode読取。`assetId`最大4件、履歴`limit`最大50、cursor |
+| GET | `/api/discovery` | Attentionの固定条件・最新raw・episode読取。`assetId`最大4件、任意`generationId`、履歴`limit`最大50、cursor |
+| GET | `/api/discovery-summary` | 軽量な一覧・identity・generation/cutoff。raw/native treeを含まない |
 | GET / POST | `/api/user-workspace` | お気に入り・保存view・最大4比較pin。更新の競合と容量上限を検証 |
 | GET / POST | `/api/decisions` | Web所有の監視/見送りと表示根拠snapshot。条件付き・重複排除保存 |
 | POST | `/api/selection` | 許可済みlocal / Tailscale接続でselection write |
@@ -465,6 +477,11 @@ active/interruptedは削除しない。`historyAvailableFrom`はquery scope内�
 重複しない`assetId`を最大4件、`limit=1..50`（既定50）、対象scopeへ束縛したopaque cursorを受ける。
 未知・重複parameterや不正cursorは400、生成前は503、古い世代は元の時刻を残してstale/unknownとする。
 GETから入力取得・再計算・DB write・pruneを行わない。
+
+`GET /discovery-summary`とWebの`/api/discovery-summary`は独立`discovery-summary-v1`を返す。
+最新詳細はasset ID主キーで取得し、summary/metadata/detailは同じSQLite transactionで更新する。
+filtered `/discovery`に任意の`generationId`を渡せる。不一致は409 `discovery_generation_changed`。
+既存の無指定full応答と保存済みevidence/episodeは互換性を維持する。
 
 ## Candle receipt / finalizationと研究snapshot
 

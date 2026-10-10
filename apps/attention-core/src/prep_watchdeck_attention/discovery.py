@@ -5,7 +5,15 @@ from collections.abc import Sequence
 from prep_watchdeck_ranking.models import RankingResponse
 
 from .discovery_models import DiscoveryDirection, DiscoveryNative, DiscoveryRow, DiscoveryState
-from .features import _l1_fresh, _l1_observation, _metric, _missing, _ready
+from .features import (
+    _funding_timestamp_diagnostics,
+    _funding_unavailable_reason,
+    _l1_fresh,
+    _l1_observation,
+    _metric,
+    _missing,
+    _ready,
+)
 from .identity import JoinedAsset, join_attention_assets
 from .market_input import MarketInputBundle
 from .models import FeatureSnapshotRow, InputReference, RawFeatureValue, content_digest
@@ -16,6 +24,7 @@ def _native(asset: JoinedAsset, decision_ms: int) -> tuple[DiscoveryNative, ...]
     rows = []
     for item in asset.universe:
         fresh = _l1_fresh(item, decision_ms)
+        funding_reason = _funding_unavailable_reason(item, decision_ms)
         source = f"{item.venue_instrument_id}@{item.venue_instrument_version_id}"
 
         def l1(
@@ -26,8 +35,13 @@ def _native(asset: JoinedAsset, decision_ms: int) -> tuple[DiscoveryNative, ...]
             item=item,
             fresh=fresh,
             source=source,
+            funding_reason=funding_reason,
         ) -> RawFeatureValue:
-            observation = _l1_observation(item, name, value, unit)
+            observation = _l1_observation(item, name, value, unit, decision_ms=decision_ms)
+            if name.startswith("funding") and funding_reason:
+                return _missing(
+                    funding_reason, source=source, unit=unit, observations=(observation,)
+                )
             if not fresh:
                 return _missing(
                     "native_l1_stale",
@@ -77,11 +91,18 @@ def _native(asset: JoinedAsset, decision_ms: int) -> tuple[DiscoveryNative, ...]
                 venue=item.venue,
                 source_symbol=item.source_symbol,
                 quality=item.quality,
-                quality_reasons=item.quality_reasons,
+                quality_reasons=tuple(
+                    dict.fromkeys(
+                        (
+                            *item.quality_reasons,
+                            *_funding_timestamp_diagnostics(item, decision_ms),
+                        )
+                    )
+                ),
                 mark_price=l1("mark", item.mark_price, item.quote_asset),
                 funding_rate_raw=l1("funding_raw", item.funding_rate_raw, "rate/interval"),
                 funding_rate_per_hour=l1("funding", item.funding_rate_per_hour, "rate/hour"),
-                funding_interval_seconds=item.funding_interval_seconds,
+                funding_interval_seconds=None if funding_reason else item.funding_interval_seconds,
                 open_interest_raw=l1(
                     "oi_raw", item.open_interest_raw, item.open_interest_raw_unit or "unknown"
                 ),

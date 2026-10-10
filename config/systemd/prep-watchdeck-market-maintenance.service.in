@@ -11,6 +11,7 @@ Environment=PATH=@HOME_DIR@/.local/bin:/usr/local/bin:/usr/bin:/bin
 Environment=PREP_WATCHDECK_MARKET_STATE_DIR=@MARKET_STATE_ROOT@
 Environment=PREP_WATCHDECK_MARKET_UV_BIN=@UV_BIN@
 EnvironmentFile=@MARKET_ENV_FILE@
+EnvironmentFile=-@HOME_DIR@/.config/prep-watchdeck-market/mexc-budget.env
 UnsetEnvironment=PREP_WATCHDECK_MARKET_ALLOW_NONSTANDARD_DATABASE_TARGET
 ExecStartPre=/usr/bin/test -f @MARKET_ENV_FILE@
 ExecStartPre=/usr/bin/test -O @MARKET_ENV_FILE@

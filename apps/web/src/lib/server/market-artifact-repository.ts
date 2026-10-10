@@ -91,7 +91,7 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
         if (attempt === 0) continue;
         throw new Error("market artifacts changed while being read");
       }
-      return { universe, chart, selected, service: serviceAfter };
+      return { universe: maskExpiredFunding(universe, this.now()), chart, selected, service: serviceAfter };
     }
     throw new Error("market artifacts changed while being read");
   }
@@ -123,7 +123,7 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
         (artifact) => artifact.name === "universe-snapshot.json"
       );
       if (universeState?.status === "ready" && universeState.generatedAt === universe.generatedAt) {
-        return universe;
+        return maskExpiredFunding(universe, this.now());
       }
     }
     throw new Error("market universe changed while being read");
@@ -132,6 +132,40 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
 
 const MAX_ARTIFACT_AGE_MS = 120_000;
 const MAX_SELECTED_MARKET_AGE_MS = 15_000;
+
+function maskExpiredFunding(
+  universe: UniverseSnapshotArtifact,
+  now: Date
+): UniverseSnapshotArtifact {
+  const nowMs = now.getTime();
+  return {
+    ...universe,
+    items: universe.items.map((item) => {
+      if (item.venue !== "mexc") return item;
+      const source = Date.parse(item.fundingSourceAt ?? "");
+      const observed = Date.parse(item.fundingObservedAt ?? "");
+      const expires = Date.parse(item.fundingValidUntil ?? "");
+      const settlement = Date.parse(item.nextFundingAt ?? "");
+      const reason = ![source, observed, expires, settlement].every(Number.isFinite)
+        ? "funding_metadata_missing"
+        : Math.max(source, observed) > nowMs
+          ? "funding_timestamp_future"
+          : nowMs >= Math.min(expires, source + 90_000, observed + 90_000, settlement)
+            ? "funding_expired"
+            : null;
+      if (reason === null) return item;
+      return {
+        ...item,
+        fundingRateRaw: null,
+        fundingRatePerHour: null,
+        fundingIntervalSeconds: null,
+        nextFundingAt: null,
+        quality: item.quality === "ready" ? "partial" as const : item.quality,
+        qualityReasons: [...new Set([...item.qualityReasons, reason])]
+      };
+    })
+  };
+}
 
 function assertFresh(
   generatedAt: string,

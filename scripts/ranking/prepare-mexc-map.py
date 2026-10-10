@@ -16,7 +16,9 @@ from prep_watchdeck_ranking.mapping import IDENTITY_FIELDS, compile_map
 from prep_watchdeck_ranking.models import content_digest
 
 ROOT = Path(__file__).resolve().parents[2]
-VERIFY = runpy.run_path(str(ROOT / "scripts/ranking/verify-map-evidence.py"))["verify"]
+_VERIFICATION = runpy.run_path(str(ROOT / "scripts/ranking/verify-map-evidence.py"))
+VERIFY = _VERIFICATION["verify"]
+VERIFY_MEXC_ORIGINAL = _VERIFICATION["verify_mexc_original"]
 OUTPUT_DIRECTORY = runpy.run_path(str(ROOT / "scripts/ranking/refresh-roster-candidate.py"))[
     "output_directory"
 ]
@@ -59,19 +61,19 @@ def validate_capture_scope(
     ):
         raise ValueError("MEXC production versions require the dedicated read-only database audit")
     current = audit["currentRoster"]
-    expected = [
-        *previous_roster["items"],
-        *[{name: item[name] for name in IDENTITY_FIELDS} for item in capture["items"]],
-    ]
 
     def by_id(values: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         return {item["venueInstrumentId"]: item for item in values}
 
-    if (
-        len(by_id(current)) != len(current)
-        or len(by_id(expected)) != len(expected)
-        or by_id(current) != by_id(expected)
+    previous = by_id(previous_roster["items"])
+    captured_items = [{name: item[name] for name in IDENTITY_FIELDS} for item in capture["items"]]
+    captured = by_id(captured_items)
+    if len(captured) != len(captured_items) or any(
+        key in previous and item != previous[key] for key, item in captured.items()
     ):
+        raise ValueError("existing MEXC identities require independent requalification")
+    expected = {**previous, **captured}
+    if len(by_id(current)) != len(current) or by_id(current) != expected:
         raise ValueError(
             "current production roster differs; legacy identities require requalification"
         )
@@ -128,19 +130,20 @@ def prepare(
         review_by_symbol
     ):
         raise ValueError("MEXC capture and explicit identity reviews differ")
-    existing_ids = {entry["venueInstrumentId"] for entry in roster["items"]}
+    existing = {entry["venueInstrumentId"]: entry for entry in roster["items"]}
     rows = {row["id"]: row for row in saved["rows"]}
-    evidence["catalogs"]["mexc"] = {}
-    qualifications: dict[str, dict] = {}
+    evidence["catalogs"].setdefault("mexc", {})
+    qualifications = evidence.setdefault("mexcQualification", {})
+    added = 0
     for item in items:
         symbol = item["sourceSymbol"]
         review = review_by_symbol[symbol]
         key = item["venueInstrumentId"]
-        row = rows[review["rankingRowId"]]
+        row = rows.get(review["rankingRowId"])
+        native_only = review.get("nativeOnly") is True
         if (
             item["venue"] != "mexc"
             or key != "mexc:" + symbol
-            or key in existing_ids
             or type(item["venueInstrumentVersionId"]) is not int
             or item["venueInstrumentVersionId"] <= 0
             or item["baseAsset"] != review["baseAsset"]
@@ -148,8 +151,16 @@ def prepare(
             or not review.get("identityEvidence")
             or not review.get("project")
             or review.get("explicitFuturesLinkPresent") is not True
-            or row["status"] != "verified"
-            or row["asset"] != review["baseAsset"]
+            or (not native_only and (row is None or row["status"] != "verified"))
+            or (row is not None and row["asset"] != review["baseAsset"])
+            or (
+                native_only
+                and (
+                    review["rankingRowId"] != "mexc-native:" + symbol
+                    or not review.get("reason")
+                    or (row is not None and row["reference"] is not None)
+                )
+            )
             or item["active"] is not True
             or item["marketType"] != "linear_perpetual"
             or any(
@@ -192,9 +203,44 @@ def prepare(
             "baseAsset": item["baseAsset"],
             "multiplier": 1,
         }
+        if key in existing:
+            previous = qualifications.get(key, {})
+            if (
+                {name: item[name] for name in IDENTITY_FIELDS} != existing[key]
+                or previous.get("definitionDigest") != item["definitionDigest"]
+                or previous.get("normalizedDefinition") != definition
+                or row is None
+                or original not in row["originals"]
+                or previous.get("identity")
+                != {"assetClass": "crypto", "project": review["project"]}
+            ):
+                raise ValueError("existing MEXC definition requires independent requalification")
+            # A fresh observation is not permission to rewrite an approved review or
+            # to lend the new capture time to older evidence.
+            continue
+        if row is None:
+            row = {
+                "id": review["rankingRowId"],
+                "asset": review["baseAsset"],
+                "status": "review",
+                "reason": review["reason"],
+                "originals": [],
+                "reference": None,
+                "widget": {
+                    "status": "review",
+                    "symbol": None,
+                    "reason": "fixed_reference_unverified",
+                    "evidence": list(review["identityEvidence"]),
+                    "referenceKey": None,
+                },
+                "evidence": [],
+            }
+            saved["rows"].append(row)
+            rows[row["id"]] = row
+            evidence["remaining"].append({"id": row["id"], "reason": row["reason"]})
         row["originals"].append(original)
         row["originals"].sort(key=lambda value: value["instrumentId"])
-        row["evidence"].extend(review["identityEvidence"])
+        row["evidence"] = list(dict.fromkeys([*row["evidence"], *review["identityEvidence"]]))
         roster["items"].append({name: item[name] for name in IDENTITY_FIELDS})
         evidence["catalogs"]["mexc"][symbol] = entry
         qualifications[key] = {
@@ -203,13 +249,10 @@ def prepare(
             "baseAsset": original["baseAsset"],
             "priceMultiplier": 1,
             "baseQuantityPerContract": raw["watchdeckQuantityEvidence"]["base_per_contract"],
-            "referenceKey": ":".join(
-                row["reference"][name]
-                for name in (
-                    "provider",
-                    "symbol",
-                    "revision",
-                )
+            "referenceKey": (
+                ":".join(row["reference"][name] for name in ("provider", "symbol", "revision"))
+                if row["reference"] is not None
+                else None
             ),
             "catalogEntryDigest": content_digest(entry),
             "definitionDigest": item["definitionDigest"],
@@ -220,7 +263,10 @@ def prepare(
             "priceEvidence": [identity["documentation_url"], identity["classification_url"]],
             "finding": review["finding"],
         }
-        existing_ids.add(key)
+        existing[key] = {name: item[name] for name in IDENTITY_FIELDS}
+        added += 1
+    if not added:
+        return saved, roster, evidence
     roster["items"].sort(key=lambda value: value["venueInstrumentId"])
     roster["catalogFingerprint"] = content_digest(roster["items"])
     # Do not lend this new MEXC observation time to the older three-Venue capture.
@@ -228,6 +274,10 @@ def prepare(
     mapping = compile_map(roster, saved)
     evidence.update(mapVersion=mapping.version, verifiedAt=mapping.verified_at)
     evidence["mexcQualification"] = qualifications
+    for row in mapping.rows:
+        for original in row.originals:
+            if original.venue == "mexc":
+                VERIFY_MEXC_ORIGINAL(original, row.reference, evidence)
     evidence.setdefault("catalogIdentityIndex", {})["mexc"] = {
         symbol: {
             field: entry[field]
@@ -245,6 +295,10 @@ def prepare(
         }
         for symbol, entry in evidence["catalogs"]["mexc"].items()
     }
+    if evidence.get("mexcAddition"):
+        evidence.setdefault("mexcAdditionHistory", []).append(
+            copy.deepcopy(evidence["mexcAddition"])
+        )
     evidence["mexcAddition"] = {
         "observedAt": capture["observedAt"],
         "previousMapVersion": saved["version"],

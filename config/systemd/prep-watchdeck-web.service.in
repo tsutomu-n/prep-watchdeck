@@ -9,6 +9,7 @@ WorkingDirectory=@REPO_ROOT@/apps/web
 Environment=HOME=@HOME_DIR@
 Environment=PATH=@HOME_DIR@/.local/bin:@HOME_DIR@/.local/share/bun/bin:/usr/local/bin:/usr/bin:/bin
 Environment=PREP_WATCHDECK_MARKET_STATE_DIR=@MARKET_STATE_ROOT@
+EnvironmentFile=-@HOME_DIR@/.config/prep-watchdeck-market/mexc-budget.env
 Environment=PORT=5173
 Environment=HOST=127.0.0.1
 ExecStart=@BUN_BIN@ run start

@@ -44,3 +44,12 @@ export function discoveryFixture(now = Date.now()): DiscoveryResponse {
       firstSourceGenerationId: attention.generationId, lastSourceGenerationId: attention.generationId,
       firstRankingCutoff: cutoff, lastRankingCutoff: cutoff })), nextCursor: null };
 }
+
+export function discoverySummaryFixture(now = Date.now()) {
+  const response = discoveryFixture(now);
+  return { schemaVersion: "discovery-summary-v1" as const, policy: response.policy,
+    generationId: response.generationId, decisionAt: response.decisionAt,
+    rankingCutoff: response.rankingCutoff, status: response.status, reason: response.reason,
+    historyAvailableFrom: response.historyAvailableFrom,
+    rows: response.rows.map(({ raw: _raw, native: _native, turnoverComparison: _comparison, ...row }) => row) };
+}

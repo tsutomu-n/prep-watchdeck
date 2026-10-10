@@ -180,15 +180,71 @@ def _metric(value: MetricValue, *, source: str, decision_ms: int, oi: bool) -> R
     return _ready(value.value, source=source, unit="percent", observations=observations)
 
 
-def _l1_observation(item: UniverseInstrumentArtifact, field: str, value: float | None, unit: str):
+def _l1_observation(
+    item: UniverseInstrumentArtifact,
+    field: str,
+    value: float | None,
+    unit: str,
+    *,
+    decision_ms: int | None = None,
+):
+    independent_funding = item.venue == "mexc" and field.startswith("funding")
+    observed_at = item.funding_observed_at if independent_funding else item.observed_at
+    source_at = item.funding_source_at if independent_funding else item.source_at
+    if independent_funding and decision_ms is not None:
+        future_source = source_at is not None and utc_ms(source_at) > decision_ms
+        future_observed = observed_at is not None and utc_ms(observed_at) > decision_ms
+        if future_source or future_observed:
+            # Invalid Funding clocks remain in the input/diagnostic, not feature observations.
+            value = None
+            source_at = None if future_source else source_at
+            observed_at = None if future_observed else observed_at
     return SourceObservation(
         source=f"{item.venue_instrument_id}@{item.venue_instrument_version_id}:{field}",
-        end_at=utc_ms(item.cycle_at) if item.cycle_at else None,
-        observed_at=utc_ms(item.observed_at) if item.observed_at else None,
-        source_at=utc_ms(item.source_at) if item.source_at else None,
+        end_at=utc_ms(source_at)
+        if independent_funding and source_at
+        else (utc_ms(item.cycle_at) if item.cycle_at and not independent_funding else None),
+        observed_at=utc_ms(observed_at) if observed_at else None,
+        source_at=utc_ms(source_at) if source_at else None,
         unit=unit,
         value=value,
         payload_hash=item.source_payload_hash,
+    )
+
+
+def _funding_unavailable_reason(item: UniverseInstrumentArtifact, decision_ms: int) -> str | None:
+    if item.venue != "mexc":
+        return None
+    if any(
+        stamp is not None and utc_ms(stamp) > decision_ms
+        for stamp in (item.funding_source_at, item.funding_observed_at)
+    ):
+        return "funding_timestamp_future"
+    stamps = (item.funding_source_at, item.funding_observed_at, item.funding_valid_until)
+    if any(stamp is None for stamp in stamps) or item.next_funding_at is None:
+        return "funding_metadata_missing"
+    source, observed, expires = (utc_ms(stamp) for stamp in stamps if stamp is not None)
+    if decision_ms >= min(
+        expires, source + 90_000, observed + 90_000, utc_ms(item.next_funding_at)
+    ):
+        return "funding_expired"
+    return None
+
+
+def _funding_timestamp_diagnostics(
+    item: UniverseInstrumentArtifact, decision_ms: int
+) -> tuple[str, ...]:
+    if item.venue != "mexc":
+        return ()
+    # Exactly two known field names and bounded datetime ISO values; no provider text.
+    return tuple(
+        f"funding_timestamp_future:{item.venue_instrument_id}@"
+        f"{item.venue_instrument_version_id}:{field}={stamp.isoformat()}"
+        for field, stamp in (
+            ("funding_source_at", item.funding_source_at),
+            ("funding_observed_at", item.funding_observed_at),
+        )
+        if stamp is not None and utc_ms(stamp) > decision_ms
     )
 
 
@@ -289,6 +345,7 @@ def build_feature_row(asset: JoinedAsset, *, decision_at: datetime) -> FeatureSn
     originals = {(o.instrument_id, o.version_id): o for o in row.originals}
     for item in asset.universe:
         is_fresh = _l1_fresh(item, decision_ms)
+        quality.extend(_funding_timestamp_diagnostics(item, decision_ms))
         source = f"{item.venue_instrument_id}@{item.venue_instrument_version_id}"
         if not eligible:
             continue
@@ -301,7 +358,13 @@ def build_feature_row(asset: JoinedAsset, *, decision_at: datetime) -> FeatureSn
                     status="stale",
                     unit="rate/hour",
                     observations=(
-                        _l1_observation(item, "funding", item.funding_rate_per_hour, "rate/hour"),
+                        _l1_observation(
+                            item,
+                            "funding",
+                            item.funding_rate_per_hour,
+                            "rate/hour",
+                            decision_ms=decision_ms,
+                        ),
                     ),
                 )
             )
@@ -323,9 +386,19 @@ def build_feature_row(asset: JoinedAsset, *, decision_at: datetime) -> FeatureSn
             continue
         fresh.append(item)
         funding_observation = _l1_observation(
-            item, "funding", item.funding_rate_per_hour, "rate/hour"
+            item, "funding", item.funding_rate_per_hour, "rate/hour", decision_ms=decision_ms
         )
-        if item.funding_rate_per_hour is not None:
+        funding_reason = _funding_unavailable_reason(item, decision_ms)
+        if funding_reason:
+            funding.append(
+                _missing(
+                    funding_reason,
+                    source=source,
+                    unit="rate/hour",
+                    observations=(funding_observation,),
+                )
+            )
+        elif item.funding_rate_per_hour is not None:
             funding.append(
                 _ready(
                     item.funding_rate_per_hour,

@@ -58,6 +58,7 @@ from prep_watchdeck_market.sources.hyperliquid_l1 import (
     fetch_hyperliquid_l1,
 )
 from prep_watchdeck_market.sources.mexc import fetch_mexc_catalog
+from prep_watchdeck_market.sources.mexc_funding import MexcFundingRuntime
 from prep_watchdeck_market.sources.mexc_l1 import MEXC_L1_ENDPOINT, fetch_mexc_l1
 
 
@@ -103,6 +104,7 @@ class MarketService:
         self._artifact_files: tuple[ArtifactFileStatus, ...] = ()
         self._session: aiohttp.ClientSession | None = None
         self._recovery_enabled = recovery_enabled
+        self._mexc_funding: MexcFundingRuntime | None = None
 
     async def run_forever(self, stop_event: asyncio.Event) -> None:
         async with aiohttp.ClientSession() as session:
@@ -114,6 +116,7 @@ class MarketService:
                 venues=initial.venues_succeeded,
                 count=initial.instruments_received,
             )
+            self._mexc_funding = MexcFundingRuntime(session, lambda: self._instruments("mexc"))
             scheduler = L1Scheduler(self._l1_fetchers(), self._persist_l1_cycle)
             candle_runtime = CandleRuntime(
                 self._database_url,
@@ -128,6 +131,13 @@ class MarketService:
                 self._state_dir,
                 session,
                 enabled_venues=self._enabled_venues,
+            )
+            funding_task = (
+                asyncio.create_task(
+                    self._mexc_funding.run_forever(stop_event), name="market-mexc-funding-loop"
+                )
+                if "mexc" in self._enabled_venues
+                else None
             )
             catalog_task = asyncio.create_task(
                 self._catalog_loop(stop_event), name="market-catalog-loop"
@@ -178,6 +188,7 @@ class MarketService:
                     metrics_task,
                     activity_task,
                 )
+                + (() if funding_task is None else (funding_task,))
                 + (() if recovery_task is None else (recovery_task,))
                 + (() if endpoint_recovery_task is None else (endpoint_recovery_task,))
             )
@@ -417,7 +428,10 @@ class MarketService:
 
     async def _fetch_mexc(self, cycle_at: datetime) -> MarketBatch:
         return await fetch_mexc_l1(
-            self._require_session(), self._instruments("mexc"), cycle_at=cycle_at
+            self._require_session(),
+            self._instruments("mexc"),
+            cycle_at=cycle_at,
+            funding_snapshots=(self._mexc_funding.snapshots if self._mexc_funding else {}),
         )
 
     async def _fetch_bitget(self, cycle_at: datetime) -> MarketBatch:
@@ -560,13 +574,12 @@ class MarketService:
                 return
             self._artifact_trigger.clear()
             async with self._artifact_publish_lock:
-                generated_at = datetime.now(UTC)
                 publish_task = asyncio.create_task(
                     asyncio.to_thread(
                         _publish_artifacts_url,
                         self._database_url,
                         self._state_dir / "artifacts",
-                        generated_at,
+                        None,
                     ),
                     name="market-artifact-publish",
                 )
@@ -673,7 +686,7 @@ async def run_market_service(
 def _publish_artifacts_url(
     database_url: str,
     artifact_root: Path,
-    generated_at: datetime,
+    generated_at: datetime | None,
 ) -> ArtifactPublishResult:
     with psycopg.connect(
         database_url,

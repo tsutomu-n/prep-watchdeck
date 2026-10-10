@@ -165,14 +165,30 @@ test("保存不可のJST設定も同じ閲覧中のページ移動で保持す�
   await page.addInitScript(() => {
     Object.defineProperty(window, "localStorage", { get() { throw new DOMException("disabled", "SecurityError"); } });
   });
-  await page.goto("/settings");
-  await page.getByLabel("騰落率の基準時刻（日本時間）").fill("08:45");
-  await page.getByLabel("騰落率の基準時刻（日本時間）").blur();
-  await expect(page.getByText(/保存できない/)).toBeVisible();
-  await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "ランキング", exact: true }).click();
-  await page.getByLabel("ランキングの比較期間").selectOption("daily");
-  await expect(page.getByText(/JST 08:45/).first()).toBeVisible();
-  expect(errors).toEqual([]);
+  let release!: () => void;
+  const hydration = new Promise<void>(resolve => { release = resolve; });
+  await page.route(/\/_app\/immutable\/.*\.js(?:\?.*)?$/, async route => {
+    await hydration;
+    await route.continue();
+  });
+  try {
+    await page.goto("/settings", { waitUntil: "commit" });
+    const setting = page.getByLabel("騰落率の基準時刻（日本時間）");
+    await expect(setting).toBeVisible();
+    await expect(setting).toBeDisabled();
+    release();
+    await expect(setting).toBeEnabled();
+    await setting.fill("08:45");
+    await setting.blur();
+    await expect(setting).toHaveValue("08:45");
+    await expect(page.getByText(/保存できない/)).toBeVisible();
+    await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "ランキング", exact: true }).click();
+    await page.getByLabel("ランキングの比較期間").selectOption("daily");
+    await expect(page.getByText(/JST 08:45/).first()).toBeVisible();
+    expect(errors).toEqual([]);
+  } finally {
+    release();
+  }
 });
 
 test("目的別の表示は条件を切り替え、取扱い取引所と選択チャートを保持する", async ({ page }, testInfo) => {

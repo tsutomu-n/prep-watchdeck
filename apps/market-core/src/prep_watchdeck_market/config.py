@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     # Disable acquisition during compatible-reader rollback; retain stored MEXC data.
     mexc_enabled: bool = True
+    mexc_budget_db: Path | None = Field(
+        default=None, validation_alias="PREP_WATCHDECK_MEXC_BUDGET_DB"
+    )
     allow_nonstandard_database_target: bool = False
     candle_recovery_enabled: bool = Field(
         default=False, validation_alias="PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED"
@@ -37,6 +40,16 @@ class Settings(BaseSettings):
         if not normalized.startswith(("postgresql://", "postgres://")):
             raise ValueError("database URL must use the PostgreSQL scheme")
         return normalized
+
+    @field_validator("mexc_budget_db", mode="before")
+    @classmethod
+    def absolute_mexc_budget_db(cls, value: Any) -> Path | None:
+        if value is None:
+            return None
+        path = Path(value)
+        if not path.is_absolute():
+            raise ValueError("MEXC shared budget path must be absolute")
+        return path
 
     @field_validator("state_dir", mode="before")
     @classmethod

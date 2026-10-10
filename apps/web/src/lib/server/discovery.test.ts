@@ -27,3 +27,16 @@ test("discovery queries preserve Unicode market identities as one encoded asset 
   }, { PREP_WATCHDECK_ATTENTION_PORT: "18870" });
   expect((await reader.read(parameters)).rows).toHaveLength(5);
 });
+
+test("summary proxy validates its independent contract and preserves detail conflict status", async () => {
+  const { discoverySummaryFixture } = await import("$lib/discovery/discovery-test-fixture");
+  const fetcher = vi.fn(async () => new Response(JSON.stringify(discoverySummaryFixture())));
+  const reader = new DiscoveryReader(fetcher, { PREP_WATCHDECK_ATTENTION_PORT: "18870" });
+  expect((await reader.readSummary()).schemaVersion).toBe("discovery-summary-v1");
+  expect(fetcher.mock.calls[0]).toBeDefined();
+  await expect(reader.readSummary(new URLSearchParams("assetId=x"))).rejects.toMatchObject({ status: 400 });
+  const conflict = new DiscoveryReader(async () => new Response("{}", { status: 409 }));
+  await expect(conflict.read(new URLSearchParams({ assetId: "asset:BTC", generationId: "old" })))
+    .rejects.toMatchObject({ status: 409, code: "discovery_generation_changed" });
+  await expect(reader.read(new URLSearchParams("generationId=old"))).rejects.toMatchObject({ status: 400 });
+});

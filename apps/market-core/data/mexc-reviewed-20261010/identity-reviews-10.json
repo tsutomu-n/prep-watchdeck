@@ -1,0 +1,135 @@
+{
+  "scope": "reviewed_native_identities_without_production_version_ids",
+  "items": [
+    {
+      "sourceSymbol": "BTC_USDT",
+      "rankingRowId": "crypto:BTC",
+      "baseAsset": "BTC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/BTC",
+        "https://www.mexc.com/futures/BTC_USDT"
+      ],
+      "project": "Bitcoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "ETH_USDT",
+      "rankingRowId": "crypto:ETH",
+      "baseAsset": "ETH",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ETH",
+        "https://www.mexc.com/futures/ETH_USDT"
+      ],
+      "project": "Ethereum",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "SOL_USDT",
+      "rankingRowId": "crypto:SOL",
+      "baseAsset": "SOL",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/SOL",
+        "https://www.mexc.com/futures/SOL_USDT"
+      ],
+      "project": "Solana",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "XRP_USDT",
+      "rankingRowId": "crypto:XRP",
+      "baseAsset": "XRP",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/XRP",
+        "https://www.mexc.com/futures/XRP_USDT"
+      ],
+      "project": "XRP Ledger",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "DOGE_USDT",
+      "rankingRowId": "crypto:DOGE",
+      "baseAsset": "DOGE",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/DOGE",
+        "https://www.mexc.com/futures/DOGE_USDT"
+      ],
+      "project": "Dogecoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "LTC_USDT",
+      "rankingRowId": "crypto:LTC",
+      "baseAsset": "LTC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/LTC",
+        "https://www.mexc.com/futures/LTC_USDT"
+      ],
+      "project": "Litecoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "BNB_USDT",
+      "rankingRowId": "crypto:BNB",
+      "baseAsset": "BNB",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/BNB",
+        "https://www.mexc.com/futures/BNB_USDT"
+      ],
+      "project": "BNB Chain",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "ADA_USDT",
+      "rankingRowId": "crypto:ADA",
+      "baseAsset": "ADA",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ADA",
+        "https://www.mexc.com/futures/ADA_USDT"
+      ],
+      "project": "Cardano",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "AVAX_USDT",
+      "rankingRowId": "crypto:AVAX",
+      "baseAsset": "AVAX",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/AVAX",
+        "https://www.mexc.com/futures/AVAX_USDT"
+      ],
+      "project": "Avalanche",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "TRX_USDT",
+      "rankingRowId": "crypto:TRX",
+      "baseAsset": "TRX",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/TRX",
+        "https://www.mexc.com/futures/TRX_USDT"
+      ],
+      "project": "Tron",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    }
+  ]
+}

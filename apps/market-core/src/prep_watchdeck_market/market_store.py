@@ -243,6 +243,13 @@ def _validate_cycle(
             _require_aware(observation.observed_at, "observation observed_at")
             if observation.source_at is not None:
                 _require_aware(observation.source_at, "observation source_at")
+            for timestamp in (
+                observation.funding_source_at,
+                observation.funding_observed_at,
+                observation.funding_valid_until,
+            ):
+                if timestamp is not None:
+                    _require_aware(timestamp, "funding timestamp")
             if observation.cycle_at != cycle_at:
                 raise ValueError("market observation cycle_at does not match its batch")
 
@@ -302,6 +309,9 @@ def _state_values(
             collateral_asset,
             batch.payload_hash,
             str(raw_error) if raw_error else "missing_source_row",
+            None,
+            None,
+            None,
         )
     return (
         observation.observed_at,
@@ -326,6 +336,9 @@ def _state_values(
         observation.collateral_asset,
         observation.source_payload_hash,
         observation.error_code,
+        observation.funding_source_at,
+        observation.funding_observed_at,
+        observation.funding_valid_until,
     )
 
 
@@ -345,10 +358,11 @@ def _upsert_latest(
                 funding_interval_seconds, funding_rate_per_hour, next_funding_at,
                 open_interest_raw, open_interest_raw_unit, open_interest_base,
                 open_interest_notional, volume_24h_raw, volume_24h_unit,
-                quote_asset, collateral_asset, source_payload_hash, error_code
+                quote_asset, collateral_asset, source_payload_hash, error_code,
+                funding_source_at, funding_observed_at, funding_valid_until
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (venue_instrument_version_id) DO UPDATE SET
                 collector_run_id = EXCLUDED.collector_run_id,
                 cycle_at = EXCLUDED.cycle_at,
@@ -374,6 +388,9 @@ def _upsert_latest(
                 collateral_asset = EXCLUDED.collateral_asset,
                 source_payload_hash = EXCLUDED.source_payload_hash,
                 error_code = EXCLUDED.error_code,
+                funding_source_at = EXCLUDED.funding_source_at,
+                funding_observed_at = EXCLUDED.funding_observed_at,
+                funding_valid_until = EXCLUDED.funding_valid_until,
                 updated_at = clock_timestamp()
             WHERE latest_market_state.cycle_at <= EXCLUDED.cycle_at
         """,
@@ -411,6 +428,9 @@ def _upsert_minute(
         _collateral_asset,
         _source_payload_hash,
         _error_code,
+        funding_source_at,
+        funding_observed_at,
+        funding_valid_until,
     ) = values
     cursor.execute(
         """
@@ -420,10 +440,11 @@ def _upsert_minute(
                 mark_price, reference_price, reference_price_kind, best_bid, best_ask,
                 funding_rate_raw, funding_interval_seconds, funding_rate_per_hour,
                 open_interest_raw, open_interest_raw_unit, open_interest_base,
-                open_interest_notional, volume_24h_raw, volume_24h_unit
+                open_interest_notional, volume_24h_raw, volume_24h_unit,
+                funding_source_at, funding_observed_at, funding_valid_until
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, 1, %s, %s, %s, %s, %s, %s,
-                    %s, %s, %s, %s, %s, %s, %s, %s)
+                    %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             ON CONFLICT (venue_instrument_version_id, bucket_at) DO UPDATE SET
                 collector_run_id = EXCLUDED.collector_run_id,
                 status = EXCLUDED.status,
@@ -444,7 +465,10 @@ def _upsert_minute(
                 open_interest_base = EXCLUDED.open_interest_base,
                 open_interest_notional = EXCLUDED.open_interest_notional,
                 volume_24h_raw = EXCLUDED.volume_24h_raw,
-                volume_24h_unit = EXCLUDED.volume_24h_unit
+                volume_24h_unit = EXCLUDED.volume_24h_unit,
+                funding_source_at = EXCLUDED.funding_source_at,
+                funding_observed_at = EXCLUDED.funding_observed_at,
+                funding_valid_until = EXCLUDED.funding_valid_until
         """,
         (
             version_id,
@@ -468,6 +492,9 @@ def _upsert_minute(
             open_interest_notional,
             volume_24h_raw,
             volume_24h_unit,
+            funding_source_at,
+            funding_observed_at,
+            funding_valid_until,
         ),
     )
 

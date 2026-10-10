@@ -1,13 +1,43 @@
+import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test, vi } from "vitest";
 import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
 import type { MarketArtifactBundle } from "./market-artifact-repository";
 import { ChartHistoryService } from "./chart-history";
+import type { MexcBudget } from "./mexc-budget";
 
 const NOW = Date.parse("2026-09-10T12:02:00.000Z");
 const DAY = 86_400_000;
 const START = Date.parse("2026-09-10T00:00:00.000Z");
 
 describe("native chart history", () => {
+  test("Bun transport never retries a MEXC GET outside its shared budget admission", () => {
+    const output = execFileSync("bun", ["tests/runtime/mexc-chart-transport.mjs"], {
+      cwd: fileURLToPath(new URL("../../..", import.meta.url)), encoding: "utf8", timeout: 5_000
+    });
+    expect(JSON.parse(output).results).toEqual([
+      { warm: false, targetRequests: 1, targetBudgetAdmissions: 1, targetConnection: 1 },
+      { warm: true, targetRequests: 1, targetBudgetAdmissions: 1, targetConnection: 2 }
+    ]);
+  });
+
+  test("MEXC budget failure stops HTTP and 429 cooldown is shared before returning failure", async () => {
+    const bundle = fixture("mexc");
+    bundle.universe.items[0].sourceSymbol = "BTC_USDT";
+    bundle.universe.items[0].venueInstrumentId = "mexc:BTC_USDT";
+    const fetcher = vi.fn(async () => new Response("", { status: 429, headers: { "Retry-After": "7" } }));
+    const acquire = vi.fn(async (): Promise<void> => { throw new Error("budget unavailable"); });
+    const cooldown = vi.fn(async () => {});
+    await expect(setup(bundle, fetcher, { acquire, cooldown }).history(query("mexc:BTC_USDT", "24h")))
+      .rejects.toMatchObject({ code: "chart_source_unavailable" });
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(acquire).toHaveBeenCalledWith("foreground", expect.any(AbortSignal));
+    acquire.mockImplementation(async () => {});
+    await expect(setup(bundle, fetcher, { acquire, cooldown }).history(query("mexc:BTC_USDT", "24h")))
+      .rejects.toMatchObject({ code: "chart_source_unavailable" });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(cooldown).toHaveBeenCalledWith(7);
+  });
   test("MEXC uses second bounds and UTC candles, validates parallel arrays and keeps contract volume out of base", async () => {
     const bundle = fixture("mexc");
     bundle.universe.items[0].sourceSymbol = "BTC_USDT";
@@ -39,6 +69,7 @@ describe("native chart history", () => {
       vol: [20_000], amount: [204]
     } }));
     const service = new ChartHistoryService({
+    mexcBudget: { acquire: async () => {}, cooldown: async () => {} },
       artifacts: {
         latest: async () => { throw new Error("selected venue unavailable"); },
         latestUniverse: async () => bundle.universe
@@ -242,7 +273,8 @@ describe("native chart history", () => {
     let now = NOW;
     const bundle = fixture("aster");
     const fetcher = vi.fn(async () => json([]));
-    const service = new ChartHistoryService({ artifacts: { latest: async () => bundle },
+    const service = new ChartHistoryService({
+    mexcBudget: { acquire: async () => {}, cooldown: async () => {} }, artifacts: { latest: async () => bundle },
       fetch: fetcher as typeof fetch, now: () => now });
     await service.history(query());
     now += 30_001;
@@ -300,7 +332,8 @@ describe("native chart history", () => {
           at: Date.now() - origin });
         return json(url.hostname === "api.bitget.com" ? { code: "00000", data: [] } : []);
       });
-      const service = new ChartHistoryService({ artifacts: { latest: async () => bundle },
+      const service = new ChartHistoryService({
+    mexcBudget: { acquire: async () => {}, cooldown: async () => {} }, artifacts: { latest: async () => bundle },
         fetch: fetcher as typeof fetch, now: () => NOW, monotonicNow: Date.now });
       const first = service.history(query("bitget:BTCUSDT", "5m"));
       const second = service.history(query("bitget:BTCUSDT", "15m"));
@@ -348,9 +381,11 @@ describe("native chart history", () => {
   });
 });
 
-function setup(bundle: MarketArtifactBundle, fetcher: (url: URL, init: RequestInit) => Promise<Response>) {
+function setup(bundle: MarketArtifactBundle, fetcher: (url: URL, init: RequestInit) => Promise<Response>,
+  mexcBudget: MexcBudget = { acquire: async () => {}, cooldown: async () => {} }) {
   let clock = 0;
-  return new ChartHistoryService({ artifacts: { latest: async () => bundle },
+  return new ChartHistoryService({
+    mexcBudget, artifacts: { latest: async () => bundle },
     fetch: fetcher as typeof fetch, now: () => NOW, monotonicNow: () => clock,
     wait: async (milliseconds, signal) => { signal.throwIfAborted(); clock += milliseconds; } });
 }

@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-10(土)_08:57 JST"
+timestamp="2026-10-10(土)_11:15 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T08:57:39+09:00`
+- 更新: `2026-10-10T11:15:54+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -59,7 +59,9 @@ observed/source time、capability、exclusion reasonを保持する。
 Venue内候補1件を要求する。MEXCは確認済みのnative資産・価格単位・数量定義を
 `verified_native_contract`として扱い、exact versionの契約係数でbase数量へ変換する。
 確認済みregistryはBTC・ETH・SOL・XRP・DOGE・ADA・AVAX・LTC・BNB・TRXのUSDT perpetualに限定する。
-未審査・非crypto・定義不一致を推測でgroupへ入れない。
+未審査・非crypto・定義不一致を推測でgroupへ入れない。段階追加用registryにある新90件はnative資産だけの
+審査結果を持ち、他Venueとの同一性を確認するまでは`native:mexc:<exact source symbol>:linear-perp`の
+単独groupを使う。参考mark比較やVenue内衝突の推測へ混ぜず、価格・OI・Chart・手動selectionは保持する。
 
 将来の別asset classやexplicit mappingは別contractで追加できる。
 
@@ -77,6 +79,10 @@ version境界、unknown version、invalid barを安全側に拒否し、gapを�
 MEXCのWSにはclosed flagがなく、分終了後5秒を基準とする導出確定を`derived_final`として区別する。
 
 将来、別timeframe/source/backfill laneを追加できる。
+
+MEXCのCurrent FundingはTickerとは独立して毎秒2件開始・最大4並列で取得し、60秒巡回を目標にする。
+Funding期限切れは価格・OI公開を止めない。Candle WSは25銘柄/接続、全接続合計5購読/秒、ping15秒。
+ACKを確認し、失敗した接続だけをbackoff/jitterで再接続する。これらの数値は設計値で公式上限ではない。
 
 ### Settled Funding
 
@@ -150,7 +156,10 @@ Hyperliquidは`candleSnapshot`、Asterは`klines`、MEXCは公開host `api.mexc.
 MEXCでは`Day1`を指定する。Webへ取引所の秘密API keyを追加しない。
 
 1ページ最大500本、server cacheは30秒・32件、同時取得は8件までで同じ要求をまとめる。
-HTTP開始間隔はWeb process内でVenueごとに全銘柄・時間足で共有し、Bitgetは1秒以上、MEXCは100ms以上とする。
+HTTP開始間隔はWeb process内でVenueごとに全銘柄・時間足で共有し、Bitgetは1秒以上とする。
+MEXCは既存のprocess内100ms以上に加え、Market/Web/recovery/maintenanceが同じSQLite予算を使う。
+rolling2秒に合計8回、Funding4・foreground2・recovery2の固定枠とし、再試行も消費する。
+429 cooldownを共有し、予算DBが不通なら無制限取得へ切り替えない。
 1 HTTP requestは10秒、待機を含むページ全体は30秒でtimeoutする。最新を60秒ごとに更新し、
 過去へのスクロールまたは追加ボタンで古いページを取得する。Browserは1銘柄・1時間足につき
 最大10,000本を保持する。取得量は取引所の配信範囲に依存し、DBの8日保持には依存しない。
@@ -253,7 +262,9 @@ Discoveryも同じAttention writerが既存入力から毎分評価し、既存A
 active/interruptedは保持する。Attention世代とDiscoveryはそれぞれcommit/readback後に公開し、
 後者の保存失敗は成功扱いせず`storage_unavailable`と観測中断を示す。
 `GET /discovery`とWebの`/api/discovery`は読取だけで、Provider・user-workspace・selectionを呼ばない。
-最大4対象の取得はSQLite内で行を絞り、全Universeのraw treeをPythonへ展開しない。
+`/discovery-summary`はraw treeを含まない一覧で、Webの15秒pollは一覧と最大4対象の詳細だけを読む。
+詳細はasset主キーのtableとmetadataを1 SQL snapshotで読み、全Universe JSONやjson_eachを走査しない。
+旧full projectionを併存させ、旧writerによるrollback後も次回起動でindexを再構築する。
 世代更新時も旧projectionは必要な継続判定fieldだけを読み、完全payloadのreadbackは保存bytesの一致で確認する。
 
 Webは最大4件の比較pinを`user-workspace.json` v2、手動の監視/見送りを別の`manual-decisions.json`に保存する。

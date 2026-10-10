@@ -92,3 +92,30 @@ class DiscoveryResponse(Contract):
     rows: tuple[DiscoveryRow, ...]
     episodes: tuple[DiscoveryEpisode, ...]
     next_cursor: str | None = None
+
+
+class DiscoverySummaryRow(Contract):
+    """List labels and exact identity only; frozen evidence remains in the detail contract."""
+
+    asset_id: str
+    asset: str
+    reference_key: str | None
+    originals: tuple[OriginalReference, ...]
+    identity_key: str
+    state: DiscoveryState
+    reason: str | None
+    direction: DiscoveryDirection
+    confirmation: Confirmation | None = None
+    episode_id: str | None = None
+
+
+class DiscoverySummary(Contract):
+    schema_version: Literal["discovery-summary-v1"] = "discovery-summary-v1"
+    policy: DiscoveryPolicy = DiscoveryPolicy()
+    generation_id: str | None
+    decision_at: int | None
+    ranking_cutoff: int | None
+    status: Literal["ready", "partial", "stale", "unavailable"]
+    reason: str | None
+    history_available_from: int | None
+    rows: tuple[DiscoverySummaryRow, ...]

@@ -342,7 +342,8 @@ describe("daily change native provider integration", () => {
           interval: url.searchParams.get("granularity") });
         return json({ code: "00000", data: [] });
       });
-      const source = new ChartHistoryService({ artifacts: { latest: async () => fixture(item) },
+      const source = new ChartHistoryService({
+    mexcBudget: { acquire: async () => {}, cooldown: async () => {} }, artifacts: { latest: async () => fixture(item) },
         fetch: fetcher as typeof fetch, now: () => NOW, monotonicNow: Date.now });
       const service = new DailyPriceChangeService({ source, now: () => NOW });
       const chart = source.history(new URLSearchParams({
@@ -387,7 +388,8 @@ function nativeSource(
   now: () => number = () => NOW
 ) {
   let clock = 0;
-  return new ChartHistoryService({ artifacts: { latest: async () => bundle },
+  return new ChartHistoryService({
+    mexcBudget: { acquire: async () => {}, cooldown: async () => {} }, artifacts: { latest: async () => bundle },
     fetch: fetcher as typeof fetch, now, monotonicNow: () => clock,
     wait: async (delay, signal) => { signal.throwIfAborted(); clock += delay; } });
 }

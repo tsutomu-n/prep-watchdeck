@@ -1,3 +1,4 @@
+import { mexcBudget, type MexcBudget } from "./mexc-budget";
 import type { UniverseInstrumentArtifact } from "$lib/generated/universe-snapshot";
 import {
   CHART_TIMEFRAMES,
@@ -18,7 +19,7 @@ const MAX_INFLIGHT = 8;
 const REQUEST_TIMEOUT_MS = 10_000;
 const PAGE_TIMEOUT_MS = 30_000;
 const BITGET_REQUEST_INTERVAL_MS = 1_000;
-const MEXC_REQUEST_INTERVAL_MS = 100;
+
 const DAY_MS = 86_400_000;
 const MIN_CANDLE_TIME_MS = Date.UTC(2009, 0, 1);
 
@@ -54,6 +55,7 @@ export interface MinuteCandleQuery {
 
 interface Options {
   fetch?: typeof globalThis.fetch;
+  mexcBudget?: MexcBudget;
   artifacts?: MarketArtifactRepository;
   now?: () => number;
   monotonicNow?: () => number;
@@ -66,14 +68,16 @@ export class ChartHistoryService {
   private readonly now: () => number;
   private readonly monotonicNow: () => number;
   private readonly wait: (milliseconds: number, signal: AbortSignal) => Promise<void>;
-  private startQueues = { bitget: Promise.resolve(), mexc: Promise.resolve() };
-  private nextStarts = { bitget: 0, mexc: 0 };
+  private readonly mexcBudget: MexcBudget;
+  private startQueues = { bitget: Promise.resolve() };
+  private nextStarts = { bitget: 0 };
   private readonly cache = new Map<string, { expiresAt: number; value: ChartHistory }>();
   private readonly inflight = new Map<string, Promise<ChartHistory>>();
   private minuteRequests = 0;
 
   constructor(options: Options = {}) {
     this.fetcher = options.fetch ?? globalThis.fetch;
+    this.mexcBudget = options.mexcBudget ?? mexcBudget;
     this.artifacts = options.artifacts ?? createMarketArtifactRepository();
     this.now = options.now ?? Date.now;
     this.monotonicNow = options.monotonicNow ?? (() => performance.now());
@@ -289,9 +293,17 @@ export class ChartHistoryService {
     let signal = pageSignal;
     try {
       if (url.hostname === "api.bitget.com") await this.paceRequests("bitget", pageSignal);
-      if (url.hostname === "api.mexc.com") await this.paceRequests("mexc", pageSignal);
+      if (url.hostname === "api.mexc.com") await this.mexcBudget.acquire("foreground", pageSignal);
       signal = AbortSignal.any([pageSignal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]);
-      const response = await this.fetcher(url, { ...init, signal, redirect: "error" });
+      const response = await this.fetcher(url, {
+        ...init, signal, redirect: "error",
+        // Bun retries failed pooled GETs internally, bypassing the shared admission above.
+        ...(url.hostname === "api.mexc.com" ? { keepalive: false } : {})
+      });
+      if (url.hostname === "api.mexc.com" && response.status === 429) {
+        const retry = Number(response.headers.get("Retry-After"));
+        await this.mexcBudget.cooldown(Number.isFinite(retry) && retry > 0 ? retry : 2);
+      }
       if (!response.ok) throw new ChartHistoryError(502, "chart_source_unavailable");
       const body = await response.text();
       if (body.length > 2_000_000) invalidSource();
@@ -307,13 +319,13 @@ export class ChartHistoryService {
     }
   }
 
-  private paceRequests(venue: "bitget" | "mexc", signal: AbortSignal): Promise<void> {
+  private paceRequests(venue: "bitget", signal: AbortSignal): Promise<void> {
     const slot = this.startQueues[venue].then(async () => {
       signal.throwIfAborted();
       const delay = Math.max(0, this.nextStarts[venue] - this.monotonicNow());
       if (delay > 0) await this.wait(delay, signal);
       signal.throwIfAborted();
-      this.nextStarts[venue] = this.monotonicNow() + (venue === "bitget" ? BITGET_REQUEST_INTERVAL_MS : MEXC_REQUEST_INTERVAL_MS);
+      this.nextStarts[venue] = this.monotonicNow() + BITGET_REQUEST_INTERVAL_MS;
     });
     // An aborted page must release the queue for other instruments and timeframes.
     this.startQueues[venue] = slot.catch(() => undefined);

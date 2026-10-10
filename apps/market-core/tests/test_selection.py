@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
+import runpy
 import uuid
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from pathlib import Path
 from typing import Any
 
 import psycopg
@@ -12,7 +15,9 @@ import pytest
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
+from prep_watchdeck_market.catalog_store import persist_catalog
 from prep_watchdeck_market.database import apply_migrations
+from prep_watchdeck_market.identity import resolve_market_groups
 from prep_watchdeck_market.retention import prune_selected_history
 from prep_watchdeck_market.selected_market import DepthLevel, SelectedDepth, SelectedTrade
 from prep_watchdeck_market.selected_store import (
@@ -27,8 +32,69 @@ from prep_watchdeck_market.selection import (
     SelectionController,
     estimate_book_walks,
 )
+from prep_watchdeck_market.sources import mexc
+from prep_watchdeck_market.sources.mexc_selected import MexcSelectedState
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated test PostgreSQL")
+def test_native_only_mexc_singleton_can_select_and_store_book_and_trades(monkeypatch):
+    assert TEST_DATABASE_URL is not None
+    directory = Path(__file__).resolve().parents[1] / "data/mexc-reviewed-20261010"
+    registry = runpy.run_path(str(directory / "registry-100.py"))["MEXC_REVIEWED_IDENTITIES"]
+    monkeypatch.setattr(mexc, "MEXC_REVIEWED_IDENTITIES", registry)
+    now = datetime(2026, 10, 10, tzinfo=UTC)
+    batch = mexc.parse_mexc_catalog(
+        json.loads((directory / "catalog.json").read_text()), observed_at=now
+    )
+    native = next(item for item in batch.instruments if item.source_symbol == "ZEC_USDT")
+    schema = "native_selection_" + uuid.uuid4().hex
+    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        try:
+            apply_migrations(connection)
+            persist_catalog(connection, batch, resolve_market_groups(batch.instruments))
+            lease = uuid.uuid4()
+            activate_selection(
+                connection,
+                selection_id=lease,
+                group_id="native:mexc:ZEC_USDT:linear-perp",
+                primary_venue_instrument_id="mexc:ZEC_USDT",
+                activated_at=now,
+            )
+            state = MexcSelectedState(native)
+            depth = state.snapshot(
+                {
+                    "success": True,
+                    "code": 0,
+                    "data": {"version": 10, "bids": [[99, 100, 1]], "asks": [[101, 100, 1]]},
+                },
+                received_at=now,
+            )
+            trades = state.parse(
+                {
+                    "channel": "push.deal",
+                    "symbol": "ZEC_USDT",
+                    "data": [
+                        {"p": 100, "v": 100, "T": 1, "t": int(now.timestamp() * 1000), "i": "1"}
+                    ],
+                },
+                received_at=now,
+            )
+            store_selected_events(connection, lease, [depth, *trades])
+            view = read_selected_market(connection, now=now)
+            assert view is not None
+            assert view.group_id == "native:mexc:ZEC_USDT:linear-perp"
+            assert view.primary_venue_instrument_id == "mexc:ZEC_USDT"
+            assert len(view.instruments) == 1
+            assert view.instruments[0].bids[0].size_base == Decimal("1")
+            assert len(view.trades) == 1
+            assert view.trades[0].size_base == Decimal("1")
+        finally:
+            connection.execute("RESET search_path")
+            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 def test_selection_controller_debounces_last_write_and_cleans_before_switch() -> None:
