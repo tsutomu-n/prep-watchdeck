@@ -1,8 +1,8 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-11(日)_07:05 JST"
+timestamp="2026-10-11(日)_08:29 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T22:26:15+09:00`
+- 更新: `2026-10-11T08:29:14+09:00`
 - 検証: `2026-09-30T21:04:03+09:00`
 - 状態: `現行`
 
@@ -343,6 +343,10 @@ metricの未来時刻はartifact生成時刻を基準に検査し、時間経過
 実時間60秒の継続測定とは呼ばない。v1→v2比較は旧未解決キー/境界/catalog不明区間の保持、
 来歴unknown、scope不一致・入力改変・特殊file・出力上書きの拒否を確認する。
 local受入bundleはtracked-only source、helper/map/policy hash、実build、source modeと改変拒否を検査する。
+保存bundleからの連続再生成ではglobal fixtureを読まず、元test原文・保存fixtureを保持する。
+map gateは収録commitの既存Ranking checkerを使い、roster fingerprint・catalog/reference/Widget根拠・
+未解決台帳とvalidation集計を照合する。生成前の不正rosterと、hashを再計算した不正rosterも拒否する。
+整合した未資格candidateは許容し、資格未達を合格へ書き換えない。
 `comparison_complete`やbundleの`sourceStatus=PASS`から、履歴全体・本番運用を合格へ昇格しない。
 
 ## Research remediation

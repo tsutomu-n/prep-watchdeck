@@ -1,8 +1,8 @@
 # Identity・履歴診断・50件開始gateの根本修正
 
-timestamp="2026-10-11(日)_07:14 JST"
+timestamp="2026-10-11(日)_08:31 JST"
 - 作成: `2026-10-10T21:25:20+09:00`
-- 更新: `2026-10-11T06:54:18+09:00`
+- 更新: `2026-10-11T08:31:38+09:00`
 - 検証: `2026-10-10T22:32:13+09:00`
 - 状態: `実装計画`
 
@@ -265,3 +265,22 @@ Sourceとlocal成果物はPASS。map資格は未達、PEARL欠損1/版境界1、
 本番deploy/unit/live DB write/Provider回復/新2時間観測/CI/push/PRはnot_run。
 将来の本番受入checkpointが残るため、このplanはactiveで保持する。
 詳細の検証結果と限界は上記archiveのREADME.md/verification-summary.jsonに固定した。
+
+
+## Bundle再生成・内容整合の追加修正
+
+ユーザーの「実装開始」により、前回read-only auditで確認した2件をlocal修正する。
+保存済みbundleと元helper/map/fixture、元checkoutのdirty4を保全する。
+
+- [x] D1 保存bundleのmanifest/fixtureから再生成できる。変換済みpathとlauncherを再変換で壊さず、元global fixtureへ依存しない。
+- [x] D2 map/roster/evidenceの内容整合を既存semantic checkerで生成・再検証する。未資格candidateは保持できるが不正内容は拒否する。
+- [ ] D3 再現RED→GREEN・関連最小検証・実bundle再生成・source/helper/hash検査・独立review・local commit。
+
+Scopeは生成/検証のlocal toolと回帰検証・必要docsだけ。本番deploy/unit/live DB/Provider回復/2h観測/CI/push/PRは含まない。
+Rollbackは今回commitと新outputだけ。旧成果物・旧台帳を変更・削除せず、履歴/data資格を合格へ昇格しない。
+
+Source検証: 専用Postgres17/port32818でMarket全526 pytest PASS、containerは終了後削除済み。
+最終semantic snapshot処理もbundle局所15 pytest PASS、Ruff check/format・Market package設定Pyrefly 0 errors・docs checks PASS。
+Pyreflyを最初にRepo rootから実行した確認は別package testsのimport設定で11 errorsだったため、
+所定のMarket package directoryから再実行した。対象外の設定・testsは変更していない。
+旧bundle941 fileと元helper15 fileはhash一致。D3の実bundle再生成はimmutable source commit後に確認する。

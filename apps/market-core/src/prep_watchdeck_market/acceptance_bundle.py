@@ -17,6 +17,8 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from .bundle_map_validation import MAP_VALIDATOR_SOURCE_FILES, validate_map_snapshot
+
 MAX_INPUT_BYTES = 64 * 1024 * 1024
 MAX_SOURCE_BYTES = 256 * 1024 * 1024
 MAP_FILES = (
@@ -176,15 +178,28 @@ def _runtime_files(release: Path) -> dict[str, str]:
 
 
 def _legacy_test_inputs(
-    base: Path, helper_files: dict[str, bytes], commit: str
+    base: Path,
+    helper_files: dict[str, bytes],
+    commit: str,
+    frozen_manifest: dict[str, Any] | None = None,
 ) -> dict[str, bytes]:
     """Snapshot the existing offline tests' fixtures and relocate only their input paths."""
     files: dict[str, bytes] = {}
-    if "test_collector_clocks.py" in helper_files:
+    if frozen_manifest is not None:
+        for name, expected in frozen_manifest["offlineTestInputs"].items():
+            raw = _regular_bytes(base.joinpath(*_safe_relative(name).parts))
+            if _digest(raw) != expected:
+                raise ValueError("bundle_offline_test_hash_mismatch")
+            files[name] = raw
+    if "test_collector_clocks.py" in helper_files and frozen_manifest is None:
         files["test_observer.py"] = _regular_bytes(base / "test_observer.py")
     if "test_recovery_definition_capture.py" not in helper_files:
         return files
-    raw = _regular_bytes(base / "test_mexc_readonly_capture.py")
+    raw = (
+        files["evidence/original-test-mexc-readonly-capture.py"]
+        if frozen_manifest is not None
+        else _regular_bytes(base / "test_mexc_readonly_capture.py")
+    )
     files["evidence/original-test-mexc-readonly-capture.py"] = raw
     replacements = (
         (
@@ -208,6 +223,8 @@ def _legacy_test_inputs(
             raise ValueError("bundle_test_fixture_layout_unsupported")
         raw = raw.replace(old, new)
     files["test_mexc_readonly_capture.py"] = raw
+    if frozen_manifest is not None:
+        return files
     files["mexc-production-10-readonly-capture.json"] = _regular_bytes(
         base / "mexc-production-10-readonly-capture.json"
     )
@@ -256,7 +273,17 @@ def build_bundle(
         raise ValueError("bundle_canonical_source_mismatch")
     dependencies: dict[str, bytes] = {}
     base = helper_manifest.parent.parent
-    test_inputs = _legacy_test_inputs(base, helper_files, commit)
+    frozen_manifest = None
+    if (base / "BUNDLE.json").exists() or (base / "BUNDLE.json").is_symlink():
+        verify_bundle(base)
+        frozen_manifest = _object(_regular_bytes(base / "BUNDLE.json"))
+    test_inputs = _legacy_test_inputs(base, helper_files, commit, frozen_manifest)
+    launcher = helper_files["launch-stage50.py"]
+    old_base = b'BASE = Path("/home/tn/watchdeck-local-archive/mexc-100-scale-20261010-1025")'
+    new_base = b"BASE = Path(__file__).resolve().parent.parent"
+    if (launcher.count(old_base), launcher.count(new_base)) not in ((1, 0), (0, 1)):
+        raise ValueError("bundle_launcher_layout_unsupported")
+    relocated_launcher = launcher.replace(old_base, new_base)
     _dependency(base / "complete-mexc-scale.py", policy["completeDriverSha256"], dependencies)
     for name, expected in policy["helpers"].items():
         if len(_safe_relative(name).parts) != 1:
@@ -283,6 +310,7 @@ def build_bundle(
         raise ValueError("bundle_map_validation_mismatch")
     if _object(mapping["qualification-evidence.json"]).get("mapVersion") != version:
         raise ValueError("bundle_map_evidence_mismatch")
+    map_validation = validate_map_snapshot(source, mapping)
     if reconciliation is not None:
         raw = _regular_bytes(reconciliation)
         if _object(raw).get("schemaVersion") != "candle-gap-reconciliation-v1":
@@ -315,14 +343,8 @@ def build_bundle(
     _write_json(output / "evidence/original-unit-bindings.json", original_bindings)
     # The existing supervisor anchors its output at HERE.parent. Relocate the copied
     # launcher's historical absolute BASE to that same directory; preserve its input.
-    launcher = helper_files["launch-stage50.py"]
-    old_base = b'BASE = Path("/home/tn/watchdeck-local-archive/mexc-100-scale-20261010-1025")'
-    if launcher.count(old_base) != 1:
-        raise ValueError("bundle_launcher_layout_unsupported")
     (output / "evidence/original-launch-stage50.py").write_bytes(launcher)
-    (output / "helper/launch-stage50.py").write_bytes(
-        launcher.replace(old_base, b"BASE = Path(__file__).resolve().parent.parent")
-    )
+    (output / "helper/launch-stage50.py").write_bytes(relocated_launcher)
     if build_environment:
         _run_build(release, output / "build.log")
     runtime_files = _runtime_files(release) if build_environment else {}
@@ -431,6 +453,7 @@ def build_bundle(
         "plannedProductionRelease": str(production_release),
         "plannedProductionMap": str(PRODUCTION_MAPS / version),
         "mapVersion": version,
+        "mapContentValidation": map_validation,
         "build": metadata["build"],
         "files": files,
         "trackedSourceModes": source_modes,
@@ -467,6 +490,8 @@ def verify_bundle(output: Path) -> dict[str, Any]:
     source_modes = manifest.get("trackedSourceModes")
     if not isinstance(source_modes, dict) or not source_modes:
         raise ValueError("bundle_source_inventory_invalid")
+    if not set(MAP_VALIDATOR_SOURCE_FILES) <= source_modes.keys():
+        raise ValueError("bundle_map_validator_source_invalid")
     required = {
         "helper/policy.json",
         "helper/source-manifest.json",
@@ -477,12 +502,21 @@ def verify_bundle(output: Path) -> dict[str, Any]:
     }
     if not required <= files.keys() or manifest.get("stagedRelease") != str(release):
         raise ValueError("bundle_manifest_incomplete")
+    release_relative = release.relative_to(output)
+    semantic_paths = {
+        *("maps/" + name for name in MAP_FILES),
+        *((release_relative / name).as_posix() for name in MAP_VALIDATOR_SOURCE_FILES),
+    }
+    semantic_inputs: dict[str, bytes] = {}
     for relative, expected in files.items():
         path = output.joinpath(*_safe_relative(relative).parts)
         if any(parent.is_symlink() for parent in (path, *path.parents)):
             raise ValueError("bundle_path_symlink")
-        if _digest(_regular_bytes(path)) != expected:
+        raw = _regular_bytes(path)
+        if _digest(raw) != expected:
             raise ValueError("bundle_hash_mismatch")
+        if relative in semantic_paths:
+            semantic_inputs[relative] = raw
     for relative, expected in source_modes.items():
         path = release.joinpath(*_safe_relative(relative).parts)
         if expected not in (0o644, 0o755) or stat.S_IMODE(path.stat().st_mode) != expected:
@@ -563,18 +597,31 @@ def verify_bundle(output: Path) -> dict[str, Any]:
         "sha256": _digest(_regular_bytes(checker)),
     }:
         raise ValueError("bundle_checker_binding_invalid")
+    mapping = {name: semantic_inputs["maps/" + name] for name in MAP_FILES}
     for name, field in (
         ("initial-map.json", "version"),
         ("qualification-evidence.json", "mapVersion"),
         ("validation.json", "mapVersion"),
     ):
-        if _object(_regular_bytes(output / "maps" / name)).get(field) != manifest["mapVersion"]:
+        if _object(mapping[name]).get(field) != manifest["mapVersion"]:
             raise ValueError("bundle_map_binding_invalid")
+    map_validation = validate_map_snapshot(
+        {
+            name: semantic_inputs[(release_relative / name).as_posix()]
+            for name in MAP_VALIDATOR_SOURCE_FILES
+        },
+        mapping,
+    )
+    if "mapContentValidation" in manifest and json.dumps(
+        manifest["mapContentValidation"], sort_keys=True
+    ) != json.dumps(map_validation, sort_keys=True):
+        raise ValueError("bundle_map_validation_mismatch")
     return {
         "sourceStatus": "PASS",
         "build": manifest["build"],
         "sourceCommit": manifest["sourceCommit"],
         "mapVersion": manifest["mapVersion"],
+        "mapContentValidation": map_validation,
         "operationalAcceptance": "NOT_ACCEPTED",
         "requiredBeforeObservation": manifest["requiredBeforeObservation"],
     }

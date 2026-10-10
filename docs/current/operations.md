@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_07:10 JST"
+timestamp="2026-10-11(日)_08:29 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T22:26:15+09:00`
+- 更新: `2026-10-11T08:29:14+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -629,6 +629,12 @@ Git archiveのtracked sourceだけを収録し、locked dependenciesとWebをloc
 staged venvのeditable参照とshebangは絶対pathを持つため、本番先で環境を再構築・再bindingする。
 元helper/証拠は保全し、copied launcherの出力BASEをbundle内へ合わせる。
 helperのoffline testに必要な旧test/fixtureも保存し、copied testの入力pathをstaged sourceと保存fixtureへ固定する。
+保存bundleの`helper/source-manifest.json`・`maps`・保存比較JSONを次の入力にも指定できる。
+入力bundleのhashを再確認し、元test原文と保存fixtureだけからpathを再bindingする。
+元workspaceや本番mapのfixtureへ戻らず、変換済みlauncherも再利用できる。
+生成前と`--verify`では、同じcommitに収録したRanking checkerでmap/roster/catalog/evidenceを照合し、
+`validation.json`の標準集計・資格値との一致を要求する。結果は`mapContentValidation`へ保持する。
+内容不整合は拒否するが、`qualificationComplete=false`の整合した候補は未資格のまま保存できる。
 
 `BUNDLE.json`とstaged releaseはlocal成果物で、本番配置先とは別である。policyはapproved=false、
 警告例外は空、settlement例外は無効、recoveryNotBeforeは未確定のまま。
