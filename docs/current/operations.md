@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_09:16 JST"
+timestamp="2026-10-10(土)_09:21 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T09:16:44+09:00`
+- 更新: `2026-10-10T09:21:13+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -560,7 +560,9 @@ run_idを特定した別の修復判断とする。本番でのbackup、exact so
 
 Repositoryには`watchdeck-attention` CLIがあるが、production unitのinstall/enable/startや既存releaseの更新は別の明示承認対象である。既定stateは`~/.local/share/prep-watchdeck-attention`、portは8770。Market/Rankingとは別のdirectory・portを指定する。既定portやrootは製品の永久制約ではない。
 
-承認された配置では[Attention専用unit template](../../config/systemd/prep-watchdeck-attention.service.in)をreleaseの絶対pathと専用state/portでrenderする。MemoryMaxは512 MiB、CPUQuotaは100%、TasksMaxは32、LimitNOFILEは128。Linux bubblewrapでrootとMarket/Ranking stateをread-onlyにし、Attention stateだけを書込み可能にする。Market/Ranking unitを新規起動する依存は持たず、既存の収集processを変更しない。Webには`PREP_WATCHDECK_ATTENTION_PORT`を設定する。広域の`install-user-services.sh`をAttention配置のために実行しない。
+承認された配置では[Attention専用unit template](../../config/systemd/prep-watchdeck-attention.service.in)をreleaseの絶対pathと専用state/portでrenderする。MemoryMaxは768 MiB、CPUQuotaは100%、TasksMaxは32、LimitNOFILEは128。Linux bubblewrapでrootとMarket/Ranking stateをread-onlyにし、Attention stateだけを書込み可能にする。Market/Ranking unitを新規起動する依存は持たず、既存の収集processを変更しない。Webには`PREP_WATCHDECK_ATTENTION_PORT`を設定する。広域の`install-user-services.sh`をAttention配置のために実行しない。
+
+Discoveryの全件取得と比較取得を重ねたwarm負荷ではPython RSSだけで500 MiBを超えるため、旧512 MiB上限は使わない。容量受入では保持済みDBと複数世代・実HTTP取得を含め、RSS、cgroupのanonymous/file内訳、OOMと再起動回数を確認する。短時間のOOMなしだけでは容量余裕を証明しない。
 
 配置前は旧WebのWorkingDirectory/drop-inとunitの有無を保存し、tracked sourceから独立releaseを作る。配置後は`/health`、`/attention`、Webの`/api/attention`と`/attention`、少なくとも2回の世代更新を確認する。`partial`は欠損を含む有効応答であり、全銘柄の全成分が有効という意味ではない。確認ではcoverageとquality reason、元の2 collectorのPID/更新継続も記録する。
 
