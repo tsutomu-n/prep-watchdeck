@@ -73,6 +73,7 @@ def test_semantic_version_keeps_contract_change_unknown_fields_ignores_display_f
             "displayName": "new",
             "makerFeeRate": ".001",
             "maxLeverage": 300,
+            "isHot": True,
         },
     )
     assert display.definition_sha256() != item.definition_sha256()

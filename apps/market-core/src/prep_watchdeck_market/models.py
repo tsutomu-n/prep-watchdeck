@@ -128,6 +128,7 @@ class CatalogInstrument:
                 "displayNameEn",
                 "fn",
                 "baseCoinIconUrl",
+                "isHot",  # Official contract-info: hot-symbol tag, not contract identity.
                 "makerFeeRate",
                 "takerFeeRate",
                 "liquidationFeeRate",

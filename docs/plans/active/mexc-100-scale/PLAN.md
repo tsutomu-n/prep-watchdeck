@@ -1,8 +1,8 @@
 # MEXC 10 → 50 → 100 銘柄の最適化と段階受入
 
-timestamp="2026-10-10(土)_11:15 JST"
+timestamp="2026-10-10(土)_11:27 JST"
 - 作成: `2026-10-10T10:30:00+09:00`
-- 更新: `2026-10-10T11:15:54+09:00`
+- 更新: `2026-10-10T11:27:30+09:00`
 - 検証: `未検証`
 - 状態: `実装計画`
 
@@ -140,5 +140,7 @@ MEXC取得停止→直前段階registryへ→単一writerでcurrent catalog→�
 - 旧daytrader-mexc-hardening planは本計画へ置換。maintenance/dataopsの復帰済み障害は再修正せず、Attention継続運用と容量受入を本計画の段階gateへ引き継ぐ。既存数量/Widget未確認、30日prospective evidenceは引き続き別受入。
 - 横断gateはMarket345、Ranking176、Attention76、Web265 unitと必須check通過、E2Eは156成功/1既定skip/1失敗でraw exit1。既存JST設定のhydration raceを再現し修正後、Web266 unit・check/build・関連E2E16件が通過。raw gate全成功とは記録しない。native-onlyの追加16回帰・Ruff/Pyrefly・100件registry監査も通過。
 - 隔離capacityは保持済み1645世代を複製し100MEXC/全1197原本・60世代更新。cycle p95 4.208秒/max5.367秒、一覧＋4詳細p95 29.761ms、RSS high-water 549.047MiB、旧evidence hash保持。加速replayであり実運転ではない。専用cgroupのkernel peakとWeb proxy並行負荷は未観測でPASS WITH ISSUES、live段階で確認する。
-- production前の専用PG dumpとAttention SQLite backup・unit/control/workspace保全を確認。最適化済み10件配置、50件2h/100件24h観測、commit/pushは未完了。
+- production前の専用PG dumpとAttention SQLite backup・unit/control/workspace保全を確認。b49d71dをcommit/pushしtracked archiveからbuild。11:20 JSTに互換reader、migration0006、10件writerを切替。Market/Ranking/Attention/Webとmaintenance/dataopsのsourceを同releaseへ接続、共有予算を配置し10件の価格/OI/Funding readyを確認。元4ファイルとselection/workspace/manual decisionsの保全をhashで確認。
+- 11:15 JST（配置前）にSOL_USDTのversionが9925→9933へ変化。差分は公式hot symbol tagのisHot false→trueのみ。完全raw/旧定義を保全してsemantic比較の限定除外を追加し、現9933の独立再資格candidateを準備中。古いIDを復元しない。50件拡大はこの確認と10件連続観測の完了後。
+- 50件2h/100件24h観測と最終容量受入は未実施。isolated replayの追加90件groupIdはnullで、現singleton文字列を入れた場合も行数668は不変。summary増分0.77%、4詳細増分0.11%のserialization差を確認したが、その補正後性能は未実測。
 - 既存maintenance/dataopsは10:07/10:04時点で復帰しており、過去失敗を現障害としない。

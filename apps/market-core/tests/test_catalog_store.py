@@ -21,8 +21,69 @@ from prep_watchdeck_market.models import (
     SourceCapability,
     canonical_json_sha256,
 )
+from prep_watchdeck_market.sources.mexc import parse_mexc_catalog
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated test PostgreSQL")
+def test_mexc_hot_tag_preserves_version_and_original_raw_definition() -> None:
+    assert TEST_DATABASE_URL is not None
+    schema = "mexc_hot_tag_" + uuid.uuid4().hex
+    first_at = datetime(2026, 10, 10, tzinfo=UTC)
+    definition = {
+        "symbol": "BTC_USDT",
+        "baseCoin": "BTC",
+        "quoteCoin": "USDT",
+        "settleCoin": "USDT",
+        "futureType": 1,
+        "state": 0,
+        "contractSize": "0.0001",
+        "priceUnit": "0.1",
+        "volUnit": 1,
+        "isHot": False,
+    }
+    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        try:
+            apply_migrations(connection)
+            first = parse_mexc_catalog(
+                {"success": True, "code": 0, "data": [definition]}, observed_at=first_at
+            )
+            persist_catalog(connection, first, resolve_market_groups(first.instruments))
+            original = connection.execute(
+                "SELECT venue_instrument_version_id, definition_hash, raw_definition, valid_from "
+                "FROM venue_instrument_versions WHERE valid_to IS NULL"
+            ).fetchone()
+            changed = parse_mexc_catalog(
+                {"success": True, "code": 0, "data": [{**definition, "isHot": True}]},
+                observed_at=first_at + timedelta(minutes=1),
+            )
+            result = persist_catalog(
+                connection, changed, resolve_market_groups(changed.instruments)
+            )
+            assert result.instrument_versions_created == 0
+            assert result.instrument_versions_unchanged == 1
+            assert result.instrument_versions_closed == 0
+            assert (
+                connection.execute(
+                    "SELECT venue_instrument_version_id, definition_hash, raw_definition, "
+                    "valid_from FROM venue_instrument_versions WHERE valid_to IS NULL"
+                ).fetchone()
+                == original
+            )
+            assert connection.execute(
+                "SELECT count(*) FROM venue_instrument_versions"
+            ).fetchone() == (1,)
+            assert connection.execute(
+                "SELECT payload->'data'->0->'isHot' FROM raw_catalog_payloads "
+                "WHERE raw_catalog_payload_id = %s",
+                (result.raw_payload_id,),
+            ).fetchone() == (True,)
+        finally:
+            connection.execute("RESET search_path")
+            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 @pytest.mark.skipif(
