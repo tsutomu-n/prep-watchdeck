@@ -1,9 +1,9 @@
 # MEXC・Discovery 修正と本番反映
 
-timestamp="2026-10-10(土)_09:16 JST"
+timestamp="2026-10-10(土)_09:41 JST"
 - 作成: `2026-10-10T08:51:29+09:00`
-- 更新: `2026-10-10T09:16:44+09:00`
-- 検証: `2026-10-10T08:51:29+09:00`
+- 更新: `2026-10-10T09:41:00+09:00`
+- 検証: `2026-10-10T09:41:00+09:00`
 - 状態: `実装計画`
 
 ---
@@ -16,13 +16,13 @@ CI・PR は実行しない。未確認の既存資格を推測で承認しない
 
 ## Checkpoint
 
-- 前段 source は 8e6ef26、文書 closeout は 5edf284。60分の MEXC 隔離実データ受入は完了。
-- 本番はc32a2bbの4 Venue readerへ切替済み。DB、state、unitと旧releaseを保全し、MEXC取得を有効化した。
-- Unicode銘柄の比較保存/GET拒否、warm Discoveryの512 MiB超過、selection再起動時のTTL延長、production map capture未対応を修正済み。
-- 本番SQLite約4.3 GBのcopyを512 MiB cgroupで検証し、3世代・障害・同cutoff保留・次cutoff復帰・再起動を確認。既存76episode喪失0。
-- 既存3 Venueのversion差分5件を定義で再照合、新規PEARLはunsupportedとして独立保持したcandidateを作成。旧577行の参照/数量/Widgetを保持。
-- 全体local gateを通過し、c32a2bbをcommit/push・tracked releaseとして配置。本番DBのMEXC versionでmapを再資格判定し、全1107契約の一致とMEXC10銘柄の連続更新を確認。
-- 既存maintenanceの失敗を追跡し、先頭100行がnullの列をPolarsがNull型へ推論する欠陥を再現。SQL列型の明示で修正し、実102行のParquet往復を確認。追加release gate後に失敗partitionのみ再生成する。
+- Source修正と追加hardeningは `a1ad6ca` までcommit・通常push済み。Webはclean tracked release `/home/tn/releases/prep-watchdeck/a1ad6ca/apps/web` へreader先行反映し、旧drop-in・releaseを保存した。Market/Ranking/Attentionは `c32a2bb` の既存稼働releaseを維持。
+- 稼働Web `/health` と `/api/market-data` はHTTP 200。localhost/TailscaleのDesktop/Mobile全4組合せでDiscovery表示とMEXC native chartを確認。BTC_USDT version 9923の500 bars、書込み・selection POST 0、protected state hash不変。
+- 本番mapはDBの全1107契約と一致し、MEXCは審査済み10銘柄。MEXC catalog全件や未確認の既存数量4件/Widget3件を審査済みとは扱わない。
+- 現在の4主要serviceはactive、再起動回数0。AttentionはMemoryMax 768 MiBに対しmemory.current 805,056,512 byte、peak 805,752,832 byte、OOM/OOM-kill 0。file cache 312 MB、anonymous 489 MB、memory pressure some avg10 0.02。単発値から長時間容量余裕は判定しない。
+- Maintenance timerはactiveだが、09:00の実行はfunding sweep成功後にMaintenanceError / exit 2で失敗し、unitのpeakは5.3 GiB。09:00/09:39のread-only data-operationsもranking identity mismatch / metric future timestampでexit 1。失敗partition修正・parquet往復だけで通常maintenance全体を受入済みとしない。
+- clean releaseのWeb関連43 tests、Svelte check（0 errors/warnings）、buildはPASS。4ケースのブラウザ受入PASS。pushとWeb反映済みだが、maintenance/data-operations・Attentionの継続運用受入は未完了。
+- 進捗: 実装・commit・push・Web反映は完了。下記の運用受入項目が未完了のため、このplanはactiveに保つ。
 
 ## 完了条件と検証
 
@@ -40,7 +40,8 @@ DB downgrade・restore・既存データ削除は行わない。Attention の追
 
 ## 未解決
 
-- archive型修正の追加commit/push・maintenance実反映・失敗partition再生成・timer再開。
-- 本番ブラウザの一時chart 503の原因確認。全4組合せの表示成功とwrite 0は確認済み。
-- Attentionが実本番で512 MiB OOMと4回の再起動を起こしたため09:17に停止。保存stateを保持し、長時間・実HTTP負荷と容量上限の再確認が必要。短時間隔離probeのPASSでproduction受入を代替しない。
+- 次のmaintenance失敗はログ/manifestを用いて非破壊で原因を特定し、個別の失敗partition修復を超えるwriter・retention操作は別承認の下で行う。timer/serviceはactiveだが、成功した次回実行を確認するまでは受入保留。
+- data-operationsのread-only failure（09:00 ranking original identity mismatch、09:39 metric future timestamp）をソース・実データ・契約から切り分け、正当なcoverage欠損を0/成功へ丸めずに解消する。
+- Attentionは稼働とOOMなしを確認したが、現在の768 MiB上限に対する余裕、長時間・実HTTP負荷、保存増分を再確認する。retention/archive、30日 prospective evidence、容量保証は別の運用受入。
 - 数量未確認4件・Widget未確認3件は既存の未確認として保持し、全件review済みとは扱わない。
+- 最後に見たproduction status以後の変化や将来の再起動・cutoverは未観測。今回のWeb反映を30日acceptance、候補優位性、全MEXC銘柄coverageの証拠へ読み替えない。
