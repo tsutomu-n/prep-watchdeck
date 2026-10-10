@@ -1,8 +1,8 @@
 # MEXC 10 → 50 → 100 銘柄の最適化と段階受入
 
-timestamp="2026-10-10(土)_12:41 JST"
+timestamp="2026-10-10(土)_12:53 JST"
 - 作成: `2026-10-10T10:30:00+09:00`
-- 更新: `2026-10-10T12:41:52+09:00`
+- 更新: `2026-10-10T12:53:41+09:00`
 - 検証: `未検証`
 - 状態: `実装計画`
 
@@ -154,3 +154,5 @@ MEXC取得停止→直前段階registryへ→単一writerでcurrent catalog→�
 - 12:27 JST: Funding修正版の横断gate exit0。Market355/Ranking176/Attention78/Web266、E2E157成功/既定1skip、Ruff/Pyrefly/schema/type/docs/buildが通過。12:02通常maintenanceのsettled Fundingでbatch/各eventの観測時刻不一致による失敗を確認し、MEXC分岐の二重時刻取得を最小修正中。12:19 dataopsはranking_original_identity_mismatchで失敗しており、実対象を確認するまで50再観測と100昇格を保留する。
 - settled FundingはMEXCのHTTP完了後に時計を2回読む不具合を3行で修正。実store validatorでREDを確認した回帰を含む関連6件、Ruff/Pyrefly・独立reviewが成功。50件互換修正版としてFunding公開修正と配置する。dataopsのmismatchはKAIA/MAGIC/TAO/USの4 MEXC native-only行（03:15 catalog更新）に限定され、旧/current定義を確認中。通常maintenanceの修正後成功と新50件2h受入は未実施。
 - MEXC公式仕様と4件のREAD ONLY差分を照合し、注文数量上限4項目とrisk tier内maxVol値だけをsemantic比較から除外。raw/full hash/旧version/未知tier情報を保つ関連20件（DB3件を含む）・Ruff/Pyreflyが成功。4現versionのみ再資格したmap候補1e2c8d5d1e282295468a36f9は50件consumer/replay/独立reviewを通過し、他1143originals/46資格/旧history全22filesとreview40/quantity4/Widget43を保持。source修正版と候補mapは最終照合後に同時配置予定で未採用。
+- 12:44 JST: commit/push済み59671d2のtracked50releaseを全6serviceへ配置し、独立requalification map1e2c8d5d1e282295468a36f9を同時採用。配置直前の専用READ ONLY current roster1147/active50を新release consumerで照合、immutable map全26files hash一致。旧ID復元・migration・単独catalog persistなし。選択/workspace hashとmanual decisions不存在は不変。12:45に価格/OI/Funding50件readyを確認し、12:46:04 JSTから新50件7200秒performance観測と3秒間隔Funding観測を開始。旧360秒観測は引き続き不採用。100件source候補の最終横断gateを実行し、実50件2hとFunding/WS/recovery/dataopsの判定後にだけ100配置へ進む。
+- 12:52 JST: 100件source候補の最終横断gateがexit0で終了。Market373/Ranking176/Attention78/Web266、E2E157成功/既定1skip、Ruff/Pyrefly/schema/type/docs/build成功。稼働中は59671d2の50件で、2h観測の完了予定は14:46 JST。100件registryとcurrent docsをcommit/pushしてtracked releaseを準備するが、2h終端とFunding/WS/recovery/dataopsが受入済みになるまで100件を配置しない。100件24h・容量受入は未実施。
