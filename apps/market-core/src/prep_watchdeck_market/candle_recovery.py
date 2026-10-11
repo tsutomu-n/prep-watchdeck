@@ -211,10 +211,6 @@ class CandleRecovery:
             raise ValueError("HTTP session is required when applying recovery")
         if instrument_id and ":" not in instrument_id:
             raise ValueError("instrument ID must include venue and source symbol")
-        if venue == "hyperliquid" and window.start < recovery_cutoff(datetime.now(UTC)) - timedelta(
-            minutes=5000
-        ):
-            raise ValueError("Hyperliquid history exceeds the recent 5,000-bar limit")
         if apply:
             with exclusive_runtime_lock(self._state_dir / "control" / "candle-recovery.lock"):
                 return await self._run_locked(
@@ -312,6 +308,7 @@ class CandleRecovery:
                 offset = self._next_start % len(ordered)
                 ordered = ordered[offset:] + ordered[:offset]
             deferred: set[RecoveryTarget] = set()
+            errors: dict[RecoveryTarget, str] = {}
             for index, target in enumerate(ordered):
                 if loop.time() >= deadline_at:
                     deferred.add(target)
@@ -319,7 +316,9 @@ class CandleRecovery:
                 if target.venue == "hyperliquid" and window.start < recovery_cutoff(
                     started_at
                 ) - timedelta(minutes=5000):
-                    raise ValueError("Hyperliquid history exceeds its recent 5,000-bar limit")
+                    errors[target] = "history_limit"
+                    self._next_start = (offset + index + 1) % len(ordered)
+                    continue
                 missing = await _thread_call(
                     scan_missing_candles,
                     connection,
@@ -337,10 +336,15 @@ class CandleRecovery:
                         missing_before=len(before[target]) if target in before else None,
                         inserted=0,
                         remaining=len(before[target]) if target in before else None,
+                        error_code=errors.get(target),
                     )
                     for target in targets
                 ]
-                total = None if deferred else sum(len(missing) for missing in before.values())
+                total = (
+                    None
+                    if len(before) != len(targets)
+                    else sum(len(missing) for missing in before.values())
+                )
                 return _state(
                     run_id=run_id.hex,
                     started_at=started_at,
@@ -355,11 +359,13 @@ class CandleRecovery:
                     inserted=0,
                     newly_present=0,
                     remaining=total,
-                    failed_targets=0,
+                    failed_targets=len(errors),
                     deferred_targets=len(deferred),
                     details=details,
                     error_code=(
-                        "recovery_budget_exceeded"
+                        "recovery_target_failed"
+                        if errors
+                        else "recovery_budget_exceeded"
                         if deferred
                         else None
                         if total == 0
@@ -373,7 +379,6 @@ class CandleRecovery:
                 max_requests=120 if trigger != "manual" else 3000,
                 deadline_seconds=max(0.0, deadline_at - loop.time()),
             )
-            errors: dict[RecoveryTarget, str] = {}
             blocked_venues = {
                 venue for venue, until in self._venue_cooldown_until.items() if until > loop.time()
             }

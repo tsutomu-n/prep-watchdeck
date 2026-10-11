@@ -89,6 +89,46 @@ def test_later_endpoint_correction_recomputes_without_cached_values() -> None:
     assert after.oi_change["15m"].value < before.oi_change["15m"].value
 
 
+@pytest.mark.parametrize(
+    "reason,expected",
+    [
+        ("official_contract_unconfirmed", "official_contract_unconfirmed"),
+        (None, "source_capability_unavailable"),
+    ],
+)
+def test_unavailable_oi_capability_preserves_null_and_reason(reason, expected) -> None:
+    now = datetime(2026, 9, 28, 12, 6, 30, tzinfo=UTC)
+    source = dict(row(now), oi_capability_available=False, oi_capability_reason=reason)
+    source["l_oi_base"] = None
+    result = build_market_metrics([source], now=now)
+    metric = result.rows[0]
+    for value in metric.oi_change.values():
+        assert value.availability == "unsupported"
+        assert value.reason_code == expected
+        assert value.value is None
+        assert value.start_value is None and value.end_value is None
+    assert metric.trade_change["15m"].value == pytest.approx(10)
+    assert metric.venue_instrument_id == "bitget:BTCUSDT"
+    assert metric.venue_instrument_version_id == 7
+    assert result.candle_cutoff == datetime(2026, 9, 28, 12, 3, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("available", [True, None])
+def test_missing_oi_stays_missing_without_unavailable_capability(available) -> None:
+    now = datetime(2026, 9, 28, 12, 6, 30, tzinfo=UTC)
+    source = dict(
+        row(now),
+        l_oi_base=None,
+        oi_capability_available=available,
+        oi_capability_reason="official_contract_unconfirmed",
+    )
+    metric = build_market_metrics([source], now=now).rows[0]
+    for value in metric.oi_change.values():
+        assert value.availability == "missing"
+        assert value.reason_code == "endpoint_missing"
+        assert value.value is None
+
+
 @pytest.mark.parametrize("future", [False, True])
 def test_snapshot_completion_clock_preserves_query_cutoff_and_future_evidence(future) -> None:
     from contextlib import nullcontext
@@ -443,6 +483,46 @@ def test_current_version_does_not_splice_oi_or_infer_unknown_quantity(isolated_m
         read_market_metrics(connection, now=now, clock=lambda: now).rows[0].oi_change["15m"].value
         is None
     )
+
+
+def test_metrics_query_tracks_saved_oi_capability(isolated_metrics_database):
+    _, connection = isolated_metrics_database
+    now = datetime.now(UTC)
+    version, _ = seed_metrics_database(connection, now)
+    connection.execute(
+        "INSERT INTO capabilities "
+        "(venue, capability, available, source_kind, observed_at, details) VALUES "
+        "('bitget', 'funding', true, 'native_rest', %s, '{}'), "
+        "('bitget', 'open_interest', false, 'native_rest', %s, "
+        '\'{"reason":"official_contract_unconfirmed"}\')',
+        (now, now),
+    )
+    unsupported = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert len(unsupported.rows) == 1
+    for value in unsupported.rows[0].oi_change.values():
+        assert value.availability == "unsupported"
+        assert value.reason_code == "official_contract_unconfirmed"
+        assert value.value is None
+    assert unsupported.rows[0].trade_change["15m"].value == pytest.approx(10)
+    connection.execute(
+        "UPDATE capabilities SET available=true WHERE venue='bitget' AND capability='open_interest'"
+    )
+    supported = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert supported.rows[0].oi_change["15m"].value == pytest.approx(10)
+    connection.execute(
+        "UPDATE latest_market_state SET open_interest_base=NULL "
+        "WHERE venue_instrument_version_id=%s",
+        (version,),
+    )
+    missing = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert missing.rows[0].oi_change["15m"].availability == "missing"
+    assert missing.rows[0].oi_change["15m"].reason_code == "endpoint_missing"
+    connection.execute(
+        "DELETE FROM capabilities WHERE venue='bitget' AND capability='open_interest'"
+    )
+    unknown = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert unknown.rows[0].oi_change["15m"].availability == "missing"
+    assert unknown.rows[0].oi_change["15m"].reason_code == "endpoint_missing"
 
 
 def test_real_statement_timeout_releases_projection_connection(isolated_metrics_database, tmp_path):

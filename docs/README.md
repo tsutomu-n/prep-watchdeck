@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-11(日)_10:39 JST"
+timestamp="2026-10-11(日)_10:52 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-11T10:39:13+09:00`
-- 検証: `2026-10-08T16:09:39+09:00`
+- 更新: `2026-10-11T10:52:23+09:00`
+- 検証: `2026-10-11T10:52:23+09:00`
 - 状態: `現行`
 
 ---
@@ -52,7 +52,6 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 
 ## 実装計画
 
-- [DiscoveryとRecoveryの限定修正](plans/active/discovery-failure-scope/PLAN.md): 復旧失敗の局所化、独立読込、判断下書き、OI capabilityの理由表示。local sourceと隔離検証まで。
 
 - [Identity・履歴診断・50件開始gateの根本修正](plans/active/identity-recovery-rootfix/PLAN.md): 50件sourceからの修復。本番変更・再測定・100件拡大は別承認。
 

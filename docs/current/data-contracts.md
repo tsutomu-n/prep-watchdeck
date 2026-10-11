@@ -1,10 +1,10 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-11(日)_07:05 JST"
+timestamp="2026-10-11(日)_10:52 JST"
 
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T22:26:15+09:00`
-- 検証: `2026-10-08T16:04:27+09:00`
+- 更新: `2026-10-11T10:52:23+09:00`
+- 検証: `2026-10-11T10:52:23+09:00`
 - 状態: `現行`
 
 ---
@@ -369,6 +369,10 @@ Ranking応答`ranking-v5`は同じgenerationの15分、1時間、直近24時間�
 
 `market-metrics.json`は既存4 artifactから独立した任意の読取laneで、`native-endpoints-v1`、`generationId`、`candleCutoff`、現行ID/version別の`oiChange`と`tradeChange`を保持する。数量OIは同一versionのL1 bucketの15分・1時間差。終値変化は全行共通cutoffの確定1分足の15分・1時間・24時間差であり、JST騰落率とは別の値である。180秒lagと300秒上限は設計初期値で、実データから測定した数値ではない。欠損や古い値を0へ置換しない。
 
+数量OIの`availability`は、保存済みの同Venueの`open_interest` capabilityがfalseなら`unsupported`とし、
+文字列の契約理由または`source_capability_unavailable`を`reasonCode`へ残す。capabilityがtrueまたは未確認の
+対象で終点が欠ける場合は`missing` / `endpoint_missing`のまま。unsupportedを0や取得失敗へ置き換えない。
+
 `GET /api/market-metrics`はartifactだけをschema検証して返す。未生成・不正は503、正常な古いartifactは元の時刻のまま返し、Browserで鮮度を判定する。`GET/POST /api/user-workspace`はfavoriteの望む状態と名前付きviewの条件付き更新を扱う。メモは読取bytesのSHA-256 tokenを条件に保存し、`context`を添付する保存ではNoteFile v2へ移る。旧v1項目も読み続ける。
 
 `user-workspace.json`の現行schemaVersionは2で、favorite最大200件・saved view最大20件に加え、
@@ -422,6 +426,9 @@ schemaに加え、重複identity、窓の長さ・順序・共通cutoff、現在
 対象の現行ID・version・definitionHash、半開UTC窓、scan/insert/rescan件数、失敗と未処理を分ける。
 `execution=running|succeeded|partial|failed`で、部分成功を全契約成功へ昇格しない。
 手動scanだけではartifactを更新しない。
+Hyperliquidの直近5,000本の履歴上限より古い窓では、その対象に`history_limit`を残し、他Venueの
+scan/回収を継続する。dry-run/applyとも全体は`partial`で、未検査対象の欠損件数と全体の残件数は`null`。
+applyは対象診断をDB auditとterminal artifactへ保持する。
 `evidence`は表示detailsとは別に、全対象のID/version/definitionHash、scope、整列済みrosterのSHA-256、
 run開始/終了のroster一致を保持する。旧artifactは読めるが、この証拠がない結果はstrict受入へ使わない。
 `candle-recovery-latest-completed.json`と`candle-endpoint-recovery-latest-completed.json`は
