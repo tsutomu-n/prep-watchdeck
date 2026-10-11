@@ -1,11 +1,11 @@
 # 残件の実装計画 — 追加調査を反映した実行版
 
-timestamp="2026-10-11(日)_14:57 JST"
+timestamp="2026-10-11(日)_15:37 JST"
 - 作成: `2026-10-11T13:53:08+09:00`
-- 更新: `2026-10-11T14:57:10+09:00`
-- 検証: `計画と保存済み実データの照合。実装検証は未実行`
+- 更新: `2026-10-11T15:37:59+09:00`
+- 検証: `2026-10-11T15:33:52+09:00`
 - 状態: `実装計画`
-- 実行状態: `IN_PROGRESS`。ユーザー指示「実装・本番変更」により実装と対象unit反映を開始。
+- 実行状態: `PARTIAL`。source・対象unit反映済み。Recovery受入と2h/24h/30日、本人実機は未完了。
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. この計画はprimaryが段階的に実行する。agentの追加・並列writeを前提にしない。
 
@@ -29,7 +29,7 @@ timestamp="2026-10-11(日)_14:57 JST"
 - 本番のevidence削除・自動prune・DB downgradeはこの計画の初期実装に含めない。archive/restoreのcopy検証を先に行う。
 - Attentionのactual multi-captureは現行受入対象の実市場入力と別機能。ATT-124/125はこの計画へ混ぜない。
 
-## 調査で確定した基準
+## 実装前調査で確定した基準
 
 | 境界 | 観測・既存証拠 | 解釈 |
 |---|---|---|
@@ -96,19 +96,19 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 
 **既存対象:** `/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/market_store.py`、同じMarket packageの`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/service.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/artifacts.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/sources/mexc_l1.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/sources/mexc_funding.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/sources/aster_l1.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/scripts/market/check-data-operations.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/tests/test_market_store.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/tests/test_data_operations_monitor.py`。
 
-**作成予定・未作成:** 実装branchへ相当する `/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/scripts/ops/check-runtime-capacity.py` と対応する最小test。監視結果は専用の観測出力rootへ保存し、business stateへ書かない。
+**実装済み:** 実装branchの `/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/scripts/ops/check-runtime-capacity.py` と対応する最小test。監視結果は専用の観測出力rootへ保存し、business stateへ書かない。
 
 **Interfaces:** collector metricsの既存JSONBに `persistedQualityCountsByVenue`、`persistedReasonCountsByVenue`、`persistedDiagnosticExamples` を追加する。最終persist/join後の結果を数え、examplesは各Venue最大8件のexact ID/version、reason、欠測field名とsource時刻に限定する。collector runの同じtransactionへ保存して後続Funding更新で変更しない。原本payload・秘密を含めない。capacity reportは `sampledAt`、`stateBytes`（SQLite/WAL/artifact内訳）、`filesystemAvailableBytes`、`measurementCoverage`、`observationDurationSeconds`、`projection`（期間/増分/仮定）を持つ。24h未満の外挿には診断用と明示し、受入済み30日forecastを生成しない。既存status・databaseBytesの意味を変更しない。
 
-- [ ] final Funding join、quantity/native version照合、persistenceの境界で、実際に保存した状態の理由・件数・少数の診断IDをcollector metricsへ記録する。取得時rawのFunding理由を保存時の理由として流用しない。既存JSONBを使い、DB migrationを前提にしない。
-- [ ] 独立Funding更新で元bucketのstatusが変わっても、collector終了時の診断は不変とする。後続rawのobservedAt/nativeVersionId/contractVersionを辿れることを確認し、旧availabilityを上書きしたかのような研究証拠を作らない。
-- [ ] 最小回帰 `test_persisted_diagnostics_preserve_final_reason_and_bound_examples` のparameterized caseでFunding-only、Aster bid=0、native version変更、複合原因とVenue上限8件を区別する。既存Funding store回帰に、後続Funding更新後もcollector diagnosticsが不変というassertionを加える。`test_capacity_projection_requires_valid_sample_period` で短期間/不足sample/取得不能を受入forecastにしない。既存の正常source/monitor testsを維持する。
-- [ ] 13:00 MEXCのFunding限定不良と13:06 Aster SXTUSDTのbid=0をretained rawで再現する。原本を変えず、対象別partialと取得全体の停止を別に報告する。bid/時刻/OIを補完しない。
-- [ ] 監視はfreshなpartial＋既知のvenue_partial_failureだけを、完全な診断件数と対象別不良を伴う条件で分類する。対象別不良は品質失敗として残し、stale/unavailable、未知error、identity drift、診断欠落、当該Venueの利用可能入力0はoperational failureとする。診断を必要とする場合だけ、collector artifactへoptional bounded diagnosticsを追加しschema/型を生成する。旧readerの互換性を先に検証する。
-- [ ] `test_partial_cycle_is_reported_without_masking_unavailable` を既存monitor testへ追加する。Aster 452 ready/1 known partialを説明付きpartial、stale/全体取得不能/未知理由/診断欠落をfailureとする。exit0は対象全体の品質PASSを意味しない。旧assertionを削除する変更で帳尻を合わせない。
-- [ ] SQLite＋WAL＋immutable、Market archive、PG logical/取得可能な物理量、host全体の空き推移を記録する。取得不能はunknown。24hの増分と長期推計の前提を分ける。
-- [ ] archive/readback/restoreを隔離copyで通し、checksumと参照generationを照合する。本番削除はしない。新規蓄積停止条件は現行の空き50GiB、直近増分の7日分確保を維持する。
-- [ ] 関連pytest→Ruff check/format→package Pyreflyを通し、このtaskの差分だけをcommitする。
+- [x] final Funding join、quantity/native version照合、persistenceの境界で、実際に保存した状態の理由・件数・少数の診断IDをcollector metricsへ記録する。取得時rawのFunding理由を保存時の理由として流用しない。既存JSONBを使い、DB migrationを前提にしない。
+- [x] 独立Funding更新で元bucketのstatusが変わっても、collector終了時の診断は不変とする。後続rawのobservedAt/nativeVersionId/contractVersionを辿れることを確認し、旧availabilityを上書きしたかのような研究証拠を作らない。
+- [x] 最小回帰 `test_persisted_diagnostics_preserve_final_reason_and_bound_examples` と既存Funding/store/monitorのcaseでFunding-only、Aster bid=0、native version変更、複合原因とVenue上限8件を区別する。既存Funding store回帰に、後続Funding更新後もcollector diagnosticsが不変というassertionを加える。`test_capacity_projection_requires_valid_sample_period` で短期間/不足sample/取得不能を受入forecastにしない。既存の正常source/monitor testsを維持する。
+- [x] 13:00 MEXCのFunding限定不良と13:06 Aster SXTUSDTのbid=0をretained rawで再現する。原本を変えず、対象別partialと取得全体の停止を別に報告する。bid/時刻/OIを補完しない。
+- [x] 監視はfreshなpartial＋既知のvenue_partial_failureだけを、完全な診断件数と対象別不良を伴う条件で分類する。対象別不良は品質失敗として残し、stale/unavailable、未知error、identity drift、診断欠落、当該Venueの利用可能入力0はoperational failureとする。診断を必要とする場合だけ、collector artifactへoptional bounded diagnosticsを追加しschema/型を生成する。旧readerの互換性を先に検証する。
+- [x] `test_partial_cycle_is_reported_without_masking_unavailable` を既存monitor testへ追加する。Aster 452 ready/1 known partialを説明付きpartial、stale/全体取得不能/未知理由/診断欠落をfailureとする。exit0は対象全体の品質PASSを意味しない。旧assertionを削除する変更で帳尻を合わせない。
+- [x] SQLite＋WAL＋immutable、Market archive、PG logical/取得可能な物理量、host全体の空き推移を記録する。取得不能はunknown。24hの増分と長期推計の前提を分ける。
+- [x] archive/readback/restoreを隔離copyで通し、checksumと参照generationを照合する。本番削除はしない。新規蓄積停止条件は現行の空き50GiB、直近増分の7日分確保を維持する。
+- [x] 関連pytest→Ruff check/format→package Pyreflyを通し、このtaskの差分だけをcommitする。
 
 **Gate:** 説明不能な監視異常を既知の警告へ置換していない。取得全体の稼働と対象別品質の判定を分け、known partialをPARTIAL/PASS WITH ISSUESとして明示する。全理由・件数・鮮度・versionを追跡できる。容量は全体空きとcomponent内訳の範囲を区別し、隔離復元が成立する。
 
@@ -116,19 +116,19 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 
 **責務:** 回復可能な欠損と回復不能・未確認を切り分け、実データに対して監査可能な状態を作る。
 
-**再利用対象:** `55edb36`の`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_gap_audit.py`（待統合・現行では未作成）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_gap_reconciliation.py`（待統合・現行では未作成）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/recovery_evidence.py`（待統合・現行では未作成）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/acceptance_evidence.py`（待統合・現行では未作成）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/acceptance_bundle.py`（待統合・現行では未作成）と既存tests/CLI、保管済み受入helper。現在のsourceへ適用する時点で全差分を確認する。
+**再利用対象:** `55edb36`の`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_gap_audit.py`（現行sourceへ統合済み）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_gap_reconciliation.py`（現行sourceへ統合済み）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/recovery_evidence.py`（現行sourceへ統合済み）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/acceptance_evidence.py`（現行sourceへ統合済み）、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/acceptance_bundle.py`（現行sourceへ統合済み）と既存tests/CLI、保管済み受入helper。現在のsourceへ適用する時点で全差分を確認する。
 
 **現行対象:** `/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_recovery.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_endpoint_recovery.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/candle_recovery_state.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/service.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/scripts/ranking/prepare-mexc-map.py`、Ranking mapping/models、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/ranking-core/data`。
 
 **Interfaces:** history auditはscope・DB identity・exact native version・window・checksumを固定。reconciliationは旧証拠と新証拠を混ぜず、追加時刻とreadbackを持つ。新bundleは新commit/map/helper/unit bindingsのSHAとrecoveryNotBeforeを持つ。
 
-- [ ] source baselineへ必要部分を選択的に統合する。Phase Aのhistory-limit対応、下書き保護、OI unsupported、Discovery coverage表示を保つ。旧branchの丸ごとmergeで逆戻りさせない。
-- [ ] 40 MEXC reviewをnative分類、固定reference、quantity、Widgetに分ける。42 unsupportedは既存根拠を尊重し、新しい肯定根拠がある対象だけ再審査する。
-- [ ] fresh公式catalogとexact契約/倍率を確認できる対象だけを採用する。reference不存在・未確認なら理由を残す。native-onlyと外部reference資格を同一視しない。
-- [ ] quantity4 / Widget43の各残件を表にし、確認可能なものだけ閉じる。残るものは機能を限定し、`qualificationComplete=false`と受入範囲を維持する。`validate-map --require-reviewed`の失敗をPASSと呼ばない。
-- [ ] 固定窓でread-only auditを実行し、missing / provider history limit / definition証拠不足 / no_baselineを区別する。native definition/validityを確認したwindowだけ、Marketの既存単一writer内で限定回復する。
-- [ ] 原本・修復履歴・変更前後件数・source hash・finality・追加時刻を保存し、同一scopeの再scan/readbackで照合する。後日回復を過去の研究availabilityへ遡及させない。
-- [ ] 局所回帰と当該package必須check、map evidence/schema生成checkを通す。new source/map/bundleを追跡対象のみで再生成し、混在sourceを保った配置案と切戻しを具体化する。
+- [x] source baselineへ必要部分を選択的に統合する。Phase Aのhistory-limit対応、下書き保護、OI unsupported、Discovery coverage表示を保つ。旧branchの丸ごとmergeで逆戻りさせない。
+- [x] 40 MEXC reviewをnative分類、固定reference、quantity、Widgetに分ける。42 unsupportedは既存根拠を尊重し、新しい肯定根拠がある対象だけ再審査する。
+- [x] fresh公式catalogとexact契約/倍率を確認できる対象だけを採用する。reference不存在・未確認なら理由を残す。native-onlyと外部reference資格を同一視しない。
+- [x] quantity4 / Widget43の各残件を表にし、確認可能なものだけ閉じる。残るものは機能を限定し、`qualificationComplete=false`と受入範囲を維持する。`validate-map --require-reviewed`の失敗をPASSと呼ばない。
+- [x] 固定窓でread-only auditを実行し、missing / provider history limit / definition証拠不足 / no_baselineを区別する。native definition/validityを確認したwindowだけ、Marketの既存単一writer内で限定回復する。
+- [x] 原本・修復履歴・変更前後件数・source hash・finality・追加時刻を保存し、同一scopeの再scan/readbackで照合する。後日回復を過去の研究availabilityへ遡及させない。
+- [x] 局所回帰と当該package必須check、map evidence/schema生成checkを通す。new source/map/bundleを追跡対象のみで再生成し、混在sourceを保った配置案と切戻しを具体化する。
 
 **Gate:** すべての対象に処理結果と理由がある。eligibleの履歴と定義が一致し、未資格はexcluded/reviewとして明示される。古いmap `9b411...`や古いunit bindingsをcurrentとして採用しない。全map資格PASSと、機能を限定した運用受入を別に報告する。
 
@@ -136,8 +136,8 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 
 **対象:** Task2のtracked release、immutable map、再生成したstage50 observer/Funding capture/helper/policy、正確なunit bindings。copy archiveの`55edb36`版helperを参考にし、現在のrelease/mapへ再bindする。
 
-- [ ] 元workspace/control、対象unit、Market writer数、DB/SQLite backup、既存release/mapを保全し、反映対象とhashを確定する。互換reader→Market writerの順を守る。
-- [ ] 承認対象のunitだけへsource/mapを反映する。live DB変更は必要性が確認されたものだけ、別の具体的操作として扱う。
+- [x] 元workspace/control、対象unit、Market writer数、DB/SQLite backup、既存release/mapを保全し、反映対象とhashを確定する。互換reader→Market writerの順を守る。
+- [x] 承認対象のunitだけへsource/mapを反映する。live DB変更は必要性が確認されたものだけ、別の具体的操作として扱う。
 - [ ] 採用後のrecoveryNotBeforeと完了Recovery証拠を確認し、新しい7200秒のobserverを開始する。中断・旧source・異なるmapの標本を連結して2hにしない。
 - [ ] 既存scopeのcycle<60s、input freshness<=150s、summary/detail p95<=1s、OOM/予期しないrestart0を確認する。Attention anonymous＋kernel peak目標は768MiBの80%以下。
 - [ ] Funding expiry/settlement、WS gaps、429、recovery backlog、理由別partial、数量・単位・時刻を確認する。既存settlement例外は最大90秒の厳密な二枝の根拠付き条件だけ。一般expiry/取引失敗/identity driftへ広げない。
@@ -162,19 +162,19 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 
 **既存対象:** `/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550/`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/research_cli.py`と`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/research`、Attentionの`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/attention-core/src/prep_watchdeck_attention/outcomes.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/attention-core/src/prep_watchdeck_attention/evaluation.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/attention-core/src/prep_watchdeck_attention/models.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/attention-core/src/prep_watchdeck_attention/cli.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/attention-core/src/prep_watchdeck_attention/storage.py`、既存research/outcome/evaluation tests。
 
-**作成予定・未作成:** `/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/research/finalizer.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/scripts/attention/export-outcome-input.py`、familyを参照するimmutable評価protocol。新しいformal protocolは既存CandidatePolicyのhashを書き換えない。
+**実装済み:** `/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/apps/market-core/src/prep_watchdeck_market/research/finalizer.py`、`/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/scripts/attention/export-outcome-input.py`、familyを参照するimmutable評価protocol。新しいformal protocolは既存CandidatePolicyのhashを書き換えない。
 
 **Interfaces:** capture completion、quality eligibility、evaluation statusを別fieldで報告。offline入力は既存`attention-outcome-input-v1`の`mapVersion / bars / native`へ接続する。protocolはfamily hash・対象範囲・開始/終了cutoff・formal look回数1・seed/bootstrap数・共通eligible診断・欠測/訂正方針を事前固定する。
 
-- [ ] 1440 receiptsとsnapshot/quality/trialのhashを確認し、原本を保った新しい隔離outputへ終了処理を再実行する。失敗したhookの一括再起動や24h再取得を先に行わない。
-- [ ] capture本体の終了3と、終了後のtimeoutを別に記録する。品質不適格なら評価NOT_RUN＋reasonを出す。欠落2/5を埋めたり、この元studyを評価PASSへ変更しない。
-- [ ] `finalize_capture(input_root: Path, output_root: Path, *, deadline_seconds: int) -> dict[str, object]` を新finalizerの入口とする。出力は原本と同一/内包/被包含を拒否し、原本manifestとprocess completion証拠を固定する。capture_complete/quality_eligible/evaluation_status/finalization_statusを別fieldにする。期限切れはfinalization INCOMPLETEとphase/checkpointを出し、既存成果物hashを照合して再開する。品質不適格なら重いA/B評価へ進まない。終了処理を2分hookから、期限・再開・原本hash・atomic結果を持つ有限処理へ整理する。既存の正常研究testに加え、`test_quality_exit_three_is_complete_but_ineligible` と `test_finalizer_deadline_preserves_input_and_reports_incomplete` を最小回帰とする。重複起動、signal、count不足は既存caseを再利用する。
-- [ ] Ranking/Marketの許可済みread-only入力から、outcome素材を少なくとも日次で隔離exportする。Rankingの現行retentionは `4 * 1440 + 1` 分であり、30日後まで元minute barsが残るとは仮定しない。Attention writerはactive Ranking DBへ接続せず、専用copy＋offline fixtureを使う。export helperだけがread-onlyのSQLite online backupを専用出力へ作り、稼働DB/WAL/SHMの単純file copyを使わない。
-- [ ] `export_outcome_input(ranking_copy: Path, attention_copy: Path, output_root: Path, *, map_version: str, after_ms: int, through_ms: int) -> Path` をexport helperの入口とする。両入力はlive stateと重ならない完成済みcopy、出力はimmutable bundle。mapVersion別に分割し、closed barsとnative pointのexact identity/available時刻を照合する。未閉鎖窓、原時刻より前への丸め、重複・gap・不一致を採用しない。`FixtureBarReader`の128MiB上限に合わせ、day/map/reference群で分割しmanifestを付ける。
-- [ ] 既存outcome testを再利用し、実export→既存settle/evaluate CLIを専用copyで通す。live Attention DBへ別writerを接続しない。source時刻、reference/native identity、future窓のgap、map/revision変更を保持し、計算不能はreason/nullとする。
-- [ ] 実データ短窓でoutcomeが得られる対象と得られない対象を確認する。候補と3 baselineの共通eligible比較、coverage/単一Venue/理由別診断を追加する。共通集合は判断時点のinput資格で決め、将来outcomeから選ばない。`test_common_eligible_is_selected_before_outcome` を最小回帰とし、元の全体coverage guardも残す。
+- [x] 1440 receiptsとsnapshot/quality/trialのhashを確認し、原本を保った新しい隔離outputへ終了処理を再実行する。失敗したhookの一括再起動や24h再取得を先に行わない。
+- [x] capture本体の終了3と、終了後のtimeoutを別に記録する。品質不適格なら評価NOT_RUN＋reasonを出す。欠落2/5を埋めたり、この元studyを評価PASSへ変更しない。
+- [x] `finalize_capture(input_root: Path, output_root: Path, *, deadline_seconds: int) -> dict[str, object]` を新finalizerの入口とする。出力は原本と同一/内包/被包含を拒否し、原本manifestとprocess completion証拠を固定する。capture_complete/quality_eligible/evaluation_status/finalization_statusを別fieldにする。期限切れはfinalization INCOMPLETEとphase/checkpointを出し、既存成果物hashを照合して再開する。品質不適格なら重いA/B評価へ進まない。終了処理を2分hookから、期限・再開・原本hash・atomic結果を持つ有限処理へ整理する。既存の正常研究testに加え、`test_quality_exit_three_is_complete_but_ineligible` と `test_finalizer_deadline_preserves_input_and_reports_incomplete` を最小回帰とする。重複起動、signal、count不足は既存caseを再利用する。
+- [x] Ranking/Marketの許可済みread-only入力から、outcome素材を少なくとも日次で隔離exportする。Rankingの現行retentionは `4 * 1440 + 1` 分であり、30日後まで元minute barsが残るとは仮定しない。Attention writerはactive Ranking DBへ接続せず、専用copy＋offline fixtureを使う。export helperだけがread-onlyのSQLite online backupを専用出力へ作り、稼働DB/WAL/SHMの単純file copyを使わない。
+- [x] `export_outcome_input(ranking_copy: Path, attention_copy: Path, output_root: Path, *, map_version: str, after_ms: int, through_ms: int) -> Path` をexport helperの入口とする。両入力はlive stateと重ならない完成済みcopy、出力はimmutable bundle。mapVersion別に分割し、closed barsとnative pointのexact identity/available時刻を照合する。未閉鎖窓、原時刻より前への丸め、重複・gap・不一致を採用しない。`FixtureBarReader`の128MiB上限に合わせ、day/map/reference群で分割しmanifestを付ける。
+- [x] 既存outcome testを再利用し、実export→既存settle/evaluate CLIを専用copyで通す。live Attention DBへ別writerを接続しない。source時刻、reference/native identity、future窓のgap、map/revision変更を保持し、計算不能はreason/nullとする。
+- [x] 実データ短窓でoutcomeが得られる対象と得られない対象を確認する。候補と3 baselineの共通eligible比較、coverage/単一Venue/理由別診断を追加する。共通集合は判断時点のinput資格で決め、将来outcomeから選ばない。`test_common_eligible_is_selected_before_outcome` を最小回帰とし、元の全体coverage guardも残す。
 - [ ] 正式cutoff、判定回数1、seed=0、bootstrap_samples=2000（現行CLI既定）、K=10/20、horizon=15/60分、minimum30 UTC day blocks、minimum_coverage=0.8、maximum_coverage_regression=0.05、minimum_practical_delta=0.1をprotocolへ事前固定する。最終cutoffは観測開始のUTC境界と同時に確定し、途中結果で延長/短縮しない。既存の異種単位raw max v1は明示したheuristicとして保存し、score変更が必要なら別policyとして評価開始前に固定する。
-- [ ] `test_protocol_rejects_changed_cutoff_seed_or_family` で正式protocolの改変を拒否する。日々の診断はdescriptiveとして保存する。正式評価は固定cutoffで1回、訂正版の再計算は別editionとして履歴を残す。30日中にpolicyや都合のよい停止日を選び直さない。
+- [x] `test_protocol_rejects_changed_cutoff_seed_or_family` で正式protocolの改変を拒否する。日々の診断はdescriptiveとして保存する。正式評価は固定cutoffで1回、訂正版の再計算は別editionとして履歴を残す。30日中にpolicyや都合のよい停止日を選び直さない。
 
 **Gate:** 元のcaptureの終了・品質・評価可否が確定し、outcomeとevaluationが実データ由来の隔離copyで通る。正式評価は条件成立までPARTIAL/not_run。結果がsupportedにならなくても、reject/insufficient evidenceを正しく確定できれば評価工程は完了。将来最大絶対参照returnの結果を方向・実約定・費用控除後利益へ拡張しない。
 
@@ -204,7 +204,7 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 
 ## 最小検証と停止条件
 
-関連pytest/Ruff/format/Pyreflyを変更箇所ごとに実行する。Web変更があればVitest→Svelte check→build＋関連E2E。model/schema変更は正本から再生成しcheckする。最終cross-package sourceにrelease gateを1回実行し、文書metadata/links/diffを確認する。今回の調査ではこれらのsource検証を再実行していない。
+関連pytest/Ruff/format/Pyreflyを変更箇所ごとに実行する。Web変更があればVitest→Svelte check→build＋関連E2E。model/schema変更は正本から再生成しcheckする。最終cross-package sourceにrelease gateを1回実行し、文書metadata/links/diffを確認する。実行checkpointに実施済みsource検証と未実施の実運転受入を分けて記録する。
 
 実運転のgateはsource testで代用しない。2h、24h、30日はそれぞれ実際の標本期間が必要。容量不足・identity漂流・backlog/429継続・新しいsource不良・予期しないrestartがあれば100昇格やformal評価開始を止める。raw evidence、旧source、protected controlsを保持する。
 
@@ -230,15 +230,20 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 
 ## 実行checkpoint
 
-timestamp="2026-10-11(日)_14:19 JST"
+timestamp="2026-10-11(日)_15:37 JST"
 
-- A: closed artifact schema・生成型と周期診断を実装。関連46 pytest、Ruff/format、Pyreflyを通過。本番未反映。
-- B: capacity初回はPG physicalのhost権限不足をunknown、30日forecastはnot_validated。SQLite online backupと3295 immutable generationのchecksum/readback完了。PG dumpと隔離restore/readback完了。現行native 1147件、minute state 12769005行を照合。
-- C: 1440 observationsの原本を保全し、capture COMPLETE・quality INELIGIBLE・evaluation NOT_RUN・finalization COMPLETEを新出力へ確定。candle 2/state 5の欠測を保持。
-- D以降、実測7200秒/24h/30日、本人実機は未完了。
+- source: `6c06046f3c1e848237f94b80d07ba22d4969718e`を専用branch `ai/remaining-completion-20261011-1353`へcommit/push。元workspace4差分を保全。後続のcheckpoint更新は文書だけで、稼働source SHAとは別。
+- A: 周期終了時の全件品質・理由・説明可能partial件数と最大8例を同一transactionへ保存。後続Funding更新で診断は不変。限定Aster bid/ask不良は警告、未知原因・stale・利用可能入力0はfailure。closed schemaと生成型を更新し、互換readerを先に配置。 retained rawの13:00 MEXC16件Funding決済partialと13:06 Aster452 ready/1 SXT partialを、当時の50/453契約定義で現行parserへ再入力し、原payload hash一致を確認。bid/時刻/OIは補完していない。
+- B: SQLite online backup、3295 immutable generationのhash/readback、専用PG dumpと隔離restore/readbackを確認。本番DB restore・evidence削除は未実施。現在PG physicalは専用container内のread-only測定で補足。初回physical sampleはunknown、観測約66分のため24h増分・30日forecastはNOT_VALIDATED。copy/export peakと50GiB reserveの現在余裕はあり、将来容量受入とは別。
+- C: 原本1440 observationsを保全し、新出力でcapture COMPLETE・quality INELIGIBLE・evaluation NOT_RUN・finalization COMPLETE。candle2/state5欠測は保持。
+- D: Recovery/取消保護/history audit/reconciliation/bundleを統合。公式catalogでnative50を再照合。reference40、unsupported42、quantity4、Widget43の未資格理由を全件保持し、`qualificationComplete=false`を維持。固定6h/1147契約の同一scope auditは176 gap→20→1→0、412920分を確認。追加は現在の観測/回復時刻を保ち、研究の過去availabilityへ遡及しない。
+- D/live repair: 既存単一writerを保つためMarketを2回計画停止。SOPH16分、その後公式APIに返るようになったMEME46/NOT12分を既存Recoveryで取り込み、各target remaining0。ほかの回復分は通常Recoveryによる。後続の通常6h/endpoint全scope受入は、scoped手動成功や固定audit成功で代用しない。
+- production: Web→Ranking→Attention→Marketを同releaseへ反映。既存31unit file、59旧map file、元workspace/controlのhashを保全。runtime manifest290filesと現PIDの実行sourceを確認。通常monitor exit0は対象別partialを含むPASS WITH ISSUES。最新通常6h完了はremaining9、最新endpoint完了はremaining17でstrict Recovery gateは未通過。50件7200秒の新観測、100件配置/24h、正式30日開始は未実施。
+- E準備: 現行6追加drop-in、release metadata、map、helper/policy/source hashesを専用operational bundleへ固定。古いhardcoded drop-in/map依存を除去。Aster book欠測の全件counts/理由/clockを検証するadapterを加え、実応答＋6拒否case、既存preflight3tests、live設定照合を通過。known map/native制限だけをexact identity/metric/reasonと24hの有限例外へ束縛。endpoint欠損は除外しない。最大90秒の既存二枝settlement条件を保持し、100自動昇格はfalse。実preflightはRecovery未受入でBLOCKED、child/観測は未開始。
+- G: outcome export/hash reader/common-eligible診断/prospective protocolの固定helperを実装。3保存世代・618assets全件の隔離probeで各2472outcomes（参照ready1072、native等unscorable1400）を生成。評価は期間不足の技術probeでformal NOT_RUN。完了UTC日を6map/60fragments約1.03GiBへ退避しSHAを照合。日次timerを配置し、次の予定実行は2026-10-12。native5分観測の1分経路不足を補完しない。
+- source検証: 横断gateはaf0b385でexit0、Market548/Ranking176/Attention83/Web266とE2E169成功/1既定skip。独立reviewはCritical0/Important2、parent traversalとbackup timeout再開をRED→GREENで修正。最終6c06046はcopy6/outcome-protocol5 testsとRuff/format/Pyrefly等の局所検証を通過。修正後full gateは反復していない。
+- H: 本人回答「まだ確認していない」。PC/スマホ/IME/focus/Chart往復/下書き/再開は未受入。source/E2Eを本人実機の証拠にしない。
+- 切戻し: 今回追加した8設定だけをSHA guardで扱う。new archive timerを停止し、Market writerを旧sourceへ戻してfreshな非空collectorsからdiagnosticsが消えた後に旧readerへ戻す。guardとpredicate5casesを確認。最終配置後の切戻し実行はNOT_RUN。最初の2配置試行は配置script側のhealth predicate誤りでreaderのみ切戻し、実行scriptと失敗receiptを保全。
+- 再開: 現行完了Recovery全roster・通常6h/endpoint scope・fresh clock・remaining0をstrict checkerで確認してから新7200秒observer。その判定後だけ100件のfresh catalog/実version/mapと24h通常運転へ進む。正式protocolは運転/容量/入力受入後に将来UTC境界とcutoffを固定。原本・旧map・protected controls・daily exportを維持する。
 
-- D/source: Recovery、取消保護、history audit/reconciliation、bundle検証を選択統合。既存履歴上限・下書き・Discovery表示を保持。Recovery等161 pytestとmonitor 23 pytest通過。固定6hのread-only auditは412920分中412744分を確認し176 gapを保存。新規Provider取得・DB変更は0。これはRecovery完了PASSではない。
-
-- G source: 完了copyからday/map/reference別outcome bundle、hash検証reader、common-eligible診断、future30UTC日protocolの固定と日次退避を実装。実copyの3世代・618assets全件で各2472outcomesを生成（参照ready1072、native等unscorable1400）。3世代の評価は不足期間の技術probeでformal NOT_RUN。Attention全83testsと局所5testsを確認。30日開始は100件24h/容量受入後で、現時点で開始しない。
-
-- 独立source review: Critical0/Important2（parent traversal、backup timeout後の再開）をRED→GREENで修正。copy6tests、outcome/protocol5testsとRuffを通過。横断gateは修正前af0b385でexit0（E2E169成功/1既定skip）、修正範囲を追加局所検証。本人実機はuser回答「まだ確認していない」のため未確認。native50契約semantic一致、reference40/quantity4/widget43とunsupported42の未資格理由を新artifactへ保持。
+詳細なhost receiptと再開commandは `/home/tn/watchdeck-local-archive/remaining-completion-implementation-20261011-1353/FINAL_REPORT.md`へ保存する。CI・PR・main mergeは未実施。

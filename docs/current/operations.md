@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_14:57 JST"
+timestamp="2026-10-11(日)_15:23 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T14:57:10+09:00`
-- 検証: `2026-10-11T11:09:44+09:00`
+- 更新: `2026-10-11T15:23:38+09:00`
+- 検証: `2026-10-11T15:23:38+09:00`
 - 状態: `現行`
 
 ---
@@ -662,6 +662,8 @@ CLI終了3による品質不適格は、全sampleを保存したかどうかと�
 ## 周期診断、容量と隔離copy
 
 `check-data-operations.py`はfreshな`venue_partial_failure`でも、完全な周期診断が全native件数を説明し、各Venueにready入力があり、Asterの不良がbid/ask欠測だけの場合に対象別partialを警告として記録する。不良rowの値・品質は補完しない。stale/unavailable、未知理由、診断欠落、identity不一致、利用可能入力0はfailureを維持する。Funding限定partialの一般除外は追加していない。exit 0は全rowの品質PASSを意味しない。
+
+周期diagnosticsを出すwriterへの切替は、closed artifactを受けるWeb/Attention readerを先に更新する。切戻しでは新writerの追加設定だけをhash確認して戻し、旧writer再開後のfreshな`generatedAt`と非空の`collectors`を確認する。すべてのcollector rowから新しい`diagnostics` fieldが消えた後に旧readerへ戻す。設定上のWorkingDirectoryに加えて、現PIDのcommand/cwdで実行releaseを照合する。DB・map・evidenceの削除やdowngradeは行わない。
 
 `scripts/ops/check-runtime-capacity.py`は明示したMarket/Ranking/Attention stateをread-onlyで測り、新しい外部JSONへSQLite/WAL/artifact/archiveとhost空きを出す。権限不足・symlinkはunknownとして記録する。24h未満や測定不足の30日外挿は`not_validated`。50 GiBと実測増分7日分の停止条件は維持し、このscriptは蓄積を停止・削除しない。Postgres logicalとphysicalを同一視しない。
 
