@@ -1,9 +1,9 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-11(日)_11:56 JST"
+timestamp="2026-10-11(日)_12:08 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-11T11:56:31+09:00`
-- 検証: `2026-10-11T11:56:31+09:00`
+- 更新: `2026-10-11T12:08:34+09:00`
+- 検証: `2026-10-11T12:08:34+09:00`
 - 状態: `現行`
 
 ---
@@ -51,8 +51,6 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 - [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](decisions/0016-reader-observed-research.md): Reader観測版と固定比較の証拠境界。
 
 ## 実装計画
-
-- [Discovery coverageと対応表不一致の修復](plans/active/discovery-coverage-repair/PLAN.md): 未対応を維持した契約version更新と、同じ観測の判定件数表示。
 
 - [MEXC 100銘柄への段階拡大](plans/active/mexc-100-scale/PLAN.md): Funding/共有予算/Discovery最適化、銘柄審査、2h/24h運転と容量受入。
 
