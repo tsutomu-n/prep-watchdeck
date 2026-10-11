@@ -201,7 +201,14 @@ def build_market_metrics(
         latest_at = row["l_cycle_at"]
         for name, minutes in (("15m", 15), ("1h", 60)):
             anchor = latest_at - timedelta(minutes=minutes) if latest_at else None
-            if latest_at is None or anchor is None or row["l_oi_base"] is None:
+            if row.get("oi_capability_available") is False:
+                reason = row.get("oi_capability_reason")
+                if not isinstance(reason, str) or not reason.strip():
+                    reason = "source_capability_unavailable"
+                oi[name] = _missing(reason, anchor, latest_at).model_copy(
+                    update={"availability": "unsupported"}
+                )
+            elif latest_at is None or anchor is None or row["l_oi_base"] is None:
                 oi[name] = _missing("endpoint_missing", anchor, latest_at)
             else:
                 oi[name] = _change(
@@ -267,6 +274,8 @@ def build_market_metrics(
 METRICS_SQL = """
 SELECT vi.venue_instrument_version_id, vi.venue, vi.source_symbol,
        vi.quote_asset, vi.settle_asset, vi.price_tick,
+       oi_cap.available AS oi_capability_available,
+       oi_cap.details->'reason' AS oi_capability_reason,
        l.cycle_at AS l_cycle_at, l.open_interest_base AS l_oi_base,
        l.source_at AS l_source_at, l.observed_at AS l_observed_at,
        oi15.open_interest_base AS oi_15m_base, oi60.open_interest_base AS oi_1h_base,
@@ -281,6 +290,8 @@ SELECT vi.venue_instrument_version_id, vi.venue, vi.source_symbol,
        c1440.close_price AS c_24h_close, c1440.finality AS c_24h_finality,
        c1440.source_at AS c_24h_source_at, c1440.observed_at AS c_24h_observed_at
 FROM venue_instrument_versions vi
+LEFT JOIN capabilities oi_cap
+  ON oi_cap.venue = vi.venue AND oi_cap.capability = 'open_interest'
 LEFT JOIN latest_market_state l
   ON l.venue_instrument_version_id = vi.venue_instrument_version_id
 LEFT JOIN market_state_1m oi15

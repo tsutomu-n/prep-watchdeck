@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-10(土)_10:53 JST"
+timestamp="2026-10-11(日)_11:09 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T10:53:42+09:00`
-- 検証: `2026-10-08T16:04:27+09:00`
+- 更新: `2026-10-11T11:09:44+09:00`
+- 検証: `2026-10-11T11:09:44+09:00`
 - 状態: `現行`
 
 ---
@@ -477,6 +477,11 @@ Repo rootで`bun scripts/assets/generate-logo-bindings.mjs`を実行し、画像
 許可済み対象への`--apply`はnative履歴を取得し、欠損だけ挿入する。現行契約の版・定義hashが変わったら
 対象を停止する。自動実行は`PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED=true`を明示したserviceだけで有効。
 falseに戻しても追加済みの正当な保存足を自動削除しない。
+
+Hyperliquidの直近5,000本の履歴上限を超える古い窓は、その対象の`history_limit`として扱い、
+他Venueのscan/回収を続ける。結果は`partial`、未検査件数は`null`であり、全履歴の完了とは扱わない。
+dry-runは状態を保存せず、applyは全体の件数・終了理由をDB auditへ、対象別診断を
+`candle-recovery-state.json`へ残す。
 
 有効なserviceでは15分ごとの履歴回復に加え、毎分の不足endpoint回復が動く。
 後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足を

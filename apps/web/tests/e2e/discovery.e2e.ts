@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import type { MarketArtifactBundle } from "../../src/lib/server/market-artifact-repository";
 import type { UniverseInstrumentArtifact } from "../../src/lib/generated/universe-snapshot";
 import type { UserWorkspace } from "../../src/lib/server/user-workspace-repository";
@@ -36,6 +36,185 @@ function marketBundle(now: number): MarketArtifactBundle {
       artifacts: ["universe-snapshot.json", "market-chart.json", "selected-market.json"].map(name => ({ name, status: "ready", generatedAt, errorCode: null })) }
   };
 }
+
+async function storedComparison(page: Page) {
+  const now = Math.floor(Date.now() / 60_000) * 60_000 + 10_000;
+  await page.clock.install({ time: new Date(now) });
+  const state = {
+    source: discoveryFixture(now),
+    workspace: { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] } as UserWorkspace,
+    history: { schemaVersion: 1, revision: 0, decisions: [] } as DecisionHistory,
+    historyUnavailable: false,
+    decisionResponseLost: false,
+    decisions: [] as { decision: DecisionHistory["decisions"][number]; expectedRevision: number }[],
+    selectionPosts: [] as unknown[]
+  };
+  state.workspace.pins = state.source.rows.filter(row => ["BTC", "ETH"].includes(row.asset))
+    .map(row => ({ target: { kind: "reference", id: row.assetId, referenceKey: row.referenceKey!,
+      originals: row.originals.map(original => `${original.instrumentId}:${original.versionId}`) },
+      episodeId: row.episodeId, discoveredAt: row.raw.decisionAt,
+      snapshot: { asset: row.asset, referenceClose: row.raw.referenceClose } }));
+  await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
+  await page.route("**/api/rankings?**", route => route.fulfill({ json: rankingFixture(new URL(route.request().url()).searchParams, state.source.rankingCutoff!) }));
+  await page.route("**/api/discovery-summary", route => route.fulfill({ json: {
+    schemaVersion: "discovery-summary-v1", policy: state.source.policy, generationId: state.source.generationId,
+    decisionAt: state.source.decisionAt, rankingCutoff: state.source.rankingCutoff, status: state.source.status,
+    reason: state.source.reason, historyAvailableFrom: state.source.historyAvailableFrom,
+    rows: state.source.rows.map(({ raw: _raw, native: _native, turnoverComparison: _comparison, ...row }) => row)
+  } }));
+  await page.route("**/api/discovery?**", route => {
+    const ids = new URL(route.request().url()).searchParams.getAll("assetId");
+    return route.fulfill({ json: { ...state.source, rows: state.source.rows.filter(row => ids.includes(row.assetId)) } });
+  });
+  await page.route("**/api/user-workspace", route => {
+    if (route.request().method() === "POST") {
+      const command = route.request().postDataJSON();
+      state.workspace = { ...state.workspace, revision: state.workspace.revision + 1,
+        pins: command.enabled ? [...state.workspace.pins, command.pin]
+          : state.workspace.pins.filter(pin => pin.target.id !== command.pin.target.id) };
+    }
+    return route.fulfill({ json: state.workspace });
+  });
+  await page.route("**/api/decisions", route => {
+    if (route.request().method() === "GET") return route.fulfill(state.historyUnavailable
+      ? { status: 500, json: { error: "decision_unavailable" } } : { json: state.history });
+    const command = route.request().postDataJSON();
+    state.decisions.push(command);
+    if (state.decisionResponseLost) {
+      state.decisionResponseLost = false;
+      return route.fulfill({ status: 500, json: { error: "decision_unavailable" } });
+    }
+    const saved = state.history.decisions.find(item => item.id === command.decision.id);
+    if (saved) {
+      const { recordedAt: _recordedAt, ...input } = saved;
+      if (JSON.stringify(input) !== JSON.stringify(command.decision)) {
+        return route.fulfill({ status: 409, json: { error: "decision_id_conflict" } });
+      }
+    } else {
+      state.history = { ...state.history, revision: state.history.revision + 1,
+        decisions: [...state.history.decisions, { ...command.decision, recordedAt: new Date(now).toISOString() }] };
+    }
+    return route.fulfill({ json: state.history });
+  });
+  await page.route("**/api/selection", route => {
+    state.selectionPosts.push(route.request().postDataJSON());
+    return route.fulfill({ json: { ok: true } });
+  });
+  return state;
+}
+
+test("判断履歴だけが失敗しても比較候補を表示・追加でき、失敗側の再取得で判断を回復する", async ({ page }) => {
+  const state = await storedComparison(page);
+  state.historyUnavailable = true;
+  await page.goto("/?mode=reference");
+  const panel = page.getByTestId("discovery-workflow");
+  await expect(panel.getByTestId("comparison-card")).toHaveCount(2);
+  await expect(panel).toContainText("見送り適用は未確認");
+  await expect(panel.getByTestId("manual-history")).toContainText("判断履歴 (未確認)");
+  await expect(panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "監視を記録" })).toBeDisabled();
+  await panel.getByRole("button", { name: /^SOL ·/ }).click();
+  await expect(panel.getByTestId("comparison-card")).toHaveCount(3);
+  await expect(panel).toContainText("見送り適用は未確認");
+  state.historyUnavailable = false;
+  await panel.getByRole("button", { name: "判断履歴を再取得" }).click();
+  await expect(panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "監視を記録" })).toBeEnabled();
+  await expect(panel).not.toContainText("見送り適用は未確認");
+  expect(state.workspace.pins.map(pin => pin.target.id)).toEqual(["asset:BTC", "asset:ETH", "asset:SOL"]);
+  expect(state.decisions).toHaveLength(0);
+  expect(state.selectionPosts).toHaveLength(0);
+});
+
+test("判断下書きは切替を止め、画面移動・再読込・保存結果不明でも元の根拠と同じidを保持する", async ({ page }) => {
+  const state = await storedComparison(page);
+  await page.goto("/?mode=reference");
+  const panel = page.getByTestId("discovery-workflow");
+  const btc = panel.locator('[data-target="asset:BTC"]');
+  const eth = panel.locator('[data-target="asset:ETH"]');
+  await btc.getByRole("button", { name: "監視を記録" }).click();
+  await panel.getByLabel("判断理由").fill("元の100 USDTを根拠に監視");
+  await expect(btc.getByRole("button", { name: "監視を記録" })).toBeDisabled();
+  await expect(eth.getByRole("button", { name: "この成立を見送り" })).toBeDisabled();
+  await expect(btc.getByRole("button", { name: "この実Venueを確認" })).toBeDisabled();
+  state.source.rows.find(row => row.asset === "BTC")!.raw.referenceClose.value = 105;
+  await page.clock.fastForward(15_000);
+  await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "設定", exact: true }).click();
+  await expect(page).toHaveURL(/\/settings/);
+  await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "ランキング", exact: true }).click();
+  await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
+  await page.reload();
+  await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toContainText("asset:BTC · 監視 · 成立 episode-BTC-1");
+  state.decisionResponseLost = true;
+  await panel.getByRole("button", { name: "判断を保存", exact: true }).click();
+  await expect(panel.getByRole("alert")).toContainText("判断を保存できません");
+  await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
+  await expect(panel.getByLabel("判断理由")).toBeDisabled();
+  await page.reload();
+  await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
+  await panel.getByRole("button", { name: "判断を保存", exact: true }).click();
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
+  expect(state.decisions).toHaveLength(2);
+  expect(state.decisions[1].decision).toEqual(state.decisions[0].decision);
+  expect(state.history.decisions).toHaveLength(1);
+  expect((state.history.decisions[0].snapshot.row as typeof state.source.rows[0]).raw.referenceClose.value).toBe(100);
+  await page.reload();
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
+  expect(state.selectionPosts).toHaveLength(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test("復元下書きの対象や成立が変わった場合は保存を止め、明示破棄まで本文を保持する", async ({ page }) => {
+  const state = await storedComparison(page);
+  await page.goto("/?mode=reference");
+  const panel = page.getByTestId("discovery-workflow");
+  await panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "この成立を見送り" }).click();
+  await panel.getByLabel("判断理由").fill("元の成立だけを見送る");
+  state.source.rows.find(row => row.asset === "BTC")!.episodeId = "episode-BTC-2";
+  await page.reload();
+  await expect(panel.getByLabel("判断理由")).toHaveValue("元の成立だけを見送る");
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toContainText("成立が変更");
+  await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
+  state.source.rows.find(row => row.asset === "BTC")!.originals[0].versionId = 2;
+  state.source.rows.find(row => row.asset === "BTC")!.native[0].versionId = 2;
+  await page.reload();
+  await expect(panel.getByLabel("判断理由")).toHaveValue("元の成立だけを見送る");
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toContainText("対象が変更");
+  await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
+  await panel.getByRole("button", { name: "下書きを破棄", exact: true }).click();
+  await page.reload();
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
+  expect(state.decisions).toHaveLength(0);
+  expect(state.selectionPosts).toHaveLength(0);
+});
+
+test("タブ保存が使えない場合は警告し、画面内の判断下書きを編集・保存できる", async ({ page }) => {
+  const state = await storedComparison(page);
+  await page.addInitScript(() => {
+    for (const method of ["getItem", "setItem", "removeItem"] as const) {
+      const original = Storage.prototype[method];
+      Storage.prototype[method] = function(key: string, value?: string) {
+        if (this === window.sessionStorage && key.startsWith("watchdeck:discovery-decision-draft:")) {
+          throw new DOMException("Fixture session storage unavailable", "SecurityError");
+        }
+        return Reflect.apply(original, this, [key, value]);
+      };
+    }
+  });
+  await page.goto("/?mode=reference");
+  const panel = page.getByTestId("discovery-workflow");
+  await panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "監視を記録" }).click();
+  await panel.getByLabel("判断理由").fill("この画面内の下書き");
+  await expect(panel).toContainText("この画面を閉じると失われる可能性");
+  await expect(panel.getByLabel("判断理由")).toHaveValue("この画面内の下書き");
+  await panel.getByRole("button", { name: "下書きを破棄", exact: true }).click();
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
+  await panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "監視を記録" }).click();
+  await panel.getByLabel("判断理由").fill("この画面内の下書き");
+  await panel.getByRole("button", { name: "判断を保存", exact: true }).click();
+  await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
+  expect(state.history.decisions[0].reason).toBe("この画面内の下書き");
+  expect(state.selectionPosts).toHaveLength(0);
+});
 
 test("候補4件を解除・再読込後も保持し、判断根拠を固定して明示確認でのみ実Venueへ移る", async ({ page }, testInfo) => {
   // Align the simulated observation timeline independently of the wall-clock minute.

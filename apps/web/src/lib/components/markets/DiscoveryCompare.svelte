@@ -4,8 +4,9 @@
   import type { DiscoveryResponse, DiscoveryRow, RawFeatureValue, DiscoveryEpisode } from "$lib/generated/discovery-response";
   import type { DiscoverySummary, DiscoverySummaryRow } from "$lib/generated/discovery-summary";
   import { DiscoveryGenerationChanged, readDiscoveryView, requestDiscovery } from "$lib/discovery/client";
+  import { DECISION_DRAFT_KEY, decisionDraftInput, parseDecisionDraft, type DecisionDraft } from "$lib/discovery/decision-draft";
   import type { ComparisonPin, UserWorkspace } from "$lib/server/user-workspace-repository";
-  import type { DecisionHistory, DecisionInput } from "$lib/market/decisions";
+  import type { DecisionHistory } from "$lib/market/decisions";
   import { mergeDiscoveryEpisodes } from "$lib/discovery/history";
   import { episodeSkipped } from "$lib/market/decisions";
   import { favoriteKey, readUserWorkspace } from "$lib/market/user-workspace";
@@ -19,12 +20,20 @@
   let pinnedDiscovery = $state<DiscoveryResponse | null>(null);
   let pinnedRows = $derived(pinnedDiscovery?.rows ?? []);
   let history = $state<DecisionHistory | null>(null);
+  let workspaceError = $state<string | null>(null);
+  let historyError = $state<string | null>(null);
+  let workspaceLoading = $state(false);
+  let historyLoading = $state(false);
+  let workspaceRead = 0;
+  let historyRead = 0;
   let error = $state<string | null>(null);
   let unavailable = $state<string | null>(null);
   let busy = $state(false);
   let nativeConfirm = $state<{ pin: ComparisonPin; row: DiscoveryRow; instrumentId: string; version: number } | null>(null);
-  let decisionFor = $state<{ pin: ComparisonPin; row: DiscoveryRow; action: "watch" | "skip"; id: string; snapshot: Record<string, unknown> } | null>(null);
-  let reason = $state("");
+  let decisionFor = $state<DecisionDraft | null>(null);
+  let draftWarning = $state<string | null>(null);
+  let draftUnreadable = $state(false);
+  let decisionBlocked = $derived(decisionBlockReason());
   let confirmationRegion = $state<HTMLElement | null>(null);
   let reasonInput = $state<HTMLTextAreaElement | null>(null);
   let returnFocus: HTMLElement | null = null;
@@ -41,6 +50,90 @@
     !episodeSkipped(history, row.episodeId)) ?? []);
   let pins = $derived(workspace?.pins ?? []);
 
+  function rememberDraft() {
+    if (!decisionFor) return;
+    try { sessionStorage.setItem(DECISION_DRAFT_KEY, JSON.stringify($state.snapshot(decisionFor))); draftWarning = null; }
+    catch { draftWarning = "下書きをこのタブへ保存できません。この画面を閉じると失われる可能性があります。"; }
+  }
+  function restoreDraft() {
+    let stored: string | null;
+    try { stored = sessionStorage.getItem(DECISION_DRAFT_KEY); }
+    catch {
+      draftWarning = "タブ保存を利用できません。下書きは画面内だけで保持し、この画面を閉じると失われる可能性があります。";
+      return;
+    }
+    if (!stored) return;
+    try {
+      const draft = parseDecisionDraft(JSON.parse(stored));
+      if (!draft) throw new Error("invalid draft");
+      decisionFor = draft;
+    } catch {
+      draftUnreadable = true;
+      draftWarning = "保存済み下書きを復元できません。保存内容は保持しています。新しい判断には明示的な破棄が必要です。";
+    }
+  }
+  function discardDraft() {
+    if (busy) return;
+    draftWarning = null;
+    try { sessionStorage.removeItem(DECISION_DRAFT_KEY); }
+    catch { draftWarning = "画面内の下書きは解除しましたが、タブ保存から削除できません。再読込すると戻る可能性があります。"; }
+    decisionFor = null; draftUnreadable = false;
+    void tick().then(() => returnFocus?.focus());
+  }
+  function updateReason(value: string) {
+    if (!decisionFor || decisionFor.submitted || busy) return;
+    decisionFor.reason = value;
+    rememberDraft();
+  }
+  function decisionBlockReason() {
+    if (!decisionFor) return null;
+    if (updating) return "候補の更新待ちです。元の下書きと根拠を保持しています。";
+    if (!history || historyError || historyLoading) return "判断履歴が未確認のため保存できません。下書きは保持しています。";
+    if (!workspace || workspaceError || workspaceLoading) return "比較候補が未確認のため保存できません。下書きは保持しています。";
+    const pin = pins.find(item => sameTarget(item.target, decisionFor!.pin.target));
+    const row = pin ? rowFor(pin) : null;
+    if (!pin || row && !current(pin, row)) return "保存対象が変更・削除されています。元の対象と下書きを保持しています。";
+    if (!row || unavailable) return "現在の対象・根拠を確認できません。元の下書きを保持しています。";
+    if (row.episodeId !== decisionFor.row.episodeId) return "成立が変更されています。元の成立と下書きを保持しています。";
+    return null;
+  }
+  function settleDraft() {
+    if (!decisionFor?.submitted || !history) return false;
+    const entry = history.decisions.find(item => item.id === decisionFor!.id);
+    if (!entry) return false;
+    const { recordedAt: _recordedAt, ...saved } = entry;
+    if (JSON.stringify(saved) !== JSON.stringify(decisionDraftInput(decisionFor))) {
+      error = "同じ判断idに異なる保存内容があります。下書きを保持しています。";
+      return false;
+    }
+    discardDraft();
+    return true;
+  }
+  async function loadWorkspace() {
+    if (workspaceLoading || !alive) return;
+    const read = ++workspaceRead;
+    workspaceLoading = true;
+    try {
+      const saved = await readUserWorkspace();
+      if (!alive || read !== workspaceRead) return;
+      workspace = saved; workspaceError = null; void load();
+    } catch { if (alive && read === workspaceRead) workspaceError = "比較候補を読み込めません。保存内容は保持しています。"; }
+    finally { if (alive && read === workspaceRead) workspaceLoading = false; }
+  }
+  async function loadHistory() {
+    if (historyLoading || !alive) return;
+    const read = ++historyRead;
+    historyLoading = true;
+    try {
+      const response = await fetch("/api/decisions", { cache: "no-store" });
+      if (!response.ok) throw new Error("history unavailable");
+      const saved = await response.json() as DecisionHistory;
+      if (!alive || read !== historyRead) return;
+      history = saved; historyError = null;
+      if (!busy && settleDraft()) error = null;
+    } catch { if (alive && read === historyRead) { history = null; historyError = "判断履歴を読み込めません。見送り適用は未確認で、判断保存を停止しています。"; } }
+    finally { if (alive && read === historyRead) historyLoading = false; }
+  }
 
   function pinnedIds() { return pins.filter(pin => pin.target.kind === "reference").map(pin => pin.target.id); }
   async function load() {
@@ -88,19 +181,23 @@
   }
   onMount(() => {
     alive = true;
-    void Promise.all([readUserWorkspace(), fetch("/api/decisions", { cache: "no-store" }).then(async response => {
-      if (!response.ok) throw new Error("判断履歴を読み込めません"); return await response.json() as DecisionHistory;
-    })]).then(([saved, decisions]) => {
-      if (!alive) return; workspace = saved; history = decisions; void load();
-    }).catch(cause => { if (alive) { error = String(cause); void load(); } });
-    const timer = setInterval(() => { if (document.visibilityState !== "hidden") void load(); }, 15_000);
+    restoreDraft();
+    void loadWorkspace(); void loadHistory(); void load();
+    const timer = setInterval(() => {
+      if (document.visibilityState === "hidden") return;
+      void load();
+      if (!busy) {
+        if (workspaceError) void loadWorkspace();
+        if (historyError) void loadHistory();
+      }
+    }, 15_000);
     function compare(event: Event) {
       const detail = (event as CustomEvent<{ assetId: string }>).detail;
       if (!detail?.assetId) return;
       void pinAsset(detail.assetId);
     }
     window.addEventListener("watchdeck:compare", compare);
-    return () => { alive = false; clearInterval(timer); window.removeEventListener("watchdeck:compare", compare); };
+    return () => { alive = false; workspaceRead++; historyRead++; clearInterval(timer); window.removeEventListener("watchdeck:compare", compare); };
   });
   function rowFor(pin: ComparisonPin) {
     return pinnedRows.find(row => row.assetId === pin.target.id) ?? null;
@@ -113,18 +210,20 @@
     return !!row && sameTarget(pin.target, discoveryTarget(row));
   }
   async function mutatePin(pin: ComparisonPin, enabled: boolean) {
-    if (!workspace || busy) return;
+    if (!workspace || workspaceLoading || workspaceError || busy) return;
     busy = true; error = null;
     try {
       const response = await fetch("/api/user-workspace", { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "setPin", pin, enabled, expectedRevision: workspace.revision }) });
       if (!response.ok) throw new Error(response.status === 413 ? "比較は最大4件です。既存候補を外してください。"
         : response.status === 409 ? "保存内容または対象が更新されました。再読込して再確認してください。" : "比較候補を保存できません");
-      workspace = await response.json(); await load();
+      const saved = await response.json();
+      if (!alive) return;
+      workspace = saved; await load();
     } catch (cause) {
       error = cause instanceof Error ? cause.message : "比較候補を保存できません";
-      try { workspace = await readUserWorkspace(); } catch { /* Preserve visible error. */ }
-    } finally { busy = false; }
+      if (alive) await loadWorkspace();
+    } finally { if (alive) busy = false; }
   }
   async function pinRow(row: DiscoveryRow) {
     const pin = comparisonPin(row);
@@ -168,7 +267,7 @@
       ? `${((latest.value / first.value - 1) * 100).toFixed(2)}%` : "未取得 / 比較不能";
   }
   async function askNative(pin: ComparisonPin, row: DiscoveryRow, instrumentId: string, version: number) {
-    if (updating) return;
+    if (updating || busy || decisionFor || draftUnreadable) return;
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     nativeConfirm = { pin, row, instrumentId, version };
     await tick();
@@ -176,11 +275,11 @@
     confirmationRegion?.focus({ preventScroll: true });
   }
   function dismissConfirmation() {
-    nativeConfirm = null; decisionFor = null;
+    nativeConfirm = null;
     void tick().then(() => returnFocus?.focus());
   }
   function prepareDecision(pin: ComparisonPin, row: DiscoveryRow, action: "watch" | "skip") {
-    if (updating) return;
+    if (updating || busy || !history || historyError || decisionFor || draftUnreadable || nativeConfirm) return;
     returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     // Freeze the full evidence currently displayed, including status and the observation time.
     const evidenceResponse = pinnedDiscovery?.rows.some(item => item.assetId === row.assetId && item.raw.decisionAt === row.raw.decisionAt)
@@ -189,25 +288,33 @@
       row: structuredClone($state.snapshot(row)), displayedStatus: unavailable ? "unavailable" : evidenceResponse?.status ?? "unavailable",
       displayedAt: Date.now(), policy: structuredClone($state.snapshot(evidenceResponse?.policy)), generationId: evidenceResponse?.generationId,
       decisionAt: evidenceResponse?.decisionAt, rankingCutoff: evidenceResponse?.rankingCutoff
-    } };
-    reason = ""; error = null;
+    }, reason: "", submitted: false };
+    rememberDraft(); error = null;
     void tick().then(() => { reasonInput?.scrollIntoView({ block: "center" }); reasonInput?.focus({ preventScroll: true }); });
   }
   async function saveDecision() {
-    if (!decisionFor || !history || !reason.trim() || busy || updating) return;
+    if (!decisionFor || !history || !decisionFor.reason.trim() || busy || decisionBlocked) return;
     busy = true; error = null;
-    const input: DecisionInput = { id: decisionFor.id, action: decisionFor.action, reason: reason.trim(),
-      target: decisionFor.pin.target, episodeId: decisionFor.row.episodeId!, snapshot: decisionFor.snapshot };
+    decisionFor.submitted = true;
+    rememberDraft();
+    const input = decisionDraftInput(decisionFor);
     try {
       const response = await fetch("/api/decisions", { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ decision: input, expectedRevision: history.revision }) });
       if (!response.ok) throw new Error(response.status === 413 ? "判断履歴の保存上限です。履歴は保持し、新規保存を拒否しました。"
         : response.status === 409 ? "別の画面で判断履歴が更新されました。内容を再確認して保存してください。" : "判断を保存できません。同じ操作を再試行できます。");
-      history = await response.json(); reason = ""; dismissConfirmation();
+      const saved = await response.json();
+      if (!alive || decisionFor?.id !== input.id) return;
+      history = saved; historyError = null;
+      busy = false;
+      if (!settleDraft()) error = "保存結果を確認できません。下書きは保持しています。同じ操作を再試行できます。";
     } catch (cause) {
+      if (!alive) return;
       error = cause instanceof Error ? cause.message : "判断を保存できません";
-      try { const response = await fetch("/api/decisions", { cache: "no-store" }); if (response.ok) history = await response.json(); } catch { /* Keep explicit error. */ }
-    } finally { busy = false; }
+      await loadHistory();
+      busy = false;
+      if (settleDraft()) error = null;
+    } finally { if (alive) busy = false; }
   }
   async function moreEpisodes() {
     if (!cursor || cursorLoading) return; cursorLoading = true;
@@ -254,13 +361,17 @@
 {/snippet}
 
 <section class="discovery" aria-label="候補比較と判断" data-testid="discovery-workflow">
-  <header><h2>候補比較・判断 <span>{pins.length}/4</span></h2><p>固定監視: 15分売買代金が昨日・一昨日の両方の3倍以上 · 方向 ±2%。ブラウザの強調設定とは独立。</p></header>
+  <header><h2>候補比較・判断 <span>{workspace ? pins.length : "未確認"}/4</span></h2><p>固定監視: 15分売買代金が昨日・一昨日の両方の3倍以上 · 方向 ±2%。ブラウザの強調設定とは独立。</p></header>
   <p class="muted">条件履歴はAttention稼働中に保存されます。初回確認・再確認は成立の開始時刻を意味しません。ブラウザを閉じても判断記録と比較候補を保持します。</p>
   {#if unavailable}<p class="warning" role="status">{unavailable}。保存候補は保持しています。</p>{:else if discovery?.status === "stale"}<p class="warning" role="status">候補データが古くなっています。表示値は以前の観測です。</p>{/if}
+  {#if workspaceError}<p class="warning" role="alert">{workspaceError}</p><button type="button" disabled={busy || workspaceLoading} onclick={loadWorkspace}>比較候補を再取得</button>{/if}
+  {#if historyError}<p class="warning" role="alert">{historyError}</p><button type="button" disabled={busy || historyLoading} onclick={loadHistory}>判断履歴を再取得</button>{:else if !history}<p class="muted">判断履歴を確認中です。見送り適用は未確認で、判断保存を停止しています。</p>{/if}
+  {#if draftWarning}<p class="warning" role="status">{draftWarning}</p>{/if}
+  {#if draftUnreadable}<button type="button" disabled={busy} onclick={discardDraft}>保存済み下書きを破棄</button>{/if}
   {#if error}<p class="warning" role="alert">{error}</p>{/if}
   <div class="candidate-list" aria-label="固定条件の成立候補">
     {#each candidates as row (row.assetId)}
-      <button type="button" disabled={busy || updating || !workspace || !discoveryTarget(row) || pins.some(pin => pin.target.id === row.assetId)} onclick={() => pinAsset(row.assetId)}>
+      <button type="button" disabled={busy || updating || workspaceLoading || !!workspaceError || !workspace || !discoveryTarget(row) || pins.some(pin => pin.target.id === row.assetId)} onclick={() => pinAsset(row.assetId)}>
         {row.asset} · {direction(row)} · {confirmation(row)} · 比較へ
       </button>
     {:else}<p class="muted">{discovery ? "現在の成立候補なし / 不足情報は未取得として扱います。" : "候補を取得しています。"}</p>{/each}
@@ -270,7 +381,7 @@
       {@const row = rowFor(pin)}
       {@const identityCurrent = current(pin, row)}
       <article class="comparison" data-testid="comparison-card" data-target={pin.target.id}>
-        <header><h3>{String(pin.snapshot.asset ?? pin.target.id)}</h3><button type="button" disabled={busy} onclick={() => mutatePin(pin, false)} aria-label={`${pin.target.id}を比較から外す`}>比較から外す</button></header>
+        <header><h3>{String(pin.snapshot.asset ?? pin.target.id)}</h3><button type="button" disabled={busy || workspaceLoading || !!workspaceError} onclick={() => mutatePin(pin, false)} aria-label={`${pin.target.id}を比較から外す`}>比較から外す</button></header>
         <details class="target"><summary>保存対象: {pin.target.kind === "reference" ? referenceLabel(pin.target.referenceKey) : `${pin.target.id} v${pin.target.version}`}</summary><p>{pin.target.kind === "reference" ? pin.target.referenceKey : `${pin.target.id} v${pin.target.version}`}</p></details>
         <p class="muted">比較へ追加: {time(pin.discoveredAt)} · 比較追加後の参照価格変化: {changedSince(pin, row)}</p>
         {#if !identityCurrent}<p class="warning">要再確認: 対応する元契約または参照市場が変更・欠測です。保存対象を保持しています。比較から外し、現在の対象を確認して追加してください。</p>{/if}
@@ -294,9 +405,9 @@
                 <dt>15分OI変化</dt><dd>{@render metric(native.oiChange["15m"], "percent")}</dd></dl>
               <details><summary>実Venueの根拠</summary><p class="muted">source: {native.markPrice.source} · source時刻: {time(native.markPrice.observations[0]?.sourceAt)} · {native.qualityReasons.join(" · ")}</p></details>
             </details>
-            <button class="native-action" type="button" disabled={updating || ["stale", "unavailable"].includes(rowStatus(row)) || !row.originals.some(item => item.current && item.instrumentId === native.instrumentId && item.versionId === native.versionId)} onclick={() => askNative(pin, row, native.instrumentId, native.versionId)}>この実Venueを確認<span class="muted"> · {native.venue} {native.sourceSymbol}</span></button>
+            <button class="native-action" type="button" disabled={busy || !!decisionFor || draftUnreadable || updating || ["stale", "unavailable"].includes(rowStatus(row)) || !row.originals.some(item => item.current && item.instrumentId === native.instrumentId && item.versionId === native.versionId)} onclick={() => askNative(pin, row, native.instrumentId, native.versionId)}>この実Venueを確認<span class="muted"> · {native.venue} {native.sourceSymbol}</span></button>
           {/each}
-          <div class="actions"><button type="button" disabled={busy || updating || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "watch")}>監視を記録</button><button type="button" disabled={busy || updating || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "skip")}>この成立を見送り</button></div>
+          <div class="actions"><button type="button" disabled={busy || updating || historyLoading || !!decisionFor || draftUnreadable || !!nativeConfirm || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "watch")}>監視を記録</button><button type="button" disabled={busy || updating || historyLoading || !!decisionFor || draftUnreadable || !!nativeConfirm || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "skip")}>この成立を見送り</button></div>
         {:else}<p>現在の根拠は未取得です。追加時の対象・根拠を保持しています。</p><details><summary>追加時の根拠</summary><pre>{JSON.stringify(pin.snapshot, null, 2)}</pre></details>{/if}
       </article>
     {:else}<p class="muted">成立候補やランキングの「比較へ」から最大4件を追加してください。追加だけでは実Venueのselectionを変更しません。</p>{/each}
@@ -307,14 +418,17 @@
   {#if decisionFor}
     <form class="confirmation" onsubmit={event => { event.preventDefault(); void saveDecision(); }} aria-label="判断を保存">
       <p>{decisionFor.pin.target.id} · {decisionFor.action === "watch" ? "監視" : "見送り"} · 成立 {decisionFor.row.episodeId}</p><p class="muted">根拠を固定: {time(decisionFor.row.raw.decisionAt)}。この表示snapshotを履歴へ保存します。</p>
-      <label>判断理由<textarea bind:this={reasonInput} bind:value={reason} maxlength="2000" required></textarea></label><button type="submit" disabled={busy || updating || !reason.trim()}>判断を保存</button><button type="button" onclick={dismissConfirmation}>キャンセル</button>
+      <p class="muted">{draftWarning ? "判断下書きはこの画面で保持しています。" : "判断下書きをこのタブで保持しています。"}別の判断・実Venue確認へ切り替えるには、保存または明示的な破棄が必要です。</p>
+      {#if decisionBlocked}<p class="warning" aria-live="polite">{decisionBlocked}</p>{/if}
+      {#if decisionFor.submitted}<p class="muted">送信済みの内容を保持しています。保存結果が確認できるまで、同じ判断id・理由・根拠で再試行します。</p>{/if}
+      <label>判断理由<textarea bind:this={reasonInput} value={decisionFor.reason} oninput={event => updateReason(event.currentTarget.value)} disabled={busy || decisionFor.submitted} maxlength="2000" required></textarea></label><button type="submit" disabled={busy || !!decisionBlocked || !decisionFor.reason.trim()}>判断を保存</button><button type="button" disabled={busy} onclick={discardDraft}>下書きを破棄</button>
     </form>
   {/if}
   <details ontoggle={event => { if (event.currentTarget.open) void loadEpisodes(); }}><summary>条件履歴 ({episodes.length}) · 保持開始 {time(discovery?.historyAvailableFrom)} · 終了履歴7日 / 最大10,000件</summary>
     {#each episodes as episode (episode.id)}<p>{episode.asset} · {episode.startKind === "new" ? "新規成立" : episode.startKind === "reconfirmation" ? "再確認" : "初回確認"} · {episode.state} · 初回観測 {time(episode.firstObservedAt)} · 最終確認 {time(episode.lastConfirmedAt)} · {episode.consecutiveConfirmations}回 · 観測継続 {formatFinite(episode.observedDurationMs / 60000, 1)}分 · {episode.endReason ?? ""}</p>{/each}
     {#if cursor}<button type="button" disabled={cursorLoading} onclick={moreEpisodes}>条件履歴をさらに読む</button>{/if}
   </details>
-  <details data-testid="manual-history"><summary>判断履歴 ({history?.decisions.length ?? 0}) · 自動削除なし</summary>
+  <details data-testid="manual-history"><summary>判断履歴 ({history ? history.decisions.length : "未確認"}) · 自動削除なし</summary>
     <label>判断履歴を検索<input bind:value={historyFilter} placeholder="対象・理由" /></label>
     {#each [...(history?.decisions ?? [])].reverse().filter(entry => `${entry.target.id} ${entry.reason}`.includes(historyFilter)) as entry (entry.id)}
       <details><summary>{entry.target.id} · {entry.action === "watch" ? "監視" : "見送り"} · {formatTimestamp(entry.recordedAt)} JST · {entry.reason}</summary><p>成立: {entry.episodeId} · 保存対象: {JSON.stringify(entry.target)}</p><pre>{JSON.stringify(entry.snapshot, null, 2)}</pre></details>
