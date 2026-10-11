@@ -249,6 +249,41 @@ class SelectedMarketArtifact(ArtifactModel):
     selection: SelectedPayloadArtifact | None
 
 
+class PersistedDiagnosticExample(ArtifactModel):
+    venue_instrument_id: str
+    venue_instrument_version_id: int = Field(gt=0)
+    status: Literal["partial", "unavailable"]
+    error_code: str
+    missing_fields: tuple[str, ...]
+    observed_at: datetime
+    source_at: datetime | None
+
+
+class PersistedQualityCounts(ArtifactModel):
+    ready: int = Field(ge=0)
+    partial: int = Field(ge=0)
+    unavailable: int = Field(ge=0)
+
+
+class PersistedReasonCount(ArtifactModel):
+    error_code: str
+    count: int = Field(gt=0)
+
+
+class PersistedVenueDiagnostics(ArtifactModel):
+    venue: Venue
+    quality_counts: PersistedQualityCounts
+    reason_counts: tuple[PersistedReasonCount, ...] = Field(max_length=64)
+    explained_partial_count: int = Field(ge=0)
+    examples: tuple[PersistedDiagnosticExample, ...] = Field(max_length=8)
+
+
+class PersistedCycleDiagnostics(ArtifactModel):
+    schema_version: Literal["persisted-l1-diagnostics-v1"] = "persisted-l1-diagnostics-v1"
+    cycle_at: datetime
+    venues: tuple[PersistedVenueDiagnostics, ...] = Field(max_length=4)
+
+
 class CollectorRunArtifact(ArtifactModel):
     run_kind: Literal["catalog", "l1"]
     status: CollectorStatus
@@ -259,6 +294,7 @@ class CollectorRunArtifact(ArtifactModel):
     records_received: int = Field(ge=0)
     records_written: int = Field(ge=0)
     error_code: str | None
+    diagnostics: PersistedCycleDiagnostics | None = None
 
 
 class FreshnessArtifact(ArtifactModel):
@@ -372,6 +408,7 @@ class CollectorRunRecord:
     records_received: int
     records_written: int
     error_code: str | None
+    diagnostics: PersistedCycleDiagnostics | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -1025,6 +1062,7 @@ def _collector_artifact(run: CollectorRunRecord, now: datetime) -> CollectorRunA
         records_received=run.records_received,
         records_written=run.records_written,
         error_code=run.error_code,
+        diagnostics=run.diagnostics,
     )
 
 
@@ -1311,7 +1349,7 @@ def read_collector_runs(connection: Connection[Any]) -> tuple[CollectorRunRecord
                 """
                     SELECT DISTINCT ON (run_kind)
                            run_kind, status, started_at, completed_at, cycle_at,
-                           records_received, records_written, error_code
+                           records_received, records_written, error_code, metrics
                     FROM collector_runs
                     WHERE run_kind IN ('catalog', 'l1')
                       AND status IN ('succeeded', 'partial', 'failed')
@@ -1342,6 +1380,39 @@ def read_collector_runs(connection: Connection[Any]) -> tuple[CollectorRunRecord
                 records_received=int(row["records_received"]),
                 records_written=int(row["records_written"]),
                 error_code=None if row["error_code"] is None else str(row["error_code"]),
+                diagnostics=(
+                    PersistedCycleDiagnostics(
+                        cycle_at=row["cycle_at"],
+                        venues=tuple(
+                            PersistedVenueDiagnostics(
+                                venue=venue,
+                                quality_counts=PersistedQualityCounts.model_validate(counts),
+                                reason_counts=tuple(
+                                    PersistedReasonCount(error_code=code, count=count)
+                                    for code, count in sorted(
+                                        row["metrics"]["persistedReasonCountsByVenue"][
+                                            venue
+                                        ].items()
+                                    )
+                                ),
+                                explained_partial_count=row["metrics"][
+                                    "persistedExplainedPartialCountsByVenue"
+                                ][venue],
+                                examples=tuple(
+                                    PersistedDiagnosticExample.model_validate(example)
+                                    for example in row["metrics"]["persistedDiagnosticExamples"][
+                                        venue
+                                    ]
+                                ),
+                            )
+                            for venue, counts in sorted(
+                                row["metrics"]["persistedQualityCountsByVenue"].items()
+                            )
+                        ),
+                    )
+                    if "persistedQualityCountsByVenue" in row["metrics"]
+                    else None
+                ),
             )
         )
     return tuple(records)

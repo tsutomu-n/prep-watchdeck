@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-11(日)_11:09 JST"
+timestamp="2026-10-11(日)_14:19 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T11:09:44+09:00`
+- 更新: `2026-10-11T14:19:10+09:00`
 - 検証: `2026-10-11T11:09:44+09:00`
 - 状態: `現行`
 
@@ -140,6 +140,9 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 ### service-state.json
 
 現行collector/artifactのfreshnessとwrite結果を持つ。Web process healthとmarket data qualityを混同しない。
+
+L1 collectorの`diagnostics`は任意の`persisted-l1-diagnostics-v1`で、cycle時刻と最大4 Venueの配列を持つ。各Venueは保存後のready/partial/unavailable件数、理由別件数、説明可能なpartial件数、最大8件のexact native ID/version・欠測field・source/observed時刻を持つ。収集終了の同一transactionで保存し、後続の独立Funding更新では変更しない。collector metricsのJSONBと公開artifactは表現形式を分け、公開objectは閉じたschemaを維持する。診断のない旧artifactも読める。配置は互換readerを先に更新する。
+
 
 ## 現行Selection command
 
@@ -509,3 +512,5 @@ Aster fundingInfoはraw provenanceと観測されたintervalをcatalog version�
 
 新しい研究snapshotはpayload/receiptの別edition、chain/hash、local temporal contextを含む。
 Schemaとavailability、A/B資格は別判定。詳細と生成コマンドは[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)。
+
+Recovery stateの任意`evidence`は全対象のexact ID/version/definition hashとroster digestを保持する。`previousCompletedRunId`で現在のrunningと直接の終了結果を結ぶ。終了したpartial/failedもlatest-completedへ公開し、古いsuccessを再採用しない。表示用detailsは128件で、不良対象を優先する。history audit v2は固定scope・DB identity・contract validity・catalog不明区間・境界minuteを保存し、Provider取得やMarket書込を行わない。

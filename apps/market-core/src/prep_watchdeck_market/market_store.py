@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -122,6 +123,14 @@ def persist_market_cycle(
             unknown_source_rows = 0
             batch_by_venue: dict[str, MarketBatch] = {batch.venue: batch for batch in batches}
             state_statuses: dict[str, list[str]] = {venue: [] for venue in batch_by_venue}
+            quality_counts = {
+                venue: {"ready": 0, "partial": 0, "unavailable": 0} for venue in batch_by_venue
+            }
+            reason_counts: dict[str, Counter[str]] = {venue: Counter() for venue in batch_by_venue}
+            explained_partial_counts = dict.fromkeys(batch_by_venue, 0)
+            diagnostic_examples: dict[str, list[dict[str, object]]] = {
+                venue: [] for venue in batch_by_venue
+            }
             for batch in batches:
                 source_at = _latest_source_at(batch.observations)
                 cursor.execute(
@@ -198,6 +207,51 @@ def persist_market_cycle(
                 state_statuses[venue].append(
                     "unavailable" if observation is None else observation.status
                 )
+                status = "unavailable" if observation is None else observation.status
+                quality_counts[venue][status] += 1
+                if status != "ready":
+                    reason = str(values[21] or "unexplained_partial")
+                    reason_counts[venue][reason] += 1
+                    fields = {
+                        "markPrice": values[3],
+                        "referencePrice": values[4],
+                        "bestBid": values[6],
+                        "bestAsk": values[7],
+                        "fundingRateRaw": values[8],
+                        "nextFundingAt": values[11],
+                        "volume24hRaw": values[16],
+                        "sourceAt": values[1],
+                    }
+                    missing = [name for name, value in fields.items() if value is None]
+                    # This explains book incompleteness, never repairs the affected row.
+                    # Count every row before limiting diagnostic examples.
+                    if (
+                        venue == "aster"
+                        and status == "partial"
+                        and reason == "incomplete_source_row"
+                        and missing
+                        and set(missing) <= {"bestBid", "bestAsk"}
+                        and observation is not None
+                        and observation.source_at is not None
+                        and observation.source_at <= observation.observed_at
+                    ):
+                        explained_partial_counts[venue] += 1
+                    if len(diagnostic_examples[venue]) < 8:
+                        diagnostic_examples[venue].append(
+                            {
+                                "venueInstrumentId": f"{venue}:{source_symbol}",
+                                "venueInstrumentVersionId": version_id,
+                                "status": status,
+                                "errorCode": reason,
+                                "missingFields": missing,
+                                "observedAt": batch.observed_at.isoformat()
+                                if observation is None
+                                else observation.observed_at.isoformat(),
+                                "sourceAt": None
+                                if observation is None or observation.source_at is None
+                                else observation.source_at.isoformat(),
+                            }
+                        )
                 _upsert_latest(cursor, version_id, run_id, cycle_at, values)
                 _upsert_minute(cursor, version_id, run_id, cycle_at, values)
                 snapshot = (
@@ -240,6 +294,12 @@ def persist_market_cycle(
                             "rawPayloadsWritten": raw_written,
                             "unknownSourceRows": unknown_source_rows,
                             "venueStatuses": venue_statuses,
+                            "persistedQualityCountsByVenue": quality_counts,
+                            "persistedReasonCountsByVenue": {
+                                venue: dict(counts) for venue, counts in reason_counts.items()
+                            },
+                            "persistedExplainedPartialCountsByVenue": explained_partial_counts,
+                            "persistedDiagnosticExamples": diagnostic_examples,
                         }
                     ),
                     run_id,

@@ -76,6 +76,7 @@ def test_endpoints_refresh_cutoff_and_resume_after_the_last_requested_target(
     connection, audits = _fake_connection(monkeypatch)
     now = datetime(2026, 10, 2, 4, 0, tzinfo=UTC)
     targets = [_target(symbol, index + 1) for index, symbol in enumerate(("A", "B", "C", "D"))]
+    monkeypatch.setattr(f"{MODULE}.load_recovery_targets", lambda *_a, **_k: tuple(targets))
     requested: list[tuple[str, datetime]] = []
     scans: list[datetime] = []
 
@@ -131,6 +132,7 @@ def test_current_endpoints_precede_old_baselines_without_losing_daily_insert_cou
     recent = now - timedelta(minutes=19)
     daily = now - timedelta(minutes=1444)
     targets = [_target(symbol, index + 1) for index, symbol in enumerate(("A", "B", "C", "D"))]
+    monkeypatch.setattr(f"{MODULE}.load_recovery_targets", lambda *_a, **_k: tuple(targets))
     pending = {
         targets[0]: {recent, daily},
         targets[1]: {end, daily},
@@ -229,6 +231,7 @@ def test_failed_target_identity_and_safe_error_code_persist_after_a_later_succes
     _, audits = _fake_connection(monkeypatch)
     now = datetime(2026, 10, 2, 4, 0, tzinfo=UTC)
     targets = [_target(f"TEST{index:03}USDT", index + 1) for index in range(target_count)]
+    monkeypatch.setattr(f"{MODULE}.load_recovery_targets", lambda *_a, **_k: tuple(targets))
     second_run = False
 
     def scan(_connection, *, now: datetime, version_id: int | None = None):
@@ -283,6 +286,7 @@ def test_new_cutoff_missing_keys_are_included_in_insert_and_rescan_audit(
     initial_now = datetime(2026, 10, 2, 4, 0, tzinfo=UTC)
     now = initial_now
     target = _target("BTC")
+    monkeypatch.setattr(f"{MODULE}.load_recovery_targets", lambda *_a, **_k: (target,))
     initial_bucket = initial_now - timedelta(minutes=4)
     saved: set[datetime] = set()
 
@@ -358,6 +362,7 @@ def test_endpoint_cancellation_joins_insert_and_finalizes_audit(
     connection, audits = _fake_connection(monkeypatch)
     now = datetime(2026, 10, 2, 4, 0, tzinfo=UTC)
     target = _target("BTC")
+    monkeypatch.setattr(f"{MODULE}.load_recovery_targets", lambda *_a, **_k: (target,))
     bucket = now - timedelta(minutes=4)
     candle = Candle1m(
         venue="hyperliquid",

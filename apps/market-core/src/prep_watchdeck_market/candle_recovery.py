@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -11,15 +12,16 @@ from uuid import uuid4
 import aiohttp
 import psycopg
 
-from prep_watchdeck_market.artifacts import write_artifact_atomic
 from prep_watchdeck_market.candle_recovery_state import (
     CandleRecoveryState,
+    RecoveryEvidence,
     RecoveryExecution,
     RecoverySummary,
     RecoveryTargetDetail,
     RecoveryTargetIdentity,
     RecoveryTrigger,
     RecoveryWindow,
+    bounded_recovery_details,
 )
 from prep_watchdeck_market.candle_recovery_store import (
     RecoveryStoreError,
@@ -33,6 +35,11 @@ from prep_watchdeck_market.candle_recovery_store import (
 )
 from prep_watchdeck_market.candles import Candle1m, CandleParseError, require_utc_datetime
 from prep_watchdeck_market.models import Venue
+from prep_watchdeck_market.recovery_evidence import (
+    previous_completed_run_id,
+    roster_evidence,
+    write_recovery_state,
+)
 from prep_watchdeck_market.retention import NORMALIZED_RETENTION
 from prep_watchdeck_market.runtime_lock import exclusive_runtime_lock
 from prep_watchdeck_market.sources.candle_history import (
@@ -42,6 +49,7 @@ from prep_watchdeck_market.sources.candle_history import (
     HistoryRateLimited,
     NativeCandleHistoryClient,
 )
+from prep_watchdeck_market.thread_tasks import await_thread_task
 
 DATABASE_TIMEOUT_OPTIONS = "-c statement_timeout=5000 -c lock_timeout=2000"
 AUTOMATIC_RUN_SECONDS = 600
@@ -89,11 +97,7 @@ def recovery_window(
 async def _thread_call[T](function: Callable[..., T], *args: object, **kwargs: object) -> T:
     """Join a DB thread even when its awaiting task is cancelled."""
     task = asyncio.create_task(asyncio.to_thread(function, *args, **kwargs))
-    try:
-        return await asyncio.shield(task)
-    except asyncio.CancelledError:
-        await asyncio.gather(task, return_exceptions=True)
-        raise
+    return await await_thread_task(task)
 
 
 async def _open_connection(database_url: str, *, apply: bool) -> psycopg.Connection[Any]:
@@ -111,12 +115,10 @@ async def _open_connection(database_url: str, *, apply: bool) -> psycopg.Connect
         )
     )
     try:
-        return await asyncio.shield(task)
+        return await await_thread_task(task)
     except asyncio.CancelledError:
-        results = await asyncio.gather(task, return_exceptions=True)
-        connection = results[0]
-        if isinstance(connection, psycopg.Connection):
-            await _thread_call(connection.close)
+        if not task.cancelled() and task.exception() is None:
+            await _thread_call(task.result().close)
         raise
 
 
@@ -147,10 +149,12 @@ def _state(
     deferred_targets: int,
     details: list[RecoveryTargetDetail],
     error_code: str | None,
+    evidence: RecoveryEvidence | None = None,
+    previous_completed_id: str | None = None,
 ) -> CandleRecoveryState:
     return CandleRecoveryState(
         run_id=run_id,
-        generated_at=datetime.now(UTC),
+        generated_at=max(datetime.now(UTC), finished_at or started_at),
         started_at=started_at,
         finished_at=finished_at,
         execution=execution,
@@ -167,9 +171,11 @@ def _state(
             failed_targets=failed_targets,
             deferred_targets=deferred_targets,
         ),
-        details=tuple(details[:128]),
+        details=bounded_recovery_details(details),
         details_truncated=len(details) > 128,
         error_code=error_code,
+        evidence=evidence,
+        previous_completed_run_id=previous_completed_id,
     )
 
 
@@ -240,8 +246,9 @@ class CandleRecovery:
             AUTOMATIC_RUN_SECONDS if trigger != "manual" else MANUAL_RUN_SECONDS
         )
         run_id = uuid4()
-        connection = await _open_connection(self._database_url, apply=apply)
+        connection: psycopg.Connection[Any] | None = None
         state_path = self._state_dir / "artifacts" / "candle-recovery-state.json"
+        previous_completed_id = previous_completed_run_id(state_path) if apply else None
         run_started = False
         finalized = False
         targets: tuple[RecoveryTarget, ...] = ()
@@ -250,20 +257,7 @@ class CandleRecovery:
         client: NativeCandleHistoryClient | None = None
         try:
             if apply:
-                # A cancellation can arrive after the DB thread commits the start row.
-                # Failure cleanup must still finalize that row once the thread is joined.
-                run_started = True
-                await _thread_call(
-                    start_recovery_run,
-                    connection,
-                    run_id,
-                    started_at,
-                    metrics={
-                        "windowStart": window.start.isoformat(),
-                        "windowEnd": window.end.isoformat(),
-                    },
-                )
-                write_artifact_atomic(
+                write_recovery_state(
                     state_path,
                     _state(
                         run_id=run_id.hex,
@@ -283,7 +277,23 @@ class CandleRecovery:
                         deferred_targets=0,
                         details=[],
                         error_code=None,
+                        previous_completed_id=previous_completed_id,
                     ),
+                )
+            connection = await _open_connection(self._database_url, apply=apply)
+            if apply:
+                # A cancellation can arrive after the DB thread commits the start row.
+                # Failure cleanup must still finalize that row once the thread is joined.
+                run_started = True
+                await _thread_call(
+                    start_recovery_run,
+                    connection,
+                    run_id,
+                    started_at,
+                    metrics={
+                        "windowStart": window.start.isoformat(),
+                        "windowEnd": window.end.isoformat(),
+                    },
                 )
             targets = await _thread_call(
                 load_recovery_targets, connection, venue=venue, instrument_id=instrument_id
@@ -478,11 +488,22 @@ class CandleRecovery:
                 )
                 for target in targets
             ]
+            final_targets = await _thread_call(
+                load_recovery_targets, connection, venue=venue, instrument_id=instrument_id
+            )
+            final_targets = tuple(
+                target for target in final_targets if target.venue in self._enabled_venues
+            )
+            roster_unchanged = targets == final_targets
             execution: RecoveryExecution = (
-                "succeeded" if remaining == 0 and not errors and not deferred else "partial"
+                "succeeded"
+                if remaining == 0 and not errors and not deferred and roster_unchanged
+                else "partial"
             )
             error_code = (
-                "recovery_rescan_failed"
+                "recovery_roster_changed"
+                if not roster_unchanged
+                else "recovery_rescan_failed"
                 if after_failed
                 else "recovery_target_failed"
                 if errors
@@ -511,6 +532,10 @@ class CandleRecovery:
                 deferred_targets=len(deferred),
                 details=details,
                 error_code=error_code,
+                evidence=roster_evidence(
+                    targets, scope="full-candle-window", unchanged=roster_unchanged
+                ),
+                previous_completed_id=previous_completed_id,
             )
             await _thread_call(
                 finish_recovery_run,
@@ -535,27 +560,13 @@ class CandleRecovery:
                 },
             )
             finalized = True
-            write_artifact_atomic(state_path, state)
+            write_recovery_state(state_path, state)
             return state
         except BaseException:
-            if apply and run_started and not finalized:
+            if apply:
                 failed_at = max(datetime.now(UTC), started_at)
-                try:
-                    await _thread_call(
-                        finish_recovery_run,
-                        connection,
-                        run_id,
-                        failed_at,
-                        status="failed",
-                        received=sum(len(missing) for missing in before.values()),
-                        inserted=sum(inserted_by_target.values()),
-                        error_code="recovery_run_failed",
-                        metrics={
-                            "windowStart": window.start.isoformat(),
-                            "windowEnd": window.end.isoformat(),
-                        },
-                    )
-                    write_artifact_atomic(
+                with suppress(Exception):
+                    write_recovery_state(
                         state_path,
                         _state(
                             run_id=run_id.hex,
@@ -589,10 +600,26 @@ class CandleRecovery:
                                 for target in targets
                             ],
                             error_code="recovery_run_failed",
+                            previous_completed_id=previous_completed_id,
                         ),
                     )
-                except Exception:
-                    pass
+                if connection is not None and run_started and not finalized:
+                    with suppress(Exception):
+                        await _thread_call(
+                            finish_recovery_run,
+                            connection,
+                            run_id,
+                            failed_at,
+                            status="failed",
+                            received=sum(len(missing) for missing in before.values()),
+                            inserted=sum(inserted_by_target.values()),
+                            error_code="recovery_run_failed",
+                            metrics={
+                                "windowStart": window.start.isoformat(),
+                                "windowEnd": window.end.isoformat(),
+                            },
+                        )
             raise
         finally:
-            await _thread_call(connection.close)
+            if connection is not None:
+                await _thread_call(connection.close)

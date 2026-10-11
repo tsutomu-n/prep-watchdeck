@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable
+from contextlib import suppress
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,6 @@ from uuid import uuid4
 import aiohttp
 import psycopg
 
-from prep_watchdeck_market.artifacts import write_artifact_atomic
 from prep_watchdeck_market.candle_recovery import _open_connection, _thread_call, recovery_cutoff
 from prep_watchdeck_market.candle_recovery_state import (
     CandleRecoveryState,
@@ -20,6 +20,7 @@ from prep_watchdeck_market.candle_recovery_state import (
     RecoveryTargetIdentity,
     RecoveryTrigger,
     RecoveryWindow,
+    bounded_recovery_details,
 )
 from prep_watchdeck_market.candle_recovery_store import (
     RecoveryStoreError,
@@ -27,10 +28,16 @@ from prep_watchdeck_market.candle_recovery_store import (
     RecoveryVersionChanged,
     finish_recovery_run,
     insert_missing_candles,
+    load_recovery_targets,
     start_recovery_run,
 )
 from prep_watchdeck_market.candles import Candle1m, CandleParseError
 from prep_watchdeck_market.models import Venue
+from prep_watchdeck_market.recovery_evidence import (
+    previous_completed_run_id,
+    roster_evidence,
+    write_recovery_state,
+)
 from prep_watchdeck_market.runtime_lock import exclusive_runtime_lock
 from prep_watchdeck_market.sources.candle_history import (
     HistoryBudgetExceeded,
@@ -184,7 +191,10 @@ class CandleEndpointRecovery:
         deadline = loop.time() + ENDPOINT_RUN_SECONDS
         run_id = uuid4()
         state_path = self._state_dir / "artifacts" / "candle-endpoint-recovery-state.json"
-        connection = await _open_connection(self._database_url, apply=True)
+        previous_completed_id = previous_completed_run_id(state_path)
+        connection: psycopg.Connection[Any] | None = None
+        roster_targets: tuple[RecoveryTarget, ...] = ()
+        roster_unchanged = False
         before: EndpointSnapshot = {}
         after: EndpointSnapshot | None = None
         inserted: dict[RecoveryTarget, int] = {}
@@ -197,6 +207,8 @@ class CandleEndpointRecovery:
         priority_requests = dict.fromkeys(("current", "recent", "daily"), 0)
 
         def state(execution: RecoveryExecution, error_code: str | None) -> CandleRecoveryState:
+            finished_at = None if execution == "running" else max(self._clock(), started_at)
+            generated_at = max(self._clock(), finished_at or started_at)
             missing = sum(map(len, before.values())) if scanned else None
             remaining = sum(map(len, after.values())) if after is not None else None
             details = tuple(
@@ -215,9 +227,9 @@ class CandleEndpointRecovery:
             )
             return CandleRecoveryState(
                 run_id=run_id.hex,
-                generated_at=self._clock(),
+                generated_at=generated_at,
                 started_at=started_at,
-                finished_at=None if execution == "running" else self._clock(),
+                finished_at=finished_at,
                 execution=execution,
                 trigger=trigger,
                 window=RecoveryWindow(
@@ -236,9 +248,15 @@ class CandleEndpointRecovery:
                     failed_targets=len(errors),
                     deferred_targets=len(deferred),
                 ),
-                details=details[:128],
+                details=bounded_recovery_details(details),
                 details_truncated=len(details) > 128,
                 error_code=error_code,
+                evidence=roster_evidence(
+                    roster_targets, scope="metric-endpoints", unchanged=roster_unchanged
+                )
+                if scanned
+                else None,
+                previous_completed_run_id=previous_completed_id,
             )
 
         def audit_metrics() -> dict[str, object]:
@@ -268,11 +286,16 @@ class CandleEndpointRecovery:
             }
 
         try:
+            write_recovery_state(state_path, state("running", None))
+            connection = await _open_connection(self._database_url, apply=True)
             run_started = True
             await _thread_call(
                 start_recovery_run, connection, run_id, started_at, metrics=audit_metrics()
             )
-            write_artifact_atomic(state_path, state("running", None))
+            roster_targets = await _thread_call(load_recovery_targets, connection)
+            roster_targets = tuple(
+                target for target in roster_targets if target.venue in self._enabled_venues
+            )
             before = await _thread_call(load_missing_endpoints, connection, now=started_at)
             before = {
                 target: buckets
@@ -395,9 +418,18 @@ class CandleEndpointRecovery:
                         if started_requests:
                             self._last_targets[priority] = self._key(target)
             after = await _thread_call(_remaining_snapshot, connection, before)
+            final_targets = await _thread_call(load_recovery_targets, connection)
+            final_targets = tuple(
+                target for target in final_targets if target.venue in self._enabled_venues
+            )
+            roster_unchanged = roster_targets == final_targets and set(before).issubset(
+                roster_targets
+            )
             remaining = sum(map(len, after.values()))
             error_code = (
-                "recovery_target_failed"
+                "recovery_roster_changed"
+                if not roster_unchanged
+                else "recovery_target_failed"
                 if errors
                 else "recovery_budget_exceeded"
                 if deferred
@@ -410,7 +442,7 @@ class CandleEndpointRecovery:
                 finish_recovery_run,
                 connection,
                 run_id,
-                self._clock(),
+                result.finished_at,
                 status=result.execution,
                 received=sum(map(len, before.values())),
                 inserted=sum(inserted.values()),
@@ -418,25 +450,26 @@ class CandleEndpointRecovery:
                 metrics=audit_metrics(),
             )
             finalized = True
-            write_artifact_atomic(state_path, result)
+            write_recovery_state(state_path, result)
             return result
         except BaseException:
-            if run_started and not finalized:
-                try:
+            failed = state("failed", "endpoint_recovery_failed")
+            with suppress(Exception):
+                write_recovery_state(state_path, failed)
+            if connection is not None and run_started and not finalized:
+                with suppress(Exception):
                     await _thread_call(
                         finish_recovery_run,
                         connection,
                         run_id,
-                        self._clock(),
+                        failed.finished_at,
                         status="failed",
                         received=sum(map(len, before.values())),
                         inserted=sum(inserted.values()),
                         error_code="endpoint_recovery_failed",
                         metrics=audit_metrics(),
                     )
-                    write_artifact_atomic(state_path, state("failed", "endpoint_recovery_failed"))
-                except Exception:
-                    pass
             raise
         finally:
-            await _thread_call(connection.close)
+            if connection is not None:
+                await _thread_call(connection.close)

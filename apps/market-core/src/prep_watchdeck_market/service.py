@@ -66,26 +66,7 @@ from prep_watchdeck_market.sources.mexc_funding import (
     join_funding,
 )
 from prep_watchdeck_market.sources.mexc_l1 import MEXC_L1_ENDPOINT, fetch_mexc_l1
-
-
-async def _await_locked_thread[T](task: asyncio.Task[T]) -> T:
-    """Keep a lock-owning writer alive through repeated cancellation until its thread finishes."""
-    cancelled = False
-    while True:
-        try:
-            result = await asyncio.shield(task)
-            break
-        except asyncio.CancelledError:
-            if task.cancelled():
-                raise
-            cancelled = True
-        except Exception:
-            if cancelled:
-                raise asyncio.CancelledError from None
-            raise
-    if cancelled:
-        raise asyncio.CancelledError
-    return result
+from prep_watchdeck_market.thread_tasks import await_thread_task as _await_locked_thread
 
 
 class MarketServiceError(RuntimeError):

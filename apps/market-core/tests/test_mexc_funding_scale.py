@@ -421,9 +421,18 @@ def test_independent_funding_updates_existing_ticker_bucket_and_artifact():
                 cycle_at=NOW,
                 observed_at=NOW,
             )
-            persist_market_cycle(
+            cycle = persist_market_cycle(
                 conn, NOW, NOW, [batch], mexc_version_ids={item.source_symbol: version_id + 2}
             )
+            diagnostics = conn.execute(
+                "SELECT metrics FROM collector_runs WHERE run_id=%s", (cycle.run_id,)
+            ).fetchone()[0]
+            assert diagnostics["persistedReasonCountsByVenue"] == {
+                "mexc": {"funding_only_partial:funding_contract_changed": 1}
+            }
+            assert diagnostics["persistedQualityCountsByVenue"] == {
+                "mexc": {"ready": 0, "partial": 1, "unavailable": 0}
+            }
             assert conn.execute(
                 "SELECT funding_rate_raw,error_code FROM latest_market_state"
             ).fetchone() == (None, "funding_only_partial:funding_contract_changed")
@@ -447,6 +456,12 @@ def test_independent_funding_updates_existing_ticker_bucket_and_artifact():
                 funding_snapshot(payload, item, observed_at=current), native_version_id=version_id
             )
             assert persist_mexc_funding(conn, {item.source_symbol: (item, snapshot)}, current) == 1
+            assert (
+                conn.execute(
+                    "SELECT metrics FROM collector_runs WHERE run_id=%s", (cycle.run_id,)
+                ).fetchone()[0]
+                == diagnostics
+            )
             record = read_universe_records(conn)[0]
             artifact = build_universe_snapshot([record], generated_at=NOW + timedelta(seconds=57))
             assert artifact.items[0].funding_rate_raw is not None
