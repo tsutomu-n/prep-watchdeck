@@ -114,7 +114,9 @@ test("条件判定の件数は全対象を含め、確認不能を成立なし�
     state.source.rows[index].reason = reason;
   }
   await page.goto("/?mode=reference");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   const panel = page.getByTestId("discovery-workflow");
+  await panel.locator("summary").filter({ hasText: "固定監視の条件・取得状況" }).click();
   const coverage = panel.getByRole("region", { name: "固定条件の判定状況" });
   await expect(coverage).toContainText("条件判定済み 2 / 5");
   await expect(coverage).toContainText("成立 1 · 不成立 1");
@@ -135,6 +137,7 @@ test("判断履歴だけが失敗しても比較候補を表示・追加でき�
   const state = await storedComparison(page);
   state.historyUnavailable = true;
   await page.goto("/?mode=reference");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   const panel = page.getByTestId("discovery-workflow");
   await expect(panel.getByTestId("comparison-card")).toHaveCount(2);
   await expect(panel).toContainText("見送り適用は未確認");
@@ -155,6 +158,7 @@ test("判断履歴だけが失敗しても比較候補を表示・追加でき�
 test("判断下書きは切替を止め、画面移動・再読込・保存結果不明でも元の根拠と同じidを保持する", async ({ page }) => {
   const state = await storedComparison(page);
   await page.goto("/?mode=reference");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   const panel = page.getByTestId("discovery-workflow");
   const btc = panel.locator('[data-target="asset:BTC"]');
   const eth = panel.locator('[data-target="asset:ETH"]');
@@ -162,14 +166,17 @@ test("判断下書きは切替を止め、画面移動・再読込・保存結�
   await panel.getByLabel("判断理由").fill("元の100 USDTを根拠に監視");
   await expect(btc.getByRole("button", { name: "監視を記録" })).toBeDisabled();
   await expect(eth.getByRole("button", { name: "この成立を見送り" })).toBeDisabled();
-  await expect(btc.getByRole("button", { name: "この実Venueを確認" })).toBeDisabled();
+  await expect(btc.getByRole("button", { name: "この実Venueを確認", includeHidden: true })).toBeDisabled();
   state.source.rows.find(row => row.asset === "BTC")!.raw.referenceClose.value = 105;
   await page.clock.fastForward(15_000);
+  await page.getByRole("button", { name: "一覧に戻る", exact: true }).click();
   await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "設定", exact: true }).click();
   await expect(page).toHaveURL(/\/settings/);
   await page.getByRole("navigation", { name: "メインメニュー" }).getByRole("link", { name: "ランキング", exact: true }).click();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
   await page.reload();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
   await expect(panel.getByRole("form", { name: "判断を保存" })).toContainText("asset:BTC · 監視 · 成立 episode-BTC-1");
   state.decisionResponseLost = true;
@@ -178,6 +185,7 @@ test("判断下書きは切替を止め、画面移動・再読込・保存結�
   await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
   await expect(panel.getByLabel("判断理由")).toBeDisabled();
   await page.reload();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByLabel("判断理由")).toHaveValue("元の100 USDTを根拠に監視");
   await panel.getByRole("button", { name: "判断を保存", exact: true }).click();
   await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
@@ -186,6 +194,7 @@ test("判断下書きは切替を止め、画面移動・再読込・保存結�
   expect(state.history.decisions).toHaveLength(1);
   expect((state.history.decisions[0].snapshot.row as typeof state.source.rows[0]).raw.referenceClose.value).toBe(100);
   await page.reload();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
   expect(state.selectionPosts).toHaveLength(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -194,22 +203,26 @@ test("判断下書きは切替を止め、画面移動・再読込・保存結�
 test("復元下書きの対象や成立が変わった場合は保存を止め、明示破棄まで本文を保持する", async ({ page }) => {
   const state = await storedComparison(page);
   await page.goto("/?mode=reference");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   const panel = page.getByTestId("discovery-workflow");
   await panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "この成立を見送り" }).click();
   await panel.getByLabel("判断理由").fill("元の成立だけを見送る");
   state.source.rows.find(row => row.asset === "BTC")!.episodeId = "episode-BTC-2";
   await page.reload();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByLabel("判断理由")).toHaveValue("元の成立だけを見送る");
   await expect(panel.getByRole("form", { name: "判断を保存" })).toContainText("成立が変更");
   await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
   state.source.rows.find(row => row.asset === "BTC")!.originals[0].versionId = 2;
   state.source.rows.find(row => row.asset === "BTC")!.native[0].versionId = 2;
   await page.reload();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByLabel("判断理由")).toHaveValue("元の成立だけを見送る");
   await expect(panel.getByRole("form", { name: "判断を保存" })).toContainText("対象が変更");
   await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
   await panel.getByRole("button", { name: "下書きを破棄", exact: true }).click();
   await page.reload();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByRole("form", { name: "判断を保存" })).toHaveCount(0);
   expect(state.decisions).toHaveLength(0);
   expect(state.selectionPosts).toHaveLength(0);
@@ -229,6 +242,7 @@ test("タブ保存が使えない場合は警告し、画面内の判断下書�
     }
   });
   await page.goto("/?mode=reference");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   const panel = page.getByTestId("discovery-workflow");
   await panel.locator('[data-target="asset:BTC"]').getByRole("button", { name: "監視を記録" }).click();
   await panel.getByLabel("判断理由").fill("この画面内の下書き");
@@ -311,10 +325,12 @@ test("候補4件を解除・再読込後も保持し、判断根拠を固定し�
   }
   await page.goto("/?mode=reference");
   const panel = page.getByTestId("discovery-workflow");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel).toContainText("固定監視: 15分");
   for (const asset of ["BTC", "ETH", "SOL", "MISSING"]) {
     await panel.getByRole("button", { name: new RegExp(`^${asset} ·`) }).click();
     await expect(panel.locator(`[data-target="asset:${asset}"]`)).toBeVisible();
+    await expect(page.getByRole("dialog").getByRole("status")).toContainText(`${asset}を比較に追加しました`);
   }
   await panel.getByRole("button", { name: /^NOCHART ·/ }).click();
   await expect(panel.getByRole("alert")).toContainText("最大4件");
@@ -327,22 +343,27 @@ test("候補4件を解除・再読込後も保持し、判断根拠を固定し�
   await expect(panel.locator('[data-target="asset:BTC"]')).toContainText("条件解除");
   await expect(panel.locator('[data-target="asset:SOL"]')).toContainText("条件未成立 · 価格方向 ±2% 内");
   await page.reload();
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(panel.getByTestId("comparison-card")).toHaveCount(4);
   const btc = panel.locator('[data-target="asset:BTC"]');
   await btc.getByRole("button", { name: "この成立を見送り" }).click();
   await panel.getByLabel("判断理由").fill("板が薄いので見送り");
+  await page.getByRole("button", { name: "一覧に戻る", exact: true }).click();
+  await page.getByRole("button", { name: /候補・比較/ }).click();
+  await expect(panel.getByLabel("判断理由")).toHaveValue("板が薄いので見送り");
   const oldClose = source.rows.find(row => row.asset === "BTC")!.raw.referenceClose.value;
   source.rows.find(row => row.asset === "BTC")!.raw.referenceClose.value = 105;
   const savedPins = structuredClone(workspace.pins);
   generationConflicts = 2;
   now += 15000; await page.clock.fastForward(15000);
-  await expect(panel.getByRole("status")).toContainText("更新待ち");
+  await expect(page.getByRole("dialog").getByRole("status")).toContainText("更新待ち");
   await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
-  await expect(btc.getByRole("button", { name: "この実Venueを確認" })).toBeDisabled();
+  await expect(btc.getByRole("button", { name: "この実Venueを確認", includeHidden: true })).toBeDisabled();
   expect(workspace.pins).toEqual(savedPins); expect(history.decisions).toHaveLength(0);
   detailFailures = 1;
   now += 15000; await page.clock.fastForward(15000);
-  await expect(panel.getByRole("status")).toContainText("更新待ち");
+  await expect(page.getByRole("dialog").getByRole("status")).toContainText("更新待ち");
   await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeDisabled();
   now += 15000; await page.clock.fastForward(15000);
   await expect(panel.getByRole("button", { name: "判断を保存", exact: true })).toBeEnabled();
@@ -363,7 +384,7 @@ test("候補4件を解除・再読込後も保持し、判断根拠を固定し�
   // Publish a genuinely newer provider generation before confirming a native selection.
   now += 15000; source = discoveryFixture(now); await page.clock.fastForward(15000);
   await btc.locator("summary").filter({ hasText: "実Venue:" }).click();
-  await btc.getByRole("button", { name: "この実Venueを確認" }).click();
+  await btc.getByRole("button", { name: "この実Venueを確認", includeHidden: true }).click();
   expect(selectionPosts).toHaveLength(0);
   const bundle = marketBundle(Date.now());
   const runtime = resolve(process.cwd(), "../../var/tmp/e2e/runtime/artifacts");
@@ -406,6 +427,7 @@ test("条件履歴を再展開すると最新状態を取り込み、既読ペ�
       nextCursor: cursor === "oldest-page" ? null : cursor === "older-page" ? "oldest-page" : "older-page" } });
   });
   await page.goto("/");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   const panel = page.getByTestId("discovery-workflow");
   const toggle = panel.locator("summary").filter({ hasText: /^条件履歴/ });
   const historyPanel = toggle.locator("..");
@@ -433,6 +455,173 @@ test("旧Attentionの候補APIが未対応でもMarketsのランキングを利�
   await page.route("**/api/decisions", route => route.fulfill({ json: { schemaVersion: 1, revision: 0, decisions: [] } }));
   await page.route("**/api/rankings?**", route => route.fulfill({ json: rankingFixture(new URL(route.request().url()).searchParams) }));
   await page.goto("/");
+  await page.getByRole("button", { name: /候補・比較/ }).click();
   await expect(page.getByTestId("discovery-workflow")).toContainText("候補機能を利用できません");
   await expect(page.getByTestId("ranking-row").first()).toBeVisible();
+});
+
+async function panelFixture(page: Page, count = 100, saved = 4) {
+  const now = Date.now();
+  await page.clock.install({ time: new Date(now) });
+  const fixture = discoveryFixture(now);
+  const template = fixture.rows[0];
+  let source = { ...fixture, rows: Array.from({ length: count }, (_, index) => {
+    if (index === 0) return structuredClone(template);
+    const row = structuredClone(template);
+    row.asset = `COIN${String(index).padStart(3, "0")}`;
+    row.assetId = `asset:${row.asset}`; row.identityKey = `identity-${row.asset}`;
+    row.referenceKey = `bybit:${row.asset}USDT:fixture-v1`; row.episodeId = `episode-${row.asset}`;
+    row.raw.asset = row.asset; row.raw.assetId = row.assetId; row.raw.referenceKey = row.referenceKey;
+    return row;
+  }), episodes: [] };
+  let workspace: UserWorkspace = { schemaVersion: 2, revision: 0, favorites: [], savedViews: [],
+    pins: source.rows.slice(0, saved).map(row => ({
+      target: { kind: "reference" as const, id: row.assetId, referenceKey: row.referenceKey!,
+        originals: row.originals.map(item => `${item.instrumentId}:${item.versionId}`).sort() },
+      discoveredAt: row.raw.decisionAt, episodeId: row.episodeId,
+      snapshot: { asset: row.asset, referenceClose: row.raw.referenceClose }
+    })) };
+  let failure = 0;
+  let offline = false;
+  let requests = 0;
+  let writes = 0;
+  const selections: unknown[] = [];
+  await page.route("https://s3.tradingview.com/**", route => route.fulfill({ body: "" }));
+  await page.route("**/api/rankings?**", route => route.fulfill({ json: rankingFixture(new URL(route.request().url()).searchParams, fixture.rankingCutoff!) }));
+  await page.route("**/api/discovery-summary", route => route.fulfill(offline
+    ? { status: 503, json: { error: "unavailable" } } : { json: {
+      schemaVersion: "discovery-summary-v1", policy: source.policy, generationId: source.generationId,
+      decisionAt: source.decisionAt, rankingCutoff: source.rankingCutoff, status: source.status,
+      reason: source.reason, historyAvailableFrom: source.historyAvailableFrom,
+      rows: source.rows.map(({ raw: _raw, native: _native, turnoverComparison: _comparison, ...row }) => row)
+    } }));
+  await page.route("**/api/discovery?**", route => {
+    requests++;
+    if (offline) return route.fulfill({ status: 503, json: { error: "unavailable" } });
+    const ids = new URL(route.request().url()).searchParams.getAll("assetId");
+    return route.fulfill({ json: { ...source, rows: ids.length ? source.rows.filter(row => ids.includes(row.assetId)) : source.rows } });
+  });
+  await page.route("**/api/user-workspace", route => {
+    if (route.request().method() === "POST") {
+      writes++;
+      if (failure) return route.fulfill({ status: failure, json: { error: "fixture" } });
+      const command = route.request().postDataJSON();
+      if (command.enabled && workspace.pins.length === 4) return route.fulfill({ status: 413, json: { error: "workspace_limit" } });
+      workspace = { ...workspace, revision: workspace.revision + 1, pins: command.enabled ? [...workspace.pins, command.pin]
+        : workspace.pins.filter(pin => pin.target.id !== command.pin.target.id) };
+    }
+    return route.fulfill({ json: workspace });
+  });
+  await page.route("**/api/decisions", route => route.fulfill({ json: { schemaVersion: 1, revision: 0, decisions: [] } }));
+  await page.route("**/api/market-data", route => route.fulfill({ json: marketBundle(now) }));
+  await page.route("**/api/selection", route => { selections.push(route.request().postDataJSON()); return route.fulfill({ json: { ok: true } }); });
+  return { get source() { return source; }, set source(value) { source = value; },
+    get requests() { return requests; }, get writes() { return writes; },
+    fail: (status: number) => { failure = status; }, offline: () => { offline = true; }, selections };
+}
+
+test("大量候補でも初期一覧を妨げず、パネルの開閉で位置・focusと候補検索を保持する", async ({ page }, testInfo) => {
+  const state = await panelFixture(page);
+  await page.goto("/?mode=native");
+  const entry = page.getByRole("button", { name: /候補・比較/ });
+  await expect(entry).toContainText("保存4/4");
+  const dialog = page.getByRole("dialog", { name: "候補・比較" });
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByRole("heading", { name: "取引所別", exact: true })).toBeInViewport();
+  expect(await page.getByTestId("discovery-workflow").evaluate(node => node.getBoundingClientRect().height)).toBeLessThan(120);
+  await entry.focus();
+  const originalScroll = await page.evaluate(() => ({ x: scrollX, y: scrollY }));
+  await page.keyboard.press("Enter");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "一覧に戻る" })).toBeFocused();
+  await page.keyboard.press("Shift+Tab");
+  expect(await dialog.evaluate(node => node.contains(document.activeElement))).toBe(true);
+  await page.keyboard.press("Tab");
+  await expect(dialog.getByRole("button", { name: "一覧に戻る" })).toBeFocused();
+  if (page.viewportSize()!.width > 768) {
+    await page.mouse.click(10, 100);
+    await expect(dialog).toBeVisible();
+  }
+  await expect(dialog.getByTestId("comparison-card")).toHaveCount(4);
+  expect(await dialog.evaluate(node => node.scrollWidth <= node.clientWidth)).toBe(true);
+  const box = (await dialog.boundingBox())!;
+  const viewport = page.viewportSize()!;
+  if (viewport.width <= 768) { expect(box.width).toBe(viewport.width); expect(box.height).toBe(viewport.height); }
+  else { expect(box.width).toBeLessThanOrEqual(720); expect(box.x + box.width).toBe(viewport.width); }
+  await page.screenshot({ path: testInfo.outputPath("comparison-panel.png") });
+  const list = dialog.getByRole("region", { name: "成立候補" });
+  await expect(list.getByRole("button", { name: /比較へ/ })).toHaveCount(10);
+  await list.getByRole("button", { name: "次の10件" }).click();
+  await expect(list).toContainText("2 / 10");
+  const before = state.requests;
+  await page.clock.fastForward(15000);
+  await expect.poll(() => state.requests).toBeGreaterThan(before);
+  await expect(list).toContainText("2 / 10");
+  await list.getByLabel("候補の銘柄検索").fill("COIN09");
+  await expect(list).toContainText("1 / 1");
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(entry).toBeFocused();
+  expect(await page.evaluate(() => ({ x: scrollX, y: scrollY }))).toEqual(originalScroll);
+  await entry.click();
+  await expect(list.getByLabel("候補の銘柄検索")).toHaveValue("COIN09");
+  await list.getByLabel("候補の銘柄検索").fill("");
+  await list.getByRole("button", { name: "次の10件" }).click();
+  state.source = { ...state.source, rows: state.source.rows.slice(0, 5) };
+  await page.clock.fastForward(15000);
+  await expect(list).toContainText("1 / 1");
+  await page.keyboard.press("Escape");
+  state.source.status = "stale";
+  await page.clock.fastForward(15000);
+  await expect(page.getByTestId("discovery-workflow").getByRole("status")).toContainText("前回の観測");
+  state.source.status = "partial";
+  await page.clock.fastForward(15000);
+  await expect(page.getByTestId("discovery-workflow").getByRole("status")).toContainText("一部確認不能");
+  state.offline();
+  await page.clock.fastForward(15000);
+  await expect(page.getByTestId("discovery-workflow").getByRole("status")).toContainText("候補機能を利用できません");
+  await entry.click();
+  await expect(dialog.getByTestId("comparison-card")).toHaveCount(4);
+  expect(state.selections).toEqual([]);
+  await page.keyboard.press("Escape");
+  // A shorter viewport creates real page scroll without changing page content.
+  await page.setViewportSize({ width: page.viewportSize()!.width, height: 400 });
+  await page.evaluate(() => { window.scrollTo(0, 150); });
+  const scrolled = await page.evaluate(() => scrollY);
+  expect(scrolled).toBeGreaterThan(0);
+  await entry.evaluate(node => (node as HTMLButtonElement).focus({ preventScroll: true }));
+  await page.keyboard.press("Enter");
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
+  await expect(entry).toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBe(scrolled);
+});
+
+test("一覧の比較追加は非遷移で通知し、重複と保存失敗も一覧から確認できる", async ({ page }) => {
+  const state = await panelFixture(page, 5, 0);
+  await page.goto("/?mode=reference");
+  const add = page.getByRole("button", { name: "BTCを比較へ追加", exact: true });
+  await expect(page.getByRole("button", { name: /候補・比較/ })).toContainText("保存0/4");
+  await add.click();
+  const notice = page.getByTestId("comparison-feedback");
+  await expect(notice).toContainText("BTCを比較に追加しました");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
+  const scroll = await page.evaluate(() => scrollY);
+  await add.click();
+  await expect(notice).toContainText("BTCは追加済みです");
+  expect(state.writes).toBe(1);
+  const view = notice.getByRole("button", { name: "比較を見る" });
+  await view.click();
+  await expect(page.getByTestId("comparison-card")).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(view).toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBe(scroll);
+  for (const [status, message] of [[413, "最大4件"], [409, "更新されました"], [500, "保存できません"]] as const) {
+    state.fail(status);
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent("watchdeck:compare", { detail: { assetId: "asset:COIN001" } })));
+    await expect(notice.getByRole("alert")).toContainText(message);
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+  }
+  expect(state.selections).toEqual([]);
 });

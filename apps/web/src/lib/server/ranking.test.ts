@@ -42,7 +42,8 @@ describe("independent ranking read path", () => {
   });
 
   it("retains the source time for stale snapshots instead of hiding them", async () => {
-    const response = rankingFixture(undefined, Date.now() - 600_000 - (Date.now() % 60_000));
+    const now = Date.now();
+    const response = rankingFixture(undefined, now - 600_000 - (now % 60_000));
     response.stale = true; response.status = "stale";
     const reader = new RankingReader(vi.fn<typeof fetch>().mockResolvedValue(Response.json(response)));
     expect((await reader.read(rankingQuery("15m", "00:00", "gainers", 0))).generatedAt).toBe(response.generatedAt);

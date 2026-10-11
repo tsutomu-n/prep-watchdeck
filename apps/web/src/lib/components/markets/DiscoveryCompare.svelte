@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import { goto } from "$app/navigation";
+  import { goto, afterNavigate } from "$app/navigation";
   import type { DiscoveryResponse, DiscoveryRow, RawFeatureValue, DiscoveryEpisode } from "$lib/generated/discovery-response";
   import type { DiscoverySummary, DiscoverySummaryRow } from "$lib/generated/discovery-summary";
   import { DiscoveryGenerationChanged, readDiscoveryView, requestDiscovery } from "$lib/discovery/client";
@@ -49,6 +49,74 @@
   let candidates = $derived(discovery?.rows.filter(row => row.state === "matched" &&
     !episodeSkipped(history, row.episodeId)) ?? []);
   let pins = $derived(workspace?.pins ?? []);
+  let panel = $state<HTMLDialogElement | null>(null);
+  let panelOpen = $state(false);
+  let closeButton = $state<HTMLButtonElement | null>(null);
+  let entryButton = $state<HTMLButtonElement | null>(null);
+  let candidateQuery = $state("");
+  let candidatePage = $state(1);
+  let filteredCandidates = $derived(candidates.filter(row => row.asset.toLocaleLowerCase().includes(candidateQuery.trim().toLocaleLowerCase())));
+  let candidatePages = $derived(Math.max(1, Math.ceil(filteredCandidates.length / 10)));
+  let visibleCandidates = $derived(filteredCandidates.slice((candidatePage - 1) * 10, candidatePage * 10));
+  let notice = $state<{ message: string; assetId: string } | null>(null);
+  let panelReturnFocus: HTMLElement | null = null;
+  let scrollPosition = { x: 0, y: 0 };
+  let bodyStyles: { position: string; top: string; left: string; width: string; overflow: string } | null = null;
+  let summaryStatus = $derived(updating ? "候補の更新待ち" : unavailable ? "候補機能を利用できません"
+    : discovery?.status === "stale" ? "前回の観測 · 更新停止"
+    : discovery?.status === "partial" ? "一部確認不能"
+    : workspaceError ? "保存候補を確認できません" : historyError ? "判断履歴を確認できません"
+    : !discovery ? "候補を取得中" : null);
+
+  $effect(() => { if (candidatePage > candidatePages) candidatePage = candidatePages; });
+
+  async function openPanel(assetId?: string) {
+    if (!panel || panel.open) return;
+    panelReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : entryButton;
+    scrollPosition = { x: window.scrollX, y: window.scrollY };
+    const style = document.body.style;
+    bodyStyles = { position: style.position, top: style.top, left: style.left, width: style.width, overflow: style.overflow };
+    style.position = "fixed"; style.top = `-${scrollPosition.y}px`; style.left = `-${scrollPosition.x}px`;
+    style.width = "100%"; style.overflow = "hidden";
+    panel.showModal(); panelOpen = true;
+    await tick();
+    if (!panel.open) return;
+    const card = assetId ? Array.from(panel.querySelectorAll<HTMLElement>("[data-target]"))
+      .find(item => item.dataset.target === assetId) : null;
+    if (card) { card.scrollIntoView({ block: "nearest" }); card.focus({ preventScroll: true }); }
+    else closeButton?.focus({ preventScroll: true });
+  }
+  function trapPanelFocus(event: KeyboardEvent) {
+    if (event.key === "Escape") { event.preventDefault(); closePanel(); return; }
+    if (event.key !== "Tab" || !panel) return;
+    const controls = Array.from(panel.querySelectorAll<HTMLElement>(
+      'button, a[href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])'
+    )).filter(item => !item.matches(":disabled") && item.checkVisibility() && item.getClientRects().length > 0);
+    const first = controls[0]; const last = controls.at(-1);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault(); last?.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault(); first?.focus();
+    }
+  }
+  function restorePage() {
+    if (!bodyStyles) return;
+    Object.assign(document.body.style, bodyStyles); bodyStyles = null;
+    window.scrollTo({ left: scrollPosition.x, top: scrollPosition.y, behavior: "instant" });
+  }
+  function closePanel(restoreFocus = true) {
+    if (!panel?.open) return;
+    panel.close(); panelOpen = false; nativeConfirm = null;
+    restorePage();
+    if (restoreFocus) {
+      const trigger = panelReturnFocus;
+      void tick().then(() => {
+        if (!panelOpen) (trigger?.isConnected ? trigger : entryButton)?.focus({ preventScroll: true });
+      });
+    }
+  }
+  afterNavigate(() => closePanel(false));
+
   let coverage = $derived.by(() => {
     if (!discovery || discovery.status === "unavailable") return null;
     const counts = { total: discovery.rows.length, matched: 0, notMatched: 0,
@@ -172,6 +240,7 @@
     }
   }
   async function pinAsset(assetId: string) {
+    error = null; notice = null;
     try {
       const { detail } = await readDiscoveryView([assetId]);
       const row = detail?.rows.find(item => item.assetId === assetId);
@@ -210,7 +279,7 @@
       void pinAsset(detail.assetId);
     }
     window.addEventListener("watchdeck:compare", compare);
-    return () => { alive = false; workspaceRead++; historyRead++; clearInterval(timer); window.removeEventListener("watchdeck:compare", compare); };
+    return () => { alive = false; workspaceRead++; historyRead++; clearInterval(timer); window.removeEventListener("watchdeck:compare", compare); restorePage(); };
   });
   function rowFor(pin: ComparisonPin) {
     return pinnedRows.find(row => row.assetId === pin.target.id) ?? null;
@@ -223,8 +292,8 @@
     return !!row && sameTarget(pin.target, discoveryTarget(row));
   }
   async function mutatePin(pin: ComparisonPin, enabled: boolean) {
-    if (!workspace || workspaceLoading || workspaceError || busy) return;
-    busy = true; error = null;
+    if (!workspace || workspaceLoading || workspaceError || busy) return false;
+    busy = true; error = null; notice = null;
     try {
       const response = await fetch("/api/user-workspace", { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "setPin", pin, enabled, expectedRevision: workspace.revision }) });
@@ -233,18 +302,23 @@
       const saved = await response.json();
       if (!alive) return;
       workspace = saved; await load();
+      return true;
     } catch (cause) {
       error = cause instanceof Error ? cause.message : "比較候補を保存できません";
       if (alive) await loadWorkspace();
+      return false;
     } finally { if (alive) busy = false; }
   }
   async function pinRow(row: DiscoveryRow) {
+    error = null; notice = null;
+    if (!workspace || workspaceLoading || workspaceError) { error = "保存候補を確認できません。比較パネルから再取得してください。"; return; }
+    if (busy) { error = "比較候補を保存中です。完了後に追加してください。"; return; }
     const pin = comparisonPin(row);
     if (!pin) { error = "対象契約の対応を確認できません"; return; }
     if (pins.some(saved => favoriteKey(saved.target) === favoriteKey(pin.target))) {
-      error = "比較候補に保存済みです。対象変更時は比較欄で再確認してください。"; return;
+      notice = { message: `${row.asset}は追加済みです。保存対象は比較欄で確認できます。`, assetId: row.assetId }; return;
     }
-    await mutatePin(pin, true);
+    if (await mutatePin(pin, true)) notice = { message: `${row.asset}を比較に追加しました`, assetId: row.assetId };
   }
   function referenceLabel(key: string | null) {
     if (!key) return "未取得";
@@ -359,7 +433,7 @@
         body: JSON.stringify({ action: "select", groupId: matches[0].groupId, venueInstrumentId: instrumentId,
           venueInstrumentVersionId: version }) });
       if (!response.ok) throw new Error("実Venueの選択監視を切り替えられませんでした");
-      nativeConfirm = null;
+      closePanel(false);
       await goto(`/?mode=native&instrument=${encodeURIComponent(instrumentId)}&version=${version}#native-detail`);
     } catch (cause) {
       if (cause instanceof DiscoveryGenerationChanged) { updating = true; unavailable = cause.message; void load(); }
@@ -374,34 +448,35 @@
 {/snippet}
 
 <section class="discovery" aria-label="候補比較と判断" data-testid="discovery-workflow">
-  <header><h2>候補比較・判断 <span>{workspace ? pins.length : "未確認"}/4</span></h2><p>固定監視: 15分売買代金が昨日・一昨日の両方の3倍以上 · 方向 ±2%。ブラウザの強調設定とは独立。</p></header>
-  <p class="muted">条件履歴はAttention稼働中に保存されます。初回確認・再確認は成立の開始時刻を意味しません。ブラウザを閉じても判断記録と比較候補を保持します。</p>
-  {#if unavailable}<p class="warning" role="status">{unavailable}。保存候補は保持しています。</p>{:else if discovery?.status === "stale"}<p class="warning" role="status">候補データが古くなっています。表示値は以前の観測です。</p>{/if}
-  {#if coverage}
-    <section class="coverage" aria-label="固定条件の判定状況">
-      <p><strong>{unavailable || updating || discovery?.status === "stale" ? "前回観測 · " : ""}条件判定済み {coverage.matched + coverage.notMatched} / {coverage.total}</strong> · 成立 {coverage.matched} · 不成立 {coverage.notMatched}</p>
-      <p class="muted">対象確認待ち {coverage.identityPending} · 比較値確認不能 {coverage.comparisonUnavailable}{#if coverage.otherPending} · その他の確認待ち {coverage.otherPending}{/if}</p>
-      {#if discovery?.status === "partial"}<p class="warning">一部の対象・条件履歴を確認できません。判定済みの行は個別に確認できます。</p>{/if}
-      <p class="muted">条件判定は {time(discovery?.decisionAt)} の観測です。実Venueの鮮度は各比較欄で確認してください。</p>
-    </section>
+  <div class="entry-row">
+    <button type="button" bind:this={entryButton} aria-haspopup="dialog" aria-controls="comparison-panel" aria-expanded={panelOpen} onclick={() => openPanel()}>
+      候補・比較 <span>保存{workspace ? `${pins.length}/4` : "未取得"}</span>
+    </button>
+    {#if summaryStatus}<p class="warning" role="status">{summaryStatus}</p>{/if}
+  </div>
+  {#if notice || error}
+    <div class="feedback" data-testid="comparison-feedback" hidden={panelOpen}>
+      {#if error}<p class="warning" role="alert">{error}</p>{:else if notice}<p role="status">{notice.message}</p>{/if}
+      {#if notice}<button type="button" onclick={() => openPanel(notice?.assetId)}>比較を見る</button>{/if}
+      <button type="button" onclick={() => { notice = null; error = null; }} aria-label="比較の通知を閉じる">閉じる</button>
+    </div>
   {/if}
+  <dialog id="comparison-panel" bind:this={panel} aria-labelledby="comparison-title" onkeydown={trapPanelFocus} oncancel={event => { event.preventDefault(); closePanel(); }}>
+    <header class="panel-header"><h2 id="comparison-title">候補・比較</h2><button type="button" bind:this={closeButton} onclick={() => closePanel()}>一覧に戻る</button></header>
+    <div class="panel-content">
+  {#if unavailable}<p class="warning" role="status">{unavailable}。保存候補は保持しています。</p>{:else if discovery?.status === "stale"}<p class="warning" role="status">候補データが古くなっています。表示値は以前の観測です。</p>{/if}
   {#if workspaceError}<p class="warning" role="alert">{workspaceError}</p><button type="button" disabled={busy || workspaceLoading} onclick={loadWorkspace}>比較候補を再取得</button>{/if}
   {#if historyError}<p class="warning" role="alert">{historyError}</p><button type="button" disabled={busy || historyLoading} onclick={loadHistory}>判断履歴を再取得</button>{:else if !history}<p class="muted">判断履歴を確認中です。見送り適用は未確認で、判断保存を停止しています。</p>{/if}
   {#if draftWarning}<p class="warning" role="status">{draftWarning}</p>{/if}
   {#if draftUnreadable}<button type="button" disabled={busy} onclick={discardDraft}>保存済み下書きを破棄</button>{/if}
   {#if error}<p class="warning" role="alert">{error}</p>{/if}
-  <div class="candidate-list" aria-label="固定条件の成立候補">
-    {#each candidates as row (row.assetId)}
-      <button type="button" disabled={busy || updating || workspaceLoading || !!workspaceError || !workspace || !discoveryTarget(row) || pins.some(pin => pin.target.id === row.assetId)} onclick={() => pinAsset(row.assetId)}>
-        {row.asset} · {direction(row)} · {confirmation(row)} · 比較へ
-      </button>
-    {:else}<p class="muted">{discovery ? "現在の成立候補なし / 不足情報は未取得として扱います。" : "候補を取得しています。"}</p>{/each}
-  </div>
+  {#if notice}<p role="status">{notice.message}</p>{/if}
+  <h3>保存済み比較 {workspace ? `${pins.length}/4` : "未取得"}</h3>
   <div class="comparison-grid">
     {#each pins as pin (favoriteKey(pin.target))}
       {@const row = rowFor(pin)}
       {@const identityCurrent = current(pin, row)}
-      <article class="comparison" data-testid="comparison-card" data-target={pin.target.id}>
+      <article class="comparison" data-testid="comparison-card" data-target={pin.target.id} tabindex="-1" aria-label={`${String(pin.snapshot.asset ?? pin.target.id)}の比較`}>
         <header><h3>{String(pin.snapshot.asset ?? pin.target.id)}</h3><button type="button" disabled={busy || workspaceLoading || !!workspaceError} onclick={() => mutatePin(pin, false)} aria-label={`${pin.target.id}を比較から外す`}>比較から外す</button></header>
         <details class="target"><summary>保存対象: {pin.target.kind === "reference" ? referenceLabel(pin.target.referenceKey) : `${pin.target.id} v${pin.target.version}`}</summary><p>{pin.target.kind === "reference" ? pin.target.referenceKey : `${pin.target.id} v${pin.target.version}`}</p></details>
         <p class="muted">比較へ追加: {time(pin.discoveredAt)} · 比較追加後の参照価格変化: {changedSince(pin, row)}</p>
@@ -425,8 +500,8 @@
                 <dt>OI raw / base / notional</dt><dd>{@render metric(native.openInterestRaw, "amount")} / {@render metric(native.openInterestBase, "amount")} / {@render metric(native.openInterestNotional, "amount")}</dd>
                 <dt>15分OI変化</dt><dd>{@render metric(native.oiChange["15m"], "percent")}</dd></dl>
               <details><summary>実Venueの根拠</summary><p class="muted">source: {native.markPrice.source} · source時刻: {time(native.markPrice.observations[0]?.sourceAt)} · {native.qualityReasons.join(" · ")}</p></details>
-            </details>
             <button class="native-action" type="button" disabled={busy || !!decisionFor || draftUnreadable || updating || ["stale", "unavailable"].includes(rowStatus(row)) || !row.originals.some(item => item.current && item.instrumentId === native.instrumentId && item.versionId === native.versionId)} onclick={() => askNative(pin, row, native.instrumentId, native.versionId)}>この実Venueを確認<span class="muted"> · {native.venue} {native.sourceSymbol}</span></button>
+            </details>
           {/each}
           <div class="actions"><button type="button" disabled={busy || updating || historyLoading || !!decisionFor || draftUnreadable || !!nativeConfirm || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "watch")}>監視を記録</button><button type="button" disabled={busy || updating || historyLoading || !!decisionFor || draftUnreadable || !!nativeConfirm || !history || !row.episodeId} onclick={() => prepareDecision(pin, row, "skip")}>この成立を見送り</button></div>
         {:else}<p>現在の根拠は未取得です。追加時の対象・根拠を保持しています。</p><details><summary>追加時の根拠</summary><pre>{JSON.stringify(pin.snapshot, null, 2)}</pre></details>{/if}
@@ -445,6 +520,35 @@
       <label>判断理由<textarea bind:this={reasonInput} value={decisionFor.reason} oninput={event => updateReason(event.currentTarget.value)} disabled={busy || decisionFor.submitted} maxlength="2000" required></textarea></label><button type="submit" disabled={busy || !!decisionBlocked || !decisionFor.reason.trim()}>判断を保存</button><button type="button" disabled={busy} onclick={discardDraft}>下書きを破棄</button>
     </form>
   {/if}
+  <section class="candidates" aria-label="成立候補">
+    <h3>成立候補 {discovery && !unavailable && discovery.status !== "unavailable" ? `${filteredCandidates.length}件${discovery.status === "stale" ? " · 前回観測" : ""}` : "件数未取得"}</h3>
+    <label>候補の銘柄検索<input type="search" bind:value={candidateQuery} oninput={() => candidatePage = 1} placeholder="銘柄名で検索" /></label>
+    <div class="candidate-list" aria-label="固定条件の成立候補">
+      {#each visibleCandidates as row (row.assetId)}
+        <button type="button" disabled={busy || updating || workspaceLoading || !!workspaceError || !workspace || !discoveryTarget(row) || pins.some(pin => pin.target.id === row.assetId)} onclick={() => pinAsset(row.assetId)}>
+          {row.asset} · {direction(row)} · {confirmation(row)} · 比較へ
+        </button>
+      {:else}<p class="muted">{!discovery || unavailable || discovery.status === "unavailable" ? "候補を確認できません / 取得状況を確認してください。" : candidateQuery ? "検索に一致する候補なし" : "現在の成立候補なし / 不足情報は未取得として扱います。"}</p>{/each}
+    </div>
+    <nav class="pagination" aria-label="候補のページ切り替え">
+      <button type="button" disabled={candidatePage <= 1} onclick={() => candidatePage--}>前の10件</button>
+      <span>{candidatePage} / {candidatePages}</span>
+      <button type="button" disabled={candidatePage >= candidatePages} onclick={() => candidatePage++}>次の10件</button>
+    </nav>
+  </section>
+  <details><summary>固定監視の条件・取得状況</summary>
+    <p>固定監視: 15分売買代金が昨日・一昨日の両方の3倍以上 · 方向 ±2%。ブラウザの強調設定とは独立。</p>
+    <p class="muted">条件履歴はAttention稼働中に保存されます。初回確認・再確認は成立の開始時刻を意味しません。ブラウザを閉じても判断記録と比較候補を保持します。</p>
+  {#if coverage}
+    <section class="coverage" aria-label="固定条件の判定状況">
+      <p><strong>{unavailable || updating || discovery?.status === "stale" ? "前回観測 · " : ""}条件判定済み {coverage.matched + coverage.notMatched} / {coverage.total}</strong> · 成立 {coverage.matched} · 不成立 {coverage.notMatched}</p>
+      <p class="muted">対象確認待ち {coverage.identityPending} · 比較値確認不能 {coverage.comparisonUnavailable}{#if coverage.otherPending} · その他の確認待ち {coverage.otherPending}{/if}</p>
+      {#if discovery?.status === "partial"}<p class="warning">一部の対象・条件履歴を確認できません。判定済みの行は個別に確認できます。</p>{/if}
+      <p class="muted">条件判定は {time(discovery?.decisionAt)} の観測です。実Venueの鮮度は各比較欄で確認してください。</p>
+    </section>
+  {/if}
+    <p class="muted">観測: {time(discovery?.decisionAt)} · 品質: {unavailable || updating ? "unavailable" : discovery?.status ?? "未取得"} · {discovery?.reason ?? ""}</p>
+  </details>
   <details ontoggle={event => { if (event.currentTarget.open) void loadEpisodes(); }}><summary>条件履歴 ({episodes.length}) · 保持開始 {time(discovery?.historyAvailableFrom)} · 終了履歴7日 / 最大10,000件</summary>
     {#each episodes as episode (episode.id)}<p>{episode.asset} · {episode.startKind === "new" ? "新規成立" : episode.startKind === "reconfirmation" ? "再確認" : "初回確認"} · {episode.state} · 初回観測 {time(episode.firstObservedAt)} · 最終確認 {time(episode.lastConfirmedAt)} · {episode.consecutiveConfirmations}回 · 観測継続 {formatFinite(episode.observedDurationMs / 60000, 1)}分 · {episode.endReason ?? ""}</p>{/each}
     {#if cursor}<button type="button" disabled={cursorLoading} onclick={moreEpisodes}>条件履歴をさらに読む</button>{/if}
@@ -456,11 +560,27 @@
     {/each}
     <p class="muted">1000件または16MiBで新規保存を拒否します。自動条件履歴の期限後もこのsnapshotを読めます。</p>
   </details>
+    </div>
+  </dialog>
 </section>
 
 <style>
   .coverage { border-left:2px solid var(--line-strong); padding-left:var(--space-sm); margin:var(--space-sm) 0; overflow-wrap:anywhere; }
-  .discovery { max-width:1900px; margin:var(--space-md) auto; padding:var(--space-md); border:1px solid var(--line); background:var(--surface); color:var(--text); }
+  .discovery { max-width:1900px; margin:0 auto; padding:var(--space-xs) var(--space-page); color:var(--text); }
+  .entry-row { display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-sm); }
+  .entry-row p { margin:0; }
+  dialog { position:fixed; inset:0 0 0 auto; box-sizing:border-box; width:min(720px,100vw); height:100dvh; max-width:100vw; max-height:100dvh; margin:0; padding:0; border:0; border-left:1px solid var(--line); background:var(--surface); color:var(--text); overflow:hidden; }
+  dialog[open] { display:flex; flex-direction:column; }
+  dialog::backdrop { background:rgb(0 0 0 / .65); }
+  .panel-header { flex-shrink:0; padding:var(--space-sm) var(--space-md); border-bottom:1px solid var(--line); background:var(--panel-solid); }
+  .panel-content { min-height:0; overflow-y:auto; overscroll-behavior:contain; padding:var(--space-md); }
+  .feedback { position:fixed; z-index:10; bottom:max(var(--space-md),env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); width:max-content; max-width:calc(100vw - 2rem); box-sizing:border-box; display:flex; align-items:center; flex-wrap:wrap; gap:var(--space-sm); padding:var(--space-sm); border:1px solid var(--line-strong); background:var(--panel-solid); }
+  .feedback[hidden] { display:none; }
+  .feedback p { flex:1 1 12rem; margin:0; }
+  .candidates { margin:var(--space-md) 0; padding-top:var(--space-md); border-top:1px solid var(--line); }
+  .pagination { display:flex; align-items:center; justify-content:space-between; gap:var(--space-sm); }
+  .candidate-list button { width:100%; text-align:left; overflow-wrap:anywhere; }
+  input { min-width:0; width:100%; box-sizing:border-box; }
   header { display:flex; justify-content:space-between; align-items:center; gap:var(--space-sm); flex-wrap:wrap; }
   h2,h3,h4,p { margin:0; } h2 { font-size:var(--type-heading-md-size); } h3 { font-size:var(--type-title-lg-size); } h4 { font-size:var(--type-body-md-size); }
   p { margin-top:var(--space-xs); font-size:var(--type-body-sm-size); line-height:1.5; overflow-wrap:anywhere; }
@@ -468,9 +588,9 @@
   .metric-evidence { margin-top:0; } .metric-evidence summary { color:var(--muted); font-size:var(--type-body-sm-size); }
   .native-action { margin-top:var(--space-xs); }
   .muted { color:var(--muted); } .warning { color:var(--warning); } .candidate-list,.actions { display:flex; gap:var(--space-sm); flex-wrap:wrap; margin:var(--space-sm) 0; }
-  button,input,textarea { font:inherit; color:var(--text); background:var(--panel-solid); border:1px solid var(--line); border-radius:var(--radius-control,2px); min-height:var(--control-height-dense,24px); padding:var(--space-xs) var(--space-sm); }
-  button { cursor:pointer; } button:disabled { opacity:.5; cursor:default; } button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
-  .comparison-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,310px),1fr)); gap:var(--space-md); }
+  button,input,textarea { font:inherit; color:var(--text); background:var(--panel-solid); border:1px solid var(--line); border-radius:var(--radius-control,2px); min-height:44px; padding:var(--space-xs) var(--space-sm); }
+  button { cursor:pointer; } button:disabled { opacity:.5; cursor:default; } button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,.comparison:focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
+  .comparison-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:var(--space-md); }
   .comparison { padding:var(--space-sm); border:1px solid var(--line); min-width:0; } .target { overflow-wrap:anywhere; }
   .reference { border-left:2px solid var(--line-strong); padding-left:var(--space-sm); margin:var(--space-sm) 0; } .native { margin:var(--space-sm) 0; }
   dl { display:grid; grid-template-columns:minmax(5rem,.7fr) minmax(0,1fr); gap:var(--space-xs); margin:var(--space-sm) 0; font-size:var(--type-body-sm-size); } dt { color:var(--muted); } dd { margin:0; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
@@ -478,5 +598,5 @@
   pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:24rem; overflow:auto; }
   .confirmation { border:1px solid var(--warning-border); margin:var(--space-sm) 0; padding:var(--space-md); } .confirmation button { margin-top:var(--space-sm); }
   label { display:flex; flex-direction:column; gap:var(--space-xs); margin-top:var(--space-sm); } textarea { width:100%; box-sizing:border-box; min-height:5rem; }
-  @media(max-width:48rem) { .discovery { margin:var(--space-sm); } button { min-height:var(--control-height-touch,44px); } .comparison-grid { grid-template-columns:1fr; } }
+  @media(max-width:48rem) { dialog { width:100vw; border:0; } .panel-header { padding-top:max(var(--space-sm),env(safe-area-inset-top)); } .panel-content { padding-bottom:max(var(--space-md),env(safe-area-inset-bottom)); } .comparison-grid { grid-template-columns:1fr; } }
 </style>
