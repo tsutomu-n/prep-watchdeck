@@ -1,8 +1,8 @@
 # 残件の実装計画 — 追加調査を反映した実行版
 
-timestamp="2026-10-11(日)_14:31 JST"
+timestamp="2026-10-11(日)_14:48 JST"
 - 作成: `2026-10-11T13:53:08+09:00`
-- 更新: `2026-10-11T14:31:19+09:00`
+- 更新: `2026-10-11T14:48:36+09:00`
 - 検証: `計画と保存済み実データの照合。実装検証は未実行`
 - 状態: `実装計画`
 - 実行状態: `IN_PROGRESS`。ユーザー指示「実装・本番変更」により実装と対象unit反映を開始。
@@ -238,3 +238,5 @@ timestamp="2026-10-11(日)_14:19 JST"
 - D以降、実測7200秒/24h/30日、本人実機は未完了。
 
 - D/source: Recovery、取消保護、history audit/reconciliation、bundle検証を選択統合。既存履歴上限・下書き・Discovery表示を保持。Recovery等161 pytestとmonitor 23 pytest通過。固定6hのread-only auditは412920分中412744分を確認し176 gapを保存。新規Provider取得・DB変更は0。これはRecovery完了PASSではない。
+
+- G source: 完了copyからday/map/reference別outcome bundle、hash検証reader、common-eligible診断、future30UTC日protocolの固定と日次退避を実装。実copyの3世代・618assets全件で各2472outcomesを生成（参照ready1072、native等unscorable1400）。3世代の評価は不足期間の技術probeでformal NOT_RUN。Attention全83testsと局所5testsを確認。30日開始は100件24h/容量受入後で、現時点で開始しない。

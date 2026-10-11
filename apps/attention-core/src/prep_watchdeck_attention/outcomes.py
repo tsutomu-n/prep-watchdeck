@@ -1,6 +1,9 @@
 """Prospective settlement from explicitly supplied offline, closed reference bars."""
 
+import hashlib
+import json
 import math
+from collections import OrderedDict, defaultdict
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal, Protocol
@@ -58,6 +61,18 @@ class FixtureBarReader:
         self.data = data
         self.map_version = data.map_version
         self.reference_keys = frozenset(bar.reference_key for bar in data.bars)
+        grouped: dict[str, list[MinuteBar]] = defaultdict(list)
+        for bar in data.bars:
+            grouped[bar.reference_key].append(bar)
+        self._bars = {
+            key: tuple(sorted(values, key=lambda b: b.end)) for key, values in grouped.items()
+        }
+        native: dict[str, list[NativeOutcomePoint]] = defaultdict(list)
+        for point in data.native:
+            native[point.asset_id].append(point)
+        self._native = {
+            key: tuple(sorted(values, key=lambda p: p.at)) for key, values in native.items()
+        }
 
     @classmethod
     def from_payload(cls, payload: object) -> "FixtureBarReader":
@@ -67,24 +82,123 @@ class FixtureBarReader:
     def from_file(cls, path: Path) -> "FixtureBarReader":
         from .stable_files import read_stable_regular_file
 
-        return cls(
-            OutcomeInput.model_validate_json(
-                read_stable_regular_file(path, max_bytes=128 * 1024 * 1024)
+        raw = read_stable_regular_file(path, max_bytes=128 * 1024 * 1024)
+        if json.loads(raw).get("schemaVersion") == "attention-outcome-bundle-v1":
+            return PartitionedFixtureBarReader(path, OutcomeBundle.model_validate_json(raw))
+        return cls(OutcomeInput.model_validate_json(raw))
+
+    def bars(self, reference_key: str, *, after: int, through: int) -> Sequence[MinuteBar]:
+        return tuple(b for b in self._bars.get(reference_key, ()) if after < b.end <= through)
+
+    def native_points(
+        self, asset_id: str, *, after: int, through: int
+    ) -> tuple[NativeOutcomePoint, ...]:
+        return tuple(p for p in self._native.get(asset_id, ()) if after < p.at <= through)
+
+
+class OutcomeBundleFile(Contract):
+    name: str = Field(pattern=r"^[A-Za-z0-9._-]+\.json$")
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reference_keys: tuple[str, ...]
+    asset_ids: tuple[str, ...]
+    after_ms: int
+    through_ms: int
+
+
+class OutcomeBundle(Contract):
+    schema_version: Literal["attention-outcome-bundle-v1"]
+    map_version: str
+    after_ms: int
+    through_ms: int
+    copy_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    files: tuple[OutcomeBundleFile, ...] = Field(min_length=1, max_length=2048)
+
+
+class PartitionedFixtureBarReader(FixtureBarReader):
+    """Bounded fragments form one input, so settlement cannot erase other fragments."""
+
+    def __init__(self, path: Path, manifest: OutcomeBundle) -> None:
+        self.map_version = manifest.map_version
+        self._directory = path.parent
+        self._reference_files: dict[str, list[OutcomeBundleFile]] = defaultdict(list)
+        self._native_files: dict[str, list[OutcomeBundleFile]] = defaultdict(list)
+        self._cache: OrderedDict[str, FixtureBarReader] = OrderedDict()
+        names: set[str] = set()
+        for entry in manifest.files:
+            if entry.name in names:
+                raise ValueError("duplicate outcome fragment")
+            names.add(entry.name)
+            reader = self._load(entry)
+            if reader.map_version != self.map_version or reader.reference_keys != set(
+                entry.reference_keys
+            ):
+                raise ValueError("outcome fragment reference binding differs")
+            if set(reader._native) != set(entry.asset_ids):
+                raise ValueError("outcome fragment native binding differs")
+            if not manifest.after_ms <= entry.after_ms < entry.through_ms <= manifest.through_ms:
+                raise ValueError("outcome fragment window differs")
+            if any(
+                not entry.after_ms < bar.end <= entry.through_ms for bar in reader.data.bars
+            ) or any(
+                not entry.after_ms < point.at <= entry.through_ms for point in reader.data.native
+            ):
+                raise ValueError("outcome fragment contains a point outside its window")
+            for keys, index in (
+                (entry.reference_keys, self._reference_files),
+                (entry.asset_ids, self._native_files),
+            ):
+                for key in keys:
+                    if any(
+                        old.after_ms < entry.through_ms and entry.after_ms < old.through_ms
+                        for old in index[key]
+                    ):
+                        raise ValueError("overlapping identity across outcome fragments")
+                    index[key].append(entry)
+        self.reference_keys = frozenset(self._reference_files)
+
+    def _load(self, entry: OutcomeBundleFile) -> FixtureBarReader:
+        from .stable_files import read_stable_regular_file
+
+        if entry.name not in self._cache:
+            raw = read_stable_regular_file(
+                self._directory / entry.name, max_bytes=128 * 1024 * 1024
             )
-        )
+            if hashlib.sha256(raw).hexdigest() != entry.sha256:
+                raise ValueError("outcome fragment hash differs")
+            self._cache[entry.name] = FixtureBarReader(OutcomeInput.model_validate_json(raw))
+            if len(self._cache) > 2:
+                self._cache.popitem(last=False)
+        self._cache.move_to_end(entry.name)
+        return self._cache[entry.name]
 
     def bars(self, reference_key: str, *, after: int, through: int) -> Sequence[MinuteBar]:
         return tuple(
-            b
-            for b in self.data.bars
-            if b.reference_key == reference_key and after < b.end <= through
+            sorted(
+                (
+                    bar
+                    for entry in self._reference_files.get(reference_key, ())
+                    if entry.after_ms < through and after < entry.through_ms
+                    for bar in self._load(entry).bars(reference_key, after=after, through=through)
+                ),
+                key=lambda b: b.end,
+            )
         )
 
     def native_points(
         self, asset_id: str, *, after: int, through: int
     ) -> tuple[NativeOutcomePoint, ...]:
         return tuple(
-            p for p in self.data.native if p.asset_id == asset_id and after < p.at <= through
+            sorted(
+                (
+                    point
+                    for entry in self._native_files.get(asset_id, ())
+                    if entry.after_ms < through and after < entry.through_ms
+                    for point in self._load(entry).native_points(
+                        asset_id, after=after, through=through
+                    )
+                ),
+                key=lambda p: p.at,
+            )
         )
 
 

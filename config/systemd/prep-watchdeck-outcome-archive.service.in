@@ -1,0 +1,16 @@
+[Unit]
+Description=prep-watchdeck closed-day offline outcome evidence archive
+After=prep-watchdeck-ranking.service prep-watchdeck-attention.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=@REPO_ROOT@
+ExecStart=@PYTHON_BIN@ @REPO_ROOT@/scripts/attention/archive-outcome-day.py --ranking-state @RANKING_STATE_ROOT@ --attention-state @ATTENTION_STATE_ROOT@ --archive @OUTCOME_ARCHIVE_ROOT@
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=30min
+UMask=0077
+MemoryMax=2G
+CPUQuota=100%
+TasksMax=16
+LimitNOFILE=128

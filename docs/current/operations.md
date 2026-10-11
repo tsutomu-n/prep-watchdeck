@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_14:19 JST"
+timestamp="2026-10-11(日)_14:48 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T14:19:10+09:00`
+- 更新: `2026-10-11T14:48:36+09:00`
 - 検証: `2026-10-11T11:09:44+09:00`
 - 状態: `現行`
 
@@ -670,3 +670,11 @@ CLI終了3による品質不適格は、全sampleを保存したかどうかと�
 研究の`finalize_capture`は原本と重ならない出力に`capture-completion.json`を必要とする。実processのresult/exit code/statusと根拠を記録し、source manifestを固定する。verify/quality/evaluateを有限な子processとして実行し、期限切れは`INCOMPLETE`とphase/checkpointを残す。exit 3と必要件数の一致はcapture完了になり得るが、品質不適格なら評価は`NOT_RUN`。既存入力やcheckpointのhashが変わった再開を拒否する。
 
 Recovery受入では`--require-complete-recovery`により、同じnative rosterの完了周期、0 remaining、正しい通常6h/endpoint windowと時刻を要求する。通常監視の警告分類と別のgateであり、runningの0 targetやnullを完了へ昇格しない。`audit-candle-history.py`はread-only、`reconcile-candle-history.py`は原本と同一scopeの回復ledgerを照合、`prepare-acceptance-bundle.py`はtracked source・map・helper・unit bindingsを新しいimmutable bundleへ固定する。unit反映やlive repairを実行するcommandではない。
+
+## Offline outcome入力とprospective protocol
+
+`export-outcome-input.py`は完了copyのSHAを照合し、保存済みgenerationのexact mapとreference revisionだけで閉じた最大24hをexportする。現Ranking mapとは別の過去mapも保存済みinputのmapVersionで分離し、symbolから参照を作らない。128MiB以下のfragmentを一つのbundleとして読み、native観測時刻は分へ切り上げる。5分間隔のnative evidenceで1分経路の穴を補完しない。
+
+`archive-outcome-day.py`は完了UTC日のSQLite online backupとimmutable generation照合を行い、day/map別bundleとcopy manifestを保存する。日次jobはRankingの4日retentionより前に実行する。所有する一時copyだけを終了時に削除し、入力DBや既存artifactをpruneしない。copy＋exportと50GiB reserveの容量不足、不完全copy、既存editionとの衝突は停止する。map切替や失敗時は原本を保持し別editionへ退避する。
+
+`freeze-formal-protocol.py`は認証したoffline policy copyから将来の30 UTC日、K=10/20、15/60分、seed0、2000 bootstrap、family/source/scope/map hashを固定する。cutoffやfamilyを変更して既存protocolへ上書きしない。common-eligible poolはfuture outcomeを見る前に入力から固定する診断で、元のcoverage guardを置換しない。正式評価の開始は運転・容量受入後とし、最終cutoffから60分と30日blockの成立は別に確認する。

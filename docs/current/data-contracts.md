@@ -1,8 +1,8 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-11(日)_14:19 JST"
+timestamp="2026-10-11(日)_14:48 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T14:19:10+09:00`
+- 更新: `2026-10-11T14:48:36+09:00`
 - 検証: `2026-10-11T11:09:44+09:00`
 - 状態: `現行`
 
@@ -514,3 +514,9 @@ Aster fundingInfoはraw provenanceと観測されたintervalをcatalog version�
 Schemaとavailability、A/B資格は別判定。詳細と生成コマンドは[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)。
 
 Recovery stateの任意`evidence`は全対象のexact ID/version/definition hashとroster digestを保持する。`previousCompletedRunId`で現在のrunningと直接の終了結果を結ぶ。終了したpartial/failedもlatest-completedへ公開し、古いsuccessを再採用しない。表示用detailsは128件で、不良対象を優先する。history audit v2は固定scope・DB identity・contract validity・catalog不明区間・境界minuteを保存し、Provider取得やMarket書込を行わない。
+
+## Offline outcome bundle
+
+`attention-outcome-bundle-v1`はexport対象のexact map、afterMs/throughMs、完了copy-manifest SHA、各fragmentのSHA・reference revision・native asset ID・時刻範囲を保持する。fragmentは`attention-outcome-input-v1`を使い128MiB以下とする。同じidentityの時刻範囲が重なるfragment、hash変更、宣言と実体の違いを拒否する。native-provenanceは元のavailableAt、source feature SHA、mark/OIのsource clockとqualityを保持する。native outcomeのunscorableと参照価格outcomeのreadyを合算して全評価成功にしない。
+
+`attention-formal-protocol-v1`はfutureの30 UTC day blocksとfrozen family全体、source/map/scope hash、K=10/20、15/60分、seed0、bootstrap2000、formal look1、coverage0.8、coverage regression0.05、practical delta0.1を固定する。補正は原editionを保持した別editionとし、途中診断をformal lookに含めない。
