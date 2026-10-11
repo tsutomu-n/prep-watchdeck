@@ -103,6 +103,34 @@ async function storedComparison(page: Page) {
   return state;
 }
 
+test("条件判定の件数は全対象を含め、確認不能を成立なしに数えず、古い観測を明示する", async ({ page }) => {
+  const state = await storedComparison(page);
+  state.source.status = "partial";
+  state.source.reason = "incomplete_discovery_coverage";
+  state.workspace.pins = [];
+  state.source.rows[1].state = "not_matched";
+  for (const [index, reason] of [[2, "identity_ineligible"], [3, "comparison_unavailable"], [4, "future_reason"]] as const) {
+    state.source.rows[index].state = "unknown";
+    state.source.rows[index].reason = reason;
+  }
+  await page.goto("/?mode=reference");
+  const panel = page.getByTestId("discovery-workflow");
+  const coverage = panel.getByRole("region", { name: "固定条件の判定状況" });
+  await expect(coverage).toContainText("条件判定済み 2 / 5");
+  await expect(coverage).toContainText("成立 1 · 不成立 1");
+  await expect(coverage).toContainText("対象確認待ち 1");
+  await expect(coverage).toContainText("比較値確認不能 1");
+  await expect(coverage).toContainText("その他の確認待ち 1");
+  await expect(panel.getByRole("button", { name: /^BTC ·/ })).toBeEnabled();
+  await expect(panel.getByRole("button", { name: /^SOL ·/ })).toHaveCount(0);
+  await page.clock.fastForward(180_000);
+  await expect(coverage).toContainText("前回観測");
+  await expect(panel).toContainText("候補データが古くなっています");
+  expect(state.decisions).toHaveLength(0);
+  expect(state.selectionPosts).toHaveLength(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
 test("判断履歴だけが失敗しても比較候補を表示・追加でき、失敗側の再取得で判断を回復する", async ({ page }) => {
   const state = await storedComparison(page);
   state.historyUnavailable = true;

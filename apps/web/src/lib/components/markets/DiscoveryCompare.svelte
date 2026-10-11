@@ -49,6 +49,19 @@
   let candidates = $derived(discovery?.rows.filter(row => row.state === "matched" &&
     !episodeSkipped(history, row.episodeId)) ?? []);
   let pins = $derived(workspace?.pins ?? []);
+  let coverage = $derived.by(() => {
+    if (!discovery || discovery.status === "unavailable") return null;
+    const counts = { total: discovery.rows.length, matched: 0, notMatched: 0,
+      identityPending: 0, comparisonUnavailable: 0, otherPending: 0 };
+    for (const row of discovery.rows) {
+      if (row.state === "matched") counts.matched++;
+      else if (row.state === "not_matched") counts.notMatched++;
+      else if (row.reason === "identity_ineligible") counts.identityPending++;
+      else if (row.reason === "comparison_unavailable") counts.comparisonUnavailable++;
+      else counts.otherPending++;
+    }
+    return counts;
+  });
 
   function rememberDraft() {
     if (!decisionFor) return;
@@ -364,6 +377,14 @@
   <header><h2>候補比較・判断 <span>{workspace ? pins.length : "未確認"}/4</span></h2><p>固定監視: 15分売買代金が昨日・一昨日の両方の3倍以上 · 方向 ±2%。ブラウザの強調設定とは独立。</p></header>
   <p class="muted">条件履歴はAttention稼働中に保存されます。初回確認・再確認は成立の開始時刻を意味しません。ブラウザを閉じても判断記録と比較候補を保持します。</p>
   {#if unavailable}<p class="warning" role="status">{unavailable}。保存候補は保持しています。</p>{:else if discovery?.status === "stale"}<p class="warning" role="status">候補データが古くなっています。表示値は以前の観測です。</p>{/if}
+  {#if coverage}
+    <section class="coverage" aria-label="固定条件の判定状況">
+      <p><strong>{unavailable || updating || discovery?.status === "stale" ? "前回観測 · " : ""}条件判定済み {coverage.matched + coverage.notMatched} / {coverage.total}</strong> · 成立 {coverage.matched} · 不成立 {coverage.notMatched}</p>
+      <p class="muted">対象確認待ち {coverage.identityPending} · 比較値確認不能 {coverage.comparisonUnavailable}{#if coverage.otherPending} · その他の確認待ち {coverage.otherPending}{/if}</p>
+      {#if discovery?.status === "partial"}<p class="warning">一部の対象・条件履歴を確認できません。判定済みの行は個別に確認できます。</p>{/if}
+      <p class="muted">条件判定は {time(discovery?.decisionAt)} の観測です。実Venueの鮮度は各比較欄で確認してください。</p>
+    </section>
+  {/if}
   {#if workspaceError}<p class="warning" role="alert">{workspaceError}</p><button type="button" disabled={busy || workspaceLoading} onclick={loadWorkspace}>比較候補を再取得</button>{/if}
   {#if historyError}<p class="warning" role="alert">{historyError}</p><button type="button" disabled={busy || historyLoading} onclick={loadHistory}>判断履歴を再取得</button>{:else if !history}<p class="muted">判断履歴を確認中です。見送り適用は未確認で、判断保存を停止しています。</p>{/if}
   {#if draftWarning}<p class="warning" role="status">{draftWarning}</p>{/if}
@@ -438,6 +459,7 @@
 </section>
 
 <style>
+  .coverage { border-left:2px solid var(--line-strong); padding-left:var(--space-sm); margin:var(--space-sm) 0; overflow-wrap:anywhere; }
   .discovery { max-width:1900px; margin:var(--space-md) auto; padding:var(--space-md); border:1px solid var(--line); background:var(--surface); color:var(--text); }
   header { display:flex; justify-content:space-between; align-items:center; gap:var(--space-sm); flex-wrap:wrap; }
   h2,h3,h4,p { margin:0; } h2 { font-size:var(--type-heading-md-size); } h3 { font-size:var(--type-title-lg-size); } h4 { font-size:var(--type-body-md-size); }
