@@ -17,6 +17,8 @@ from prep_watchdeck_attention.outcome_export import DAY, export_outcome_input
 
 
 def archive_day(ranking: Path, attention: Path, archive: Path, *, day_ms: int) -> Path:
+    if any(".." in path.parts for path in (ranking, attention, archive)):
+        raise ValueError("input and output paths cannot contain parent traversal")
     if day_ms <= 0 or day_ms % DAY or day_ms + DAY > int(time.time() * 1000):
         raise ValueError("archive requires a completed UTC day")
     ranking, attention, archive = (p.absolute() for p in (ranking, attention, archive))

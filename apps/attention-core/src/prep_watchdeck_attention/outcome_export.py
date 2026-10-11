@@ -48,6 +48,8 @@ def export_outcome_input(
     after_ms: int,
     through_ms: int,
 ) -> Path:
+    if any(".." in path.parts for path in (ranking_copy, attention_copy, output_root)):
+        raise ValueError("input and output paths cannot contain parent traversal")
     ranking, attention, output = (p.absolute() for p in (ranking_copy, attention_copy, output_root))
     if ranking.parent != attention.parent:
         raise ValueError("inputs must share a completed copy manifest")
@@ -61,6 +63,8 @@ def export_outcome_input(
                 )
             ).absolute()
         )
+    if any(".." in path.parts for path in sources):
+        raise ValueError("state roots cannot contain parent traversal")
     if (
         output.exists()
         or any(p.is_symlink() for p in (output, *output.parents))

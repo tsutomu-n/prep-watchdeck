@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import sqlite3
+import tempfile
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -27,18 +28,22 @@ def online_backup(source: Path, destination: Path, deadline: float) -> dict[str,
     regular(source)
     if destination.exists():
         raise ValueError("backup destination already exists")
-    with sqlite3.connect(f"{source.as_uri()}?mode=ro", uri=True, timeout=5) as reader:
-        reader.execute("PRAGMA query_only=ON")
-        with sqlite3.connect(destination) as copy:
-            os.chmod(destination, 0o600)
+    with tempfile.TemporaryDirectory(prefix=".sqlite-backup-", dir=destination.parent) as scratch:
+        staged = Path(scratch) / destination.name
+        with sqlite3.connect(f"{source.as_uri()}?mode=ro", uri=True, timeout=5) as reader:
+            reader.execute("PRAGMA query_only=ON")
+            with sqlite3.connect(staged) as copy:
+                os.chmod(staged, 0o600)
 
-            def progress(_status: int, _remaining: int, _total: int) -> None:
-                if time.monotonic() >= deadline:
-                    raise TimeoutError("SQLite backup deadline exceeded")
+                def progress(_status: int, _remaining: int, _total: int) -> None:
+                    if time.monotonic() >= deadline:
+                        raise TimeoutError("SQLite backup deadline exceeded")
 
-            reader.backup(copy, pages=512, progress=progress, sleep=0.05)
-            if copy.execute("PRAGMA quick_check").fetchone() != ("ok",):
-                raise ValueError("SQLite backup integrity check failed")
+                reader.backup(copy, pages=512, progress=progress, sleep=0.05)
+                if copy.execute("PRAGMA quick_check").fetchone() != ("ok",):
+                    raise ValueError("SQLite backup integrity check failed")
+        # Exclusive publication never overwrites another copy. Failed staging is temporary.
+        os.link(staged, destination)
     return {
         "sha256": digest(destination),
         "bytes": destination.stat().st_size,
@@ -50,6 +55,8 @@ def online_backup(source: Path, destination: Path, deadline: float) -> dict[str,
 def copy_runtime_evidence(
     ranking: Path, attention: Path, output: Path, *, deadline_seconds: int = 600
 ) -> dict[str, object]:
+    if any(".." in path.parts for path in (ranking, attention, output)):
+        raise ValueError("input and output paths cannot contain parent traversal")
     roots = [ranking.absolute(), attention.absolute()]
     target = output.absolute()
     if (

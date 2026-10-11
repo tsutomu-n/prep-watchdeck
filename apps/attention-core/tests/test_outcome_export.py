@@ -38,6 +38,16 @@ def test_export_roundtrip_keeps_availability_clock_and_detects_changed_copy(tmp_
         for name in ("ranking.sqlite3", "attention.sqlite3")
     }
     (root / "copy-manifest.json").write_text(json.dumps({"status": "COMPLETE", "files": files}))
+    with pytest.raises(ValueError, match="parent traversal"):
+        export_outcome_input(
+            ranking,
+            root / "attention.sqlite3",
+            tmp_path / "archive" / ".." / "copy" / "unexpected",
+            map_version="map",
+            after_ms=CUTOFF,
+            through_ms=CUTOFF + MINUTE,
+        )
+    assert not (root / "unexpected").exists()
     manifest = export_outcome_input(
         ranking,
         root / "attention.sqlite3",

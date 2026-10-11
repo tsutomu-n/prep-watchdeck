@@ -1,8 +1,8 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_14:48 JST"
+timestamp="2026-10-11(日)_14:57 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T14:48:36+09:00`
+- 更新: `2026-10-11T14:57:10+09:00`
 - 検証: `2026-10-11T11:09:44+09:00`
 - 状態: `現行`
 
@@ -678,3 +678,5 @@ Recovery受入では`--require-complete-recovery`により、同じnative roster
 `archive-outcome-day.py`は完了UTC日のSQLite online backupとimmutable generation照合を行い、day/map別bundleとcopy manifestを保存する。日次jobはRankingの4日retentionより前に実行する。所有する一時copyだけを終了時に削除し、入力DBや既存artifactをpruneしない。copy＋exportと50GiB reserveの容量不足、不完全copy、既存editionとの衝突は停止する。map切替や失敗時は原本を保持し別editionへ退避する。
 
 `freeze-formal-protocol.py`は認証したoffline policy copyから将来の30 UTC日、K=10/20、15/60分、seed0、2000 bootstrap、family/source/scope/map hashを固定する。cutoffやfamilyを変更して既存protocolへ上書きしない。common-eligible poolはfuture outcomeを見る前に入力から固定する診断で、元のcoverage guardを置換しない。正式評価の開始は運転・容量受入後とし、最終cutoffから60分と30日blockの成立は別に確認する。
+
+Offline copy/export/archiveの入出力とstate rootはparent traversalを拒否する。SQLite backupは所有する一時ファイルへ作成し、整合検証後に既存宛先を上書きせず確定する。期限切れでは一時copyだけを終了し、元DBを維持してINCOMPLETE manifestから再試行できる。
