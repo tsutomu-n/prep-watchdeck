@@ -1,9 +1,9 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-10(土)_10:53 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-10T10:53:42+09:00`
-- 検証: `2026-09-30T21:04:03+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
@@ -337,3 +337,9 @@ source/local検証、commit、live migration/deploy、24時間観測、30日evid
 実約定・統計的独立性・優位性は別の証拠層。詳細は[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)を参照する。
 
 Attentionの周期受入は`/health`の`maxCycleDurationMs`で実処理時間を確認し、generation間隔と区別する。再起動後は値がリセットされるため、observerが稼働PID・再起動回数・各観測値を保存する。
+
+## Recovery・offline outcome・formal評価の回帰境界
+
+Unicode exact ID、通常running中の直接前回proofの限定freshness、別dayによるready outcome不変、日跨ぎ15/60分、map退出後のbar retention、未完了archive editionの保全と後続回収を確認する。正式入口ではprotocol/scope/source/policy/seed/bootstrapの一致、decisionAt window、計算前の一回予約、同一入力の再開、完了原結果の不変を検証する。streaming読みはgeneration単位で、保存copyの件数・RSS・入力statを別証拠として残す。
+
+容量はPostgres physical、outcome archive、copy/export/restore stagingを含め、unknownや24h未満を外挿成功へ昇格しない。finalizerは期限・SIGINT/SIGTERM時の子process回収と、親SIGKILL後のlock継続を確認する。release healthは設定だけでなく実PID/source、HTTP、freshで成功したL1周期を必要とする。これらのsource回帰と、現hostの全件品質・2h/24h/30日受入は別判定とする。

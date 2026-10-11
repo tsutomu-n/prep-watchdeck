@@ -1,4 +1,6 @@
+import importlib.util
 import json
+from pathlib import Path
 
 import pytest
 from test_evaluation import START, make_store
@@ -24,17 +26,72 @@ def frozen():
     )
 
 
+def test_registration_refuses_unverified_scope_hash(tmp_path):
+    from prep_watchdeck_attention.formal_protocol import write_protocol
+
+    with pytest.raises(ValueError, match="scope document"):
+        write_protocol(
+            tmp_path / "protocol.json",
+            frozen(),
+            map_version="fixed-map",
+            scope_sha256="a" * 64,
+            start_ms=START,
+            registered_at_ms=START - 1000,
+        )
+
+
+@pytest.mark.parametrize("package", ["prep_watchdeck_market", "prep_watchdeck_ranking"])
+def test_registration_refuses_ledger_in_execution_source(tmp_path, package):
+    from prep_watchdeck_attention.formal_protocol import write_protocol
+
+    scope = tmp_path / "scope.json"
+    scope.write_text(
+        json.dumps(
+            {
+                "schemaVersion": "attention-formal-scope-v1",
+                "familyId": "fixed",
+                "mapVersion": "fixed-map",
+                "referenceKeys": {"a": None},
+            }
+        )
+    )
+    spec = importlib.util.find_spec(package)
+    target = Path(spec.origin).parent / "never-created-formal-ledger.json"
+    with pytest.raises(ValueError, match="execution source"):
+        write_protocol(
+            tmp_path / "protocol.json",
+            frozen(),
+            map_version="fixed-map",
+            scope_path=scope,
+            ledger_path=target,
+            start_ms=START,
+            registered_at_ms=START - 1000,
+        )
+    assert not target.exists()
+
+
 @pytest.mark.parametrize("changed", ["cutoff", "seed", "family"])
 def test_protocol_rejects_changed_cutoff_seed_or_family(tmp_path, changed):
     from prep_watchdeck_attention.formal_protocol import write_protocol
 
     path = tmp_path / "protocol.json"
+    scope = tmp_path / "scope.json"
+    scope.write_text(
+        json.dumps(
+            {
+                "schemaVersion": "attention-formal-scope-v1",
+                "familyId": "fixed",
+                "mapVersion": "fixed-map",
+                "referenceKeys": {"a": "reference:a"},
+            }
+        )
+    )
     policies = frozen()
     write_protocol(
         path,
         policies,
         map_version="fixed-map",
-        scope_sha256="a" * 64,
+        scope_path=scope,
         start_ms=START,
         registered_at_ms=START - 1000,
     )
@@ -50,7 +107,7 @@ def test_protocol_rejects_changed_cutoff_seed_or_family(tmp_path, changed):
             path,
             policies,
             map_version="fixed-map",
-            scope_sha256="a" * 64,
+            scope_path=scope,
             start_ms=START + (86_400_000 if changed == "cutoff" else 0),
             registered_at_ms=START - 1000,
         )

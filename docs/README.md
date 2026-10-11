@@ -1,8 +1,8 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-11(日)_13:53 JST"
+timestamp="2026-10-11(日)_19:36 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-11T13:53:08+09:00`
+- 更新: `2026-10-11T19:36:41+09:00`
 - 検証: `2026-10-11T12:08:34+09:00`
 - 状態: `現行`
 
@@ -51,6 +51,8 @@ Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴
 - [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](decisions/0016-reader-observed-research.md): Reader観測版と固定比較の証拠境界。
 
 ## 実装計画
+
+- [残リスク10件の修正と本番反映](plans/active/risk-repair/PLAN.md): Unicode受入、outcome保存、固定正式評価、容量とworker/rollback。
 
 - [残件の実装・運転・実利用受入](plans/active/remaining-completion/PLAN.md): 理由診断、容量、研究終了処理、Recovery、50/100段階受入、outcomeと長期評価。
 

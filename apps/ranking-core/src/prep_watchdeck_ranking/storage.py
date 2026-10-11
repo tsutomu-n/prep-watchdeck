@@ -108,14 +108,15 @@ class Store:
         return row[0]
 
     def prune(self, cutoff: int, keys: set[str]) -> None:
+        """Retain retired reference revisions for the same bounded archive window.
+
+        ``keys`` identifies today's collection scope, not the lifetime of already
+        observed bars. Removing a key from a map must not erase its saved evidence.
+        """
         with self.connection:
             self.connection.execute(
                 "DELETE FROM minute_bars WHERE end<?", (cutoff - RETENTION_MINUTES * MINUTE,)
             )
-            existing = self.connection.execute("SELECT DISTINCT reference_key FROM minute_bars")
-            for (key,) in list(existing):
-                if key not in keys:
-                    self.connection.execute("DELETE FROM minute_bars WHERE reference_key=?", (key,))
 
     def close(self) -> None:
         self.connection.close()

@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from prep_watchdeck_ranking.models import MINUTE, MinuteBar, RankingMap
+from prep_watchdeck_ranking.models import MINUTE, RETENTION_MINUTES, MinuteBar, RankingMap
 from prep_watchdeck_ranking.storage import Store, atomic_json, isolated_state
 
 from .conftest import CUTOFF, candle, mapping, reference
@@ -60,6 +60,17 @@ def test_future_unclosed_candle_is_not_persisted(store: Store) -> None:
     with pytest.raises(ValueError, match="future"):
         store.put([candle(reference(), CUTOFF + MINUTE)], CUTOFF)
     assert store.latest(reference().key) is None
+
+
+def test_retired_reference_keeps_unexpired_bars_and_still_expires(store: Store) -> None:
+    retired = reference()
+    store.put([candle(retired, CUTOFF - MINUTE)], CUTOFF)
+    store.prune(CUTOFF, {reference(revision="v2").key})
+    assert store.window(retired.key, CUTOFF - MINUTE, CUTOFF) == [
+        (CUTOFF - MINUTE, 100.0, 5.0, 100.0, 100.0)
+    ]
+    store.prune(CUTOFF + RETENTION_MINUTES * MINUTE, {reference(revision="v2").key})
+    assert store.latest(retired.key) is None
 
 
 @pytest.mark.parametrize(

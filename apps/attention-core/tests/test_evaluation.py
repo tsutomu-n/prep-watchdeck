@@ -52,6 +52,17 @@ class MemoryStore(AttentionStore):
     def latest_outcomes(self):
         return self.outcome_rows
 
+    def iter_evidence_generations(self, *, start_ms=None, end_ms=None):
+        for row in sorted(self.generations, key=lambda g: (g[0].decision_at, g[0].generation_id)):
+            if start_ms is not None and row[0].decision_at < start_ms:
+                continue
+            if end_ms is not None and row[0].decision_at >= end_ms:
+                continue
+            yield row
+
+    def outcomes_for_generation(self, generation_id):
+        return tuple(row for row in self.outcome_rows if row.generation_id == generation_id)
+
     def save_evaluation(self, report):
         self.saved.append(report)
 
@@ -144,6 +155,18 @@ def evaluate(store, **overrides):
     }
     kwargs.update(overrides)
     return evaluate_candidate_family(store, **kwargs)
+
+
+def test_evaluator_streams_without_loading_all_generations_or_outcomes():
+    store = make_store(days=3)
+
+    def bulk_refused():
+        pytest.fail("bulk evidence or outcomes must never be loaded")
+
+    store.evidence_generations = bulk_refused
+    store.latest_outcomes = bulk_refused
+    report = evaluate(store)
+    assert all(row.metrics.generation_count == 3 for row in report.evaluations)
 
 
 def test_known_retrieval_arithmetic_and_no_future_selection_backfill():

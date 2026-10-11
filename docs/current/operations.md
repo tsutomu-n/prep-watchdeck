@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_15:23 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T15:23:38+09:00`
-- 検証: `2026-10-11T15:23:38+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
@@ -362,7 +362,6 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 独立ランキングを切り離す場合は、そのcollectorを停止し、WebのUniverse Explorerを使う。
 元DBのmigration・rollback・既存unitの変更は必要ない。stateや未commitの差分を自動削除しない。
 
-
 ### 初回準備と再開を区別する
 
 | 入力・操作 | 起きること | 次へ進める条件 |
@@ -400,7 +399,6 @@ candidate作成と通常照合は同じcatalog判定を使う。L1だけのparti
 Repositoryの採用mapは1,096契約・577行（verified 536、unsupported 41）で、
 RLC追加とDRV/NULLMASK契約版変更を反映している。元数量換算3件・Widget3件は未確認を維持する。
 これはsourceの採用状態であり、稼働processのmap採用は別途反映と確認を要する。
-
 
 削除した契約は新mapの参照対象から外れ、通常の専用stateの保存整理の対象になる。
 過去日比較の導入では表・保存形式を変えず、保存期間を4日と1分へ延長する。旧revisionの履歴を
@@ -663,22 +661,22 @@ CLI終了3による品質不適格は、全sampleを保存したかどうかと�
 
 `check-data-operations.py`はfreshな`venue_partial_failure`でも、完全な周期診断が全native件数を説明し、各Venueにready入力があり、Asterの不良がbid/ask欠測だけの場合に対象別partialを警告として記録する。不良rowの値・品質は補完しない。stale/unavailable、未知理由、診断欠落、identity不一致、利用可能入力0はfailureを維持する。Funding限定partialの一般除外は追加していない。exit 0は全rowの品質PASSを意味しない。
 
-周期diagnosticsを出すwriterへの切替は、closed artifactを受けるWeb/Attention readerを先に更新する。切戻しでは新writerの追加設定だけをhash確認して戻し、旧writer再開後のfreshな`generatedAt`と非空の`collectors`を確認する。すべてのcollector rowから新しい`diagnostics` fieldが消えた後に旧readerへ戻す。設定上のWorkingDirectoryに加えて、現PIDのcommand/cwdで実行releaseを照合する。DB・map・evidenceの削除やdowngradeは行わない。
+周期diagnosticsを出すwriterへの切替は、closed artifactを受けるWeb/Attention readerを先に更新する。切戻しでは所有する追加設定だけをhash確認して戻し、旧releaseの機能復帰を確認する。`scripts/ops/verify-release-health.py --expected-release <absolute-release> --map-version <version> --after <UTC-time>`は設定上のWorkingDirectory、現PIDのcommand/cwd、各HTTP health、切替後のfreshなL1と成功collector周期を照合する。artifact形式の互換性だけで成功にしない。DB・map・evidenceの削除やdowngradeは行わない。機能healthは全row品質や長期受入とは別である。
 
-`scripts/ops/check-runtime-capacity.py`は明示したMarket/Ranking/Attention stateをread-onlyで測り、新しい外部JSONへSQLite/WAL/artifact/archiveとhost空きを出す。権限不足・symlinkはunknownとして記録する。24h未満や測定不足の30日外挿は`not_validated`。50 GiBと実測増分7日分の停止条件は維持し、このscriptは蓄積を停止・削除しない。Postgres logicalとphysicalを同一視しない。
+`scripts/ops/check-runtime-capacity.py`はMarket/Ranking/Attention、`--postgres-root`と`--outcome-archive`をread-onlyで測り、新しい外部JSONへ保存する。parent traversal、symlink、state内への出力を拒否する。権限不足はunknownとし、Postgres physical bytesは同一root/device・60秒以内の`runtime-capacity-supplement-v1`を`--trusted-supplement`で渡せる。logical bytesで代用しない。`--copy-staging-bytes`、`--export-staging-bytes`、`--restore-staging-bytes`を分け、copy/restoreには保存bytesからの下限を置く。export未測定、範囲不足、24h未満は30日外挿を`not_validated`とする。維持処理を含むnet増分の線形外挿は、実30日観測を代替しない。50 GiBと実測増分7日分の停止条件は維持し、このscriptは蓄積を停止・削除しない。
 
 `scripts/ops/copy-runtime-evidence.py`はread-only SQLite online backupを新しい隔離rootへ作り、SQLite内の全generationとimmutable Attention fileの内容・checksumを照合する。完成したcopyのreaderは`mode=ro&immutable=1`を使う。稼働DB/WAL/SHMの単純copyを行わない。Ranking/Attention間の共通transactionはなく、各copyのmapVersionと取得窓をmanifestへ保存する。incomplete copyの再開は、保存済みfile hashと元入力pathが一致する場合だけ。
 
-研究の`finalize_capture`は原本と重ならない出力に`capture-completion.json`を必要とする。実processのresult/exit code/statusと根拠を記録し、source manifestを固定する。verify/quality/evaluateを有限な子processとして実行し、期限切れは`INCOMPLETE`とphase/checkpointを残す。exit 3と必要件数の一致はcapture完了になり得るが、品質不適格なら評価は`NOT_RUN`。既存入力やcheckpointのhashが変わった再開を拒否する。
+研究の`finalize_capture`は原本と重ならない出力に`capture-completion.json`を必要とする。実processのresult/exit code/statusと根拠を記録し、source manifestを固定する。verify/quality/evaluateを有限な子processとして実行し、期限切れは`INCOMPLETE`とphase/checkpointを残す。exit 3と必要件数の一致はcapture完了になり得るが、品質不適格なら評価は`NOT_RUN`。既存入力やcheckpointのhashが変わった再開を拒否する。子processもlockを保持し、期限切れ・SIGINT/SIGTERMではprocess groupを終了して回収する。親SIGKILL後も存続する子がlockを保持し、重複writerを拒否する。
 
 Recovery受入では`--require-complete-recovery`により、同じnative rosterの完了周期、0 remaining、正しい通常6h/endpoint windowと時刻を要求する。通常監視の警告分類と別のgateであり、runningの0 targetやnullを完了へ昇格しない。`audit-candle-history.py`はread-only、`reconcile-candle-history.py`は原本と同一scopeの回復ledgerを照合、`prepare-acceptance-bundle.py`はtracked source・map・helper・unit bindingsを新しいimmutable bundleへ固定する。unit反映やlive repairを実行するcommandではない。
 
 ## Offline outcome入力とprospective protocol
 
-`export-outcome-input.py`は完了copyのSHAを照合し、保存済みgenerationのexact mapとreference revisionだけで閉じた最大24hをexportする。現Ranking mapとは別の過去mapも保存済みinputのmapVersionで分離し、symbolから参照を作らない。128MiB以下のfragmentを一つのbundleとして読み、native観測時刻は分へ切り上げる。5分間隔のnative evidenceで1分経路の穴を補完しない。
+`export-outcome-input.py`は完了copyのSHAを照合し、保存済みgenerationのexact mapとreference revisionだけで閉じた最大24hをexportする。現Ranking mapとは別の過去mapも保存済みinputのmapVersionで分離し、symbolから参照を作らない。128MiB以下のfragmentを一つのbundleとして読み、native観測時刻は分へ切り上げる。5分間隔のnative evidenceで1分経路の穴を補完しない。settlementの`--fixture`は複数回指定でき、archive rootも読める。隣接日をexact map/revisionで結合し、日跨ぎ15/60分を評価する。入力時刻/map外のgenerationは変更せず、参照fragmentのcacheは入力全体で2件までとする。保存generationとoutcomeもgeneration単位で読む。
 
-`archive-outcome-day.py`は完了UTC日のSQLite online backupとimmutable generation照合を行い、day/map別bundleとcopy manifestを保存する。日次jobはRankingの4日retentionより前に実行する。所有する一時copyだけを終了時に削除し、入力DBや既存artifactをpruneしない。copy＋exportと50GiB reserveの容量不足、不完全copy、既存editionとの衝突は停止する。map切替や失敗時は原本を保持し別editionへ退避する。
+`archive-outcome-day.py`は完了UTC日のSQLite online backupとimmutable generation照合を行い、day/map別bundleとcopy manifestを保存する。日を指定しなければ保存済みevidence・archive ledgerの最古日から欠日を回収し、完了editionはSHAを確認して再利用する。未完了editionは保全し、別editionで再試行する。fsyncと内容検証後に日次COMPLETEを公開する。期限切れ日はFAILEDを残し、後続の回収可能日を退避したうえで全体を非成功終了する。容量不足やcopy不整合は停止する。日次jobはRankingの4日retentionより前に実行する。終了時に削除するのは所有する一時copyだけで、入力DB・過去editionをpruneしない。
 
-`freeze-formal-protocol.py`は認証したoffline policy copyから将来の30 UTC日、K=10/20、15/60分、seed0、2000 bootstrap、family/source/scope/map hashを固定する。cutoffやfamilyを変更して既存protocolへ上書きしない。common-eligible poolはfuture outcomeを見る前に入力から固定する診断で、元のcoverage guardを置換しない。正式評価の開始は運転・容量受入後とし、最終cutoffから60分と30日blockの成立は別に確認する。
+`freeze-formal-protocol.py`は認証したoffline policy copyから将来の30 UTC日、K=10/20、15/60分、seed0、2000 bootstrap、family/source/scope/map hashを固定する。cutoffやfamilyを変更して既存protocolへ上書きしない。common-eligible poolはfuture outcomeを見る前に入力から固定する診断で、元のcoverage guardを置換しない。正式評価の開始は運転・容量受入後とし、最終cutoffから60分と30日blockの成立は別に確認する。具体的scopeは`attention-formal-scope-v1`のfamilyId、mapVersion、assetId→exact referenceKey/nullで固定する。`watchdeck-attention evaluate-formal --protocol <file> --scope <file> --ledger <file>`は登録済みwindow内のdecisionAtだけをstreamingで読み、seed/bootstrap、推移的な実行source hash、policyとscopeを照合する。入力Ranking cutoffは判断以前の時刻を許容し、future outcome cutoffとは区別する。protocolに固定したledgerへ計算前に一回判定を予約し、同一入力だけ再開できる。訂正・追加outcomeや別ledgerによる再判定を拒否し、完了済み原結果を保持する。
 
 Offline copy/export/archiveの入出力とstate rootはparent traversalを拒否する。SQLite backupは所有する一時ファイルへ作成し、整合検証後に既存宛先を上書きせず確定する。期限切れでは一時copyだけを終了し、元DBを維持してINCOMPLETE manifestから再試行できる。

@@ -106,7 +106,7 @@ def export_outcome_input(
             for row in att.execute(
                 "SELECT DISTINCT json_extract(inputs,'$.rankingMapVersion') FROM input_generations "
                 "WHERE evidence=1 AND decision_at>? AND decision_at<=?",
-                (after_ms, through_ms),
+                (after_ms - 60 * MINUTE, through_ms),
             )
         }
         if map_version not in evidence_maps:
@@ -119,11 +119,13 @@ def export_outcome_input(
             "JOIN input_generations g ON g.id=f.generation_id "
             "WHERE g.evidence=1 AND g.decision_at>? AND g.decision_at<=? "
             "AND json_extract(g.inputs,'$.rankingMapVersion')=? ORDER BY g.decision_at,f.asset_id",
-            (after_ms, through_ms, map_version),
+            (after_ms - 60 * MINUTE, through_ms, map_version),
         ):
             row = FeatureSnapshotRow.model_validate_json(raw)
+            if row.reference_key:
+                reference_keys.add(row.reference_key)
             at = outcome_cutoff(row.decision_at)
-            if at > through_ms:
+            if not after_ms < at <= through_ms:
                 continue
             key = (row.asset_id, at)
             if key in seen:
@@ -240,6 +242,10 @@ def export_outcome_input(
             )
             + "\n"
         ).encode(),
+    )
+    _write(
+        output / "copy-manifest.json",
+        read_stable_regular_file(proof_path, max_bytes=16 * 1024 * 1024),
     )
     manifest = OutcomeBundle(
         schema_version="attention-outcome-bundle-v1",

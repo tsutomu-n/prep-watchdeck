@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fcntl
 import hashlib
 import json
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -62,12 +64,89 @@ def finalize_capture(
             fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise BundleError("research_finalizer_running") from None
-        return _finalize(source, output, deadline_seconds)
+        return _finalize(source, output, deadline_seconds, descriptor)
     finally:
         os.close(descriptor)
 
 
-def _finalize(source: Path, output: Path, seconds: int) -> dict[str, object]:
+def _group_running(group: int) -> bool:
+    # A reparented child is no longer waitable here. Inspect only process metadata
+    # for the private group; zombies cannot write and no longer hold descriptors.
+    for entry in Path("/proc").iterdir():
+        if not entry.name.isdecimal():
+            continue
+        try:
+            fields = (entry / "stat").read_bytes().rsplit(b")", 1)[1].split()
+        except (FileNotFoundError, ProcessLookupError, PermissionError):
+            continue
+        if int(fields[2]) == group and fields[0] != b"Z":
+            return True
+    return False
+
+
+def _stop_group(worker: subprocess.Popen[bytes]) -> None:
+    with contextlib.suppress(ProcessLookupError):
+        os.killpg(worker.pid, signal.SIGTERM)
+    grace = time.monotonic() + 2
+    while _group_running(worker.pid) and time.monotonic() < grace:
+        time.sleep(0.02)
+    if _group_running(worker.pid):
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(worker.pid, signal.SIGKILL)
+    # Keep the parent descriptor until all writers in its private group are gone.
+    while _group_running(worker.pid):
+        time.sleep(0.02)
+    worker.communicate()
+
+
+def _run_phase(
+    arguments: list[str], *, timeout: float, lock_descriptor: int
+) -> subprocess.CompletedProcess[bytes]:
+    """Keep the writer lock with the worker, and reap its group before returning."""
+    interrupted = False
+
+    def stop(_number: int, _frame: object) -> None:
+        nonlocal interrupted
+        interrupted = True
+
+    handlers = {number: signal.signal(number, stop) for number in (signal.SIGINT, signal.SIGTERM)}
+    worker: subprocess.Popen[bytes] | None = None
+    deadline = time.monotonic() + timeout
+    try:
+        worker = subprocess.Popen(
+            arguments,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+            pass_fds=(lock_descriptor,),
+        )
+        while True:
+            if interrupted:
+                raise KeyboardInterrupt
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(arguments, timeout)
+            try:
+                stdout, stderr = worker.communicate(timeout=min(remaining, 0.1))
+            except subprocess.TimeoutExpired:
+                continue
+            if interrupted:
+                raise KeyboardInterrupt
+            result = subprocess.CompletedProcess(arguments, worker.returncode, stdout, stderr)
+            break
+    finally:
+        try:
+            if worker is not None:
+                _stop_group(worker)
+        finally:
+            for number, handler in handlers.items():
+                signal.signal(number, handler)
+    if interrupted:
+        raise KeyboardInterrupt
+    return result
+
+
+def _finalize(source: Path, output: Path, seconds: int, descriptor: int) -> dict[str, object]:
     deadline = time.monotonic() + seconds
     result: dict[str, Any] = {
         "schema_version": 1,
@@ -125,7 +204,7 @@ def _finalize(source: Path, output: Path, seconds: int) -> dict[str, object]:
                         "phase": name,
                     },
                 )
-                action = subprocess.run(
+                action = _run_phase(
                     [
                         sys.executable,
                         "-m",
@@ -140,8 +219,7 @@ def _finalize(source: Path, output: Path, seconds: int) -> dict[str, object]:
                         str(output),
                     ],
                     timeout=remaining,
-                    capture_output=True,
-                    check=False,
+                    lock_descriptor=descriptor,
                 )
                 if action.returncode:
                     raise BundleError("research_finalizer_phase_failed")

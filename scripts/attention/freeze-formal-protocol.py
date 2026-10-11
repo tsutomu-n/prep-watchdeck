@@ -19,6 +19,7 @@ parser.add_argument("--map-version", required=True)
 parser.add_argument("--family-id", required=True)
 parser.add_argument("--start-ms", type=int, required=True)
 parser.add_argument("--output", type=Path, required=True)
+parser.add_argument("--ledger", type=Path, help="immutable formal-look ledger target")
 args = parser.parse_args()
 source = args.attention_copy.absolute()
 proof = json.loads(
@@ -44,6 +45,8 @@ print(
         policies,
         map_version=args.map_version,
         scope_sha256=hashlib.sha256(scope).hexdigest(),
+        scope_path=args.scope,
+        ledger_path=args.ledger,
         start_ms=args.start_ms,
         registered_at_ms=int(datetime.now(UTC).timestamp() * 1000),
     ).model_dump_json(by_alias=True)

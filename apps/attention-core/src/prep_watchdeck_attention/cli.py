@@ -141,6 +141,7 @@ def main() -> None:
         "settle-outcomes",
         "freeze-family",
         "evaluate-family",
+        "evaluate-formal",
     ):
         command = commands.add_parser(name)
         command.add_argument(
@@ -178,13 +179,23 @@ def main() -> None:
                 "--fixture",
                 type=Path,
                 required=True,
-                help="offline attention-outcome-input-v1 export",
+                action="append",
+                help="immutable input/bundle or archive root; repeat for adjacent days",
             )
-            command.add_argument("--generation-id", help="default: all saved prospective evidence")
+            command.add_argument(
+                "--generation-id",
+                help="default: saved evidence within supplied input time/map scope",
+            )
         if name in ("freeze-family", "evaluate-family"):
             command.add_argument("--family-id", default="attention-v1")
             command.add_argument("--minimum-practical-delta", type=float, default=0.1)
         if name == "evaluate-family":
+            command.add_argument("--bootstrap-samples", type=int, default=2000)
+            command.add_argument("--seed", type=int, default=0)
+        if name == "evaluate-formal":
+            command.add_argument("--protocol", type=Path, required=True)
+            command.add_argument("--scope", type=Path, required=True)
+            command.add_argument("--ledger", type=Path, required=True)
             command.add_argument("--bootstrap-samples", type=int, default=2000)
             command.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
@@ -230,30 +241,21 @@ def main() -> None:
                     )
                 )
             elif args.command == "settle-outcomes":
-                reader = FixtureBarReader.from_file(args.fixture)
+                reader = FixtureBarReader.from_files(args.fixture)
                 identities = (
-                    [args.generation_id]
+                    iter((args.generation_id,))
                     if args.generation_id
-                    else [g[0].generation_id for g in store.evidence_generations()]
+                    else (g[0].generation_id for g in reader.iter_generations(store))
                 )
-                rows = [
-                    row
-                    for identity in identities
+                counts = {"outcomes": 0, "ready": 0, "pending": 0, "unscorable": 0}
+                now_ms = int(time.time() * 1000)
+                for identity in identities:
                     for row in settle_generation_outcomes(
-                        store, reader, generation_id=identity, now_ms=int(time.time() * 1000)
-                    )
-                ]
-                print(
-                    json.dumps(
-                        {
-                            "outcomes": len(rows),
-                            "ready": sum(r.status == "ready" for r in rows),
-                            "pending": sum(r.status == "pending" for r in rows),
-                            "unscorable": sum(r.status == "unscorable" for r in rows),
-                            "databaseBytes": store.size_bytes(),
-                        }
-                    )
-                )
+                        store, reader, generation_id=identity, now_ms=now_ms
+                    ):
+                        counts["outcomes"] += 1
+                        counts[row.status] += 1
+                print(json.dumps(counts | {"databaseBytes": store.size_bytes()}))
             elif args.command == "evaluate-family":
                 from .evaluation import evaluate_candidate_family
 
@@ -268,6 +270,27 @@ def main() -> None:
                     seed=args.seed,
                 )
                 print(report.model_dump_json(by_alias=True, indent=2))
+            elif args.command == "evaluate-formal":
+                from .formal_evaluation import evaluate_formal_family
+
+                report = evaluate_formal_family(
+                    store,
+                    protocol_path=args.protocol,
+                    scope_path=args.scope,
+                    ledger_path=args.ledger,
+                    bootstrap_samples=args.bootstrap_samples,
+                    seed=args.seed,
+                )
+                print(
+                    json.dumps(
+                        {
+                            "scope": "formal_fixed_protocol_one_look",
+                            "ledger": str(args.ledger),
+                            "report": report.model_dump(mode="json", by_alias=True),
+                        },
+                        indent=2,
+                    )
+                )
         finally:
             store.close()
     except (ValueError, OSError, RuntimeError, aiohttp.ClientError) as error:

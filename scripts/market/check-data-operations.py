@@ -14,12 +14,14 @@ import urllib.request
 from collections import Counter
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeGuard
 from urllib.parse import urlsplit
 
 MAX_BYTES = 8 * 1024 * 1024
 ARTIFACT_MAX_AGE = 120
 RANKING_MAX_AGE = 150
+CANDLE_RECOVERY_GRID_SECONDS = 900
+CANDLE_RECOVERY_RUN_MAX_SECONDS = 615
 MAX_IDENTITY_DIAGNOSTICS = 20
 MAX_METRIC_TIMESTAMP_DIAGNOSTICS = 20
 MAX_WARNING_OCCURRENCES = 10000
@@ -148,6 +150,19 @@ def get_health(url: str) -> dict[str, Any]:
         raise TimeoutError("ranking_deadline")
 
 
+def native_identifier(value: Any) -> TypeGuard[str]:
+    """Validate a raw native identity without normalizing its source symbol."""
+    if not isinstance(value, str) or not 1 <= len(value) <= 200:
+        return False
+    venue, separator, symbol = value.partition(":")
+    return (
+        venue in VENUES
+        and bool(separator and symbol)
+        and value.isprintable()
+        and not any(character.isspace() for character in value)
+    )
+
+
 def identity(row: dict[str, Any], *, original: bool = False) -> tuple[str, int]:
     name = "instrumentId" if original else "venueInstrumentId"
     version_name = "versionId" if original else "venueInstrumentVersionId"
@@ -155,8 +170,7 @@ def identity(row: dict[str, Any], *, original: bool = False) -> tuple[str, int]:
     version = integer(row.get(version_name))
     venue = row.get("venue")
     if (
-        not isinstance(identifier, str)
-        or not 1 <= len(identifier) <= 200
+        not native_identifier(identifier)
         or version < 1
         or venue not in VENUES
         or not identifier.startswith(f"{venue}:")
@@ -182,10 +196,7 @@ def recovery_roster_matches(document: dict[str, Any], name: str, current: dict[s
         version = integer(target.get("venueInstrumentVersionId"))
         definition_hash = target.get("definitionHash")
         if (
-            not isinstance(identifier, str)
-            or not 1 <= len(identifier) <= 200
-            or IDENTIFIER.fullmatch(identifier) is None
-            or identifier.split(":", 1)[0] not in VENUES
+            not native_identifier(identifier)
             or version < 1
             or identifier in roster
             or not isinstance(definition_hash, str)
@@ -207,7 +218,10 @@ def select_recovery_evidence(
     now: datetime,
 ) -> dict[str, dict[str, Any] | None]:
     selected: dict[str, dict[str, Any] | None] = {}
-    for name, maximum in (("candleRecovery", 615), ("endpointRecovery", 75)):
+    for name, maximum in (
+        ("candleRecovery", CANDLE_RECOVERY_RUN_MAX_SECONDS),
+        ("endpointRecovery", 75),
+    ):
         current, latest = recovery.get(name), completed.get(name)
         selected[name] = None
         if current is None:
@@ -252,7 +266,11 @@ def select_recovery_evidence(
 
 
 def recovery_acceptance_blockers(
-    recovery: dict[str, dict[str, Any] | None], *, now: datetime, current: dict[str, int]
+    recovery: dict[str, dict[str, Any] | None],
+    *,
+    now: datetime,
+    current: dict[str, int],
+    active_recovery: dict[str, dict[str, Any] | None] | None = None,
 ) -> list[str]:
     """A normal monitor warning is not proof that a full recovery scan completed.
 
@@ -272,6 +290,24 @@ def recovery_acceptance_blockers(
             started = instant(document.get("startedAt"))
             finished = instant(document.get("finishedAt"))
             generated = instant(document.get("generatedAt"))
+            active = (active_recovery or {}).get(name)
+            if (
+                name == "candleRecovery"
+                and active is not None
+                and active.get("execution") == "running"
+                and active.get("trigger") == "periodic"
+                and active.get("runId") != document.get("runId")
+                and active.get("previousCompletedRunId") == document.get("runId")
+                and 0
+                <= (instant(active.get("startedAt")) - finished).total_seconds()
+                <= CANDLE_RECOVERY_GRID_SECONDS
+                and select_recovery_evidence({name: active}, {name: document}, now=now).get(name)
+                is document
+            ):
+                # A scan starts at the next grid after completion, then may consume
+                # its full budget. Extend only its direct, roster-bound proof;
+                # waiting, terminal, overdue or unrelated runs get no grace.
+                maximum = CANDLE_RECOVERY_GRID_SECONDS + CANDLE_RECOVERY_RUN_MAX_SECONDS
             window = object_value(document.get("window"))
             start, end = instant(window.get("start")), instant(window.get("end"))
             cutoff = started.replace(second=0, microsecond=0) - timedelta(seconds=180)
@@ -304,7 +340,7 @@ def recovery_acceptance_blockers(
                     and target > 0
                     and end - start == timedelta(hours=6)
                     and timedelta(0) <= cutoff - end <= timedelta(minutes=1)
-                    and (finished - started).total_seconds() <= 615
+                    and (finished - started).total_seconds() <= CANDLE_RECOVERY_RUN_MAX_SECONDS
                 )
             else:
                 complete = complete and (
@@ -869,7 +905,9 @@ def check(
             warnings.add(f"{name}_native_history_missing")
 
     acceptance_evidence = select_recovery_evidence(recovery, completed_recovery or {}, now=now)
-    recovery_blockers = recovery_acceptance_blockers(acceptance_evidence, now=now, current=current)
+    recovery_blockers = recovery_acceptance_blockers(
+        acceptance_evidence, now=now, current=current, active_recovery=recovery
+    )
     if require_complete_recovery:
         failures.update(recovery_blockers)
         for name, document in recovery.items():

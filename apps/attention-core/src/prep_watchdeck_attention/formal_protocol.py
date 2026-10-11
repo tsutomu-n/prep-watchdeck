@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import ast
 import hashlib
+import importlib.util
 import os
 from collections import Counter
 from collections.abc import Sequence
@@ -12,9 +14,96 @@ from typing import Any, Literal, Self
 
 from pydantic import Field, model_validator
 
+from .config import no_symlink_path
 from .evaluation import BASELINES, DAY, Generation, _outcomes, _ranking
 from .models import CandidatePolicy, Contract, OutcomeRow, content_digest, outcome_cutoff
 from .stable_files import read_stable_regular_file
+
+
+class FormalEvaluationScope(Contract):
+    """The exact asset universe and reference identity fixed before outcomes exist."""
+
+    schema_version: Literal["attention-formal-scope-v1"] = "attention-formal-scope-v1"
+    family_id: str = Field(min_length=1)
+    map_version: str = Field(min_length=1)
+    reference_keys: dict[str, str | None]
+
+    @model_validator(mode="after")
+    def concrete_universe(self) -> Self:
+        if not self.reference_keys or any(
+            not key or (value is not None and not value)
+            for key, value in self.reference_keys.items()
+        ):
+            raise ValueError("scope document requires exact assets and reference keys")
+        return self
+
+
+def read_scope(path: Path) -> tuple[FormalEvaluationScope, str]:
+    raw = read_stable_regular_file(no_symlink_path(path), max_bytes=16 * 1024 * 1024)
+    return FormalEvaluationScope.model_validate_json(raw), hashlib.sha256(raw).hexdigest()
+
+
+def validate_ledger_path(path: Path, *, protocol_path: Path, scope_path: Path) -> Path:
+    """Keep the durable look separate from immutable bindings and execution sources."""
+    if ".." in path.parts:
+        raise ValueError("formal ledger traversal is forbidden")
+    path = no_symlink_path(path)
+    if (
+        path in (no_symlink_path(protocol_path), no_symlink_path(scope_path))
+        or path.suffix != ".json"
+    ):
+        raise ValueError("formal ledger must be separate from protocol and scope")
+    for package in ("prep_watchdeck_attention", "prep_watchdeck_market", "prep_watchdeck_ranking"):
+        spec = importlib.util.find_spec(package)
+        if spec is None or spec.origin is None:
+            raise ValueError("formal execution source cannot be resolved")
+        if path.is_relative_to(no_symlink_path(Path(spec.origin).parent)):
+            raise ValueError("formal ledger cannot be inside execution source")
+    return path
+
+
+def execution_source_hashes() -> dict[str, str]:
+    """Include the transitive project source imports used by the actual formal entrypoint."""
+    pending = [
+        "prep_watchdeck_attention.formal_evaluation",
+        "prep_watchdeck_attention.formal_protocol",
+        "prep_watchdeck_attention.cli",
+    ]
+    hashes: dict[str, str] = {}
+    while pending:
+        module = pending.pop()
+        if module in hashes or not module.startswith(
+            ("prep_watchdeck_attention", "prep_watchdeck_market", "prep_watchdeck_ranking")
+        ):
+            continue
+        try:
+            spec = importlib.util.find_spec(module)
+        except (ImportError, ValueError):
+            spec = None
+        if spec is None or spec.origin is None or not spec.origin.endswith(".py"):
+            raise ValueError("formal execution source cannot be resolved")
+        path = Path(spec.origin)
+        raw = read_stable_regular_file(path, max_bytes=8 * 1024 * 1024)
+        hashes[module] = hashlib.sha256(raw).hexdigest()
+        parent = module.rpartition(".")[0]
+        if parent:
+            pending.append(parent)
+        package = module if path.name == "__init__.py" else module.rpartition(".")[0]
+        for node in ast.walk(ast.parse(raw)):
+            if isinstance(node, ast.Import):
+                pending.extend(alias.name for alias in node.names)
+            elif isinstance(node, ast.ImportFrom):
+                if node.level:
+                    name = importlib.util.resolve_name(
+                        "." * node.level + (node.module or ""), package
+                    )
+                else:
+                    name = node.module or ""
+                if node.module:
+                    pending.append(name)
+                else:
+                    pending.extend(name + "." + alias.name for alias in node.names)
+    return dict(sorted(hashes.items()))
 
 
 class FormalEvaluationProtocol(Contract):
@@ -24,6 +113,7 @@ class FormalEvaluationProtocol(Contract):
     source_hashes: dict[str, str]
     map_version: str
     scope_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    look_ledger_path: str = Field(min_length=1)
     registered_at_ms: int = Field(gt=0)
     start_ms: int = Field(gt=0)
     end_ms: int = Field(gt=0)
@@ -60,13 +150,30 @@ def write_protocol(
     policies: Sequence[CandidatePolicy],
     *,
     map_version: str,
-    scope_sha256: str,
+    scope_sha256: str | None = None,
+    scope_path: Path | None = None,
+    ledger_path: Path | None = None,
     start_ms: int,
     registered_at_ms: int,
 ) -> FormalEvaluationProtocol:
+    path = no_symlink_path(path)
+    if scope_path is None:
+        raise ValueError("a concrete scope document is required")
+    scope, scope_digest = read_scope(scope_path)
+    if scope_sha256 is not None and scope_sha256 != scope_digest:
+        raise ValueError("scope document hash differs from the supplied binding")
+    if scope.map_version != map_version:
+        raise ValueError("scope document map differs from the protocol")
+    proposed_ledger = validate_ledger_path(
+        ledger_path or path.with_name(path.name + ".look.json"),
+        protocol_path=path,
+        scope_path=scope_path,
+    )
     families = {p.family_id for p in policies}
     if len(families) != 1 or {p.horizon_minutes for p in policies} != {15, 60}:
         raise ValueError("one complete prospective family is required")
+    if scope.family_id != next(iter(families)):
+        raise ValueError("scope document family differs from the protocol")
     signals = {
         horizon: {p.signal for p in policies if p.horizon_minutes == horizon}
         for horizon in (15, 60)
@@ -86,16 +193,14 @@ def write_protocol(
     hashes = {p.id: content_digest(p.model_dump(mode="json", by_alias=True)) for p in policies}
     if len(hashes) != len(policies):
         raise ValueError("duplicate protocol policy")
-    source = {
-        name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-        for name in ("evaluation.py", "outcomes.py", "models.py", "formal_protocol.py")
-    }
+    source = execution_source_hashes()
     proposed = FormalEvaluationProtocol(
         family_id=next(iter(families)),
         policy_hashes=hashes,
         source_hashes=source,
         map_version=map_version,
-        scope_sha256=scope_sha256,
+        scope_sha256=scope_digest,
+        look_ledger_path=str(proposed_ledger),
         registered_at_ms=registered_at_ms,
         start_ms=start_ms,
         end_ms=start_ms + 30 * DAY,
@@ -114,6 +219,11 @@ def write_protocol(
         stream.write(proposed.model_dump_json(by_alias=True, indent=2) + "\n")
         stream.flush()
         os.fsync(stream.fileno())
+    descriptor = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
     return proposed
 
 

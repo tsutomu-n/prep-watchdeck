@@ -579,6 +579,193 @@ def test_strict_recovery_requires_exact_roster_and_verified_digest():
             assert not UTILITY["check"](**changed, now=NOW)["operationalFailures"]
 
 
+def test_strict_recovery_preserves_native_unicode_id_version_and_definition_bindings():
+    # The eight exact native identities rejected by the 1147-instrument roster audit.
+    observed = [
+        (
+            "aster:哈基米USDT",
+            9888,
+            "3d66fc5011b70b6bf88c4dd17e6f13f9f1b9d84d4ff96fa05f713b37b457872b",
+        ),
+        (
+            "aster:币安人生USDT",
+            9681,
+            "95946cc36c3eec2a3f8b7baeb453ded128378aae7fade6b6d610b8c61b9b0b41",
+        ),
+        (
+            "aster:我踏马来了USDT",
+            9693,
+            "a956a7714de1c63f5eb5cfd14d4a746ae06bfdc7ae5742559f01cffed3702329",
+        ),
+        (
+            "aster:牛来USDT",
+            9871,
+            "c1404998433db817620ca1bc6afdaad671e0e0819ec547af884352c4d44634b3",
+        ),
+        (
+            "aster:龙虾USDT",
+            9752,
+            "7e592a41e7b9a39e8a1bbb428290b946657d775ce242543d5b89dfc1fa6a9c6c",
+        ),
+        (
+            "bitget:哈基米USDT",
+            3187,
+            "cdba57ae7f7c28d627ade4d36ef69df5daf864d471abbc87e8afa2095d343a0c",
+        ),
+        (
+            "bitget:牛来USDT",
+            4075,
+            "73720be682d58c66a2e7958a6cc47d346f5eee3aa0254e5de44af3a9b8d1338c",
+        ),
+        (
+            "bitget:龙虾USDT",
+            5756,
+            "a1aa70b8ea613527ed3e7fa918b7deb3a3c817033f60091df5607a3cc9e56d59",
+        ),
+    ]
+    document = _completed_recovery()["candleRecovery"]
+    document["evidence"]["roster"] = [
+        {"venueInstrumentId": key, "venueInstrumentVersionId": version, "definitionHash": digest}
+        for key, version, digest in observed
+    ]
+    document["evidence"]["rosterDigest"] = hashlib.sha256(
+        json.dumps(sorted(observed), separators=(",", ":"), ensure_ascii=True).encode()
+    ).hexdigest()
+    current = {key: version for key, version, _ in observed}
+    before = copy.deepcopy(document)
+    assert UTILITY["recovery_roster_matches"](document, "candleRecovery", current)
+    assert document == before
+    for change in (
+        "control",
+        "format_control",
+        "duplicate",
+        "venue",
+        "empty_symbol",
+        "version",
+        "invalid_version",
+        "hash",
+        "invalid_hash",
+    ):
+        changed = copy.deepcopy(document)
+        row = changed["evidence"]["roster"][0]
+        if change == "control":
+            row["venueInstrumentId"] += "\n"
+        elif change == "format_control":
+            row["venueInstrumentId"] += "\u200b"
+        elif change == "duplicate":
+            changed["evidence"]["roster"].append(copy.deepcopy(row))
+        elif change == "venue":
+            row["venueInstrumentId"] = "unknown:哈基米USDT"
+        elif change == "empty_symbol":
+            row["venueInstrumentId"] = "aster:"
+        elif change == "version":
+            row["venueInstrumentVersionId"] -= 1
+        elif change == "invalid_version":
+            row["venueInstrumentVersionId"] = 0
+        elif change == "hash":
+            row["definitionHash"] = "b" * 64
+        else:
+            row["definitionHash"] = "g" * 64
+        exact_current = current
+        if change not in {"version", "hash"}:
+            # Malformed identities must fail even with a self-consistent digest
+            # and current roster, rather than merely due to mismatched bindings.
+            keys = [
+                (
+                    item["venueInstrumentId"],
+                    item["venueInstrumentVersionId"],
+                    item["definitionHash"],
+                )
+                for item in changed["evidence"]["roster"]
+            ]
+            changed["evidence"]["rosterDigest"] = hashlib.sha256(
+                json.dumps(sorted(keys), separators=(",", ":"), ensure_ascii=True).encode()
+            ).hexdigest()
+            exact_current = {key: version for key, version, _ in keys}
+        assert not UTILITY["recovery_roster_matches"](changed, "candleRecovery", exact_current), (
+            change
+        )
+
+
+def test_running_candle_scan_keeps_direct_proof_through_grid_wait_and_bounded_run():
+    data = inputs()
+    completed = _completed_recovery()
+    previous = completed["candleRecovery"]
+    finished = NOW - timedelta(seconds=1265.898621)
+    started = finished - timedelta(seconds=593.221796)
+    cutoff = started.replace(second=0, microsecond=0) - timedelta(seconds=180)
+    previous.update(
+        startedAt=started.isoformat(),
+        finishedAt=finished.isoformat(),
+        generatedAt=finished.isoformat(),
+    )
+    previous["window"].update(
+        start=(cutoff - timedelta(hours=6)).isoformat(), end=cutoff.isoformat()
+    )
+    data["recovery"] = copy.deepcopy(completed)
+    running = data["recovery"]["candleRecovery"]
+    running.update(
+        runId="c" * 32,
+        execution="running",
+        finishedAt=None,
+        startedAt=(NOW - timedelta(seconds=398.675654)).isoformat(),
+        generatedAt=NOW.isoformat(),
+        previousCompletedRunId="a" * 32,
+        evidence=None,
+    )
+    report = UTILITY["check"](
+        **data, now=NOW, completed_recovery=completed, require_complete_recovery=True
+    )
+    assert not report["operationalFailures"]
+    assert report["recoveryAcceptanceEvidence"]["candleRecovery"]["runId"] == "a" * 32
+    for elapsed in (398.675654, 615):
+        checked_at = NOW + timedelta(seconds=elapsed - 398.675654)
+        selected = UTILITY["select_recovery_evidence"](data["recovery"], completed, now=checked_at)
+        blockers = UTILITY["recovery_acceptance_blockers"](
+            selected,
+            now=checked_at,
+            current={"bitget:BTCUSDT": 7},
+            active_recovery=data["recovery"],
+        )
+        assert "candleRecovery_acceptance_unverified" not in blockers
+    for change in (
+        "waiting",
+        "failed",
+        "partial",
+        "missing",
+        "missing_current",
+        "timeout",
+        "late_start",
+        "predecessor",
+        "roster",
+        "startup",
+    ):
+        changed, latest = copy.deepcopy(data), copy.deepcopy(completed)
+        active = changed["recovery"]["candleRecovery"]
+        if change == "waiting":
+            changed["recovery"]["candleRecovery"] = copy.deepcopy(previous)
+        elif change in {"failed", "partial"}:
+            active["execution"] = change
+        elif change == "missing":
+            latest.pop("candleRecovery")
+        elif change == "missing_current":
+            changed["recovery"]["candleRecovery"] = None
+        elif change == "timeout":
+            active["startedAt"] = (NOW - timedelta(seconds=615.001)).isoformat()
+        elif change == "late_start":
+            active["startedAt"] = (finished + timedelta(seconds=900.001)).isoformat()
+        elif change == "predecessor":
+            active["previousCompletedRunId"] = "d" * 32
+        elif change == "roster":
+            latest["candleRecovery"]["evidence"] = _evidence("candleRecovery", version=6)
+        else:
+            active["trigger"] = "startup"
+        result = UTILITY["check"](
+            **changed, now=NOW, completed_recovery=latest, require_complete_recovery=True
+        )
+        assert "candleRecovery_acceptance_unverified" in result["operationalFailures"], change
+
+
 def test_running_recovery_uses_only_its_direct_completed_predecessor():
     data = inputs()
     completed = _completed_recovery()

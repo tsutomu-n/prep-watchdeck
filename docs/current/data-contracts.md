@@ -1,9 +1,9 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-11(日)_14:48 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T14:48:36+09:00`
-- 検証: `2026-10-11T11:09:44+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
@@ -142,7 +142,6 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 現行collector/artifactのfreshnessとwrite結果を持つ。Web process healthとmarket data qualityを混同しない。
 
 L1 collectorの`diagnostics`は任意の`persisted-l1-diagnostics-v1`で、cycle時刻と最大4 Venueの配列を持つ。各Venueは保存後のready/partial/unavailable件数、理由別件数、説明可能なpartial件数、最大8件のexact native ID/version・欠測field・source/observed時刻を持つ。収集終了の同一transactionで保存し、後続の独立Funding更新では変更しない。collector metricsのJSONBと公開artifactは表現形式を分け、公開objectは閉じたschemaを維持する。診断のない旧artifactも読める。配置は互換readerを先に更新する。
-
 
 ## 現行Selection command
 
@@ -318,7 +317,6 @@ catalog成功件数はsnapshot全件数と一致し、成功記録の完了時�
 `/health`の名簿診断にも応答時の同じ期限切れ判定を適用する。
 専用API未起動・初回世代待ち・不正な応答はWebで503、問い合わせ不正は400にする。
 
-
 ### 順位比較と追加指標
 
 `metricVersion`は`trade-close-quote-turnover-analysis-v4`。応答の`previousGenerationId`と
@@ -362,7 +360,7 @@ anchorで終了する足の終値は要求しない。長さ0は`starting`、参
 分母0の倍率は`no_baseline`でnullにする。Q0=0かつ分母が正の場合は倍率0を返す。
 
 過去日の不足は現在の順位適格性や既存24時間平常比を失効させない。3日分の入力と必要な価格境界
-（4,321本）を世代作成時に固定し、前世代も後着訂正で書き換えない。SQLiteは4日と1分を保持する。
+（4,321本）を世代作成時に固定し、前世代も後着訂正で書き換えない。SQLiteは4日と1分を保持する。mapから外れたreference keyも同じ時間retentionまで残し、collection対象からの退出だけで過去barを削除しない。
 比較は選択中の1期間分だけ返し、`windows`各期間へ同じ比較を重複格納しない。
 
 ### Markets workspaceの追加契約
@@ -520,3 +518,9 @@ Recovery stateの任意`evidence`は全対象のexact ID/version/definition hash
 `attention-outcome-bundle-v1`はexport対象のexact map、afterMs/throughMs、完了copy-manifest SHA、各fragmentのSHA・reference revision・native asset ID・時刻範囲を保持する。fragmentは`attention-outcome-input-v1`を使い128MiB以下とする。同じidentityの時刻範囲が重なるfragment、hash変更、宣言と実体の違いを拒否する。native-provenanceは元のavailableAt、source feature SHA、mark/OIのsource clockとqualityを保持する。native outcomeのunscorableと参照価格outcomeのreadyを合算して全評価成功にしない。
 
 `attention-formal-protocol-v1`はfutureの30 UTC day blocksとfrozen family全体、source/map/scope hash、K=10/20、15/60分、seed0、bootstrap2000、formal look1、coverage0.8、coverage regression0.05、practical delta0.1を固定する。補正は原editionを保持した別editionとし、途中診断をformal lookに含めない。
+
+Recoveryのexact native IDはUnicodeを保ち、空venue/symbol、whitespace・controlを拒否する。通常candle周期のrunningが直接の前回完了run、同じrosterとproofを示す場合だけ、終了→開始900秒以内・経過615秒以内の範囲でproof age上限を1515秒とする。他の状態は従来1080秒の上限を維持し、endpoint gateを緩めない。
+
+Offline settlementは入力day/mapの範囲だけを変更し、隣接dayの同じexact map/revisionを結合して15/60分を評価する。競合した重複barは拒否する。archive completionはcopy-manifest SHAと各bundle/fragmentを照合し、editionを保全する。
+
+正式評価は`attention-formal-scope-v1`の具体的identity集合と`attention-formal-look-v1`のSTARTED/COMPLETE ledgerを用いる。protocolにledger絶対pathを固定し、計算前のinput SHA・availability cutoffと原結果SHAを保存する。同じinputだけ再開し、別inputによる二回目のformal lookを拒否する。
