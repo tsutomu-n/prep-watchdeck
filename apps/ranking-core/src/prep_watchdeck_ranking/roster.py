@@ -43,11 +43,13 @@ def check_catalog(roster: dict[str, Any], service: dict[str, Any], now: int) -> 
         service["catalog"]["latestAt"], service["catalog"].get("maxAgeSeconds", 1800)
     )
     runs = [run for run in service["collectors"] if run["runKind"] == "catalog"]
+    # Catalog collectors include inactive definitions; the ranking fingerprint does not.
+    catalog_count = roster.get("sourceCatalogCount", len(roster["items"]))
     if (
         len(runs) != 1
         or runs[0]["status"] != "succeeded"
-        or runs[0]["recordsReceived"] != len(roster["items"])
-        or runs[0]["recordsWritten"] != len(roster["items"])
+        or runs[0]["recordsReceived"] != catalog_count
+        or runs[0]["recordsWritten"] != catalog_count
     ):
         raise RosterSourceError("source_incomplete")
     completed_at = timestamp(runs[0]["completedAt"])

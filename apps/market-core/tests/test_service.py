@@ -482,6 +482,126 @@ def test_service_entrypoint_disables_all_mexc_runtime_acquisition(monkeypatch, t
     assert enabled == ["bitget", "hyperliquid", "aster"]
 
 
+def test_initial_mexc_catalog_failure_keeps_service_running_and_funding_recovers(
+    monkeypatch, tmp_path
+):
+    from prep_watchdeck_market.market_state import MarketBatch
+    from prep_watchdeck_market.sources.common import CatalogSourceError
+
+    async def scenario():
+        service = MarketService("unused", tmp_path)
+        stop = asyncio.Event()
+        funded = asyncio.Event()
+        mexc_attempts = 0
+        persisted_venues = []
+        funding_writes = []
+        other_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster")
+
+        for venue in other_venues:
+
+            async def fetch(session, venue: Venue = venue):
+                return _batch(venue, "BTC")
+
+            monkeypatch.setattr("prep_watchdeck_market.service.fetch_" + venue + "_catalog", fetch)
+
+        async def fetch_mexc(session):
+            nonlocal mexc_attempts
+            mexc_attempts += 1
+            if mexc_attempts == 1:
+                raise CatalogSourceError("catalog unavailable")
+            return _batch("mexc", "BTC_USDT")
+
+        async def fetch_funding(session, endpoint, **kwargs):
+            assert endpoint == "/api/v1/contract/funding_rate/BTC_USDT"
+            funded.set()
+            timestamp = int(datetime.now(UTC).timestamp() * 1000)
+            return {
+                "success": True,
+                "code": 0,
+                "data": {
+                    "symbol": "BTC_USDT",
+                    "fundingRate": "0.0001",
+                    "collectCycle": 8,
+                    "timestamp": timestamp,
+                    "nextSettleTime": timestamp + 3_600_000,
+                },
+            }
+
+        def persist_cycle(database_url, cycle_at, started_at, batches, **kwargs):
+            persisted_venues.extend(batch.venue for batch in batches)
+            return _store_result()
+
+        def persist_funding(database_url, updates, as_of):
+            funding_writes.extend(updates)
+            assert updates["BTC_USDT"][1].native_version_id == 7
+            return len(updates)
+
+        async def wait(self, event):
+            await event.wait()
+
+        async def collect(self, event):
+            runtime = service._mexc_funding
+            assert runtime is not None
+            assert tuple(runtime._instruments()) == ()
+            with pytest.raises(CatalogSourceError, match="mexc catalog is unavailable"):
+                service._instruments("mexc")
+            assert await service._flush_mexc_funding() == 0
+            now = datetime.now(UTC)
+            batches = tuple(
+                MarketBatch(venue, now, now, "unused", "0" * 64, (), {}) for venue in other_venues
+            )
+            await service._persist_l1_cycle(now, now, batches)
+            assert (await service.refresh_catalog()).status == "succeeded"
+            await funded.wait()
+            assert await service._flush_mexc_funding() == 1
+            event.set()
+
+        monkeypatch.setattr("prep_watchdeck_market.service.fetch_mexc_catalog", fetch_mexc)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service._persist_catalog_refresh",
+            lambda database_url, changed, *_: tuple(batch.provenance.venue for batch in changed),
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service._load_current_candle_version_starts_url", lambda *_: {}
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.load_current_mexc_version_ids_url",
+            lambda *_: {"BTC_USDT": 7},
+        )
+        monkeypatch.setattr("prep_watchdeck_market.service.persist_market_cycle_url", persist_cycle)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.persist_mexc_funding_url", persist_funding
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_funding.fetch_mexc_json", fetch_funding
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_funding.FUNDING_SWEEP_SECONDS", 0.01
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_funding.FUNDING_START_INTERVAL_SECONDS", 0.01
+        )
+        monkeypatch.setattr("prep_watchdeck_market.service.L1Scheduler.run_forever", collect)
+        monkeypatch.setattr("prep_watchdeck_market.service.CandleRuntime.run_forever", wait)
+        monkeypatch.setattr("prep_watchdeck_market.service.SelectionRuntime.run_forever", wait)
+        for name in (
+            "_catalog_loop",
+            "_artifact_loop",
+            "_selected_artifact_loop",
+            "_metrics_loop",
+            "_activity_loop",
+            "_funding_flush_loop",
+        ):
+            monkeypatch.setattr(MarketService, name, wait)
+
+        await asyncio.wait_for(service.run_forever(stop), timeout=1)
+        assert persisted_venues == ["bitget", "hyperliquid", "aster"]
+        assert funding_writes == ["BTC_USDT"]
+        assert service._session is None
+
+    asyncio.run(scenario())
+
+
 def test_disabled_selection_runtime_excludes_saved_mexc_members(monkeypatch, tmp_path):
     from prep_watchdeck_market.selection_runtime import (
         InvalidSelectionCommandError,

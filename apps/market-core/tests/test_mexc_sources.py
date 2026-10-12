@@ -692,6 +692,228 @@ def test_selected_retries_429_and_keeps_emit_failures_visible(monkeypatch):
 
 
 @pytest.mark.parametrize(
+    "failure, error_code",
+    [
+        ("reject_depth", "subscription_rejected"),
+        ("reject_deal", "subscription_rejected"),
+        ("missing_depth", "subscription_ack_timeout"),
+        ("missing_deal", "subscription_ack_timeout"),
+        ("invalid_ack", "subscription_ack_invalid"),
+    ],
+)
+def test_selected_subscription_failure_reconnects_and_resumes(monkeypatch, failure, error_code):
+    import asyncio
+    import json
+    from contextlib import asynccontextmanager
+    from types import SimpleNamespace
+
+    import aiohttp
+
+    from prep_watchdeck_market.selected_market import SelectedDepthInvalidated
+    from prep_watchdeck_market.sources.mexc_selected import produce_mexc_selected
+    from prep_watchdeck_market.sources.mexc_stream_common import MexcSubscriptionPacer
+
+    async def fetch(session, endpoint, **kwargs):
+        if "/depth/" in endpoint:
+            return {
+                "success": True,
+                "code": 0,
+                "data": {"version": 10, "bids": [[99, 10000, 1]], "asks": [[101, 10000, 1]]},
+            }
+        return {"success": True, "code": 0, "data": []}
+
+    monkeypatch.setattr("prep_watchdeck_market.sources.mexc_selected.fetch_mexc_json", fetch)
+    monkeypatch.setattr(
+        "prep_watchdeck_market.sources.mexc_selected.MEXC_SELECTED_SUBSCRIPTION_ACK_TIMEOUT_SECONDS",
+        0.01,
+        raising=False,
+    )
+    attempts = []
+
+    class WS:
+        def __init__(self, healthy):
+            self.messages = []
+            for channel in ("depth", "deal"):
+                if not healthy and failure == "missing_" + channel:
+                    continue
+                if not healthy and failure == "reject_" + channel:
+                    self.messages.append({"channel": "rs.error", "data": "subscription rejected"})
+                else:
+                    self.messages.append(
+                        {
+                            "channel": "rs.sub." + channel,
+                            "data": "failed"
+                            if not healthy and failure == "invalid_ack"
+                            else "success",
+                        }
+                    )
+            if healthy:
+                self.messages.append(
+                    {
+                        "channel": "push.depth",
+                        "symbol": "BTC_USDT",
+                        "data": {"version": 11, "bids": [], "asks": []},
+                    }
+                )
+
+        async def send_json(self, payload):
+            pass
+
+        async def receive(self):
+            if not self.messages:
+                await asyncio.Event().wait()
+            return SimpleNamespace(
+                type=aiohttp.WSMsgType.TEXT, data=json.dumps(self.messages.pop(0))
+            )
+
+    @asynccontextmanager
+    async def connect(url):
+        attempts.append(url)
+        yield WS(healthy=len(attempts) > 1)
+
+    async def run():
+        stop = asyncio.Event()
+        events = []
+        pacer = MexcSubscriptionPacer(0)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_stream_common.mexc_subscription_pacer",
+            lambda: pacer,
+        )
+
+        async def emit(event):
+            events.append(event)
+            if isinstance(event, SelectedDepth):
+                stop.set()
+
+        await asyncio.wait_for(
+            produce_mexc_selected(
+                object(),
+                instrument(),
+                emit,
+                stop,
+                ws_factory=connect,
+                receive_poll_seconds=0.005,
+                reconnect_delay_seconds=0,
+            ),
+            timeout=0.5,
+        )
+        return events
+
+    events = asyncio.run(run())
+    assert len(attempts) == 2
+    assert any(
+        isinstance(event, SelectedDepthInvalidated)
+        and event.raw_payload.get("errorCode") == error_code
+        for event in events
+    )
+    assert len([event for event in events if isinstance(event, SelectedDepth)]) == 1
+
+
+@pytest.mark.parametrize(
+    "deal_traffic, depth_update", [(False, False), (True, False), (True, True)]
+)
+def test_selected_initial_depth_publish_preserves_latest_native_evidence(
+    monkeypatch, deal_traffic, depth_update
+):
+    import asyncio
+    import json
+    from contextlib import asynccontextmanager
+    from types import SimpleNamespace
+
+    import aiohttp
+
+    from prep_watchdeck_market.sources.mexc_selected import produce_mexc_selected
+
+    snapshot = {
+        "success": True,
+        "code": 0,
+        "data": {
+            "version": 10,
+            "timestamp": int(NOW.timestamp() * 1000),
+            "bids": [[99, 10000, 1]],
+            "asks": [[101, 10000, 1]],
+        },
+    }
+
+    async def fetch(session, endpoint, **kwargs):
+        if "/depth/" in endpoint:
+            return snapshot
+        return {"success": True, "code": 0, "data": []}
+
+    monkeypatch.setattr("prep_watchdeck_market.sources.mexc_selected.fetch_mexc_json", fetch)
+
+    class WS:
+        def __init__(self):
+            self.acks = ["depth", "deal"]
+            self.updated = False
+
+        async def send_json(self, payload):
+            pass
+
+        async def receive(self):
+            if self.acks:
+                payload = {"channel": "rs.sub." + self.acks.pop(0), "data": "success"}
+            elif depth_update and not self.updated:
+                self.updated = True
+                payload = {
+                    "channel": "push.depth",
+                    "symbol": "BTC_USDT",
+                    "data": {"version": 11, "bids": [[99, 20000, 1]], "asks": []},
+                }
+            elif deal_traffic:
+                await asyncio.sleep(0.001)
+                payload = {"channel": "push.deal", "symbol": "BTC_USDT", "data": []}
+            else:
+                await asyncio.Event().wait()
+                raise AssertionError("stalled receive must be cancelled")
+            return SimpleNamespace(type=aiohttp.WSMsgType.TEXT, data=json.dumps(payload))
+
+    @asynccontextmanager
+    async def connect(url):
+        yield WS()
+
+    async def run():
+        stop = asyncio.Event()
+        depths = []
+        stop_tasks = []
+
+        async def stop_after_receive_window():
+            await asyncio.sleep(0.02)
+            stop.set()
+
+        async def emit(event):
+            if isinstance(event, SelectedDepth):
+                depths.append(event)
+                if depth_update:
+                    stop_tasks.append(asyncio.create_task(stop_after_receive_window()))
+                else:
+                    stop.set()
+
+        await asyncio.wait_for(
+            produce_mexc_selected(
+                object(),
+                instrument(),
+                emit,
+                stop,
+                ws_factory=connect,
+                receive_poll_seconds=0.005,
+            ),
+            timeout=0.5,
+        )
+        await asyncio.gather(*stop_tasks)
+        return depths
+
+    depths = asyncio.run(run())
+    assert len(depths) == 1
+    if not depth_update:
+        assert depths[0].source_at == NOW
+    assert [(x.price, x.size_base) for x in depths[0].bids] == [
+        (Decimal(99), Decimal(2 if depth_update else 1))
+    ]
+    assert depths[0].raw_payload["watchdeckSnapshot"] == snapshot
+
+
+@pytest.mark.parametrize(
     "malformed", [None, [], {"symbol": "BTC_USDT", "interval": "Min1", "t": 10**100}]
 )
 def test_candles_reconnect_on_native_malformed_payload_then_resume(malformed):
@@ -842,11 +1064,17 @@ def test_selected_reconnects_after_malformed_ws_decode(monkeypatch, malformed):
     class WS:
         def __init__(self, payload):
             self.payload = payload
+            self.acks = ["depth", "deal"]
 
         async def send_json(self, payload):
             pass
 
         async def receive(self):
+            if self.acks:
+                return SimpleNamespace(
+                    type=aiohttp.WSMsgType.TEXT,
+                    data=json.dumps({"channel": "rs.sub." + self.acks.pop(0), "data": "success"}),
+                )
             return SimpleNamespace(type=aiohttp.WSMsgType.TEXT, data=json.dumps(self.payload))
 
     @asynccontextmanager
@@ -998,6 +1226,9 @@ def test_selected_cached_snapshot_requires_exact_commit_bridge(monkeypatch, fail
     monkeypatch.setattr("prep_watchdeck_market.sources.mexc_selected.fetch_mexc_json", fetch)
 
     class WS:
+        def __init__(self):
+            self.acks = ["depth", "deal"]
+
         async def send_json(self, payload):
             if payload["method"] == "sub.depth":
                 assert payload["param"]["compress"] is True
@@ -1005,6 +1236,11 @@ def test_selected_cached_snapshot_requires_exact_commit_bridge(monkeypatch, fail
                 assert payload["param"]["compress"] is False
 
         async def receive(self):
+            if self.acks:
+                return SimpleNamespace(
+                    type=aiohttp.WSMsgType.TEXT,
+                    data=json.dumps({"channel": "rs.sub." + self.acks.pop(0), "data": "success"}),
+                )
             return SimpleNamespace(
                 type=aiohttp.WSMsgType.TEXT,
                 data=json.dumps(
@@ -1095,10 +1331,18 @@ def test_selected_live_gap_invalidates_before_bridge_and_preserves_writer_errors
     monkeypatch.setattr("prep_watchdeck_market.sources.mexc_selected.fetch_mexc_json", fetch)
 
     class WS:
+        def __init__(self):
+            self.acks = ["depth", "deal"]
+
         async def send_json(self, payload):
             pass
 
         async def receive(self):
+            if self.acks:
+                return SimpleNamespace(
+                    type=aiohttp.WSMsgType.TEXT,
+                    data=json.dumps({"channel": "rs.sub." + self.acks.pop(0), "data": "success"}),
+                )
             version = next(versions, None)
             if version is None:
                 return SimpleNamespace(type=aiohttp.WSMsgType.CLOSED)

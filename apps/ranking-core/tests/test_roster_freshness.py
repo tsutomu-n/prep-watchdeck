@@ -173,6 +173,71 @@ def test_mexc_catalog_is_readable_but_exact_identity_requires_review(tmp_path: P
     assert changed.changed_instrument_ids == ("mexc:BTC_USDT",)
 
 
+@pytest.mark.parametrize("catalog_count", [2, 1])
+def test_inactive_mexc_listing_uses_complete_catalog_population(
+    tmp_path: Path, catalog_count: int
+) -> None:
+    from prep_watchdeck_ranking.models import OriginalInstrument
+    from prep_watchdeck_ranking.roster import check_roster
+
+    root = tmp_path / "artifacts"
+    artifacts(root)
+    universe_path = root / "universe-snapshot.json"
+    universe = json.loads(universe_path.read_text())
+    universe["items"][0]["quality"] = "ready"
+    universe["items"].append(
+        {
+            **universe["items"][0],
+            "venue": "mexc",
+            "venueInstrumentId": "mexc:ETH_USDT",
+            "sourceSymbol": "ETH_USDT",
+            "baseAsset": "ETH",
+            "groupId": "ETH",
+        }
+    )
+    universe_path.write_text(json.dumps(universe))
+    old = mapping("BTC", "ETH")
+    original = OriginalInstrument(
+        venue="mexc",
+        instrument_id="mexc:ETH_USDT",
+        version_id=1,
+        symbol="ETH_USDT",
+        base_asset="ETH",
+        multiplier=1,
+    )
+    adopted = old.model_copy(
+        update={
+            "rows": (old.rows[0], old.rows[1].model_copy(update={"originals": (original,)})),
+            "roster_fingerprint": extract_roster(universe_path)["catalogFingerprint"],
+        }
+    )
+    adopted_before = adopted.model_dump_json()
+    universe.update(status="partial", qualityReasons=["contains_non_ready_instruments"])
+    universe["items"][1].update(active=False, venueInstrumentVersionId=2, quality="unavailable")
+    universe_path.write_text(json.dumps(universe))
+    universe_before = universe_path.read_text()
+    service_path = root / "service-state.json"
+    service = json.loads(service_path.read_text())
+    service["collectors"][0].update(recordsReceived=catalog_count, recordsWritten=catalog_count)
+    service_path.write_text(json.dumps(service))
+
+    health = check_roster(adopted, root, CUTOFF)
+    if catalog_count == 1:
+        # Matching only active records cannot prove the inactive definition was persisted.
+        assert health.status == "source_incomplete"
+    else:
+        assert health.status == "review_required"
+        assert health.catalog_observed_at == CUTOFF
+        assert health.source_instruments == 1
+        assert health.removed_instrument_ids == ("mexc:ETH_USDT",)
+        current = mapping("BTC").model_copy(
+            update={"roster_fingerprint": extract_roster(universe_path)["catalogFingerprint"]}
+        )
+        assert check_roster(current, root, CUTOFF).status == "ready"
+    assert adopted.model_dump_json() == adopted_before
+    assert universe_path.read_text() == universe_before
+
+
 @pytest.mark.parametrize(
     "failure",
     [

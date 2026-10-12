@@ -128,7 +128,7 @@ class MarketService:
             )
             self._mexc_funding = (
                 MexcFundingRuntime(
-                    session, lambda: self._instruments("mexc"), lambda: self._mexc_version_ids
+                    session, self._mexc_funding_instruments, lambda: self._mexc_version_ids
                 )
                 if "mexc" in self._enabled_venues
                 else None
@@ -481,7 +481,7 @@ class MarketService:
         async with self._catalog_update_lock, self._market_write_lock:
             funding_snapshots = None
             if self._mexc_funding is not None:
-                instruments = {i.source_symbol: i for i in self._instruments("mexc")}
+                instruments = {i.source_symbol: i for i in self._mexc_funding_instruments()}
                 funding_as_of = datetime.now(UTC)
                 funding_snapshots = dict(self._mexc_funding.snapshots)
                 batches = tuple(
@@ -539,7 +539,7 @@ class MarketService:
             funding_as_of = datetime.now(UTC)
             updates = {}
             tokens = {}
-            for item in self._instruments("mexc"):
+            for item in self._mexc_funding_instruments():
                 snapshot = runtime.snapshots.get(item.source_symbol)
                 if snapshot is None or snapshot.native_version_id != self._mexc_version_ids.get(
                     item.source_symbol
@@ -751,6 +751,10 @@ class MarketService:
         if batch is None or not batch.instruments:
             raise CatalogSourceError(f"{venue} catalog is unavailable")
         return batch.instruments
+
+    def _mexc_funding_instruments(self) -> tuple[CatalogInstrument, ...]:
+        # Funding can wait for a later catalog refresh without stopping other Venues.
+        return () if "mexc" not in self._catalogs else self._instruments("mexc")
 
     def _all_instruments(self) -> tuple[CatalogInstrument, ...]:
         return tuple(

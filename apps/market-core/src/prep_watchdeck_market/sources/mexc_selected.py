@@ -32,6 +32,7 @@ from prep_watchdeck_market.sources.mexc import (
 )
 
 MEXC_DEPTH_BRIDGE_INTERVAL_SECONDS = 0.15
+MEXC_SELECTED_SUBSCRIPTION_ACK_TIMEOUT_SECONDS = 10.0
 
 
 class MexcSelectedState:
@@ -283,7 +284,7 @@ async def produce_mexc_selected(
                     )
                 )
                 try:
-                    state.snapshot(snapshot, received_at=now())
+                    snapshot_depth = state.snapshot(snapshot, received_at=now())
                 except SelectedContractError:
                     raise MexcStreamFailure("MEXC snapshot decode failed") from None
                 deals = await source_call(
@@ -306,8 +307,38 @@ async def produce_mexc_selected(
                     raise MexcStreamFailure("MEXC deal snapshot decode failed") from None
                 for event in events:
                     await emit(event)
+                pending_acknowledgements = {"rs.sub.depth", "rs.sub.deal"}
+                ack_deadline = (
+                    asyncio.get_running_loop().time()
+                    + MEXC_SELECTED_SUBSCRIPTION_ACK_TIMEOUT_SECONDS
+                )
+                snapshot_publish_at = None
                 ping_at = asyncio.get_running_loop().time() + 15
                 while not stop_event.is_set():
+                    if (
+                        pending_acknowledgements
+                        and asyncio.get_running_loop().time() >= ack_deadline
+                    ):
+                        failure_code = "subscription_ack_timeout"
+                        raise MexcStreamFailure("MEXC selected subscription ACK timeout")
+                    if (
+                        not synchronized
+                        and snapshot_publish_at is not None
+                        and asyncio.get_running_loop().time() >= snapshot_publish_at
+                    ):
+                        # Give queued deltas one receive window to bridge the snapshot first.
+                        # Deal/pong traffic must not indefinitely delay a quiet depth book.
+                        await emit(
+                            replace(
+                                snapshot_depth,
+                                raw_payload={
+                                    **snapshot_depth.raw_payload,
+                                    "watchdeckSnapshot": snapshot,
+                                },
+                            )
+                        )
+                        synchronized = True
+                        continue
                     if asyncio.get_running_loop().time() >= ping_at:
                         await source_call(websocket.send_json({"method": "ping"}))
                         ping_at = asyncio.get_running_loop().time() + 15
@@ -326,6 +357,27 @@ async def produce_mexc_selected(
                     if msg.type != aiohttp.WSMsgType.TEXT:
                         continue
                     payload = decode_message(msg)
+                    channel = payload.get("channel")
+                    if channel == "rs.error":
+                        failure_code = "subscription_rejected"
+                        raise MexcStreamFailure("MEXC selected subscription rejected")
+                    if channel in ("rs.sub.depth", "rs.sub.deal"):
+                        if (
+                            channel not in pending_acknowledgements
+                            or payload.get("data") != "success"
+                        ):
+                            failure_code = "subscription_ack_invalid"
+                            raise MexcStreamFailure("MEXC selected subscription ACK invalid")
+                        pending_acknowledgements.remove(channel)
+                        if not pending_acknowledgements:
+                            snapshot_publish_at = (
+                                asyncio.get_running_loop().time() + receive_poll_seconds
+                            )
+                        continue
+                    if (channel == "push.depth" and "rs.sub.depth" in pending_acknowledgements) or (
+                        channel == "push.deal" and "rs.sub.deal" in pending_acknowledgements
+                    ):
+                        continue
                     bridge = None
                     try:
                         gap = state.depth_gap(payload)
@@ -375,7 +427,7 @@ async def produce_mexc_selected(
                             failure_code = "socket_disconnected"
                         await emit(event)
         except MexcStreamFailure:
-            if failure_code != "depth_sequence_gap":
+            if failure_code == "socket_disconnected":
                 failure_code = "native_source_invalid_or_unavailable"
             # Discard book and reconnect with a fresh snapshot; never emit stale deltas.
             pass

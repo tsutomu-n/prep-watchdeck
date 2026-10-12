@@ -407,6 +407,16 @@ def build_feature_row(asset: JoinedAsset, *, decision_at: datetime) -> FeatureSn
                     observations=(funding_observation,),
                 )
             )
+        else:
+            quality.append(f"native_funding_missing:{source}")
+            funding.append(
+                _missing(
+                    "native_funding_missing",
+                    source=source,
+                    unit="rate/hour",
+                    observations=(funding_observation,),
+                )
+            )
         bbo_observations = tuple(
             _l1_observation(item, name, value, item.quote_asset)
             for name, value in (("bid", item.best_bid), ("ask", item.best_ask))

@@ -87,6 +87,35 @@ def test_stale_l1_excluded_with_observation_and_invalid_bbo():
     assert rows[0].spread_max_bps.status == "invalid"
 
 
+@pytest.mark.parametrize("with_ready_source", [False, True])
+def test_fresh_missing_funding_keeps_observation_and_quality_reason(with_ready_source):
+    missing = instrument().model_copy(update={"funding_rate_per_hour": None})
+    originals = [ranked().originals[0]]
+    items = [missing]
+    if with_ready_source:
+        originals.append(
+            originals[0].model_copy(update={"venue": "aster", "instrument_id": "aster:BTC"})
+        )
+        items.append(instrument("aster"))
+    _, rows = build_feature_generation(
+        bundle(tuple(items)), ranking((ranked(tuple(originals)),)), decision_at=NOW
+    )
+    row = rows[0]
+    for feature in (row.funding_abs_max_per_hour, row.funding_range_per_hour):
+        observation = next(o for o in feature.observations if o.source == "bitget:BTC@1:funding")
+        assert observation.value is None
+        assert observation.unit == "rate/hour"
+        assert observation.observed_at == int(NOW.timestamp() * 1000)
+        assert observation.payload_hash == "fixture"
+    assert row.funding_range_per_hour.status == "missing"
+    assert row.funding_range_per_hour.reason == "insufficient_sources:native_funding_missing"
+    assert "native_funding_missing:bitget:BTC@1" in row.quality_reasons
+    if with_ready_source:
+        assert row.funding_abs_max_per_hour.value == 0.0001
+    else:
+        assert row.funding_abs_max_per_hour.value is None
+
+
 def test_future_native_observation_rejected():
     from datetime import timedelta
 

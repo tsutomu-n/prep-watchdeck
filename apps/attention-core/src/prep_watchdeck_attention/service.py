@@ -17,11 +17,11 @@ from .allocation import allocate_shadow_hotset
 from .components import ComponentPolicy, score_attention
 from .config import AttentionSettings
 from .discovery import build_discovery_rows
-from .discovery_models import DiscoveryResponse, DiscoverySummary
+from .discovery_models import DiscoveryResponse, DiscoveryRow, DiscoverySummary
 from .discovery_storage import DiscoveryGenerationChanged
 from .features import build_feature_generation
 from .market_input import MarketInputBundle, MarketInputError, read_market_inputs, utc_ms
-from .models import MINUTE, AllocationPolicy, AttentionResponse, InputReference
+from .models import MINUTE, AllocationPolicy, AttentionResponse, FeatureSnapshotRow, InputReference
 from .ranking_input import RankingInputError, RankingInputReader
 from .storage import AttentionStore
 
@@ -93,6 +93,10 @@ class AttentionService:
         self._task: asyncio.Task[None] | None = None
         self._generation_lock = asyncio.Lock()
         self._discovery_restarted = True
+        self._pending_generation: (
+            tuple[AttentionResponse, tuple[FeatureSnapshotRow, ...], tuple[DiscoveryRow, ...], bool]
+            | None
+        ) = None
 
     def _observation_failed(self, reason: str) -> None:
         self.last_error = reason
@@ -126,34 +130,38 @@ class AttentionService:
                     self.last_error = None
                     return False
                 try:
-                    candidate = score_attention(
-                        inputs, features, policy=self.policy, previous=self.current
-                    )
-                    allocations = tuple(
-                        allocate_shadow_hotset(
-                            candidate,
-                            policy=policy,
-                            previous=self.store.latest_allocation(policy.id),
-                            manual_selection_id=self.manual_selection_id,
+                    pending = self._pending_generation
+                    if pending and _input_key(inputs) == _input_key(pending[0].inputs):
+                        candidate, features, discovery_rows, evidence = pending
+                        inputs = candidate.inputs
+                    else:
+                        candidate = score_attention(
+                            inputs, features, policy=self.policy, previous=self.current
                         )
-                        for policy in self.allocation_policies
-                    )
-                    candidate = candidate.model_copy(update={"shadow_allocations": allocations})
-                    self.store.save_generation(
-                        inputs,
-                        features,
-                        candidate,
-                        evidence=(
-                            inputs.ranking_cutoff % (5 * MINUTE) == 0
-                            and not self.store.has_evidence_cutoff(inputs.ranking_cutoff)
-                        ),
-                    )
+                        allocations = tuple(
+                            allocate_shadow_hotset(
+                                candidate,
+                                policy=policy,
+                                previous=self.store.latest_allocation(policy.id),
+                                manual_selection_id=self.manual_selection_id,
+                            )
+                            for policy in self.allocation_policies
+                        )
+                        candidate = candidate.model_copy(update={"shadow_allocations": allocations})
+                        discovery_rows = build_discovery_rows(market, ranking, inputs, features)
+                        cutoff = inputs.ranking_cutoff
+                        evidence = cutoff % (
+                            5 * MINUTE
+                        ) == 0 and not self.store.has_evidence_cutoff(cutoff)
+                        # Retries retain the original clocks, allocation history and evidence flag.
+                        self._pending_generation = candidate, features, discovery_rows, evidence
+                    self.store.save_generation(inputs, features, candidate, evidence=evidence)
                     saved = self.store.latest_response()
                     if saved is None or saved != candidate:
                         raise ValueError("committed generation readback differs")
                     evaluated = self.store.save_discovery(
                         inputs,
-                        build_discovery_rows(market, ranking, inputs, features),
+                        discovery_rows,
                         restarted=self._discovery_restarted,
                     )
                     if evaluated:
@@ -161,6 +169,7 @@ class AttentionService:
                 except (sqlite3.Error, OSError, ValueError, RuntimeError):
                     self._observation_failed("storage_unavailable")
                     return False
+                self._pending_generation = None
                 self.current = saved
                 self.last_error = None
                 self.cycles += 1

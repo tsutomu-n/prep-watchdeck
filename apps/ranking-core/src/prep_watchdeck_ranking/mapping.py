@@ -53,6 +53,7 @@ def extract_roster(path: Path) -> dict[str, Any]:
         "generatedAt": payload["generatedAt"],
         "sourceStatus": payload["status"],
         "sourceQualityReasons": payload.get("qualityReasons", []),
+        "sourceCatalogCount": len(payload["items"]),
         "items": entries,
         "catalogFingerprint": content_digest(entries),
         "marketDataIssueIds": sorted(market_data_issues) if quality_known else None,
