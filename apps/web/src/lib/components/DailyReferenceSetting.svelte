@@ -39,6 +39,7 @@
       type="time"
       step="60"
       required
+      disabled={!ready}
       aria-label="騰落率の基準時刻（日本時間）"
       title="指定した日本時間の直前の1分足終値を基準にします"
       {value}

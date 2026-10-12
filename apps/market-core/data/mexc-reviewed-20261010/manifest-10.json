@@ -1,0 +1,26 @@
+{
+  "scope": "fixed_source_registry_not_live_acceptance",
+  "reviewedAt": "2026-10-10T01:41:39.711475+00:00",
+  "existingReviewCount": 10,
+  "additionalReviewCount": 0,
+  "candidateOrder": "frozen_amount24_descending",
+  "candidateSnapshot": "snapshot.json",
+  "identityEvidence": "reviewed-evidence.json",
+  "registry": "registry-10.py",
+  "registrySha256": "15bbc8993d999cbfcecd70b188278e39401c8cc90b908a1ed21d157247f429be",
+  "identityReviews": "identity-reviews-10.json",
+  "symbols": [
+    "BTC_USDT",
+    "ETH_USDT",
+    "SOL_USDT",
+    "XRP_USDT",
+    "DOGE_USDT",
+    "LTC_USDT",
+    "BNB_USDT",
+    "ADA_USDT",
+    "AVAX_USDT",
+    "TRX_USDT"
+  ],
+  "productionContractVersionIds": null,
+  "productionVersionStatus": "must_capture_after_each_staged_switch"
+}

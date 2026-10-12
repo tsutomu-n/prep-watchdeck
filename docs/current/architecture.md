@@ -1,8 +1,8 @@
 # prep-watchdeck 現行アーキテクチャ
 
-timestamp="2026-10-09(金)_15:03 JST"
+timestamp="2026-10-10(土)_13:27 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T15:03:11+09:00`
+- 更新: `2026-10-10T13:27:31+09:00`
 - 検証: `2026-10-08T16:04:27+09:00`
 - 状態: `現行`
 
@@ -17,7 +17,7 @@ timestamp="2026-10-09(金)_15:03 JST"
 ## 現行Process境界
 
 ```text
-Bitget / Hyperliquid Core / Aster public API
+Bitget / Hyperliquid Core / Aster / MEXC public API
                   |
                   v
         watchdeck-market service
@@ -55,8 +55,13 @@ remote API等を必要に応じて別process/bounded contextとして追加で�
 Catalogは現在15分周期でVenue別に取得し、成功sourceをSCD2保存する。source kind、endpoint、payload hash、
 observed/source time、capability、exclusion reasonを保持する。
 
-現行auto-groupはactive crypto linear perpetual、base完全一致、base数量、multiplier 1、Venue内候補1件を要求する。
-条件外instrumentを推測でgroupへ入れない。
+既存3 Venueのauto-groupはactive crypto linear perpetual、base完全一致、base数量、multiplier 1、
+Venue内候補1件を要求する。MEXCは確認済みのnative資産・価格単位・数量定義を
+`verified_native_contract`として扱い、exact versionの契約係数でbase数量へ変換する。
+実効registryは既存10件と追加40件の審査済みUSDT perpetual、計50件を固定採用する。
+未審査・非crypto・定義不一致を推測でgroupへ入れない。追加40件と100件段階用の残り50件はnative資産だけの
+審査結果を持ち、他Venueとの同一性を確認するまでは`native:mexc:<exact source symbol>:linear-perp`の
+単独groupを使う。参考mark比較やVenue内衝突の推測へ混ぜず、価格・OI・Chart・手動selectionは保持する。
 
 将来の別asset classやexplicit mappingは別contractで追加できる。
 
@@ -69,14 +74,22 @@ observed/source time、capability、exclusion reasonを保持する。
 
 ### Candle
 
-現在は3 Venueからfinished/confirmed/derived-final 1分足を収集し、queue/batch writerでPostgresへ保存する。
+現在のsourceは4 Venueからfinished/confirmed/derived-final 1分足を収集し、queue/batch writerでPostgresへ保存する。
 version境界、unknown version、invalid barを安全側に拒否し、gapを捏造補間しない。
+MEXCのWSにはclosed flagがなく、分終了後5秒を基準とする導出確定を`derived_final`として区別する。
 
 将来、別timeframe/source/backfill laneを追加できる。
 
+MEXCのCurrent FundingはTickerとは独立して毎秒2件開始・最大4並列で取得し、60秒巡回を目標にする。
+取得済みFundingは2秒周期で変更分を保存し、次のL1周期を待たずartifact更新を通知する。
+Catalog・L1・Funding writerの順序を保ち、L1保存時はlock取得後の最新Fundingを再結合する。
+契約のnative versionが一致する取得根拠を同じtransactionで保存し、価格・OIの時刻や標本数は変更しない。
+Funding期限切れは価格・OI公開を止めない。Candle WSは25銘柄/接続、全接続合計5購読/秒、ping15秒。
+ACKを確認し、失敗した接続だけをbackoff/jitterで再接続する。これらの数値は設計値で公式上限ではない。
+
 ### Settled Funding
 
-現在のmaintenanceは3 Venueのsettled fundingを同期する。現在値/estimatedとsettled historyを区別し、version boundary、
+現在のmaintenanceは有効なVenueのsettled fundingを同期する。現在値/estimatedとsettled historyを区別し、version boundary、
 idempotency、conflictを検証する。
 
 48時間catch-up等は現行runtime値。より深いhistorical laneを別設計で追加できる。
@@ -85,6 +98,9 @@ idempotency、conflictを検証する。
 
 現在Webはselection commandをlocal fileへatomic writeし、market serviceが1 groupを購読する。
 現行値は500ms debounce、15分TTL、5分heartbeat、旧subscription cleanup、CLOB depth/trade等。
+MEXC板はnativeの200ms集約差分を使い、REST snapshotが遅れている場合は最大1,000件の
+`depth_commits`から欠落・重複のない連続鎖を確認する。WSとの同期が成立するまでreadyにせず、
+gap・切断時は板を無効化する。受信したraw envelopeとsnapshot・bridgeの根拠を保持する。
 
 1 selection、20 depth、100 trades等は永久上限ではない。複数selection、pinned/ranked capture、単独instrument detail等を
 将来追加できる。
@@ -138,11 +154,15 @@ path、port、DB engine、single-host構成は現行runtime値。local-first原�
 
 Webの`GET /api/chart-history`は検証済みUniverseのactive grouped instrumentだけを解決し、
 選択したVenueのnative時間足を取得する。Bitgetはv2の`candles`と`history-candles`、
-Hyperliquidは`candleSnapshot`、Asterは`klines`を使う。日足はUTC 00:00開始へ揃え、
-Bitgetでは`1Dutc`を指定する。Webへ取引所の秘密API keyを追加しない。
+Hyperliquidは`candleSnapshot`、Asterは`klines`、MEXCは公開host `api.mexc.com`の
+`/api/v1/contract/kline/{symbol}`を使う。日足はUTC 00:00開始へ揃え、Bitgetでは`1Dutc`、
+MEXCでは`Day1`を指定する。Webへ取引所の秘密API keyを追加しない。
 
 1ページ最大500本、server cacheは30秒・32件、同時取得は8件までで同じ要求をまとめる。
-BitgetへのHTTP開始間隔はWeb process内で全銘柄・時間足共通の1秒以上とする。
+HTTP開始間隔はWeb process内でVenueごとに全銘柄・時間足で共有し、Bitgetは1秒以上とする。
+MEXCは既存のprocess内100ms以上に加え、Market/Web/recovery/maintenanceが同じSQLite予算を使う。
+rolling2秒に合計8回、Funding4・foreground2・recovery2の固定枠とし、再試行も消費する。
+429 cooldownを共有し、予算DBが不通なら無制限取得へ切り替えない。
 1 HTTP requestは10秒、待機を含むページ全体は30秒でtimeoutする。最新を60秒ごとに更新し、
 過去へのスクロールまたは追加ボタンで古いページを取得する。Browserは1銘柄・1時間足につき
 最大10,000本を保持する。取得量は取引所の配信範囲に依存し、DBの8日保持には依存しない。
@@ -167,7 +187,7 @@ native APIの欠測・鮮度は騰落率欄の理由として示し、Market Cor
 ## 独立したデイトレランキング
 
 /home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/apps/ranking-core/ は、Bybit・Binanceの公開USDT perpetualを
-別processで継続取得する。元の3 Venueから価格・売買代金を補完しない。既存artifactからは
+別processで継続取得する。元Venueから価格・売買代金を補完しない。既存artifactからは
 名簿作成時にidentityだけを抽出し、確認済みmapとして保存する。価格・売買代金の通常収集は
 保存済みmapで動作し、元のcollector、Postgres、Parquet、Selection、Past Noteへ依存しない。
 名簿の鮮度だけは、毎世代に元stateの`universe-snapshot.json`と`service-state.json`をread-onlyで照合する。
@@ -239,6 +259,20 @@ Recovery/Auditファイルをtransaction後に別時刻として添付する。R
 毎分の計算結果を単一writerのtransactionとreadbackで確認してから、専用stateのimmutable JSONと`artifacts/current.json`へatomic公開する。全世代のcurrent responseとshadow allocationを保存し、特徴量・成分の評価用evidenceはRanking cutoffが5分境界の最初の1世代だけ保存する。失敗時は新しい世代を公開せず、APIで前世代の時刻を保ったstaleを返す。
 
 Webはloopbackの`GET /attention`を`/api/attention`経由で読む。GETから再計算・入力取得・監視対象変更を行わない。Outcome settlementは明示的なoffline exportを使い、候補群評価は固定済みの候補と確定後の将来結果だけを読む。自動captureは接続していない。設計判断は[Decision 0015](../decisions/0015-attention-core.md)を参照する。
+
+Discoveryも同じAttention writerが既存入力から毎分評価し、既存Attention SQLiteに最新raw projectionと条件episodeを持つ。
+最新projectionは置換し、全件rawのimmutable履歴を追加しない。終了episodeだけを7日・最大10,000件に制限し、
+active/interruptedは保持する。Attention世代とDiscoveryはそれぞれcommit/readback後に公開し、
+後者の保存失敗は成功扱いせず`storage_unavailable`と観測中断を示す。
+`GET /discovery`とWebの`/api/discovery`は読取だけで、Provider・user-workspace・selectionを呼ばない。
+`/discovery-summary`はraw treeを含まない一覧で、Webの15秒pollは一覧と最大4対象の詳細だけを読む。
+詳細はasset主キーのtableとmetadataを1 SQL snapshotで読み、全Universe JSONやjson_eachを走査しない。
+旧full projectionを併存させ、旧writerによるrollback後も次回起動でindexを再構築する。
+世代更新時も旧projectionは必要な継続判定fieldだけを読み、完全payloadのreadbackは保存bytesの一致で確認する。
+
+Webは最大4件の比較pinを`user-workspace.json` v2、手動の監視/見送りを別の`manual-decisions.json`に保存する。
+お気に入り、条件episode、比較候補、実captureのselectionは独立する。比較・判断記録だけではcaptureを変更せず、
+実Venueの明示確認時に最新identityを再照合して既存selectionへ送る。新しい監視serviceや外部通知は追加しない。
 
 ## 研究readerとoffline比較
 

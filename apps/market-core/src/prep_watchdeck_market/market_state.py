@@ -39,6 +39,9 @@ class MarketObservation:
     source_payload_hash: str
     error_code: str | None
     raw_payload: dict[str, object] = field(repr=False, compare=False)
+    funding_source_at: datetime | None = None
+    funding_observed_at: datetime | None = None
+    funding_valid_until: datetime | None = None
 
 
 @dataclass(frozen=True, slots=True)

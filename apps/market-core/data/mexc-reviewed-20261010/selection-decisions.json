@@ -1,0 +1,3774 @@
+{
+  "selectionCutoffRank": 161,
+  "candidatePagesRequestedDuringCapture": 155,
+  "rawCandidateRowsCaptured": 240,
+  "decisionCounts": {
+    "existing_review_retained": 10,
+    "accepted": 90,
+    "skipped": 61
+  },
+  "policy": "Preserve existing10; examine frozen amount24 order. Skip uncertain identity and non-crypto underlying; do not derive asset class from symbol or typeLabel alone. Later captured candidates are not adopted.",
+  "items": [
+    {
+      "rank": 1,
+      "sourceSymbol": "BTC_USDT",
+      "baseAsset": "BTC",
+      "amount24": "2631946867.9905",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-pow"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 2,
+      "sourceSymbol": "ZEC_USDT",
+      "baseAsset": "ZEC",
+      "amount24": "1240627668.0548",
+      "catalogConcepts": [
+        "mc-trade-zone-privity",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-pow",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ZEC",
+        "finalUrl": "https://www.mexc.com/price/ZEC",
+        "observedAt": "2026-10-10T01:32:09.408717+00:00",
+        "status": 200,
+        "sha256": "81350382b809bbcd9626cb03725502d6e8f631d2e800c66c13447237a595d600",
+        "rawBytes": 753584,
+        "rawSha256": "81350382b809bbcd9626cb03725502d6e8f631d2e800c66c13447237a595d600"
+      },
+      "pageTitle": "Zcash Price Today: Live ZEC to USD Price Chart & Market Data",
+      "pageToken": "ZEC",
+      "pageAssetName": "ZEC",
+      "pageProject": "Zcash",
+      "pageFuturesSymbol": "ZEC_USDT"
+    },
+    {
+      "rank": 3,
+      "sourceSymbol": "ETH_USDT",
+      "baseAsset": "ETH",
+      "amount24": "1079177812.1926",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 4,
+      "sourceSymbol": "SOL_USDT",
+      "baseAsset": "SOL",
+      "amount24": "859017079.866",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-pow"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 5,
+      "sourceSymbol": "XRP_USDT",
+      "baseAsset": "XRP",
+      "amount24": "475797531.0671",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 6,
+      "sourceSymbol": "XAU_USDT",
+      "baseAsset": "XAU",
+      "amount24": "308872228.62089",
+      "catalogConcepts": [
+        "mc-trade-zone-metals",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 7,
+      "sourceSymbol": "MUSTOCK_USDT",
+      "baseAsset": "MUSTOCK",
+      "amount24": "231241189.0789",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-aistorage",
+        "mc-trade-zone-aisemiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 8,
+      "sourceSymbol": "SILVER_USDT",
+      "baseAsset": "SILVER",
+      "amount24": "208109060.0017",
+      "catalogConcepts": [
+        "mc-trade-zone-metals",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 9,
+      "sourceSymbol": "XAUT_USDT",
+      "baseAsset": "XAUT",
+      "amount24": "175453633.8086",
+      "catalogConcepts": [
+        "mc-trade-zone-metals",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 10,
+      "sourceSymbol": "NEAR_USDT",
+      "baseAsset": "NEAR",
+      "amount24": "153859018.254",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-ai",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/NEAR",
+        "finalUrl": "https://www.mexc.com/price/NEAR",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:34.412716+00:00",
+        "rawSha256": "e202474456fb608da1e15f929a40ce854f3ce3dc7c15225d00a1eb6ee238ee7d",
+        "rawBytes": 768377
+      },
+      "pageTitle": "NEAR Price Today: Live NEAR to USD Price Chart & Market Data",
+      "pageToken": "NEAR",
+      "pageAssetName": "NEAR",
+      "pageProject": "NEAR Protocol",
+      "pageFuturesSymbol": "NEAR_USDT"
+    },
+    {
+      "rank": 11,
+      "sourceSymbol": "QNT_USDT",
+      "baseAsset": "QNT",
+      "amount24": "127338670.8453",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-RWA",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/QNT",
+        "finalUrl": "https://www.mexc.com/price/QNT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:35.859106+00:00",
+        "rawSha256": "2ce68f3fd1fc738720485288cb1c1fa1fd52135dbb0857f661eb60b1bcc6d505",
+        "rawBytes": 749513
+      },
+      "pageTitle": "Quant Price Today: Live QNT to USD Price Chart & Market Data",
+      "pageToken": "QNT",
+      "pageAssetName": "QNT",
+      "pageProject": "Quant",
+      "pageFuturesSymbol": "QNT_USDT"
+    },
+    {
+      "rank": 12,
+      "sourceSymbol": "LINK_USDT",
+      "baseAsset": "LINK",
+      "amount24": "96373318.825",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-ai",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/LINK",
+        "finalUrl": "https://www.mexc.com/price/LINK",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:37.453677+00:00",
+        "rawSha256": "713011a159e46de4f243aa5f132562780ed080af6e1c256737090b1815a27529",
+        "rawBytes": 762864
+      },
+      "pageTitle": "Chainlink Price Today: Live LINK to USD Price Chart & Market Data",
+      "pageToken": "LINK",
+      "pageAssetName": "LINK",
+      "pageProject": "Chainlink",
+      "pageFuturesSymbol": "LINK_USDT"
+    },
+    {
+      "rank": 13,
+      "sourceSymbol": "USOIL_USDT",
+      "baseAsset": "USOIL",
+      "amount24": "90972998.54559",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-OIL",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 14,
+      "sourceSymbol": "SUI_USDT",
+      "baseAsset": "SUI",
+      "amount24": "87705694.219",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/SUI",
+        "finalUrl": "https://www.mexc.com/price/SUI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:39.494591+00:00",
+        "rawSha256": "fb1b7f3235b1366ec5f29f360b08267e51c1e40007afb971811b6a78b47730bf",
+        "rawBytes": 773264
+      },
+      "pageTitle": "SUI Price Today: Live SUI to USD Price Chart & Market Data",
+      "pageToken": "SUI",
+      "pageAssetName": "SUI",
+      "pageProject": "Sui",
+      "pageFuturesSymbol": "SUI_USDT"
+    },
+    {
+      "rank": 15,
+      "sourceSymbol": "SOXL_USDT",
+      "baseAsset": "SOXL",
+      "amount24": "75348037.151",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 16,
+      "sourceSymbol": "SKHYNIXSTOCK_USDT",
+      "baseAsset": "SKHYNIXSTOCK",
+      "amount24": "75062905.732",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-aistorage"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 17,
+      "sourceSymbol": "UKOIL_USDT",
+      "baseAsset": "UKOIL",
+      "amount24": "71738532.41341",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-OIL",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 18,
+      "sourceSymbol": "DOGE_USDT",
+      "baseAsset": "DOGE",
+      "amount24": "71656972.55",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-pow",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 19,
+      "sourceSymbol": "PEPE_USDT",
+      "baseAsset": "PEPE",
+      "amount24": "68572701.736",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/PEPE",
+        "finalUrl": "https://www.mexc.com/price/PEPE",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:40.926607+00:00",
+        "rawSha256": "9d1153c7c44768a7d782eb7e3b5cd92177f1fe628a4f2be44ff34f4f4784a52d",
+        "rawBytes": 771022
+      },
+      "pageTitle": "Pepe Price Today: Live PEPE to USD Price Chart & Market Data",
+      "pageToken": "PEPE",
+      "pageAssetName": "PEPE",
+      "pageProject": "PEPE",
+      "pageFuturesSymbol": "PEPE_USDT"
+    },
+    {
+      "rank": 20,
+      "sourceSymbol": "SPCXSTOCK_USDT",
+      "baseAsset": "SPCXSTOCK",
+      "amount24": "63501813.4172",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-aerospace"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 21,
+      "sourceSymbol": "SNDKSTOCK_USDT",
+      "baseAsset": "SNDKSTOCK",
+      "amount24": "61838737.72314",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-aistorage"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 22,
+      "sourceSymbol": "WLD_USDT",
+      "baseAsset": "WLD",
+      "amount24": "57450505.161",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-ai",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/WLD",
+        "finalUrl": "https://www.mexc.com/price/WLD",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:42.397562+00:00",
+        "rawSha256": "76c2f27828167e858dacad8fee79777adb01b19963c225412ad82c4690e2d845",
+        "rawBytes": 762551
+      },
+      "pageTitle": "Worldcoin Price Today: Live WLD to USD Price Chart & Market Data",
+      "pageToken": "WLD",
+      "pageAssetName": "WLD",
+      "pageProject": "Worldcoin",
+      "pageFuturesSymbol": "WLD_USDT"
+    },
+    {
+      "rank": 23,
+      "sourceSymbol": "TAO_USDT",
+      "baseAsset": "TAO",
+      "amount24": "57361351.2192",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-ai",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/TAO",
+        "finalUrl": "https://www.mexc.com/price/TAO",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:44.325683+00:00",
+        "rawSha256": "89895c7ee0444186f2aa8803589353152ac3a345c29cef7db308a33352de3cc4",
+        "rawBytes": 761229
+      },
+      "pageTitle": "Bittensor Price Today: Live TAO to USD Price Chart & Market Data",
+      "pageToken": "TAO",
+      "pageAssetName": "TAO",
+      "pageProject": "Bittensor",
+      "pageFuturesSymbol": "TAO_USDT"
+    },
+    {
+      "rank": 24,
+      "sourceSymbol": "RLC_USDT",
+      "baseAsset": "RLC",
+      "amount24": "51874889.5704",
+      "catalogConcepts": [
+        "mc-trade-zone-ai",
+        "mc-trade-zone-web3"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/RLC",
+        "finalUrl": "https://www.mexc.com/price/RLC",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:45.834477+00:00",
+        "rawSha256": "00bf8a9aab147770cb107c63bb0cca738841a20c13c1c4be0ed28e13a00cd754",
+        "rawBytes": 748515
+      },
+      "pageTitle": "iExec RLC Price Today: Live RLC to USD Price Chart & Market Data",
+      "pageToken": "RLC",
+      "pageAssetName": "RLC",
+      "pageProject": "iExec RLC",
+      "pageFuturesSymbol": "RLC_USDT"
+    },
+    {
+      "rank": 25,
+      "sourceSymbol": "SPX500_USDT",
+      "baseAsset": "SPX500",
+      "amount24": "50773159.48514",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 26,
+      "sourceSymbol": "ADA_USDT",
+      "baseAsset": "ADA",
+      "amount24": "50199604.7028",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 27,
+      "sourceSymbol": "HYPE_USDT",
+      "baseAsset": "HYPE",
+      "amount24": "43251522.3956",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-PerpDex",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/HYPE",
+        "finalUrl": "https://www.mexc.com/price/HYPE",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:47.303862+00:00",
+        "rawSha256": "507572523466864ce0451d7df6cb4d34c2addefb2461e1d28460f2cebd5d807a",
+        "rawBytes": 769311
+      },
+      "pageTitle": "Hyperliquid Price Today: Live HYPE to USD Price Chart & Market Data",
+      "pageToken": "HYPE",
+      "pageAssetName": "HYPE",
+      "pageProject": "Hyperliquid",
+      "pageFuturesSymbol": "HYPE_USDT"
+    },
+    {
+      "rank": 28,
+      "sourceSymbol": "ENA_USDT",
+      "baseAsset": "ENA",
+      "amount24": "42319815.1256",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ENA",
+        "finalUrl": "https://www.mexc.com/price/ENA",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:48.756464+00:00",
+        "rawSha256": "8dbf5b5a8b90c82a4fc45d725529510ad7581ee8f72722ec2a56dd4e786532f4",
+        "rawBytes": 784873
+      },
+      "pageTitle": "Ethena Price Today: Live ENA to USD Price Chart & Market Data",
+      "pageToken": "ENA",
+      "pageAssetName": "ENA",
+      "pageProject": "Ethena",
+      "pageFuturesSymbol": "ENA_USDT"
+    },
+    {
+      "rank": 29,
+      "sourceSymbol": "ONDO_USDT",
+      "baseAsset": "ONDO",
+      "amount24": "40513833.202",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-RWA",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ONDO",
+        "finalUrl": "https://www.mexc.com/price/ONDO",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:50.207464+00:00",
+        "rawSha256": "3e33cf9cdfa51f0dbacb55b4efa1a065108156b31517e641d839485faff6de5c",
+        "rawBytes": 746736
+      },
+      "pageTitle": "Ondo Price Today: Live ONDO to USD Price Chart & Market Data",
+      "pageToken": "ONDO",
+      "pageAssetName": "ONDO",
+      "pageProject": "Ondo",
+      "pageFuturesSymbol": "ONDO_USDT"
+    },
+    {
+      "rank": 30,
+      "sourceSymbol": "SOXS_USDT",
+      "baseAsset": "SOXS",
+      "amount24": "36409354.09",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 31,
+      "sourceSymbol": "AVAX_USDT",
+      "baseAsset": "AVAX",
+      "amount24": "35911998.748",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 32,
+      "sourceSymbol": "STRK_USDT",
+      "baseAsset": "STRK",
+      "amount24": "35550943.32529",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "skipped",
+      "reason": "official_page_identity_conflict_Strike_Finance_metadata_and_Starknet_description",
+      "page": {
+        "url": "https://www.mexc.com/price/STRK",
+        "finalUrl": "https://www.mexc.com/price/STRK",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:51.668625+00:00",
+        "rawSha256": "663c15a58f1153425790a2ac9a868ab7fe23aae4d1a22866cb4408abbb86e771",
+        "rawBytes": 765105
+      },
+      "pageTitle": "STRK Price Today: Live STRK to USD Price Chart & Market Data",
+      "pageToken": "STRK",
+      "pageAssetName": "STRK",
+      "pageProject": "Strike Finance",
+      "pageFuturesSymbol": "STRK_USDT"
+    },
+    {
+      "rank": 33,
+      "sourceSymbol": "NAS100_USDT",
+      "baseAsset": "NAS100",
+      "amount24": "33063024.76917",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 34,
+      "sourceSymbol": "ARB_USDT",
+      "baseAsset": "ARB",
+      "amount24": "28403364.34672",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ARB",
+        "finalUrl": "https://www.mexc.com/price/ARB",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:53.153812+00:00",
+        "rawSha256": "4aa5e8348eb8cd50098dc47d4b9ae802190862f2997297a962a5a808774a561f",
+        "rawBytes": 767077
+      },
+      "pageTitle": "Arbitrum Price Today: Live ARB to USD Price Chart & Market Data",
+      "pageToken": "ARB",
+      "pageAssetName": "ARB",
+      "pageProject": "Arbitrum",
+      "pageFuturesSymbol": "ARB_USDT"
+    },
+    {
+      "rank": 35,
+      "sourceSymbol": "DOT_USDT",
+      "baseAsset": "DOT",
+      "amount24": "27785278.10712",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-web3"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/DOT",
+        "finalUrl": "https://www.mexc.com/price/DOT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:54.359047+00:00",
+        "rawSha256": "b6284d2eedf6b70749675e223fb787830363c3adc52872a8117fc820242fdfb9",
+        "rawBytes": 756057
+      },
+      "pageTitle": "Polkadot Price Today: Live DOT to USD Price Chart & Market Data",
+      "pageToken": "DOT",
+      "pageAssetName": "DOT",
+      "pageProject": "Polkadot",
+      "pageFuturesSymbol": "DOT_USDT"
+    },
+    {
+      "rank": 36,
+      "sourceSymbol": "TIA_USDT",
+      "baseAsset": "TIA",
+      "amount24": "27759688.8926",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/TIA",
+        "finalUrl": "https://www.mexc.com/price/TIA",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:55.801832+00:00",
+        "rawSha256": "37e15bf5446dfede31868e12582440091c12329b14ccf3a63a5a1516f41545c6",
+        "rawBytes": 748994
+      },
+      "pageTitle": "TIA Price Today: Live TIA to USD Price Chart & Market Data",
+      "pageToken": "TIA",
+      "pageAssetName": "TIA",
+      "pageProject": "TIA",
+      "pageFuturesSymbol": "TIA_USDT"
+    },
+    {
+      "rank": 37,
+      "sourceSymbol": "KORU_USDT",
+      "baseAsset": "KORU",
+      "amount24": "26927285.05934",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 38,
+      "sourceSymbol": "ATOM_USDT",
+      "baseAsset": "ATOM",
+      "amount24": "26785249.4135",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ATOM",
+        "finalUrl": "https://www.mexc.com/price/ATOM",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:57.221350+00:00",
+        "rawSha256": "782d5abd3a0bc70a083382acac32cb3da29518e4338a653a032dce8f18852e29",
+        "rawBytes": 754135
+      },
+      "pageTitle": "COSMOS Price Today: Live ATOM to USD Price Chart & Market Data",
+      "pageToken": "ATOM",
+      "pageAssetName": "ATOM",
+      "pageProject": "Cosmos",
+      "pageFuturesSymbol": "ATOM_USDT"
+    },
+    {
+      "rank": 39,
+      "sourceSymbol": "AAVE_USDT",
+      "baseAsset": "AAVE",
+      "amount24": "25519219.8627",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/AAVE",
+        "finalUrl": "https://www.mexc.com/price/AAVE",
+        "status": 200,
+        "observedAt": "2026-10-10T01:33:58.689949+00:00",
+        "rawSha256": "04cff25cb4a98511705a8637571c10a816ed1031e02958176b2dd9f52eeb42ad",
+        "rawBytes": 764124
+      },
+      "pageTitle": "AaveToken Price Today: Live AAVE to USD Price Chart & Market Data",
+      "pageToken": "AAVE",
+      "pageAssetName": "AAVE",
+      "pageProject": "AAVE",
+      "pageFuturesSymbol": "AAVE_USDT"
+    },
+    {
+      "rank": 40,
+      "sourceSymbol": "PUMPFUN_USDT",
+      "baseAsset": "PUMPFUN",
+      "amount24": "24037110.7828",
+      "catalogConcepts": [
+        "mc-trade-zone-InfoFi"
+      ],
+      "decision": "skipped",
+      "reason": "asset_page_unavailable",
+      "page": {
+        "url": "https://www.mexc.com/price/PUMPFUN",
+        "finalUrl": "https://www.mexc.com/price/PUMPFUN",
+        "status": 404,
+        "observedAt": "2026-10-10T01:33:59.920211+00:00",
+        "rawSha256": "ac59f63fc2082f23fea0cafa87486163bc92ca2233dc09181dd9bbd954ee6389",
+        "rawBytes": 214811
+      },
+      "pageTitle": "MEXC Exchange: Your 0-Fee Gateway to Infinite Opportunities - Trade Bitcoin, Ethereum & Most Trending Tokens",
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 41,
+      "sourceSymbol": "JUP_USDT",
+      "baseAsset": "JUP",
+      "amount24": "20508357.27",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-PerpDex",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/JUP",
+        "finalUrl": "https://www.mexc.com/price/JUP",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:01.561212+00:00",
+        "rawSha256": "2112a47536ae3eda379d9f64cebb612490b4dd8905e723d82851efb0b67d0985",
+        "rawBytes": 750383
+      },
+      "pageTitle": "Jupiter Price Today: Live JUP to USD Price Chart & Market Data",
+      "pageToken": "JUP",
+      "pageAssetName": "JUP",
+      "pageProject": "Jupiter",
+      "pageFuturesSymbol": "JUP_USDT"
+    },
+    {
+      "rank": 42,
+      "sourceSymbol": "APT_USDT",
+      "baseAsset": "APT",
+      "amount24": "19486035.88684",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/APT",
+        "finalUrl": "https://www.mexc.com/price/APT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:03.017607+00:00",
+        "rawSha256": "27d2896d832e10645510ace8e42332c9d20956704031b9cbe13c6733b9538341",
+        "rawBytes": 758812
+      },
+      "pageTitle": "Aptos Price Today: Live APT to USD Price Chart & Market Data",
+      "pageToken": "APT",
+      "pageAssetName": "APT",
+      "pageProject": "Aptos",
+      "pageFuturesSymbol": "APT_USDT"
+    },
+    {
+      "rank": 43,
+      "sourceSymbol": "INJ_USDT",
+      "baseAsset": "INJ",
+      "amount24": "17740407.456",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-nft",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/INJ",
+        "finalUrl": "https://www.mexc.com/price/INJ",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:04.433746+00:00",
+        "rawSha256": "9479ae10ef19da3e9329078f7f2e7beb59433329dc3b10945700fc48aea08f36",
+        "rawBytes": 761775
+      },
+      "pageTitle": "Injective Price Today: Live INJ to USD Price Chart & Market Data",
+      "pageToken": "INJ",
+      "pageAssetName": "INJ",
+      "pageProject": "Injective",
+      "pageFuturesSymbol": "INJ_USDT"
+    },
+    {
+      "rank": 44,
+      "sourceSymbol": "UNI_USDT",
+      "baseAsset": "UNI",
+      "amount24": "16893640.2126",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/UNI",
+        "finalUrl": "https://www.mexc.com/price/UNI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:05.941457+00:00",
+        "rawSha256": "d774a0737ed742c3403dbf60460d752155713410a442e89679adbd1bec4f049f",
+        "rawBytes": 752938
+      },
+      "pageTitle": "UNISWAP Price Today: Live UNI to USD Price Chart & Market Data",
+      "pageToken": "UNI",
+      "pageAssetName": "UNI",
+      "pageProject": "Uniswap",
+      "pageFuturesSymbol": "UNI_USDT"
+    },
+    {
+      "rank": 45,
+      "sourceSymbol": "ZRO_USDT",
+      "baseAsset": "ZRO",
+      "amount24": "15621928.9781",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ZRO",
+        "finalUrl": "https://www.mexc.com/price/ZRO",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:07.485604+00:00",
+        "rawSha256": "50469ed660f6b7e801d2dd9142be776b32ec90c2e63013538220fe4d8bcadf75",
+        "rawBytes": 762343
+      },
+      "pageTitle": "LayerZero Price Today: Live ZRO to USD Price Chart & Market Data",
+      "pageToken": "ZRO",
+      "pageAssetName": "ZRO",
+      "pageProject": "LayerZero",
+      "pageFuturesSymbol": "ZRO_USDT"
+    },
+    {
+      "rank": 46,
+      "sourceSymbol": "DASH_USDT",
+      "baseAsset": "DASH",
+      "amount24": "15392429.9388",
+      "catalogConcepts": [
+        "mc-trade-zone-privity",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/DASH",
+        "finalUrl": "https://www.mexc.com/price/DASH",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:09.015886+00:00",
+        "rawSha256": "227705eeedebdb891d21422987fe7793da7d59d5199b58e5854c3601539c6ccd",
+        "rawBytes": 768011
+      },
+      "pageTitle": "DASH Price Today: Live DASH to USD Price Chart & Market Data",
+      "pageToken": "DASH",
+      "pageAssetName": "DASH",
+      "pageProject": "DASH",
+      "pageFuturesSymbol": "DASH_USDT"
+    },
+    {
+      "rank": 47,
+      "sourceSymbol": "BAT_USDT",
+      "baseAsset": "BAT",
+      "amount24": "14687937.49398",
+      "catalogConcepts": [
+        "mc-trade-zone-web3"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/BAT",
+        "finalUrl": "https://www.mexc.com/price/BAT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:10.485796+00:00",
+        "rawSha256": "dba99e8b04ae50476663b3acb455bb786418715c778cac05ecab4f9c60ea4fce",
+        "rawBytes": 748918
+      },
+      "pageTitle": "BAT Price Today: Live BAT to USD Price Chart & Market Data",
+      "pageToken": "BAT",
+      "pageAssetName": "BAT",
+      "pageProject": "Basic Attention Token",
+      "pageFuturesSymbol": "BAT_USDT"
+    },
+    {
+      "rank": 48,
+      "sourceSymbol": "HBAR_USDT",
+      "baseAsset": "HBAR",
+      "amount24": "14291925.57541",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/HBAR",
+        "finalUrl": "https://www.mexc.com/price/HBAR",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:11.896110+00:00",
+        "rawSha256": "eafdd35b0b4b9f1b42e9d81c3fa025a536395d6fa8acbb6341dcc047ff52f992",
+        "rawBytes": 751334
+      },
+      "pageTitle": "Hedera Price Today: Live HBAR to USD Price Chart & Market Data",
+      "pageToken": "HBAR",
+      "pageAssetName": "HBAR",
+      "pageProject": "Hedera",
+      "pageFuturesSymbol": "HBAR_USDT"
+    },
+    {
+      "rank": 49,
+      "sourceSymbol": "MSTRSTOCK_USDT",
+      "baseAsset": "MSTRSTOCK",
+      "amount24": "14168730.62",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-CryptoConcepts"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 50,
+      "sourceSymbol": "SAND_USDT",
+      "baseAsset": "SAND",
+      "amount24": "13119154.52362",
+      "catalogConcepts": [
+        "mc-trade-zone-GameFi",
+        "mc-trade-zone-nft",
+        "mc-trade-zone-metaverse"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/SAND",
+        "finalUrl": "https://www.mexc.com/price/SAND",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:13.359572+00:00",
+        "rawSha256": "1ce7c73ddfea4868389f0186129db089bba648c5337756b1f855a438b14d851a",
+        "rawBytes": 749346
+      },
+      "pageTitle": "Sandbox Price Today: Live SAND to USD Price Chart & Market Data",
+      "pageToken": "SAND",
+      "pageAssetName": "SAND",
+      "pageProject": "Sandbox",
+      "pageFuturesSymbol": "SAND_USDT"
+    },
+    {
+      "rank": 51,
+      "sourceSymbol": "NVIDIA_USDT",
+      "baseAsset": "NVIDIA",
+      "amount24": "12323812.1722",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-TechGiants",
+        "mc-trade-zone-aisemiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 52,
+      "sourceSymbol": "KAIA_USDT",
+      "baseAsset": "KAIA",
+      "amount24": "12068936.3833",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/KAIA",
+        "finalUrl": "https://www.mexc.com/price/KAIA",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:14.831060+00:00",
+        "rawSha256": "087246f414b09ae8c68d3e925b895b122541a69b8f06f393fe5ac84082f66f7a",
+        "rawBytes": 763951
+      },
+      "pageTitle": "Kaia Price Today: Live KAIA to USD Price Chart & Market Data",
+      "pageToken": "KAIA",
+      "pageAssetName": "KAIA",
+      "pageProject": "Kaia",
+      "pageFuturesSymbol": "KAIA_USDT"
+    },
+    {
+      "rank": 53,
+      "sourceSymbol": "SEI_USDT",
+      "baseAsset": "SEI",
+      "amount24": "11991958.2714",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/SEI",
+        "finalUrl": "https://www.mexc.com/price/SEI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:16.278948+00:00",
+        "rawSha256": "37ce0292ead8043e2b73e6909811ddfca8ee1deaf40c6cdf9aeac1e6307c04b2",
+        "rawBytes": 780858
+      },
+      "pageTitle": "SEI Price Today: Live SEI to USD Price Chart & Market Data",
+      "pageToken": "SEI",
+      "pageAssetName": "SEI",
+      "pageProject": "SEI",
+      "pageFuturesSymbol": "SEI_USDT"
+    },
+    {
+      "rank": 54,
+      "sourceSymbol": "FET_USDT",
+      "baseAsset": "FET",
+      "amount24": "11602042.029",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-ai",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/FET",
+        "finalUrl": "https://www.mexc.com/price/FET",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:17.802668+00:00",
+        "rawSha256": "4d1582b43c5cc73b27093c2f612ff2b03037d75f39b6c5c19a7618312a7620c8",
+        "rawBytes": 766226
+      },
+      "pageTitle": "FET Price Today: Live FET to USD Price Chart & Market Data",
+      "pageToken": "FET",
+      "pageAssetName": "FET",
+      "pageProject": "Fetch",
+      "pageFuturesSymbol": "FET_USDT"
+    },
+    {
+      "rank": 55,
+      "sourceSymbol": "US_USDT",
+      "baseAsset": "US",
+      "amount24": "11537534.27024",
+      "catalogConcepts": [
+        "mc-trade-zone-ai"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/US",
+        "finalUrl": "https://www.mexc.com/price/US",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:19.346810+00:00",
+        "rawSha256": "b42cd67ad4d21a368ebc1c256b1603efc56a6d38db27acab6dfca34e904b7f6e",
+        "rawBytes": 1465886
+      },
+      "pageTitle": "Talus Price Today: Live US to USD Price Chart & Market Data",
+      "pageToken": "US",
+      "pageAssetName": "US",
+      "pageProject": "Talus",
+      "pageFuturesSymbol": "US_USDT"
+    },
+    {
+      "rank": 56,
+      "sourceSymbol": "FARTCOIN_USDT",
+      "baseAsset": "FARTCOIN",
+      "amount24": "11537385.1133",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/FARTCOIN",
+        "finalUrl": "https://www.mexc.com/price/FARTCOIN",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:20.883286+00:00",
+        "rawSha256": "317d1c5a281e65f66a6711eaf9691b1f4f9fed3504307c39c014d8d524baf22a",
+        "rawBytes": 766479
+      },
+      "pageTitle": "FARTCOIN Price Today: Live FARTCOIN to USD Price Chart & Market Data",
+      "pageToken": "FARTCOIN",
+      "pageAssetName": "FARTCOIN",
+      "pageProject": "FARTCOIN",
+      "pageFuturesSymbol": "FARTCOIN_USDT"
+    },
+    {
+      "rank": 57,
+      "sourceSymbol": "LTC_USDT",
+      "baseAsset": "LTC",
+      "amount24": "10509080.3633",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-pow",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 58,
+      "sourceSymbol": "TESLA_USDT",
+      "baseAsset": "TESLA",
+      "amount24": "10107208.0291",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-TechGiants",
+        "mc-trade-zone-aiapplicationlayer"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 59,
+      "sourceSymbol": "SPY_USDT",
+      "baseAsset": "SPY",
+      "amount24": "10070942.58398",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 60,
+      "sourceSymbol": "ICP_USDT",
+      "baseAsset": "ICP",
+      "amount24": "10070205.96992",
+      "catalogConcepts": [
+        "mc-trade-zone-ai",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ICP",
+        "finalUrl": "https://www.mexc.com/price/ICP",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:22.327135+00:00",
+        "rawSha256": "ec94e5f12bdaf81ba758746a9c698207d992efec2070551178fdba60c8e82a0a",
+        "rawBytes": 765584
+      },
+      "pageTitle": "Internet Computer Price Today: Live ICP to USD Price Chart & Market Data",
+      "pageToken": "ICP",
+      "pageAssetName": "ICP",
+      "pageProject": "Internet Computer",
+      "pageFuturesSymbol": "ICP_USDT"
+    },
+    {
+      "rank": 61,
+      "sourceSymbol": "ASTER_USDT",
+      "baseAsset": "ASTER",
+      "amount24": "9756103.4891",
+      "catalogConcepts": [
+        "mc-trade-zone-PerpDex",
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ASTER",
+        "finalUrl": "https://www.mexc.com/price/ASTER",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:23.743700+00:00",
+        "rawSha256": "52d8c22abe6d582f5a489fe8b3617fca09ea391e72a6e3b807149cb86f27a037",
+        "rawBytes": 750624
+      },
+      "pageTitle": "Aster Price Today: Live ASTER to USD Price Chart & Market Data",
+      "pageToken": "ASTER",
+      "pageAssetName": "ASTER",
+      "pageProject": "Aster",
+      "pageFuturesSymbol": "ASTER_USDT"
+    },
+    {
+      "rank": 62,
+      "sourceSymbol": "MAGIC_USDT",
+      "baseAsset": "MAGIC",
+      "amount24": "9339001.6522",
+      "catalogConcepts": [
+        "mc-trade-zone-GameFi",
+        "mc-trade-zone-nft",
+        "mc-trade-zone-metaverse"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/MAGIC",
+        "finalUrl": "https://www.mexc.com/price/MAGIC",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:25.223957+00:00",
+        "rawSha256": "a3d498c70c102d89bafc51740f5fc9ff9066f8025523f35bd9dafd7890e9413c",
+        "rawBytes": 747379
+      },
+      "pageTitle": "MAGIC Price Today: Live MAGIC to USD Price Chart & Market Data",
+      "pageToken": "MAGIC",
+      "pageAssetName": "MAGIC",
+      "pageProject": "MAGIC Token",
+      "pageFuturesSymbol": "MAGIC_USDT"
+    },
+    {
+      "rank": 63,
+      "sourceSymbol": "FILECOIN_USDT",
+      "baseAsset": "FILECOIN",
+      "amount24": "9267940.703007",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "skipped",
+      "reason": "asset_page_unavailable",
+      "page": {
+        "url": "https://www.mexc.com/price/FILECOIN",
+        "finalUrl": "https://www.mexc.com/price/FILECOIN",
+        "status": 404,
+        "observedAt": "2026-10-10T01:34:26.437465+00:00",
+        "rawSha256": "557b425f84bc52575c57efbc1784a1e2aa0145369dc40f117f60146465b36649",
+        "rawBytes": 214798
+      },
+      "pageTitle": "MEXC Exchange: Your 0-Fee Gateway to Infinite Opportunities - Trade Bitcoin, Ethereum & Most Trending Tokens",
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 64,
+      "sourceSymbol": "OP_USDT",
+      "baseAsset": "OP",
+      "amount24": "9112515.04093",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/OP",
+        "finalUrl": "https://www.mexc.com/price/OP",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:28.857679+00:00",
+        "rawSha256": "9e7c3704c48ea74500abb086bbb11a685441cc2d41a13cfa89de5eaea452352e",
+        "rawBytes": 756434
+      },
+      "pageTitle": "OP Price Today: Live OP to USD Price Chart & Market Data",
+      "pageToken": "OP",
+      "pageAssetName": "OP",
+      "pageProject": "OP",
+      "pageFuturesSymbol": "OP_USDT"
+    },
+    {
+      "rank": 65,
+      "sourceSymbol": "INTCSTOCK_USDT",
+      "baseAsset": "INTCSTOCK",
+      "amount24": "9035837.2831",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-aisemiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 66,
+      "sourceSymbol": "PYTH_USDT",
+      "baseAsset": "PYTH",
+      "amount24": "8781202.0235",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/PYTH",
+        "finalUrl": "https://www.mexc.com/price/PYTH",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:30.313026+00:00",
+        "rawSha256": "0b50c1f7df6b2caf275b2e2615a803d867451d886bb84727c85ec30f2dbe98ac",
+        "rawBytes": 763369
+      },
+      "pageTitle": "Pyth Network Price Today: Live PYTH to USD Price Chart & Market Data",
+      "pageToken": "PYTH",
+      "pageAssetName": "PYTH",
+      "pageProject": "Pyth Network",
+      "pageFuturesSymbol": "PYTH_USDT"
+    },
+    {
+      "rank": 67,
+      "sourceSymbol": "XLM_USDT",
+      "baseAsset": "XLM",
+      "amount24": "8447141.4841",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/XLM",
+        "finalUrl": "https://www.mexc.com/price/XLM",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:31.798560+00:00",
+        "rawSha256": "8c62caaa5b03e5c69352c9d13bd3a25ebf054aae151d899d74c30ffd1e35c1f5",
+        "rawBytes": 754286
+      },
+      "pageTitle": "Stellar Price Today: Live XLM to USD Price Chart & Market Data",
+      "pageToken": "XLM",
+      "pageAssetName": "XLM",
+      "pageProject": "Stellar",
+      "pageFuturesSymbol": "XLM_USDT"
+    },
+    {
+      "rank": 68,
+      "sourceSymbol": "BTW_USDT",
+      "baseAsset": "BTW",
+      "amount24": "8242129.76",
+      "catalogConcepts": [
+        "mc-trade-zone-TON",
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/BTW",
+        "finalUrl": "https://www.mexc.com/price/BTW",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:33.224695+00:00",
+        "rawSha256": "234866bd765b69e3e4f6ecd3d5c9e654df3d282802296b89ebc0639c771ff7ab",
+        "rawBytes": 748527
+      },
+      "pageTitle": "Bitway Price Today: Live BTW to USD Price Chart & Market Data",
+      "pageToken": "BTW",
+      "pageAssetName": "BTW",
+      "pageProject": "Bitway",
+      "pageFuturesSymbol": "BTW_USDT"
+    },
+    {
+      "rank": 69,
+      "sourceSymbol": "SHIB_USDT",
+      "baseAsset": "SHIB",
+      "amount24": "8159248.568751",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/SHIB",
+        "finalUrl": "https://www.mexc.com/price/SHIB",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:34.676881+00:00",
+        "rawSha256": "21186e7a5a147f2f95d0426246a4940ccf9764cf61fcc2bb347abc3c74f845a4",
+        "rawBytes": 753047
+      },
+      "pageTitle": "SHIBAINU Price Today: Live SHIB to USD Price Chart & Market Data",
+      "pageToken": "SHIB",
+      "pageAssetName": "SHIB",
+      "pageProject": "Shiba Inu",
+      "pageFuturesSymbol": "SHIB_USDT"
+    },
+    {
+      "rank": 70,
+      "sourceSymbol": "PENGU_USDT",
+      "baseAsset": "PENGU",
+      "amount24": "7968889.79057",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/PENGU",
+        "finalUrl": "https://www.mexc.com/price/PENGU",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:36.188850+00:00",
+        "rawSha256": "52471d74de4e47e98c3be649b75513dba07871cb340a34c210e31c9e985aea69",
+        "rawBytes": 765140
+      },
+      "pageTitle": "Pudgy Penguins Price Today: Live PENGU to USD Price Chart & Market Data",
+      "pageToken": "PENGU",
+      "pageAssetName": "PENGU",
+      "pageProject": "Pudgy Penguins",
+      "pageFuturesSymbol": "PENGU_USDT"
+    },
+    {
+      "rank": 71,
+      "sourceSymbol": "CRCLSTOCK_USDT",
+      "baseAsset": "CRCLSTOCK",
+      "amount24": "7068251.3313",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-TechGiants",
+        "mc-trade-zone-CryptoConcepts"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 72,
+      "sourceSymbol": "LDO_USDT",
+      "baseAsset": "LDO",
+      "amount24": "6903539.7624",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/LDO",
+        "finalUrl": "https://www.mexc.com/price/LDO",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:37.634108+00:00",
+        "rawSha256": "bd0469f8aeae23f66fb43a2787e6970e6dffcb1e52d57aa195ede74520c6eea9",
+        "rawBytes": 763867
+      },
+      "pageTitle": "Lido DAO Price Today: Live LDO to USD Price Chart & Market Data",
+      "pageToken": "LDO",
+      "pageAssetName": "LDO",
+      "pageProject": "Lido DAO",
+      "pageFuturesSymbol": "LDO_USDT"
+    },
+    {
+      "rank": 73,
+      "sourceSymbol": "ANTHROPIC_USDT",
+      "baseAsset": "ANTHROPIC",
+      "amount24": "6851165.44639",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-preipo",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 74,
+      "sourceSymbol": "LIT_USDT",
+      "baseAsset": "LIT",
+      "amount24": "6734477.36611",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/LIT",
+        "finalUrl": "https://www.mexc.com/price/LIT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:39.107991+00:00",
+        "rawSha256": "586a70ccc35afee002551f55e8dc4b2315d4a54d4829b058e68b99252412ebf9",
+        "rawBytes": 748662
+      },
+      "pageTitle": "Lighter Price Today: Live LIT to USD Price Chart & Market Data",
+      "pageToken": "LIT",
+      "pageAssetName": "LIT",
+      "pageProject": "Lighter",
+      "pageFuturesSymbol": "LIT_USDT"
+    },
+    {
+      "rank": 75,
+      "sourceSymbol": "AAPLSTOCK_USDT",
+      "baseAsset": "AAPLSTOCK",
+      "amount24": "6685822.8759",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-TechGiants",
+        "mc-trade-zone-aiapplicationlayer"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 76,
+      "sourceSymbol": "BR_USDT",
+      "baseAsset": "BR",
+      "amount24": "6642654.6118",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/BR",
+        "finalUrl": "https://www.mexc.com/price/BR",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:40.577543+00:00",
+        "rawSha256": "a842a67cca80ca2d430492af2f894bd4b0e88b37d60b3232424de2e8d6fedee1",
+        "rawBytes": 757532
+      },
+      "pageTitle": "Bedrock Price Today: Live BR to USD Price Chart & Market Data",
+      "pageToken": "BR",
+      "pageAssetName": "BR",
+      "pageProject": "Bedrock",
+      "pageFuturesSymbol": "BR_USDT"
+    },
+    {
+      "rank": 77,
+      "sourceSymbol": "JCT_USDT",
+      "baseAsset": "JCT",
+      "amount24": "6631437.991",
+      "catalogConcepts": [
+        "mc-trade-zone-ai"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/JCT",
+        "finalUrl": "https://www.mexc.com/price/JCT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:42.035508+00:00",
+        "rawSha256": "ddcba2a9430f815dc352ddc86d18d0e3399f843fbac1586e87af8f8342fcfc6b",
+        "rawBytes": 744571
+      },
+      "pageTitle": "Janction Price Today: Live JCT to USD Price Chart & Market Data",
+      "pageToken": "JCT",
+      "pageAssetName": "JCT",
+      "pageProject": "Janction",
+      "pageFuturesSymbol": "JCT_USDT"
+    },
+    {
+      "rank": 78,
+      "sourceSymbol": "XPL_USDT",
+      "baseAsset": "XPL",
+      "amount24": "6401579.37729",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/XPL",
+        "finalUrl": "https://www.mexc.com/price/XPL",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:43.615019+00:00",
+        "rawSha256": "ce6f4e78208376725fc78bf360a46365a82ad703479273424e611d49fcc48c5f",
+        "rawBytes": 749842
+      },
+      "pageTitle": "Plasma Price Today: Live XPL to USD Price Chart & Market Data",
+      "pageToken": "XPL",
+      "pageAssetName": "XPL",
+      "pageProject": "Plasma",
+      "pageFuturesSymbol": "XPL_USDT"
+    },
+    {
+      "rank": 79,
+      "sourceSymbol": "BNB_USDT",
+      "baseAsset": "BNB",
+      "amount24": "6366122.211",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-CEX",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 80,
+      "sourceSymbol": "CRV_USDT",
+      "baseAsset": "CRV",
+      "amount24": "6342657.7928",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/CRV",
+        "finalUrl": "https://www.mexc.com/price/CRV",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:45.138255+00:00",
+        "rawSha256": "ef85f08ee4e85db2794a43bfa99569a2c39fa04b89df83dc1ec7d4eac9da8537",
+        "rawBytes": 765311
+      },
+      "pageTitle": "Curve Price Today: Live CRV to USD Price Chart & Market Data",
+      "pageToken": "CRV",
+      "pageAssetName": "CRV",
+      "pageProject": "Curve DAO Token",
+      "pageFuturesSymbol": "CRV_USDT"
+    },
+    {
+      "rank": 81,
+      "sourceSymbol": "SKHYSTOCK_USDT",
+      "baseAsset": "SKHYSTOCK",
+      "amount24": "6077943.8147",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 82,
+      "sourceSymbol": "QQQSTOCK_USDT",
+      "baseAsset": "QQQSTOCK",
+      "amount24": "6022922.62",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 83,
+      "sourceSymbol": "AMDSTOCK_USDT",
+      "baseAsset": "AMDSTOCK",
+      "amount24": "5884691.7257",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-aisemiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 84,
+      "sourceSymbol": "RAY_USDT",
+      "baseAsset": "RAY",
+      "amount24": "5575670.05409",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/RAY",
+        "finalUrl": "https://www.mexc.com/price/RAY",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:47.168874+00:00",
+        "rawSha256": "2e8fe939164c669d87319014221df063e4142e40217d60a37b0bbd7278372c3d",
+        "rawBytes": 752345
+      },
+      "pageTitle": "Raydium Price Today: Live RAY to USD Price Chart & Market Data",
+      "pageToken": "RAY",
+      "pageAssetName": "RAY",
+      "pageProject": "Raydium",
+      "pageFuturesSymbol": "RAY_USDT"
+    },
+    {
+      "rank": 85,
+      "sourceSymbol": "XMR_USDT",
+      "baseAsset": "XMR",
+      "amount24": "5461395.9562",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-pow",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/XMR",
+        "finalUrl": "https://www.mexc.com/price/XMR",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:48.608831+00:00",
+        "rawSha256": "f171a2db8547ba8bc6be6d742e55a33bd73c1fb759e0736373114729a8cbdc95",
+        "rawBytes": 788142
+      },
+      "pageTitle": "Monero Price Today: Live XMR to USD Price Chart & Market Data",
+      "pageToken": "XMR",
+      "pageAssetName": "XMR",
+      "pageProject": "Monero",
+      "pageFuturesSymbol": "XMR_USDT"
+    },
+    {
+      "rank": 86,
+      "sourceSymbol": "RENDER_USDT",
+      "baseAsset": "RENDER",
+      "amount24": "5431516.27",
+      "catalogConcepts": [
+        "mc-trade-zone-ai",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "skipped",
+      "reason": "asset_description_absent_identity_review_incomplete",
+      "page": {
+        "url": "https://www.mexc.com/price/RENDER",
+        "finalUrl": "https://www.mexc.com/price/RENDER",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:50.177268+00:00",
+        "rawSha256": "aab67c2a6fe0362c6ad7472a0ef676b5d3e2653b1de5fafc4c7f2e24b9b3bd58",
+        "rawBytes": 750034
+      },
+      "pageTitle": "Render Price Today: Live RENDER to USD Price Chart & Market Data",
+      "pageToken": "RENDER",
+      "pageAssetName": "RENDER",
+      "pageProject": "Render",
+      "pageFuturesSymbol": "RENDER_USDT"
+    },
+    {
+      "rank": 87,
+      "sourceSymbol": "VIRTUAL_USDT",
+      "baseAsset": "VIRTUAL",
+      "amount24": "5363791.049",
+      "catalogConcepts": [
+        "mc-trade-zone-ai",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-x402"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/VIRTUAL",
+        "finalUrl": "https://www.mexc.com/price/VIRTUAL",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:51.650535+00:00",
+        "rawSha256": "dff1ad29ed691d2a8c684ef6ffd363361b374670ffe3f528d58dbfdb65b636b8",
+        "rawBytes": 752866
+      },
+      "pageTitle": "Virtuals Protocol Price Today: Live VIRTUAL to USD Price Chart & Market Data",
+      "pageToken": "VIRTUAL",
+      "pageAssetName": "VIRTUAL",
+      "pageProject": "Virtuals Protocol",
+      "pageFuturesSymbol": "VIRTUAL_USDT"
+    },
+    {
+      "rank": 88,
+      "sourceSymbol": "ETHFI_USDT",
+      "baseAsset": "ETHFI",
+      "amount24": "5254948.084",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ETHFI",
+        "finalUrl": "https://www.mexc.com/price/ETHFI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:53.325392+00:00",
+        "rawSha256": "cf7b364a0e17f150d20635d1fa0ba978ddf23cea917098a49db93c90c9e42a95",
+        "rawBytes": 773479
+      },
+      "pageTitle": "Ether.Fi Foundation Price Today: Live ETHFI to USD Price Chart & Market Data",
+      "pageToken": "ETHFI",
+      "pageAssetName": "ETHFI",
+      "pageProject": "Ether.Fi Foundation",
+      "pageFuturesSymbol": "ETHFI_USDT"
+    },
+    {
+      "rank": 89,
+      "sourceSymbol": "SAMSUNGSTOCK_USDT",
+      "baseAsset": "SAMSUNGSTOCK",
+      "amount24": "4874890.3829",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 90,
+      "sourceSymbol": "MSFTSTOCK_USDT",
+      "baseAsset": "MSFTSTOCK",
+      "amount24": "4791913.9885",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-TechGiants",
+        "mc-trade-zone-aiapplicationlayer"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 91,
+      "sourceSymbol": "XPT_USDT",
+      "baseAsset": "XPT",
+      "amount24": "4760345.17309",
+      "catalogConcepts": [
+        "mc-trade-zone-metals",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 92,
+      "sourceSymbol": "ALGO_USDT",
+      "baseAsset": "ALGO",
+      "amount24": "4642466.31956",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ALGO",
+        "finalUrl": "https://www.mexc.com/price/ALGO",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:55.074441+00:00",
+        "rawSha256": "be2fd28da1505a9cbdc76a4f1549a6fbaf6085832454b1c3ef5252ea0c63e209",
+        "rawBytes": 764914
+      },
+      "pageTitle": "Algorand Price Today: Live ALGO to USD Price Chart & Market Data",
+      "pageToken": "ALGO",
+      "pageAssetName": "ALGO",
+      "pageProject": "Algorand",
+      "pageFuturesSymbol": "ALGO_USDT"
+    },
+    {
+      "rank": 93,
+      "sourceSymbol": "MRNASTOCK_USDT",
+      "baseAsset": "MRNASTOCK",
+      "amount24": "4634059.40993",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 94,
+      "sourceSymbol": "FLOKI_USDT",
+      "baseAsset": "FLOKI",
+      "amount24": "4343899.02",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-metaverse",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/FLOKI",
+        "finalUrl": "https://www.mexc.com/price/FLOKI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:56.554155+00:00",
+        "rawSha256": "ea56f83558312447d15ecc0b6565cddabe69bd9cde36b55ae5980016605a63ca",
+        "rawBytes": 765815
+      },
+      "pageTitle": "FLOKI Price Today: Live FLOKI to USD Price Chart & Market Data",
+      "pageToken": "FLOKI",
+      "pageAssetName": "FLOKI",
+      "pageProject": "FLOKI",
+      "pageFuturesSymbol": "FLOKI_USDT"
+    },
+    {
+      "rank": 95,
+      "sourceSymbol": "SNXX_USDT",
+      "baseAsset": "SNXX",
+      "amount24": "4169803.115",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 96,
+      "sourceSymbol": "DRAM_USDT",
+      "baseAsset": "DRAM",
+      "amount24": "4053749.68",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex",
+        "mc-trade-zone-aistorage"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 97,
+      "sourceSymbol": "OGN_USDT",
+      "baseAsset": "OGN",
+      "amount24": "3894149.64344",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-nft"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/OGN",
+        "finalUrl": "https://www.mexc.com/price/OGN",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:58.089937+00:00",
+        "rawSha256": "1bafad70d81728ee851ea325a4ddfe764fba7ce9f4277957dc8700ccc0602ff7",
+        "rawBytes": 749579
+      },
+      "pageTitle": "Origin Price Today: Live OGN to USD Price Chart & Market Data",
+      "pageToken": "OGN",
+      "pageAssetName": "OGN",
+      "pageProject": "Origin Protocol",
+      "pageFuturesSymbol": "OGN_USDT"
+    },
+    {
+      "rank": 98,
+      "sourceSymbol": "BATON_USDT",
+      "baseAsset": "BATON",
+      "amount24": "3786054.88849",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/BATON",
+        "finalUrl": "https://www.mexc.com/price/BATON",
+        "status": 200,
+        "observedAt": "2026-10-10T01:34:59.746009+00:00",
+        "rawSha256": "c09e3bb966e1e1f59f2cfff95542613be9d29de7796ac0c2017a231c73d100ce",
+        "rawBytes": 745527
+      },
+      "pageTitle": "baton Price Today: Live BATON to USD Price Chart & Market Data",
+      "pageToken": "BATON",
+      "pageAssetName": "BATON",
+      "pageProject": "baton",
+      "pageFuturesSymbol": "BATON_USDT"
+    },
+    {
+      "rank": 99,
+      "sourceSymbol": "BCH_USDT",
+      "baseAsset": "BCH",
+      "amount24": "3773546.4513",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-pow",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/BCH",
+        "finalUrl": "https://www.mexc.com/price/BCH",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:01.202105+00:00",
+        "rawSha256": "c8a4685044bb0926b3659a49d2b4fef58efb079778ad721fed5ffdfc8a28d3b1",
+        "rawBytes": 769793
+      },
+      "pageTitle": "Bitcoin Cash Node Price Today: Live BCH to USD Price Chart & Market Data",
+      "pageToken": "BCH",
+      "pageAssetName": "BCH",
+      "pageProject": "Bitcoin Cash",
+      "pageFuturesSymbol": "BCH_USDT"
+    },
+    {
+      "rank": 100,
+      "sourceSymbol": "MUU_USDT",
+      "baseAsset": "MUU",
+      "amount24": "3740636.13875",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 101,
+      "sourceSymbol": "PONS_USDT",
+      "baseAsset": "PONS",
+      "amount24": "3730644.75",
+      "catalogConcepts": [
+        "mc-trade-zone-robinhood",
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/PONS",
+        "finalUrl": "https://www.mexc.com/price/PONS",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:02.696559+00:00",
+        "rawSha256": "32e8fd957b491f26e9af2ad0d909d65190f440c5a5d7834ab479e3b35307700f",
+        "rawBytes": 745147
+      },
+      "pageTitle": "Pons Price Today: Live PONS to USD Price Chart & Market Data",
+      "pageToken": "PONS",
+      "pageAssetName": "PONS",
+      "pageProject": "Pons",
+      "pageFuturesSymbol": "PONS_USDT"
+    },
+    {
+      "rank": 102,
+      "sourceSymbol": "GRAM_USDT",
+      "baseAsset": "GRAM",
+      "amount24": "3652446.883",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "skipped",
+      "reason": "native_alias_to_Toncoin_requires_separate_identity_review",
+      "page": {
+        "url": "https://www.mexc.com/price/GRAM",
+        "finalUrl": "https://www.mexc.com/price/GRAM",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:04.174834+00:00",
+        "rawSha256": "4c0185d1565527e49da99227a435f55bf8d75989a23fbb8cf1ba49dca6af891c",
+        "rawBytes": 775098
+      },
+      "pageTitle": "GRAM(prev.Toncoin) Price Today: Live GRAM to USD Price Chart & Market Data",
+      "pageToken": "GRAM",
+      "pageAssetName": "GRAM",
+      "pageProject": "Toncoin",
+      "pageFuturesSymbol": "GRAM_USDT"
+    },
+    {
+      "rank": 103,
+      "sourceSymbol": "PIXEL_USDT",
+      "baseAsset": "PIXEL",
+      "amount24": "3645269.41565",
+      "catalogConcepts": [
+        "mc-trade-zone-GameFi",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "skipped",
+      "reason": "official_page_identity_conflict_Pixel_Panic_metadata_and_Pixels_description",
+      "page": {
+        "url": "https://www.mexc.com/price/PIXEL",
+        "finalUrl": "https://www.mexc.com/price/PIXEL",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:05.631915+00:00",
+        "rawSha256": "5f76cd8eb8cf330359129e42c1a25edf49f56ef1cacac573bf0856de0f4a2210",
+        "rawBytes": 748321
+      },
+      "pageTitle": "Pixels Price Today: Live PIXEL to USD Price Chart & Market Data",
+      "pageToken": "PIXEL",
+      "pageAssetName": "PIXEL",
+      "pageProject": "Pixel Panic",
+      "pageFuturesSymbol": "PIXEL_USDT"
+    },
+    {
+      "rank": 104,
+      "sourceSymbol": "USELESS_USDT",
+      "baseAsset": "USELESS",
+      "amount24": "3616139.078",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/USELESS",
+        "finalUrl": "https://www.mexc.com/price/USELESS",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:07.040711+00:00",
+        "rawSha256": "3d40e4631e37a52a263359cbb71395708a95646ebd960af2de7c423aeb284247",
+        "rawBytes": 752125
+      },
+      "pageTitle": "USELESS COIN Price Today: Live USELESS to USD Price Chart & Market Data",
+      "pageToken": "USELESS",
+      "pageAssetName": "USELESS",
+      "pageProject": "USELESS COIN",
+      "pageFuturesSymbol": "USELESS_USDT"
+    },
+    {
+      "rank": 105,
+      "sourceSymbol": "TRUMPOFFICIAL_USDT",
+      "baseAsset": "TRUMPOFFICIAL",
+      "amount24": "3558138.844",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "skipped",
+      "reason": "exact_futures_binding_absent_or_mismatched",
+      "page": {
+        "url": "https://www.mexc.com/price/TRUMPOFFICIAL",
+        "finalUrl": "https://www.mexc.com/price/TRUMP",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:09.077858+00:00",
+        "rawSha256": "8b2c58ff00952e9911ae6f712ac4915fb42cb7fcbc65928a13725ad5d8b60b3d",
+        "rawBytes": 755476
+      },
+      "pageTitle": "OFFICIAL TRUMP Price Today: Live TRUMP to USD Price Chart & Market Data",
+      "pageToken": "TRUMP",
+      "pageAssetName": "TRUMP",
+      "pageProject": "OFFICIAL TRUMP",
+      "pageFuturesSymbol": "TRUMP_USDT"
+    },
+    {
+      "rank": 106,
+      "sourceSymbol": "COPPER_USDT",
+      "baseAsset": "COPPER",
+      "amount24": "3504372.0623",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 107,
+      "sourceSymbol": "GOOGLSTOCK_USDT",
+      "baseAsset": "GOOGLSTOCK",
+      "amount24": "3492208.5052",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-TechGiants",
+        "mc-trade-zone-aiapplicationlayer"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 108,
+      "sourceSymbol": "ZKSYNC_USDT",
+      "baseAsset": "ZKSYNC",
+      "amount24": "3347975.81033",
+      "catalogConcepts": [],
+      "decision": "skipped",
+      "reason": "asset_page_unavailable",
+      "page": {
+        "url": "https://www.mexc.com/price/ZKSYNC",
+        "finalUrl": "https://www.mexc.com/price/ZKSYNC",
+        "status": 404,
+        "observedAt": "2026-10-10T01:35:10.343257+00:00",
+        "rawSha256": "0452f9ed941d5bdcf04988f88ad00b7434d4963b8a5d1c4b99cc490677bd91a3",
+        "rawBytes": 214808
+      },
+      "pageTitle": "MEXC Exchange: Your 0-Fee Gateway to Infinite Opportunities - Trade Bitcoin, Ethereum & Most Trending Tokens",
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 109,
+      "sourceSymbol": "AKE_USDT",
+      "baseAsset": "AKE",
+      "amount24": "3276594.585",
+      "catalogConcepts": [
+        "mc-trade-zone-ai",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/AKE",
+        "finalUrl": "https://www.mexc.com/price/AKE",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:11.828993+00:00",
+        "rawSha256": "59c6a7dff466a9be044b5fa0ab5b890cda25361108398c99f8b03f80f30286b4",
+        "rawBytes": 749225
+      },
+      "pageTitle": "AKEDO Price Today: Live AKE to USD Price Chart & Market Data",
+      "pageToken": "AKE",
+      "pageAssetName": "AKE",
+      "pageProject": "AKEDO",
+      "pageFuturesSymbol": "AKE_USDT"
+    },
+    {
+      "rank": 110,
+      "sourceSymbol": "KAS_USDT",
+      "baseAsset": "KAS",
+      "amount24": "3273584.8",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/KAS",
+        "finalUrl": "https://www.mexc.com/price/KAS",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:13.345174+00:00",
+        "rawSha256": "696b35eb6932ef449a8e2502a07d28b5fbfe40e5f82703585c4f1adcd8f2cd68",
+        "rawBytes": 781063
+      },
+      "pageTitle": "Kaspa Price Today: Live KAS to USD Price Chart & Market Data",
+      "pageToken": "KAS",
+      "pageAssetName": "KAS",
+      "pageProject": "Kaspa",
+      "pageFuturesSymbol": "KAS_USDT"
+    },
+    {
+      "rank": 111,
+      "sourceSymbol": "W_USDT",
+      "baseAsset": "W",
+      "amount24": "3259683.061173",
+      "catalogConcepts": [
+        "mc-trade-zone-web3"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/W",
+        "finalUrl": "https://www.mexc.com/price/W",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:14.793806+00:00",
+        "rawSha256": "0c0c772b9fd658982869253a077fc7bc478f4d1cb28951b2ba72f0bae810c6b8",
+        "rawBytes": 786777
+      },
+      "pageTitle": "Wormhole Price Today: Live W to USD Price Chart & Market Data",
+      "pageToken": "W",
+      "pageAssetName": "W",
+      "pageProject": "Wormhole",
+      "pageFuturesSymbol": "W_USDT"
+    },
+    {
+      "rank": 112,
+      "sourceSymbol": "JASMY_USDT",
+      "baseAsset": "JASMY",
+      "amount24": "3162893.9395",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/JASMY",
+        "finalUrl": "https://www.mexc.com/price/JASMY",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:16.237624+00:00",
+        "rawSha256": "794971f82fe178243331a7b15413f7e207f0567d8c5b9c6088411c64822008a2",
+        "rawBytes": 750774
+      },
+      "pageTitle": "Jasmy Price Today: Live JASMY to USD Price Chart & Market Data",
+      "pageToken": "JASMY",
+      "pageAssetName": "JASMY",
+      "pageProject": "JasmyCoin",
+      "pageFuturesSymbol": "JASMY_USDT"
+    },
+    {
+      "rank": 113,
+      "sourceSymbol": "MET_USDT",
+      "baseAsset": "MET",
+      "amount24": "3025878.137",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/MET",
+        "finalUrl": "https://www.mexc.com/price/MET",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:17.691619+00:00",
+        "rawSha256": "8156c5b0fd4e28614489fde9dfc2bd5924afd17c5748780515674b4f4a9ed958",
+        "rawBytes": 747193
+      },
+      "pageTitle": "Meteora Price Today: Live MET to USD Price Chart & Market Data",
+      "pageToken": "MET",
+      "pageAssetName": "MET",
+      "pageProject": "Meteora",
+      "pageFuturesSymbol": "MET_USDT"
+    },
+    {
+      "rank": 114,
+      "sourceSymbol": "STX_USDT",
+      "baseAsset": "STX",
+      "amount24": "2818409.217",
+      "catalogConcepts": [
+        "mc-trade-zone-web3",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/STX",
+        "finalUrl": "https://www.mexc.com/price/STX",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:20.057970+00:00",
+        "rawSha256": "f69851b435b86925378f057f594e7017a1f62b4c8e6379aa873a2d77e153402d",
+        "rawBytes": 761128
+      },
+      "pageTitle": "Stacks Price Today: Live STX to USD Price Chart & Market Data",
+      "pageToken": "STX",
+      "pageAssetName": "STX",
+      "pageProject": "Stacks",
+      "pageFuturesSymbol": "STX_USDT"
+    },
+    {
+      "rank": 115,
+      "sourceSymbol": "WLFI_USDT",
+      "baseAsset": "WLFI",
+      "amount24": "2791480.09573",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/WLFI",
+        "finalUrl": "https://www.mexc.com/price/WLFI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:21.577158+00:00",
+        "rawSha256": "f593654f668e57fc6395e1999375dc55d5923aed622782daa2d1237f925a8c26",
+        "rawBytes": 753118
+      },
+      "pageTitle": "WLFI Price Today: Live WLFI to USD Price Chart & Market Data",
+      "pageToken": "WLFI",
+      "pageAssetName": "WLFI",
+      "pageProject": "WLFI",
+      "pageFuturesSymbol": "WLFI_USDT"
+    },
+    {
+      "rank": 116,
+      "sourceSymbol": "MCDSTOCK_USDT",
+      "baseAsset": "MCDSTOCK",
+      "amount24": "2727754.8762",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 117,
+      "sourceSymbol": "XDP_USDT",
+      "baseAsset": "XDP",
+      "amount24": "2720952.885",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/XDP",
+        "finalUrl": "https://www.mexc.com/price/XDP",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:23.688097+00:00",
+        "rawSha256": "4f407c1fa31dcb5ed38e7d386ff707f672926369d9cfb688f4178218fe1ee3be",
+        "rawBytes": 746977
+      },
+      "pageTitle": "Doppler Finance Price Today: Live XDP to USD Price Chart & Market Data",
+      "pageToken": "XDP",
+      "pageAssetName": "XDP",
+      "pageProject": "Doppler Finance",
+      "pageFuturesSymbol": "XDP_USDT"
+    },
+    {
+      "rank": 118,
+      "sourceSymbol": "LONGXIA_USDT",
+      "baseAsset": "LONGXIA",
+      "amount24": "2643710.051",
+      "catalogConcepts": [
+        "mc-trade-zone-Chinese",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "skipped",
+      "reason": "asset_page_unavailable",
+      "page": {
+        "url": "https://www.mexc.com/price/LONGXIA",
+        "finalUrl": "https://www.mexc.com/price/LONGXIA",
+        "status": 404,
+        "observedAt": "2026-10-10T01:35:24.919095+00:00",
+        "rawSha256": "cb2d41b5188d97de916914224b1251ee89a6a26aea1c4d42a5d03b2a1e626d29",
+        "rawBytes": 214797
+      },
+      "pageTitle": "MEXC Exchange: Your 0-Fee Gateway to Infinite Opportunities - Trade Bitcoin, Ethereum & Most Trending Tokens",
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 119,
+      "sourceSymbol": "1000BONK_USDT",
+      "baseAsset": "1000BONK",
+      "amount24": "2623908.28",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "skipped",
+      "reason": "unreviewed_bundled_price_identity",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 120,
+      "sourceSymbol": "TRX_USDT",
+      "baseAsset": "TRX",
+      "amount24": "2575520.7016",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "existing_review_retained",
+      "reason": "preserved_existing_ten_without_requalification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 121,
+      "sourceSymbol": "EWY_USDT",
+      "baseAsset": "EWY",
+      "amount24": "2497958.5101",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-ETF",
+        "mc-trade-zone-stockindex"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 122,
+      "sourceSymbol": "JTO_USDT",
+      "baseAsset": "JTO",
+      "amount24": "2453950.7073",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/JTO",
+        "finalUrl": "https://www.mexc.com/price/JTO",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:26.354829+00:00",
+        "rawSha256": "212bb13defa406cd3674b7cf61b1ff23db2dabb8ff19e9e5d386aaf2df13cf62",
+        "rawBytes": 747899
+      },
+      "pageTitle": "JITO Price Today: Live JTO to USD Price Chart & Market Data",
+      "pageToken": "JTO",
+      "pageAssetName": "JTO",
+      "pageProject": "JITO",
+      "pageFuturesSymbol": "JTO_USDT"
+    },
+    {
+      "rank": 123,
+      "sourceSymbol": "S_USDT",
+      "baseAsset": "S",
+      "amount24": "2426351.1697",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-web3"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/S",
+        "finalUrl": "https://www.mexc.com/price/S",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:27.903711+00:00",
+        "rawSha256": "1514a04011b7beab66de4d54cab4d64a3a88e90cb9332a72d0d495b32fdd65c6",
+        "rawBytes": 1483340
+      },
+      "pageTitle": "S Price Today: Live S to USD Price Chart & Market Data",
+      "pageToken": "S",
+      "pageAssetName": "S",
+      "pageProject": "S",
+      "pageFuturesSymbol": "S_USDT"
+    },
+    {
+      "rank": 124,
+      "sourceSymbol": "MRVLSTOCK_USDT",
+      "baseAsset": "MRVLSTOCK",
+      "amount24": "2360538.4569",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-aisemiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 125,
+      "sourceSymbol": "ORDI_USDT",
+      "baseAsset": "ORDI",
+      "amount24": "2327699.5304",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ORDI",
+        "finalUrl": "https://www.mexc.com/price/ORDI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:29.477291+00:00",
+        "rawSha256": "74324119078667bf33b27916bc724e89d3a8ea24b99bcb4407529ebf30d3c531",
+        "rawBytes": 746205
+      },
+      "pageTitle": "ORDI Price Today: Live ORDI to USD Price Chart & Market Data",
+      "pageToken": "ORDI",
+      "pageAssetName": "ORDI",
+      "pageProject": "ORDI",
+      "pageFuturesSymbol": "ORDI_USDT"
+    },
+    {
+      "rank": 126,
+      "sourceSymbol": "CT_USDT",
+      "baseAsset": "CT",
+      "amount24": "2316373.4978",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/CT",
+        "finalUrl": "https://www.mexc.com/price/CT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:30.938156+00:00",
+        "rawSha256": "e8413fe6414f2e056a98e68c10ed3c5a3e5d545bf008ba9112012e8dc3f90e2c",
+        "rawBytes": 753408
+      },
+      "pageTitle": "Concrete Price Today: Live CT to USD Price Chart & Market Data",
+      "pageToken": "CT",
+      "pageAssetName": "CT",
+      "pageProject": "Concrete",
+      "pageFuturesSymbol": "CT_USDT"
+    },
+    {
+      "rank": 127,
+      "sourceSymbol": "MINA_USDT",
+      "baseAsset": "MINA",
+      "amount24": "2214838.24323",
+      "catalogConcepts": [
+        "mc-trade-zone-privity",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/MINA",
+        "finalUrl": "https://www.mexc.com/price/MINA",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:32.414814+00:00",
+        "rawSha256": "9e4e62acd6b13f5f19bdd78bc8c7ef04cb0508de6b9c589145a37ce12e50c0a4",
+        "rawBytes": 763056
+      },
+      "pageTitle": "Mina Protocol Price Today: Live MINA to USD Price Chart & Market Data",
+      "pageToken": "MINA",
+      "pageAssetName": "MINA",
+      "pageProject": "MINA",
+      "pageFuturesSymbol": "MINA_USDT"
+    },
+    {
+      "rank": 128,
+      "sourceSymbol": "EIGEN_USDT",
+      "baseAsset": "EIGEN",
+      "amount24": "2180495.2758",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/EIGEN",
+        "finalUrl": "https://www.mexc.com/price/EIGEN",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:34.375214+00:00",
+        "rawSha256": "cd2921b52500690ac814c087a6f4c1d7ead0d3ed20bdc40cb050296b68f9ec96",
+        "rawBytes": 751376
+      },
+      "pageTitle": "EigenLayer Price Today: Live EIGEN to USD Price Chart & Market Data",
+      "pageToken": "EIGEN",
+      "pageAssetName": "EIGEN",
+      "pageProject": "EigenLayer",
+      "pageFuturesSymbol": "EIGEN_USDT"
+    },
+    {
+      "rank": 129,
+      "sourceSymbol": "POL_USDT",
+      "baseAsset": "POL",
+      "amount24": "2166074.8989",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/POL",
+        "finalUrl": "https://www.mexc.com/price/POL",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:35.891700+00:00",
+        "rawSha256": "4c38241d8381814644a01c1ac58aecc38b65663eb07ef4fb399d4188afd2357a",
+        "rawBytes": 766363
+      },
+      "pageTitle": "Polygon Ecosystem Price Today: Live POL to USD Price Chart & Market Data",
+      "pageToken": "POL",
+      "pageAssetName": "POL",
+      "pageProject": "Polygon Ecosystem",
+      "pageFuturesSymbol": "POL_USDT"
+    },
+    {
+      "rank": 130,
+      "sourceSymbol": "VVV_USDT",
+      "baseAsset": "VVV",
+      "amount24": "2158401.6974",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/VVV",
+        "finalUrl": "https://www.mexc.com/price/VVV",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:37.414752+00:00",
+        "rawSha256": "0e7f59ff83a4561bfe4ab18de54657e724b6345ebe4e82a2e95c18f0bace81a7",
+        "rawBytes": 746444
+      },
+      "pageTitle": "VVV Price Today: Live VVV to USD Price Chart & Market Data",
+      "pageToken": "VVV",
+      "pageAssetName": "VVV",
+      "pageProject": "VVV",
+      "pageFuturesSymbol": "VVV_USDT"
+    },
+    {
+      "rank": 131,
+      "sourceSymbol": "WIF_USDT",
+      "baseAsset": "WIF",
+      "amount24": "2072185.308",
+      "catalogConcepts": [
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/WIF",
+        "finalUrl": "https://www.mexc.com/price/WIF",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:38.915870+00:00",
+        "rawSha256": "d128d6118127a803d7ba4c7bf0d56204dc33279ae512ef5bf8bc7ce7b25cbb87",
+        "rawBytes": 752175
+      },
+      "pageTitle": "dogwifhat sol Price Today: Live WIF to USD Price Chart & Market Data",
+      "pageToken": "WIF",
+      "pageAssetName": "WIF",
+      "pageProject": "dogwifhat",
+      "pageFuturesSymbol": "WIF_USDT"
+    },
+    {
+      "rank": 132,
+      "sourceSymbol": "NICKEL_USDT",
+      "baseAsset": "NICKEL",
+      "amount24": "2049228.890514",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 133,
+      "sourceSymbol": "DELLSTOCK_USDT",
+      "baseAsset": "DELLSTOCK",
+      "amount24": "1939876.0259",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-storagechips",
+        "mc-trade-zone-aicomputing"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 134,
+      "sourceSymbol": "XPD_USDT",
+      "baseAsset": "XPD",
+      "amount24": "1892819.16105",
+      "catalogConcepts": [
+        "mc-trade-zone-metals",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 135,
+      "sourceSymbol": "LITESTOCK_USDT",
+      "baseAsset": "LITESTOCK",
+      "amount24": "1892510.57192",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-cpo"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 136,
+      "sourceSymbol": "NBISSTOCK_USDT",
+      "baseAsset": "NBISSTOCK",
+      "amount24": "1860542.611",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-aicomputing"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 137,
+      "sourceSymbol": "GALA_USDT",
+      "baseAsset": "GALA",
+      "amount24": "1778312.399",
+      "catalogConcepts": [
+        "mc-trade-zone-GameFi",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-nft",
+        "mc-trade-zone-metaverse",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/GALA",
+        "finalUrl": "https://www.mexc.com/price/GALA",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:40.445315+00:00",
+        "rawSha256": "e50a0282e8870832610c270a33bba2ebdfe79c885dd2a3cc8c10056f9ab72f59",
+        "rawBytes": 753893
+      },
+      "pageTitle": "Gala Price Today: Live GALA to USD Price Chart & Market Data",
+      "pageToken": "GALA",
+      "pageAssetName": "GALA",
+      "pageProject": "GALA",
+      "pageFuturesSymbol": "GALA_USDT"
+    },
+    {
+      "rank": 138,
+      "sourceSymbol": "SBUXSTOCK_USDT",
+      "baseAsset": "SBUXSTOCK",
+      "amount24": "1774158.0431",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 139,
+      "sourceSymbol": "IMX_USDT",
+      "baseAsset": "IMX",
+      "amount24": "1690328.1523",
+      "catalogConcepts": [
+        "mc-trade-zone-GameFi",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-nft"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/IMX",
+        "finalUrl": "https://www.mexc.com/price/IMX",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:41.704558+00:00",
+        "rawSha256": "26cefcb1020798602c624f2178ed9a44fe7fd76d9b6aad8c5070858e867789bd",
+        "rawBytes": 749731
+      },
+      "pageTitle": "Immutable X Price Today: Live IMX to USD Price Chart & Market Data",
+      "pageToken": "IMX",
+      "pageAssetName": "IMX",
+      "pageProject": "Immutable X",
+      "pageFuturesSymbol": "IMX_USDT"
+    },
+    {
+      "rank": 140,
+      "sourceSymbol": "ETC_USDT",
+      "baseAsset": "ETC",
+      "amount24": "1641182.639",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ETC",
+        "finalUrl": "https://www.mexc.com/price/ETC",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:43.202072+00:00",
+        "rawSha256": "155d008a680f8ddeafe6d3252f9a20bc58bd8dddae61a177f2f94cdf1071c1d6",
+        "rawBytes": 768274
+      },
+      "pageTitle": "Ethereum Classic Price Today: Live ETC to USD Price Chart & Market Data",
+      "pageToken": "ETC",
+      "pageAssetName": "ETC",
+      "pageProject": "Ethereum Classic",
+      "pageFuturesSymbol": "ETC_USDT"
+    },
+    {
+      "rank": 141,
+      "sourceSymbol": "NIGHT_USDT",
+      "baseAsset": "NIGHT",
+      "amount24": "1615367.698",
+      "catalogConcepts": [
+        "mc-trade-zone-privity",
+        "mc-trade-zone-layer2"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/NIGHT",
+        "finalUrl": "https://www.mexc.com/price/NIGHT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:44.697438+00:00",
+        "rawSha256": "73e939e2919a26a5f4b013b7c5b221bdf86cecc667e3b42d532f6d25c19ef180",
+        "rawBytes": 747168
+      },
+      "pageTitle": "Midnight Price Today: Live NIGHT to USD Price Chart & Market Data",
+      "pageToken": "NIGHT",
+      "pageAssetName": "NIGHT",
+      "pageProject": "Midnight",
+      "pageFuturesSymbol": "NIGHT_USDT"
+    },
+    {
+      "rank": 142,
+      "sourceSymbol": "VET_USDT",
+      "baseAsset": "VET",
+      "amount24": "1614797.572697",
+      "catalogConcepts": [
+        "mc-trade-zone-RWA",
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/VET",
+        "finalUrl": "https://www.mexc.com/price/VET",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:46.203186+00:00",
+        "rawSha256": "547c36a7c5fc6a92d48729024e1aea19b7f53ecf64448b8896ea1426d2940434",
+        "rawBytes": 752484
+      },
+      "pageTitle": "VeChain Price Today: Live VET to USD Price Chart & Market Data",
+      "pageToken": "VET",
+      "pageAssetName": "VET",
+      "pageProject": "VeChain",
+      "pageFuturesSymbol": "VET_USDT"
+    },
+    {
+      "rank": 143,
+      "sourceSymbol": "COINBASE_USDT",
+      "baseAsset": "COINBASE",
+      "amount24": "1595584.4978",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-CryptoConcepts"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 144,
+      "sourceSymbol": "UAI_USDT",
+      "baseAsset": "UAI",
+      "amount24": "1588844.811",
+      "catalogConcepts": [
+        "mc-trade-zone-ai",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/UAI",
+        "finalUrl": "https://www.mexc.com/price/UAI",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:47.682642+00:00",
+        "rawSha256": "95ba1d8cad0c2ad358640039bd7515d7800fab03669d973fc18837c58d858e1f",
+        "rawBytes": 747837
+      },
+      "pageTitle": "UnifAI Price Today: Live UAI to USD Price Chart & Market Data",
+      "pageToken": "UAI",
+      "pageAssetName": "UAI",
+      "pageProject": "UnifAI",
+      "pageFuturesSymbol": "UAI_USDT"
+    },
+    {
+      "rank": 145,
+      "sourceSymbol": "PLTRSTOCK_USDT",
+      "baseAsset": "PLTRSTOCK",
+      "amount24": "1524419.4128",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-aiapplicationlayer"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 146,
+      "sourceSymbol": "BEAT_USDT",
+      "baseAsset": "BEAT",
+      "amount24": "1502207.8124",
+      "catalogConcepts": [
+        "mc-trade-zone-GameFi",
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/BEAT",
+        "finalUrl": "https://www.mexc.com/price/BEAT",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:49.142099+00:00",
+        "rawSha256": "0095c608da0477ffa080b0864283108182120772ff72401d5fb37ae280511cf9",
+        "rawBytes": 745805
+      },
+      "pageTitle": "Audiera Price Today: Live BEAT to USD Price Chart & Market Data",
+      "pageToken": "BEAT",
+      "pageAssetName": "BEAT",
+      "pageProject": "Audiera",
+      "pageFuturesSymbol": "BEAT_USDT"
+    },
+    {
+      "rank": 147,
+      "sourceSymbol": "ALUMINUM_USDT",
+      "baseAsset": "ALUMINUM",
+      "amount24": "1471611.35993",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 148,
+      "sourceSymbol": "ASTSSTOCK_USDT",
+      "baseAsset": "ASTSSTOCK",
+      "amount24": "1441921.9345",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-aerospacedefense",
+        "mc-trade-zone-aerospace"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 149,
+      "sourceSymbol": "LAB_USDT",
+      "baseAsset": "LAB",
+      "amount24": "1439042.6155",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/LAB",
+        "finalUrl": "https://www.mexc.com/price/LAB",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:50.667703+00:00",
+        "rawSha256": "4fe9ad3472684880dad92dd0117e9896f88954e5aac7d71d3ea9c0555058349c",
+        "rawBytes": 745380
+      },
+      "pageTitle": "LAB Price Today: Live LAB to USD Price Chart & Market Data",
+      "pageToken": "LAB",
+      "pageAssetName": "LAB",
+      "pageProject": "LAB",
+      "pageFuturesSymbol": "LAB_USDT"
+    },
+    {
+      "rank": 150,
+      "sourceSymbol": "ZHIPUSTOCK_USDT",
+      "baseAsset": "ZHIPUSTOCK",
+      "amount24": "1412685.4136",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 151,
+      "sourceSymbol": "ORCLSTOCK_USDT",
+      "baseAsset": "ORCLSTOCK",
+      "amount24": "1402717.7188",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-aicomputing"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 152,
+      "sourceSymbol": "GRASS_USDT",
+      "baseAsset": "GRASS",
+      "amount24": "1401886.5907",
+      "catalogConcepts": [
+        "mc-trade-zone-ai"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/GRASS",
+        "finalUrl": "https://www.mexc.com/price/GRASS",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:52.110391+00:00",
+        "rawSha256": "98337fd59adcfea2f217c27676daa7a464f4f23fffa2f7388a7e99c53fd0f719",
+        "rawBytes": 757209
+      },
+      "pageTitle": "GRASS Price Today: Live GRASS to USD Price Chart & Market Data",
+      "pageToken": "GRASS",
+      "pageAssetName": "GRASS",
+      "pageProject": "GRASS",
+      "pageFuturesSymbol": "GRASS_USDT"
+    },
+    {
+      "rank": 153,
+      "sourceSymbol": "ZRX_USDT",
+      "baseAsset": "ZRX",
+      "amount24": "1376114.3574",
+      "catalogConcepts": [
+        "mc-trade-zone-layer2",
+        "mc-trade-zone-mainly"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/ZRX",
+        "finalUrl": "https://www.mexc.com/price/ZRX",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:53.544782+00:00",
+        "rawSha256": "5e92f35b367fa719649b6095d250633b20fbf0c1eed8a4dc08be726358014bfa",
+        "rawBytes": 747692
+      },
+      "pageTitle": "0x Price Today: Live ZRX to USD Price Chart & Market Data",
+      "pageToken": "ZRX",
+      "pageAssetName": "ZRX",
+      "pageProject": "0x",
+      "pageFuturesSymbol": "ZRX_USDT"
+    },
+    {
+      "rank": 154,
+      "sourceSymbol": "PAXG_USDT",
+      "baseAsset": "PAXG",
+      "amount24": "1368159.88627",
+      "catalogConcepts": [
+        "mc-trade-zone-metals",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-metalsfutures",
+        "mc-trade-zone-Commodities"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 155,
+      "sourceSymbol": "AVGOSTOCK_USDT",
+      "baseAsset": "AVGOSTOCK",
+      "amount24": "1364991.712",
+      "catalogConcepts": [
+        "mc-trade-zone-Stock",
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-tradfi",
+        "mc-trade-zone-AICompute",
+        "mc-trade-zone-semiconductors",
+        "mc-trade-zone-aisemiconductors"
+      ],
+      "decision": "skipped",
+      "reason": "excluded_native_tradfi_classification",
+      "page": null,
+      "pageTitle": null,
+      "pageToken": null,
+      "pageAssetName": null,
+      "pageProject": null,
+      "pageFuturesSymbol": null
+    },
+    {
+      "rank": 156,
+      "sourceSymbol": "APE_USDT",
+      "baseAsset": "APE",
+      "amount24": "1357719.2",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees",
+        "mc-trade-zone-web3",
+        "mc-trade-zone-nft",
+        "mc-trade-zone-metaverse"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/APE",
+        "finalUrl": "https://www.mexc.com/price/APE",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:54.995890+00:00",
+        "rawSha256": "19f96c493722a6a53d48dfd4b828decfcdfda96df31f73a7764dd88bc688acd1",
+        "rawBytes": 750065
+      },
+      "pageTitle": "ApeCoin Price Today: Live APE to USD Price Chart & Market Data",
+      "pageToken": "APE",
+      "pageAssetName": "APE",
+      "pageProject": "ApeCoin",
+      "pageFuturesSymbol": "APE_USDT"
+    },
+    {
+      "rank": 157,
+      "sourceSymbol": "PENDLE_USDT",
+      "baseAsset": "PENDLE",
+      "amount24": "1348925.7147",
+      "catalogConcepts": [
+        "mc-trade-zone-DeFi"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/PENDLE",
+        "finalUrl": "https://www.mexc.com/price/PENDLE",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:56.634042+00:00",
+        "rawSha256": "561a96114bac9040746694082462b0e28229a41aba21a043ba89f2ae3cd317b9",
+        "rawBytes": 750711
+      },
+      "pageTitle": "Pendle Price Today: Live PENDLE to USD Price Chart & Market Data",
+      "pageToken": "PENDLE",
+      "pageAssetName": "PENDLE",
+      "pageProject": "Pendle",
+      "pageFuturesSymbol": "PENDLE_USDT"
+    },
+    {
+      "rank": 158,
+      "sourceSymbol": "NMR_USDT",
+      "baseAsset": "NMR",
+      "amount24": "1347722.8985",
+      "catalogConcepts": [
+        "mc-trade-zone-ai"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/NMR",
+        "finalUrl": "https://www.mexc.com/price/NMR",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:58.273810+00:00",
+        "rawSha256": "d045c446bc1cf21c1f11a9e0b8e0fadc3906c389867b348bf2faedac177258d1",
+        "rawBytes": 750537
+      },
+      "pageTitle": "Numeraire Price Today: Live NMR to USD Price Chart & Market Data",
+      "pageToken": "NMR",
+      "pageAssetName": "NMR",
+      "pageProject": "Numerai",
+      "pageFuturesSymbol": "NMR_USDT"
+    },
+    {
+      "rank": 159,
+      "sourceSymbol": "MOVR_USDT",
+      "baseAsset": "MOVR",
+      "amount24": "1319286.9512",
+      "catalogConcepts": [],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/MOVR",
+        "finalUrl": "https://www.mexc.com/price/MOVR",
+        "status": 200,
+        "observedAt": "2026-10-10T01:35:59.925792+00:00",
+        "rawSha256": "c0f38434f74bc7c3947ef99da588187328489ec98c80047e189f70db6092e4f6",
+        "rawBytes": 748490
+      },
+      "pageTitle": "Moonriver Price Today: Live MOVR to USD Price Chart & Market Data",
+      "pageToken": "MOVR",
+      "pageAssetName": "MOVR",
+      "pageProject": "Moonriver",
+      "pageFuturesSymbol": "MOVR_USDT"
+    },
+    {
+      "rank": 160,
+      "sourceSymbol": "SPX_USDT",
+      "baseAsset": "SPX",
+      "amount24": "1271995.6509",
+      "catalogConcepts": [
+        "mc-trade-zone-MEME"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/SPX",
+        "finalUrl": "https://www.mexc.com/price/SPX",
+        "status": 200,
+        "observedAt": "2026-10-10T01:36:01.518434+00:00",
+        "rawSha256": "a9791b1f9c0153a707010f0efe48abb5409bde5e33d871184508a0b7902bf182",
+        "rawBytes": 750930
+      },
+      "pageTitle": "SPX6900 Price Today: Live SPX to USD Price Chart & Market Data",
+      "pageToken": "SPX",
+      "pageAssetName": "SPX",
+      "pageProject": "SPX6900",
+      "pageFuturesSymbol": "SPX_USDT"
+    },
+    {
+      "rank": 161,
+      "sourceSymbol": "CHIP_USDT",
+      "baseAsset": "CHIP",
+      "amount24": "1269666.33",
+      "catalogConcepts": [
+        "mc-trade-zone-0fees"
+      ],
+      "decision": "accepted",
+      "reason": "official_asset_description_native_identifier_and_exact_futures_link_reviewed",
+      "page": {
+        "url": "https://www.mexc.com/price/CHIP",
+        "finalUrl": "https://www.mexc.com/price/CHIP",
+        "status": 200,
+        "observedAt": "2026-10-10T01:36:03.072368+00:00",
+        "rawSha256": "bbf7ecc591859b4a23805efd846d10a499329c2cf2545b519449cc55d9f5bb4f",
+        "rawBytes": 747912
+      },
+      "pageTitle": "USD.AI Price Today: Live CHIP to USD Price Chart & Market Data",
+      "pageToken": "CHIP",
+      "pageAssetName": "CHIP",
+      "pageProject": "USD.AI",
+      "pageFuturesSymbol": "CHIP_USDT"
+    }
+  ]
+}

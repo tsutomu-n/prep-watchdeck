@@ -1,16 +1,17 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-09(金)_16:16 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T16:16:17+09:00`
-- 検証: `2026-10-08T16:04:27+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
 
 ## この文書の範囲
 
-この文書は**現在productionの3 Venue Perp runtime**を安全に運用する手順を記述する。
+この文書はBitget・Hyperliquid Core・Aster・MEXCのPerp runtimeとDiscoveryを安全に運用する手順を記述する。
+Repositoryの仕様と各hostの稼働releaseは別に確認し、MEXC対応版の切替には下記の配置境界を適用する。
 port、path、unit、artifact数、retention、public API構成等は現在のruntime contractであり、
 [product boundary](product-boundary.md)が許可する将来機能を禁止するものではない。
 
@@ -62,6 +63,7 @@ Watchdeck v1 P0のRepository実装とproduction qualificationは完了済み。P
 [README](../../README.md)の専用stateと`postgres.env`を作る。実credentialをcommit、terminal log、issue、文書へ
 貼らない。
 
+Webはrelease directoryの`apps/web/`で`bun install --frozen-lockfile`、`bun run build`を実行してから配置する。
 unit renderだけ確認する。
 
 ```bash
@@ -76,6 +78,22 @@ bash scripts/ops/install-user-services.sh --repo-root /absolute/clean-release --
 ```
 
 installerは既存unitをbackupする。installとruntime start/restartを同一操作とみなさない。
+
+## Webの本番配信
+
+Web unitは`bun run start`でadapter-nodeのbuildを配信し、`HOST=127.0.0.1`、`PORT=5173`を使う。
+開発時の`bun run dev`とは別で、source更新後はbuildと承認済みrestartが必要。
+HTML/APIは`no-store`で配信し、clientの受容形式に合わせgzip/Brotli等で応答を圧縮する。
+ハッシュ付き静的assetはadapterの事前圧縮とimmutable cacheを使う。
+listenerはloopback hostnameと設定済みTailscale authority以外のHostを全routeで拒否する。
+APIの認証・Origin・socket接続元検証は維持し、forwarded addressをadapterのclient addressへ代入しない。
+`PREP_WATCHDECK_WEB_`接頭辞の`ORIGIN`、`ADDRESS_HEADER`、`HOST_HEADER`、`PORT_HEADER`設定による
+上書きは拒否する。
+
+Webだけの互換な変更は、検証済みcommitから別release directoryへ配置し、WebのWorkingDirectoryとExecStartだけを
+切り替える。旧releaseと既存drop-inを保持し、health・実際のHTTPS入口・認証・主要画面を確認する。
+失敗時は今回のWeb用drop-inだけを戻し、daemon-reloadとWeb restartを行う。
+Market/Ranking/Attentionの収集process、DB、stateの切替はこのWeb更新に含めない。
 
 ## 起動と停止
 
@@ -112,7 +130,7 @@ Webのlistenerは`127.0.0.1:5173`を維持し、既存Tailscale ServeのHTTPS pr
 `https://ubuntu.narluga-gecko.ts.net:8444/`。スマホ本人による接続確認はserver検証と別に行う。
 
 Web unitに`PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN=https://ubuntu.narluga-gecko.ts.net:8444`を
-指定する。Viteの既存allowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
+指定する。開発時はViteのallowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
 Serveの認証済みuser identity headerが揃った場合にlocal APIを利用できる。
 
 タグ付き端末にはuser identity headerが付かないため、このサーバー自身から同じHTTPS URLを開く場合は
@@ -125,7 +143,7 @@ socketが読めない、timeout、不正response、別端末、Funnel経由の�
 
 JSON更新には引き続き設定したHTTPS originとの一致が必要。検証時にidentity headerを手作業で付けて
 認証成功と扱わない。serverからのHTTP・ブラウザー検証と、スマホ実機での本人操作確認を分ける。
-URL変更時はこのoriginとVite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
+URL変更時はこのoriginと開発用Vite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
 
 ```bash
 systemctl --user show \
@@ -199,6 +217,7 @@ PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' \
 
 現在のmaintenanceは、normalized Parquetのreadback、row count、key、timestamp、row digest、SHA-256、active manifestを
 確認した後だけ対応sourceを削除する。空datasetをarchive成功として捏造しない。
+Parquet列はSQL projectionの型を明示する。先頭の行が欠測でも後続の値を保持し、欠測を0へ補完しない。
 
 現在の保持期間:
 
@@ -343,7 +362,6 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 独立ランキングを切り離す場合は、そのcollectorを停止し、WebのUniverse Explorerを使う。
 元DBのmigration・rollback・既存unitの変更は必要ない。stateや未commitの差分を自動削除しない。
 
-
 ### 初回準備と再開を区別する
 
 | 入力・操作 | 起きること | 次へ進める条件 |
@@ -381,7 +399,6 @@ candidate作成と通常照合は同じcatalog判定を使う。L1だけのparti
 Repositoryの採用mapは1,096契約・577行（verified 536、unsupported 41）で、
 RLC追加とDRV/NULLMASK契約版変更を反映している。元数量換算3件・Widget3件は未確認を維持する。
 これはsourceの採用状態であり、稼働processのmap採用は別途反映と確認を要する。
-
 
 削除した契約は新mapの参照対象から外れ、通常の専用stateの保存整理の対象になる。
 過去日比較の導入では表・保存形式を変えず、保存期間を4日と1分へ延長する。旧revisionの履歴を
@@ -458,6 +475,11 @@ Repo rootで`bun scripts/assets/generate-logo-bindings.mjs`を実行し、画像
 許可済み対象への`--apply`はnative履歴を取得し、欠損だけ挿入する。現行契約の版・定義hashが変わったら
 対象を停止する。自動実行は`PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED=true`を明示したserviceだけで有効。
 falseに戻しても追加済みの正当な保存足を自動削除しない。
+
+Hyperliquidの直近5,000本の履歴上限を超える古い窓は、その対象の`history_limit`として扱い、
+他Venueのscan/回収を続ける。結果は`partial`、未検査件数は`null`であり、全履歴の完了とは扱わない。
+dry-runは状態を保存せず、applyは全体の件数・終了理由をDB auditへ、対象別診断を
+`candle-recovery-state.json`へ残す。
 
 有効なserviceでは15分ごとの履歴回復に加え、毎分の不足endpoint回復が動く。
 後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足を
@@ -541,7 +563,11 @@ run_idを特定した別の修復判断とする。本番でのbackup、exact so
 
 Repositoryには`watchdeck-attention` CLIがあるが、production unitのinstall/enable/startや既存releaseの更新は別の明示承認対象である。既定stateは`~/.local/share/prep-watchdeck-attention`、portは8770。Market/Rankingとは別のdirectory・portを指定する。既定portやrootは製品の永久制約ではない。
 
-承認された配置では[Attention専用unit template](../../config/systemd/prep-watchdeck-attention.service.in)をreleaseの絶対pathと専用state/portでrenderする。MemoryMaxは512 MiB、CPUQuotaは100%、TasksMaxは32、LimitNOFILEは128。Linux bubblewrapでrootとMarket/Ranking stateをread-onlyにし、Attention stateだけを書込み可能にする。Market/Ranking unitを新規起動する依存は持たず、既存の収集processを変更しない。Webには`PREP_WATCHDECK_ATTENTION_PORT`を設定する。広域の`install-user-services.sh`をAttention配置のために実行しない。
+承認された配置では[Attention専用unit template](../../config/systemd/prep-watchdeck-attention.service.in)をreleaseの絶対pathと専用state/portでrenderする。MemoryMaxは768 MiB、CPUQuotaは100%、TasksMaxは32、LimitNOFILEは128。Linux bubblewrapでrootとMarket/Ranking stateをread-onlyにし、Attention stateだけを書込み可能にする。Market/Ranking unitを新規起動する依存は持たず、既存の収集processを変更しない。Webには`PREP_WATCHDECK_ATTENTION_PORT`を設定する。広域の`install-user-services.sh`をAttention配置のために実行しない。
+
+Discoveryの全件取得と比較取得を重ねたwarm負荷ではPython RSSだけで500 MiBを超えるため、旧512 MiB上限は使わない。容量受入では保持済みDBと複数世代・実HTTP取得を含め、RSS、cgroupのanonymous/file内訳、OOMと再起動回数を確認する。短時間のOOMなしだけでは容量余裕を証明しない。
+
+Attention `/health`の`lastCycleDurationMs`と`maxCycleDurationMs`は、generation lock取得後から入力読取・保存・Discovery更新までをmonotonic clockで計測する。失敗した試行も含み、起動後未試行はnull、maxはprocess lifetimeの最大値。世代間の時刻差を処理時間の代用にしない。
 
 配置前は旧WebのWorkingDirectory/drop-inとunitの有無を保存し、tracked sourceから独立releaseを作る。配置後は`/health`、`/attention`、Webの`/api/attention`と`/attention`、少なくとも2回の世代更新を確認する。`partial`は欠損を含む有効応答であり、全銘柄の全成分が有効という意味ではない。確認ではcoverageとquality reason、元の2 collectorのPID/更新継続も記録する。
 
@@ -554,6 +580,56 @@ Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`va
 `freeze-family --family-id <新family>`、`settle-outcomes --fixture <offline export.json>`、`evaluate-family --family-id <固定family>`は専用SQLiteへ書くため、Attention serviceを停止した状態で実行する。共通の`--state-dir`等を指定できる。後二者はProvider取得やactive Ranking DB接続を行わない。評価結果はstdoutと`artifacts/evaluation.json`へ出る。訂正後のstale reportは再評価が必要。
 
 停止・rollbackは起動したAttention process、または承認された`prep-watchdeck-attention.service`だけを停止する。Webも戻す場合は保存した旧drop-inを復元してWebだけを再起動する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。
+
+## MEXC・Discovery対応sourceの配置境界
+
+MEXCを含むsourceを配置するときは、先にMarket artifact、Ranking original、Attention、Webのreaderを
+対応させ、取得を無効にした互換構成で確認してから収集を有効化する。既定値は
+`PREP_WATCHDECK_MARKET_MEXC_ENABLED=true`で、reader先行配置では明示的に`false`を設定する。
+この設定はMarket CoreのMEXC Catalog/L1/candle/recovery/funding/selected収集を止め、既存stateを削除しない。
+Webから明示要求する表示用Chart履歴・約定騰落率の公開API読取は別経路であり、この設定では停止しない。
+このWeb readはfreshなUniverseと対応するservice manifestだけを必要とし、Venueのactive selectionや`selected-market.json`の利用可否には依存しない。
+
+採用範囲は審査済みregistryの10 USDT perpetualだけで、未審査catalogの全件収集ではない。
+同梱Ranking mapのMEXC versionは隔離DBのcatalog captureに基づく。本番DBのcurrent instrument/versionを
+取得し、定義・数量係数・原資産・固定参照の根拠を再照合してから採用する。
+隔離captureの内部SCD2 IDを本番へそのままコピーしない。参照価格のProviderはBybit/Binanceのまま維持する。
+`prepare-mexc-map.py --capture-scope production_read_only`は専用DBのread-only snapshot、全current roster、
+MEXCのcurrent version・保存済み定義と30分以内の観測を照合する。既存Venueのidentityに差分があれば、
+先に独立したroster refreshを行う。既存の数量・Widget未確認をMEXC追加だけで承認済みにしない。
+取得無効時はcatalogも停止するため、採番にはMarketとmaintenanceを停止し、同じruntime lock下で
+catalogを一度だけ保存する。単独MEXC catalogは一時的に全件coverageを満たさないため、対応mapを
+配置して通常serviceを再開した後、全Venue catalog成功・件数整合・version一致を確認する。
+maintenance writerとdata-operations readerのrelease/mapも配置対象に含める。
+
+最適化版の配置ではMigration 0006とFunding時刻3列を理解する互換releaseを使う。
+Web/Attention等のreaderを先行させ、maintenanceの次回起動を制御してからmigration、Market writerを
+切り替える。旧行のFundingは未知のままにし、schema5専用binaryへは戻さない。
+審査済みregistryを10→50→100と固定して順に配置し、本番のcurrent SCD2 versionでmapを再作成する。
+追加mapの再実行では既存根拠とreview日時を保ち、同じ入力でversionを変えない。
+参照未確認のnative-onlyもrosterへ残し、Ranking/Widgetの資格gateは弱めない。
+段階rollbackはMEXC取得停止→直前registry→単一writer catalog→current versionでmap再資格→再開とする。
+履歴削除・古いversion ID mapの単純復元は行わない。
+
+共有予算は`PREP_WATCHDECK_MEXC_BUDGET_DB`に絶対pathで指定し、business DBとは別のSQLiteにする。
+親directoryを先に作成し、Market/Web/maintenanceの専用budget-only環境file
+`~/.config/prep-watchdeck-market/mexc-budget.env`へ同じ値を設定する。templateはこのfileをoptionalで読み、
+未設定ならMEXC HTTPはfail closedになる。WebにPostgres credential fileを読ませない。
+CLIのrecovery/maintenanceと実Providerを使う隔離検証にも同じ変数を明示して渡す。
+予算・429待機の共有以外は隔離DB/state/portを使う。Candle shardの接続数・ACK失敗・再接続・
+無更新時間・観測したforward gapはMarket journalの`MEXC candle shard=`で確認できる。
+このgap counterだけでは全欠損を証明できないため、保存足coverageも確認する。
+
+Discoveryは既存Attention serviceのwriterで動き、専用の新serviceを追加しない。
+Webの`/api/discovery-summary`、`/api/discovery`、`/api/decisions`と比較操作は対応Webのbuildで提供する。
+配置確認では実際のsource版とstateを特定し、固定条件、連続世代、欠測時の中断、保存候補、
+明示確認以外でselectionが変わらないことを、source testと別に確認する。
+
+rollbackもMEXCを読める互換版を使い、Market側の取得を無効化して保存データを保持する。
+MEXC入りartifact/mapを旧3 Venue readerへ戻さず、user-workspace v2を書いた後にv1専用Webへ戻さない。
+比較pinとfavorite/view、`manual-decisions.json`、Attention SQLiteを保全対象に含める。
+終了Discovery episodeの7日/10,000件制限は既存Attention evidence全体のretentionではない。
+手動判断は1,000件/16 MiBで新規保存を拒否し、自動削除しない。満杯時は保存済み内容を保全して容量方針を再判断する。
 
 ## Researchと新しいcandle finalityの配置境界
 
@@ -580,3 +656,27 @@ mapの根拠review・validation・稼働採用・採用後monitor成功を別々
 統計的推定可否を分けて記録する。`SERVICE_RESULT`・`EXIT_CODE`・`EXIT_STATUS`が不明、
 強制終了、件数不足の場合は、残ったsnapshotの品質が良くてもcapture完了のPASSにしない。
 CLI終了3による品質不適格は、全sampleを保存したかどうかと別に残す。
+
+## 周期診断、容量と隔離copy
+
+`check-data-operations.py`はfreshな`venue_partial_failure`でも、完全な周期診断が全native件数を説明し、各Venueにready入力があり、Asterの不良がbid/ask欠測だけの場合に対象別partialを警告として記録する。不良rowの値・品質は補完しない。stale/unavailable、未知理由、診断欠落、identity不一致、利用可能入力0はfailureを維持する。Funding限定partialの一般除外は追加していない。exit 0は全rowの品質PASSを意味しない。
+
+周期diagnosticsを出すwriterへの切替は、closed artifactを受けるWeb/Attention readerを先に更新する。切戻しでは所有する追加設定だけをhash確認して戻し、旧releaseの機能復帰を確認する。`scripts/ops/verify-release-health.py --expected-release <absolute-release> --map-version <version> --after <UTC-time>`は設定上のWorkingDirectory、現PIDのcommand/cwd、各HTTP health、切替後のfreshなL1と成功collector周期を照合する。artifact形式の互換性だけで成功にしない。DB・map・evidenceの削除やdowngradeは行わない。機能healthは全row品質や長期受入とは別である。
+
+`scripts/ops/check-runtime-capacity.py`はMarket/Ranking/Attention、`--postgres-root`と`--outcome-archive`をread-onlyで測り、新しい外部JSONへ保存する。parent traversal、symlink、state内への出力を拒否する。権限不足はunknownとし、Postgres physical bytesは同一root/device・60秒以内の`runtime-capacity-supplement-v1`を`--trusted-supplement`で渡せる。logical bytesで代用しない。`--copy-staging-bytes`、`--export-staging-bytes`、`--restore-staging-bytes`を分け、copy/restoreには保存bytesからの下限を置く。export未測定、範囲不足、24h未満は30日外挿を`not_validated`とする。維持処理を含むnet増分の線形外挿は、実30日観測を代替しない。50 GiBと実測増分7日分の停止条件は維持し、このscriptは蓄積を停止・削除しない。
+
+`scripts/ops/copy-runtime-evidence.py`はread-only SQLite online backupを新しい隔離rootへ作り、SQLite内の全generationとimmutable Attention fileの内容・checksumを照合する。完成したcopyのreaderは`mode=ro&immutable=1`を使う。稼働DB/WAL/SHMの単純copyを行わない。Ranking/Attention間の共通transactionはなく、各copyのmapVersionと取得窓をmanifestへ保存する。incomplete copyの再開は、保存済みfile hashと元入力pathが一致する場合だけ。
+
+研究の`finalize_capture`は原本と重ならない出力に`capture-completion.json`を必要とする。実processのresult/exit code/statusと根拠を記録し、source manifestを固定する。verify/quality/evaluateを有限な子processとして実行し、期限切れは`INCOMPLETE`とphase/checkpointを残す。exit 3と必要件数の一致はcapture完了になり得るが、品質不適格なら評価は`NOT_RUN`。既存入力やcheckpointのhashが変わった再開を拒否する。子processもlockを保持し、期限切れ・SIGINT/SIGTERMではprocess groupを終了して回収する。親SIGKILL後も存続する子がlockを保持し、重複writerを拒否する。
+
+Recovery受入では`--require-complete-recovery`により、同じnative rosterの完了周期、0 remaining、正しい通常6h/endpoint windowと時刻を要求する。通常監視の警告分類と別のgateであり、runningの0 targetやnullを完了へ昇格しない。`audit-candle-history.py`はread-only、`reconcile-candle-history.py`は原本と同一scopeの回復ledgerを照合、`prepare-acceptance-bundle.py`はtracked source・map・helper・unit bindingsを新しいimmutable bundleへ固定する。unit反映やlive repairを実行するcommandではない。
+
+## Offline outcome入力とprospective protocol
+
+`export-outcome-input.py`は完了copyのSHAを照合し、保存済みgenerationのexact mapとreference revisionだけで閉じた最大24hをexportする。現Ranking mapとは別の過去mapも保存済みinputのmapVersionで分離し、symbolから参照を作らない。128MiB以下のfragmentを一つのbundleとして読み、native観測時刻は分へ切り上げる。5分間隔のnative evidenceで1分経路の穴を補完しない。settlementの`--fixture`は複数回指定でき、archive rootも読める。隣接日をexact map/revisionで結合し、日跨ぎ15/60分を評価する。入力時刻/map外のgenerationは変更せず、参照fragmentのcacheは入力全体で2件までとする。保存generationとoutcomeもgeneration単位で読む。
+
+`archive-outcome-day.py`は完了UTC日のSQLite online backupとimmutable generation照合を行い、day/map別bundleとcopy manifestを保存する。日を指定しなければ保存済みevidence・archive ledgerの最古日から欠日を回収し、完了editionはSHAを確認して再利用する。未完了editionは保全し、別editionで再試行する。fsyncと内容検証後に日次COMPLETEを公開する。期限切れ日はFAILEDを残し、後続の回収可能日を退避したうえで全体を非成功終了する。容量不足やcopy不整合は停止する。日次jobはRankingの4日retentionより前に実行する。終了時に削除するのは所有する一時copyだけで、入力DB・過去editionをpruneしない。
+
+`freeze-formal-protocol.py`は認証したoffline policy copyから将来の30 UTC日、K=10/20、15/60分、seed0、2000 bootstrap、family/source/scope/map hashを固定する。cutoffやfamilyを変更して既存protocolへ上書きしない。common-eligible poolはfuture outcomeを見る前に入力から固定する診断で、元のcoverage guardを置換しない。正式評価の開始は運転・容量受入後とし、最終cutoffから60分と30日blockの成立は別に確認する。具体的scopeは`attention-formal-scope-v1`のfamilyId、mapVersion、assetId→exact referenceKey/nullで固定する。`watchdeck-attention evaluate-formal --protocol <file> --scope <file> --ledger <file>`は登録済みwindow内のdecisionAtだけをstreamingで読み、seed/bootstrap、推移的な実行source hash、policyとscopeを照合する。入力Ranking cutoffは判断以前の時刻を許容し、future outcome cutoffとは区別する。protocolに固定したledgerへ計算前に一回判定を予約し、同一入力だけ再開できる。訂正・追加outcomeや別ledgerによる再判定を拒否し、完了済み原結果を保持する。
+
+Offline copy/export/archiveの入出力とstate rootはparent traversalを拒否する。SQLite backupは所有する一時ファイルへ作成し、整合検証後に既存宛先を上書きせず確定する。期限切れでは一時copyだけを終了し、元DBを維持してINCOMPLETE manifestから再試行できる。

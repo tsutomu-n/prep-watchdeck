@@ -20,7 +20,7 @@ from prep_watchdeck_market.models import Venue
 ArchiveDataset = Literal["market_state_1m", "candle_1m", "funding_events"]
 ArchiveStatus = Literal["confirmed"]
 _SUPPORTED_DATASETS = {"market_state_1m", "candle_1m", "funding_events"}
-_SUPPORTED_VENUES = {"bitget", "hyperliquid", "aster"}
+_SUPPORTED_VENUES = {"bitget", "hyperliquid", "aster", "mexc"}
 _SCHEMA_VERSION = 1
 _PART_FILE_NAME = "part-0000.parquet"
 _PARQUET_DECIMAL = pl.Decimal(precision=38, scale=18)
@@ -44,6 +44,30 @@ _PARQUET_DECIMAL_COLUMNS = frozenset(
         "volume_notional",
     }
 )
+_PARQUET_COLUMN_TYPES = {
+    **dict.fromkeys(_PARQUET_DECIMAL_COLUMNS, _PARQUET_DECIMAL),
+    "venue_instrument_version_id": pl.Int64,
+    "venue": pl.String,
+    "source_symbol": pl.String,
+    "bucket_at": pl.Datetime("us", "UTC"),
+    "status": pl.String,
+    "first_observed_at": pl.Datetime("us", "UTC"),
+    "last_observed_at": pl.Datetime("us", "UTC"),
+    "source_at": pl.Datetime("us", "UTC"),
+    "funding_source_at": pl.Datetime("us", "UTC"),
+    "funding_observed_at": pl.Datetime("us", "UTC"),
+    "funding_valid_until": pl.Datetime("us", "UTC"),
+    "sample_count": pl.Int64,
+    "reference_price_kind": pl.String,
+    "funding_interval_seconds": pl.Int64,
+    "open_interest_raw_unit": pl.String,
+    "volume_24h_unit": pl.String,
+    "trade_count": pl.Int64,
+    "finality": pl.String,
+    "observed_at": pl.Datetime("us", "UTC"),
+    "finalized_at": pl.Datetime("us", "UTC"),
+    "funding_at": pl.Datetime("us", "UTC"),
+}
 
 
 class ArchiveError(RuntimeError):
@@ -76,17 +100,11 @@ class _PartitionRows:
 
 
 def _partition_frame(partition: _PartitionRows) -> pl.DataFrame:
-    """Build a normalized partition with a stable Parquet decimal schema."""
+    """Use the SQL projection's types even when early rows contain only nulls."""
 
-    decimal_overrides = {
-        column: _PARQUET_DECIMAL
-        for column in partition.columns
-        if column in _PARQUET_DECIMAL_COLUMNS
-    }
     return pl.DataFrame(
         partition.rows,
-        schema=list(partition.columns),
-        schema_overrides=decimal_overrides,
+        schema={column: _PARQUET_COLUMN_TYPES[column] for column in partition.columns},
         orient="row",
         strict=False,
     )
@@ -230,6 +248,9 @@ def _fetch_partition(
                 "open_interest_notional",
                 "volume_24h_raw",
                 "volume_24h_unit",
+                "funding_source_at",
+                "funding_observed_at",
+                "funding_valid_until",
             )
             cursor.execute(
                 """
@@ -242,7 +263,8 @@ def _fetch_partition(
                            state.funding_rate_per_hour, state.open_interest_raw,
                            state.open_interest_raw_unit, state.open_interest_base,
                            state.open_interest_notional, state.volume_24h_raw,
-                           state.volume_24h_unit
+                           state.volume_24h_unit, state.funding_source_at,
+                           state.funding_observed_at, state.funding_valid_until
                     FROM market_state_1m AS state
                     JOIN venue_instrument_versions AS instrument
                       USING (venue_instrument_version_id)

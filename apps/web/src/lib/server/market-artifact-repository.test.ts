@@ -10,6 +10,41 @@ import { resolveMarketStatePaths } from "./market-state-paths";
 import { LocalFileSelectionCommandRepository } from "./selection-command-repository";
 
 describe("market artifact and local selection repositories", () => {
+  test("expires only MEXC Funding at read time without changing stored Ticker data", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-funding-expiry-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    const item = bundle.universe.items[0];
+    Object.assign(item, {
+      venue: "mexc", venueInstrumentId: "mexc:BTC_USDT", sourceSymbol: "BTC_USDT",
+      fundingSourceAt: "2026-08-14T11:59:00Z",
+      fundingObservedAt: "2026-08-14T11:59:01Z",
+      fundingValidUntil: "2026-08-14T12:00:05Z",
+      nextFundingAt: "2026-08-14T20:00:00Z"
+    });
+    try {
+      await writeArtifacts(paths, bundle);
+      let now = new Date("2026-08-14T12:00:04Z");
+      const repository = new LocalFileMarketArtifactRepository(paths, () => now);
+      expect((await repository.latestUniverse()).items[0].fundingRateRaw).toBe(item.fundingRateRaw);
+      now = new Date("2026-08-14T12:00:05Z");
+      const expired = (await repository.latest()).universe.items[0];
+      expect(expired.markPrice).toBe(item.markPrice);
+      expect(expired.openInterestBase).toBe(item.openInterestBase);
+      expect(expired.fundingRateRaw).toBeNull();
+      expect(expired.fundingRatePerHour).toBeNull();
+      expect(expired.fundingIntervalSeconds).toBeNull();
+      expect(expired.nextFundingAt).toBeNull();
+      expect(expired.qualityReasons).toContain("funding_expired");
+      expect(JSON.parse(await readFile(paths.universeSnapshotPath, "utf-8"))).toEqual(bundle.universe);
+      item.fundingObservedAt = null;
+      await writeArtifacts(paths, bundle);
+      expect((await repository.latestUniverse()).items[0].qualityReasons).toContain("funding_metadata_missing");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
   test("accepts one coherent four-file generation and rejects an invalid artifact", async () => {
     const root = await mkdtemp(join(tmpdir(), "watchdeck-market-artifacts-"));
     const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
@@ -37,6 +72,31 @@ describe("market artifact and local selection repositories", () => {
         () => new Date("2026-08-14T12:02:01Z")
       );
       await expect(stale.latest()).rejects.toThrow(/service-state is stale/);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test("keeps native chart identity reads available when no venue selection is active", async () => {
+    const root = await mkdtemp(join(tmpdir(), "watchdeck-market-unselected-universe-"));
+    const paths = resolveMarketStatePaths({ PREP_WATCHDECK_MARKET_STATE_DIR: root });
+    const bundle = fixtureBundle();
+    bundle.selected.generatedAt = "2026-08-14T11:00:00Z";
+    const selectedState = bundle.service.artifacts.find(
+      (item) => item.name === "selected-market.json"
+    );
+    if (!selectedState) throw new Error("selected artifact state missing from fixture");
+    selectedState.status = "unavailable";
+    selectedState.generatedAt = bundle.selected.generatedAt;
+    try {
+      await writeArtifacts(paths, bundle);
+      const repository = new LocalFileMarketArtifactRepository(
+        paths,
+        () => new Date("2026-08-14T12:00:10Z")
+      );
+
+      await expect(repository.latestUniverse()).resolves.toEqual(bundle.universe);
+      await expect(repository.latest()).rejects.toThrow(/selected-market is stale/);
     } finally {
       await rm(root, { recursive: true, force: true });
     }

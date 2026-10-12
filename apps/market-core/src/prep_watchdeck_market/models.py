@@ -7,7 +7,8 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-Venue = Literal["bitget", "hyperliquid", "aster"]
+Venue = Literal["bitget", "hyperliquid", "aster", "mexc"]
+SUPPORTED_VENUES: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc")
 QuantityUnit = Literal["base", "contracts", "unknown"]
 SourceKind = Literal["native_rest", "native_ws"]
 JsonPayload = dict[str, object] | list[object]
@@ -121,9 +122,62 @@ class CatalogInstrument:
             # onboardDate remains in the signature as the listing boundary.
             # Aster's extra createTime metadata drifts without a contract change.
             ignored = {"createTime"}
+        elif self.venue == "mexc":
+            ignored = {
+                "displayName",
+                "displayNameEn",
+                "fn",
+                "baseCoinIconUrl",
+                "isHot",  # Official contract-info: hot-symbol tag, not contract identity.
+                "makerFeeRate",
+                "takerFeeRate",
+                "liquidationFeeRate",
+                "feeRateMode",
+                "feeRateType",
+                "leverageFeeRates",
+                "tieredFeeRates",
+                "isZeroFeeRate",
+                "isZeroFeeSymbol",
+                "minLeverage",
+                "maxLeverage",
+                "countryConfigContractMaxLeverage",
+                "regularMaxLeverage",
+                "isMaxLeverage",
+                "tempMaxLeverageLimited",
+                "maxVol",
+                "limitMaxVol",
+                "riskBaseVol",
+                "riskIncrVol",
+            }
         raw_definition = {
             name: value for name, value in self.raw_definition.items() if name not in ignored
         }
+        tag_ids = raw_definition.get("tagIdList")
+        if (
+            self.venue == "mexc"
+            and isinstance(tag_ids, list)
+            and all(type(tag_id) is int and tag_id >= 0 for tag_id in tag_ids)
+        ):
+            # Hash-only projection of documented contract tags; preserve field presence.
+            raw_definition["tagIdList"] = []
+        risk_tiers = raw_definition.get("riskLimitCustom")
+        if self.venue == "mexc" and isinstance(risk_tiers, list):
+            projected_tiers = []
+            for tier in risk_tiers:
+                if isinstance(tier, dict):
+                    tier = dict(tier)
+                    cap = tier.get("maxVol")
+                    if (
+                        isinstance(cap, (int, float))
+                        and not isinstance(cap, bool)
+                        and cap >= 0
+                        and Decimal(str(cap)).is_finite()
+                    ):
+                        # Hash-only marker: keep cap presence and all tier structure,
+                        # while retaining actual order/risk caps in immutable raw data.
+                        tier["maxVol"] = 0
+                projected_tiers.append(tier)
+            raw_definition["riskLimitCustom"] = projected_tiers
         return replace(self, raw_definition=raw_definition).definition_sha256()
 
 
@@ -138,3 +192,24 @@ class CatalogBatch:
 
 def _decimal_text(value: Decimal | None) -> str | None:
     return None if value is None else format(value, "f")
+
+
+def quantity_normalizable(instrument: CatalogInstrument) -> bool:
+    if instrument.venue != "mexc":
+        return instrument.quantity_unit == "base" and instrument.contract_multiplier == Decimal("1")
+    raw = instrument.raw_definition
+    evidence = raw.get("watchdeckQuantityEvidence")
+    identity = raw.get("watchdeckIdentityEvidence")
+    multiplier = instrument.contract_multiplier
+    return (
+        instrument.quantity_unit == "contracts"
+        and multiplier is not None
+        and multiplier.is_finite()
+        and multiplier > 0
+        and isinstance(evidence, dict)
+        and evidence.get("base_per_contract") == format(multiplier, "f")
+        and isinstance(identity, dict)
+        and identity.get("base_asset") == instrument.base_asset
+        and identity.get("price_unit") == "quote_per_base"
+        and identity.get("identity_price_multiplier") == "1"
+    )

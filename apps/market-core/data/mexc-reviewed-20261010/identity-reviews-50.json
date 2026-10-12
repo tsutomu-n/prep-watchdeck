@@ -1,0 +1,775 @@
+{
+  "scope": "reviewed_native_identities_without_production_version_ids",
+  "items": [
+    {
+      "sourceSymbol": "BTC_USDT",
+      "rankingRowId": "crypto:BTC",
+      "baseAsset": "BTC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/BTC",
+        "https://www.mexc.com/futures/BTC_USDT"
+      ],
+      "project": "Bitcoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "ETH_USDT",
+      "rankingRowId": "crypto:ETH",
+      "baseAsset": "ETH",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ETH",
+        "https://www.mexc.com/futures/ETH_USDT"
+      ],
+      "project": "Ethereum",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "SOL_USDT",
+      "rankingRowId": "crypto:SOL",
+      "baseAsset": "SOL",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/SOL",
+        "https://www.mexc.com/futures/SOL_USDT"
+      ],
+      "project": "Solana",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "XRP_USDT",
+      "rankingRowId": "crypto:XRP",
+      "baseAsset": "XRP",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/XRP",
+        "https://www.mexc.com/futures/XRP_USDT"
+      ],
+      "project": "XRP Ledger",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "DOGE_USDT",
+      "rankingRowId": "crypto:DOGE",
+      "baseAsset": "DOGE",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/DOGE",
+        "https://www.mexc.com/futures/DOGE_USDT"
+      ],
+      "project": "Dogecoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "LTC_USDT",
+      "rankingRowId": "crypto:LTC",
+      "baseAsset": "LTC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/LTC",
+        "https://www.mexc.com/futures/LTC_USDT"
+      ],
+      "project": "Litecoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "BNB_USDT",
+      "rankingRowId": "crypto:BNB",
+      "baseAsset": "BNB",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/BNB",
+        "https://www.mexc.com/futures/BNB_USDT"
+      ],
+      "project": "BNB Chain",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "ADA_USDT",
+      "rankingRowId": "crypto:ADA",
+      "baseAsset": "ADA",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ADA",
+        "https://www.mexc.com/futures/ADA_USDT"
+      ],
+      "project": "Cardano",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "AVAX_USDT",
+      "rankingRowId": "crypto:AVAX",
+      "baseAsset": "AVAX",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/AVAX",
+        "https://www.mexc.com/futures/AVAX_USDT"
+      ],
+      "project": "Avalanche",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "TRX_USDT",
+      "rankingRowId": "crypto:TRX",
+      "baseAsset": "TRX",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/TRX",
+        "https://www.mexc.com/futures/TRX_USDT"
+      ],
+      "project": "Tron",
+      "explicitFuturesLinkPresent": true,
+      "finding": "MEXC official asset information links this named crypto asset to its USDT-M perpetual market. Native market catalog independently confirms base, settlement, perpetual and active fields."
+    },
+    {
+      "sourceSymbol": "ZEC_USDT",
+      "rankingRowId": "mexc-native:ZEC_USDT",
+      "baseAsset": "ZEC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ZEC",
+        "https://www.mexc.com/futures/ZEC_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Zcash",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Privacy-preserving cryptocurrency with the Zcash blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "NEAR_USDT",
+      "rankingRowId": "mexc-native:NEAR_USDT",
+      "baseAsset": "NEAR",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/NEAR",
+        "https://www.mexc.com/futures/NEAR_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "NEAR Protocol",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the NEAR blockchain and decentralized application network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "QNT_USDT",
+      "rankingRowId": "mexc-native:QNT_USDT",
+      "baseAsset": "QNT",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/QNT",
+        "https://www.mexc.com/futures/QNT_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Quant",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Digital currency associated with the Quant interoperability project. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "LINK_USDT",
+      "rankingRowId": "mexc-native:LINK_USDT",
+      "baseAsset": "LINK",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/LINK",
+        "https://www.mexc.com/futures/LINK_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Chainlink",
+      "explicitFuturesLinkPresent": true,
+      "finding": "ERC-20 token used by the Chainlink oracle network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "SUI_USDT",
+      "rankingRowId": "mexc-native:SUI_USDT",
+      "baseAsset": "SUI",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/SUI",
+        "https://www.mexc.com/futures/SUI_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Sui",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Sui Layer 1 smart-contract blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "PEPE_USDT",
+      "rankingRowId": "mexc-native:PEPE_USDT",
+      "baseAsset": "PEPE",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/PEPE",
+        "https://www.mexc.com/futures/PEPE_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "PEPE",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Meme token identified by the official asset page and token explorer. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "WLD_USDT",
+      "rankingRowId": "mexc-native:WLD_USDT",
+      "baseAsset": "WLD",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/WLD",
+        "https://www.mexc.com/futures/WLD_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Worldcoin",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token for the Worldcoin decentralized identity and economy protocol. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "TAO_USDT",
+      "rankingRowId": "mexc-native:TAO_USDT",
+      "baseAsset": "TAO",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/TAO",
+        "https://www.mexc.com/futures/TAO_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Bittensor",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Bittensor's decentralized machine-learning blockchain network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "RLC_USDT",
+      "rankingRowId": "mexc-native:RLC_USDT",
+      "baseAsset": "RLC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/RLC",
+        "https://www.mexc.com/futures/RLC_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "iExec RLC",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of the iExec decentralized confidential-computing project. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "HYPE_USDT",
+      "rankingRowId": "mexc-native:HYPE_USDT",
+      "baseAsset": "HYPE",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/HYPE",
+        "https://www.mexc.com/futures/HYPE_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Hyperliquid",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Hyperliquid blockchain and onchain financial system. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ENA_USDT",
+      "rankingRowId": "mexc-native:ENA_USDT",
+      "baseAsset": "ENA",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ENA",
+        "https://www.mexc.com/futures/ENA_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Ethena",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Protocol token for Ethena's Ethereum-based synthetic-dollar system. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ONDO_USDT",
+      "rankingRowId": "mexc-native:ONDO_USDT",
+      "baseAsset": "ONDO",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ONDO",
+        "https://www.mexc.com/futures/ONDO_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Ondo",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Ondo protocol token; official token-contract and foundation links distinguish it from tokenized securities. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ARB_USDT",
+      "rankingRowId": "mexc-native:ARB_USDT",
+      "baseAsset": "ARB",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ARB",
+        "https://www.mexc.com/futures/ARB_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Arbitrum",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Governance token of the Arbitrum Ethereum Layer 2 network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "DOT_USDT",
+      "rankingRowId": "mexc-native:DOT_USDT",
+      "baseAsset": "DOT",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/DOT",
+        "https://www.mexc.com/futures/DOT_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Polkadot",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Polkadot shared-security blockchain ecosystem. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "TIA_USDT",
+      "rankingRowId": "mexc-native:TIA_USDT",
+      "baseAsset": "TIA",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/TIA",
+        "https://www.mexc.com/futures/TIA_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "TIA",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of Celestia's modular blockchain and data-availability network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ATOM_USDT",
+      "rankingRowId": "mexc-native:ATOM_USDT",
+      "baseAsset": "ATOM",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ATOM",
+        "https://www.mexc.com/futures/ATOM_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Cosmos",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Staking asset of Cosmos Hub in the Cosmos blockchain ecosystem. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "AAVE_USDT",
+      "rankingRowId": "mexc-native:AAVE_USDT",
+      "baseAsset": "AAVE",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/AAVE",
+        "https://www.mexc.com/futures/AAVE_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "AAVE",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of the Aave decentralized crypto lending protocol. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "JUP_USDT",
+      "rankingRowId": "mexc-native:JUP_USDT",
+      "baseAsset": "JUP",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/JUP",
+        "https://www.mexc.com/futures/JUP_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Jupiter",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Jupiter's Solana decentralized-finance liquidity infrastructure. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "APT_USDT",
+      "rankingRowId": "mexc-native:APT_USDT",
+      "baseAsset": "APT",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/APT",
+        "https://www.mexc.com/futures/APT_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Aptos",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Aptos Layer 1 blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "INJ_USDT",
+      "rankingRowId": "mexc-native:INJ_USDT",
+      "baseAsset": "INJ",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/INJ",
+        "https://www.mexc.com/futures/INJ_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Injective",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of Injective's decentralized financial blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "UNI_USDT",
+      "rankingRowId": "mexc-native:UNI_USDT",
+      "baseAsset": "UNI",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/UNI",
+        "https://www.mexc.com/futures/UNI_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Uniswap",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of the Uniswap Ethereum-based decentralized exchange protocol. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ZRO_USDT",
+      "rankingRowId": "mexc-native:ZRO_USDT",
+      "baseAsset": "ZRO",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ZRO",
+        "https://www.mexc.com/futures/ZRO_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "LayerZero",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of LayerZero's inter-blockchain messaging protocol. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "DASH_USDT",
+      "rankingRowId": "mexc-native:DASH_USDT",
+      "baseAsset": "DASH",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/DASH",
+        "https://www.mexc.com/futures/DASH_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "DASH",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native cryptocurrency of the Dash blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "BAT_USDT",
+      "rankingRowId": "mexc-native:BAT_USDT",
+      "baseAsset": "BAT",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/BAT",
+        "https://www.mexc.com/futures/BAT_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Basic Attention Token",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Digital advertising token identified by the official asset page and blockchain explorer. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "HBAR_USDT",
+      "rankingRowId": "mexc-native:HBAR_USDT",
+      "baseAsset": "HBAR",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/HBAR",
+        "https://www.mexc.com/futures/HBAR_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Hedera",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native cryptocurrency powering the Hedera public distributed network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "SAND_USDT",
+      "rankingRowId": "mexc-native:SAND_USDT",
+      "baseAsset": "SAND",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/SAND",
+        "https://www.mexc.com/futures/SAND_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Sandbox",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Utility token of The Sandbox blockchain-based virtual-world ecosystem. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "KAIA_USDT",
+      "rankingRowId": "mexc-native:KAIA_USDT",
+      "baseAsset": "KAIA",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/KAIA",
+        "https://www.mexc.com/futures/KAIA_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Kaia",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native Kaia blockchain asset; current official website and explorer identify KAIA despite legacy Klaytn prose. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "SEI_USDT",
+      "rankingRowId": "mexc-native:SEI_USDT",
+      "baseAsset": "SEI",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/SEI",
+        "https://www.mexc.com/futures/SEI_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "SEI",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Sei Layer 1 blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "FET_USDT",
+      "rankingRowId": "mexc-native:FET_USDT",
+      "baseAsset": "FET",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/FET",
+        "https://www.mexc.com/futures/FET_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Fetch",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Fetch.ai's decentralized AI and ledger project. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "US_USDT",
+      "rankingRowId": "mexc-native:US_USDT",
+      "baseAsset": "US",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/US",
+        "https://www.mexc.com/futures/US_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Talus",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Talus's onchain AI-agent infrastructure network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "FARTCOIN_USDT",
+      "rankingRowId": "mexc-native:FARTCOIN_USDT",
+      "baseAsset": "FARTCOIN",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/FARTCOIN",
+        "https://www.mexc.com/futures/FARTCOIN_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "FARTCOIN",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Meme token on the Solana blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ICP_USDT",
+      "rankingRowId": "mexc-native:ICP_USDT",
+      "baseAsset": "ICP",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ICP",
+        "https://www.mexc.com/futures/ICP_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Internet Computer",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Internet Computer decentralized cloud blockchain. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "ASTER_USDT",
+      "rankingRowId": "mexc-native:ASTER_USDT",
+      "baseAsset": "ASTER",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/ASTER",
+        "https://www.mexc.com/futures/ASTER_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Aster",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Aster's decentralized perpetual-exchange ecosystem. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "MAGIC_USDT",
+      "rankingRowId": "mexc-native:MAGIC_USDT",
+      "baseAsset": "MAGIC",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/MAGIC",
+        "https://www.mexc.com/futures/MAGIC_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "MAGIC Token",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Treasure's blockchain gaming and NFT ecosystem. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "OP_USDT",
+      "rankingRowId": "mexc-native:OP_USDT",
+      "baseAsset": "OP",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/OP",
+        "https://www.mexc.com/futures/OP_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "OP",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Governance token of Optimism's Ethereum Layer 2 ecosystem. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "PYTH_USDT",
+      "rankingRowId": "mexc-native:PYTH_USDT",
+      "baseAsset": "PYTH",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/PYTH",
+        "https://www.mexc.com/futures/PYTH_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Pyth Network",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of the Pyth blockchain oracle network, distinct from its underlying price feeds. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "XLM_USDT",
+      "rankingRowId": "mexc-native:XLM_USDT",
+      "baseAsset": "XLM",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/XLM",
+        "https://www.mexc.com/futures/XLM_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Stellar",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Native asset of the Stellar payments network. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "BTW_USDT",
+      "rankingRowId": "mexc-native:BTW_USDT",
+      "baseAsset": "BTW",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/BTW",
+        "https://www.mexc.com/futures/BTW_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Bitway",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Token of Bitway's blockchain and onchain-liquidity infrastructure. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "SHIB_USDT",
+      "rankingRowId": "mexc-native:SHIB_USDT",
+      "baseAsset": "SHIB",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/SHIB",
+        "https://www.mexc.com/futures/SHIB_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Shiba Inu",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Community meme token with an official blockchain token-explorer identifier. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    },
+    {
+      "sourceSymbol": "PENGU_USDT",
+      "rankingRowId": "mexc-native:PENGU_USDT",
+      "baseAsset": "PENGU",
+      "assetClass": "crypto",
+      "identityEvidence": [
+        "https://www.mexc.com/price/PENGU",
+        "https://www.mexc.com/futures/PENGU_USDT",
+        "https://www.mexc.com/api-docs/futures/market-endpoints/get-contract-info"
+      ],
+      "project": "Pudgy Penguins",
+      "explicitFuturesLinkPresent": true,
+      "finding": "Pudgy Penguins ecosystem meme token with an official token-explorer identifier. Native MEXC price unit verified separately from contract quantity. Fixed-provider identity remains unreviewed.",
+      "nativeOnly": true,
+      "reason": "fixed_reference_unverified"
+    }
+  ]
+}

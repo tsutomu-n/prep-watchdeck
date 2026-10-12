@@ -65,7 +65,8 @@ describe("install-user-services", () => {
     expect(timer).toContain("Persistent=true");
     expect(web).toContain(`Environment=PREP_WATCHDECK_MARKET_STATE_DIR=${fixture.stateRoot}`);
     expect(web).toContain(`WorkingDirectory=${repoRoot}/apps/web`);
-    expect(web).toContain(`ExecStart=${fixture.bun} run dev -- --port 5173 --strictPort`);
+    expect(web).toContain(`ExecStart=${fixture.bun} run start`);
+    expect(web).toContain("Environment=HOST=127.0.0.1");
     expect(readFileSync(fixture.systemctlLog, "utf8")).toBe(
       "--user daemon-reload\n" +
         "--user enable prep-watchdeck-market-db.service prep-watchdeck-market.service " +

@@ -135,6 +135,44 @@ def test_price_partial_does_not_invalidate_complete_unchanged_catalog(tmp_path: 
     assert health.market_data_issue_ids == ("bitget:BTC",)
 
 
+def test_mexc_catalog_is_readable_but_exact_identity_requires_review(tmp_path: Path) -> None:
+    from prep_watchdeck_ranking.models import OriginalInstrument
+    from prep_watchdeck_ranking.roster import check_roster
+
+    root = tmp_path / "artifacts"
+    artifacts(root)
+    universe_path = root / "universe-snapshot.json"
+    universe = json.loads(universe_path.read_text())
+    universe["items"][0].update(
+        venue="mexc", venueInstrumentId="mexc:BTC_USDT", sourceSymbol="BTC_USDT"
+    )
+    universe_path.write_text(json.dumps(universe))
+    pending = check_roster(mapping("BTC"), root, CUTOFF)
+    assert pending.status == "review_required"
+    assert pending.added_instrument_ids == ("mexc:BTC_USDT",)
+    original = OriginalInstrument(
+        venue="mexc",
+        instrument_id="mexc:BTC_USDT",
+        version_id=1,
+        symbol="BTC_USDT",
+        base_asset="BTC",
+        multiplier=1,
+    )
+    old = mapping("BTC")
+    adopted = old.model_copy(
+        update={
+            "rows": (old.rows[0].model_copy(update={"originals": (original,)}),),
+            "roster_fingerprint": extract_roster(universe_path)["catalogFingerprint"],
+        }
+    )
+    assert check_roster(adopted, root, CUTOFF).status == "ready"
+    universe["items"][0]["venueInstrumentVersionId"] = 2
+    universe_path.write_text(json.dumps(universe))
+    changed = check_roster(adopted, root, CUTOFF)
+    assert changed.status == "review_required"
+    assert changed.changed_instrument_ids == ("mexc:BTC_USDT",)
+
+
 @pytest.mark.parametrize(
     "failure",
     [

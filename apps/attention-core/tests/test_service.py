@@ -108,10 +108,17 @@ def test_database_failure_prevents_new_publication(tmp_path, monkeypatch):
             raise OSError("disk full")
 
         monkeypatch.setattr(store, "save_generation", fail)
+        ticks = iter([100.0, 100.25])
+        monkeypatch.setattr(
+            "prep_watchdeck_attention.service.time.perf_counter", lambda: next(ticks)
+        )
+        assert service.health()["lastCycleDurationMs"] is None
         try:
             assert not await service.generate_once(now=NOW)
             assert service.current_response() is None
             assert service.last_error == "storage_unavailable"
+            assert service.health()["lastCycleDurationMs"] == 250
+            assert service.health()["maxCycleDurationMs"] == 250
         finally:
             store.close()
 

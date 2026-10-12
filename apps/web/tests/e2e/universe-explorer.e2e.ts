@@ -174,6 +174,10 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
   await returnLink.focus();
   await returnLink.press("Enter");
   try {
+    // Cached data restores keyboard position before the revalidation request finishes.
+    await expect(selected).toHaveAttribute("aria-pressed", "true");
+    await expect(selected).toBeFocused();
+    await expect.poll(() => scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }))).toEqual(scroll);
     await openSection(page, "ランキング条件");
     await expect(page.getByLabel("平常比期間")).toHaveValue("1h");
     await expect(page.getByLabel("平常比下限")).toHaveValue("0.5");
@@ -182,7 +186,9 @@ test("P02 慎重な確認担当は日本語下書きと参照条件・keyboard f
     await expect(page.getByLabel("表示列プリセット")).toHaveValue("movement");
   } finally { release(); }
   await expect(selected).toHaveAttribute("aria-pressed", "true");
-  await expect(selected).toBeFocused();
+  await expect(page.locator(".refresh-state")).toHaveText("毎分更新");
+  // Finishing revalidation must not steal focus from an interaction after restoration.
+  await expect(page.locator(".ranking-conditions > summary")).toBeFocused();
   await expect.poll(() => scroller.evaluate(el => ({ top: el.scrollTop, left: el.scrollLeft }))).toEqual(scroll);
   if (mobile) {
     await selected.press("Enter");
@@ -275,6 +281,54 @@ test("追加指標は現行IDとversionが一致する時だけ表示する", as
   await expect(page.getByRole("region", { name: "追加の市場変化指標" })).toContainText("追加指標は準備中です");
   version = instrument.venueInstrumentVersionId;
   await expect(page.getByRole("region", { name: "追加の市場変化指標" })).toContainText("数量OI: 15m +10.00%", { timeout: 10_000 });
+});
+
+test("数量OIの未対応は理由を示し取得可能な指標の欠損と区別する", async ({ page }) => {
+  const universe = JSON.parse(await readFile(resolve(artifactRoot, "universe-snapshot.json"), "utf-8")) as UniverseSnapshotArtifact;
+  const now = new Date();
+  const cutoff = new Date(Math.floor(now.getTime() / 60_000) * 60_000 - 180_000).toISOString();
+  const unavailable = (availability: "unsupported" | "missing", reasonCode: string) => ({
+    value: null, availability, reasonCode,
+    startAt: null, endAt: null, startValue: null, endValue: null,
+    startSourceAt: null, startObservedAt: null, endSourceAt: null,
+    endObservedAt: null, endFinality: null, unit: null
+  });
+  const trade = {
+    value: 5, availability: "available" as const, reasonCode: null,
+    startAt: cutoff, endAt: cutoff, startValue: 100, endValue: 105,
+    startSourceAt: cutoff, startObservedAt: cutoff, endSourceAt: cutoff,
+    endObservedAt: cutoff, endFinality: "confirmed", unit: "quote"
+  };
+  const payload: MarketMetricsArtifact = {
+    schemaVersion: 1, metricVersion: "native-endpoints-v1", generationId: "oi-capability",
+    generatedAt: now.toISOString(), candleCutoff: cutoff,
+    timingPolicy: { candleLagSeconds: 180, candleMaxAgeSeconds: 300 },
+    rows: universe.items.filter(item => item.venue === "bitget").map(item => {
+      const oi = item.baseAsset === "BTC"
+        ? unavailable("unsupported", "official_contract_unconfirmed")
+        : unavailable("missing", "endpoint_missing");
+      return {
+        venueInstrumentId: item.venueInstrumentId, venueInstrumentVersionId: item.venueInstrumentVersionId,
+        venue: item.venue, sourceSymbol: item.sourceSymbol, quoteAsset: item.quoteAsset,
+        settleAsset: item.settleAsset, priceTick: null,
+        oiChange: { "15m": oi, "1h": oi },
+        tradeChange: { "15m": trade, "1h": trade, "24h": trade }
+      };
+    })
+  };
+  await page.route("**/api/market-metrics", route => route.fulfill({ json: payload }));
+  await page.goto(BTC_NATIVE_DETAIL);
+  const oi = page.locator(".primary-metrics > div").filter({ has: page.locator("dt", { hasText: /^数量OI/ }) });
+  await expect(oi.locator("dd")).toHaveText("未対応");
+  await expect(oi).toContainText("取得先・単位契約が未確認");
+  const metrics = page.getByRole("region", { name: "追加の市場変化指標" });
+  await expect(metrics).toContainText("数量OI: 15m 未対応 · 1h 未対応");
+  await expect(metrics).toContainText("確定終値: 15m +5.00%");
+  await clickNativeListButton(page, "ETH bitgetを詳細表示");
+  await expect(oi.locator("dd")).toHaveText("—");
+  await expect(oi).not.toContainText("未対応");
+  await expect(oi).not.toContainText("取得先・単位契約が未確認");
+  await expect(metrics).toContainText("数量OI: 15m — · 1h —");
 });
 
 test("groupのないactive契約も単体チャートとJST変化を表示する", async ({ page }) => {
@@ -1456,7 +1510,13 @@ test("2タブのメモCASと別favorite・savedView競合・旧selection heartbe
     expect(stored.favorites.map((item: { id: string }) => item.id).sort()).toEqual(["bitget:BTCUSDT", "bitget:ETHUSDT"]);
     await page.reload(); await other.reload();
     for (const tab of [page, other]) {
+      // Reload restores a native detail entry after the lazy surface mounts.
+      // Wait for that visible state before asking the helper to return to the list.
+      if ((tab.viewportSize()?.width ?? 1440) <= 768) {
+        await expect(tab.getByRole("button", { name: "一覧へ戻る", exact: true })).toBeVisible();
+      }
       await showMarketList(tab);
+      await expect(tab.getByRole("heading", { name: "銘柄一覧", exact: true })).toBeVisible();
       await openSection(tab, "表示条件を保存／管理");
     }
     await page.getByLabel("取引所別の表示名").fill("先の表示");

@@ -6,11 +6,12 @@ import json
 import os
 import sqlite3
 import stat
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from uuid import uuid4
 
 from .config import isolated_attention_state, no_symlink_path
+from .discovery_storage import DiscoveryStorage
 from .models import (
     MINUTE,
     AttentionEvaluationReport,
@@ -55,7 +56,7 @@ def atomic_json(path: Path, payload: object) -> None:
         temporary.unlink(missing_ok=True)
 
 
-class AttentionStore:
+class AttentionStore(DiscoveryStorage):
     def __init__(
         self,
         state_dir: Path,
@@ -151,6 +152,8 @@ class AttentionStore:
                     PRIMARY KEY(generation_id,policy_id)
                 );
                 CREATE INDEX IF NOT EXISTS input_time ON input_generations(decision_at);
+                CREATE INDEX IF NOT EXISTS input_latest_order
+                    ON input_generations(decision_at DESC,id DESC);
                 CREATE UNIQUE INDEX IF NOT EXISTS evidence_cutoff
                     ON input_generations(cutoff) WHERE evidence=1;
             """)
@@ -163,6 +166,7 @@ class AttentionStore:
                 self.connection.execute(
                     "INSERT OR IGNORE INTO metadata VALUES ('schema',?)", (SCHEMA_VERSION,)
                 )
+            self.initialize_discovery()
         except BaseException:
             if hasattr(self, "connection"):
                 self.connection.close()
@@ -316,26 +320,66 @@ class AttentionStore:
         ).fetchone()
         return AttentionResponse.model_validate_json(row[0]) if row else None
 
+    def iter_evidence_generations(
+        self, *, start_ms: int | None = None, end_ms: int | None = None
+    ) -> Iterator[tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]]:
+        conditions = ["evidence=1"]
+        parameters = []
+        if start_ms is not None:
+            conditions.append("decision_at>=?")
+            parameters.append(start_ms)
+        if end_ms is not None:
+            conditions.append("decision_at<?")
+            parameters.append(end_ms)
+        cursor = self.connection.execute(
+            "SELECT id,inputs,response FROM input_generations WHERE "
+            + " AND ".join(conditions)
+            + " ORDER BY decision_at,id",
+            parameters,
+        )
+        try:
+            for identity, inputs, response in cursor:
+                yield self._decode_evidence_generation(identity, inputs, response)
+        finally:
+            cursor.close()
+
+    def _decode_evidence_generation(
+        self, identity: str, inputs: str, response: str
+    ) -> tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]:
+        features = self.connection.execute(
+            "SELECT payload FROM feature_rows WHERE generation_id=? ORDER BY asset_id", (identity,)
+        )
+        return (
+            InputReference.model_validate_json(inputs),
+            tuple(FeatureSnapshotRow.model_validate_json(row[0]) for row in features),
+            AttentionResponse.model_validate_json(response),
+        )
+
+    def evidence_generation(
+        self, generation_id: str
+    ) -> tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]:
+        row = self.connection.execute(
+            "SELECT id,inputs,response FROM input_generations WHERE evidence=1 AND id=?",
+            (generation_id,),
+        ).fetchone()
+        if row is None:
+            raise ValueError("outcomes require one saved evidence generation")
+        return self._decode_evidence_generation(*row)
+
     def evidence_generations(
         self,
     ) -> list[tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]]:
-        result = []
-        for identity, inputs, response in self.connection.execute(
-            "SELECT id,inputs,response FROM input_generations "
-            "WHERE evidence=1 ORDER BY decision_at,id"
-        ).fetchall():
-            features = self.connection.execute(
-                "SELECT payload FROM feature_rows WHERE generation_id=? ORDER BY asset_id",
-                (identity,),
-            ).fetchall()
-            result.append(
-                (
-                    InputReference.model_validate_json(inputs),
-                    tuple(FeatureSnapshotRow.model_validate_json(r[0]) for r in features),
-                    AttentionResponse.model_validate_json(response),
-                )
-            )
-        return result
+        return list(self.iter_evidence_generations())
+
+    def outcomes_for_generation(self, generation_id: str) -> tuple[OutcomeRow, ...]:
+        rows = self.connection.execute(
+            "SELECT a.payload FROM outcome_rows a WHERE a.generation_id=? AND a.edition=("
+            "SELECT MAX(b.edition) FROM outcome_rows b WHERE b.generation_id=a.generation_id "
+            "AND b.asset_id=a.asset_id AND b.horizon=a.horizon AND b.family=a.family) "
+            "ORDER BY a.asset_id,a.horizon,a.family",
+            (generation_id,),
+        )
+        return tuple(OutcomeRow.model_validate_json(row[0]) for row in rows)
 
     def put_outcome(self, outcome: OutcomeRow) -> OutcomeRow:
         outcome = OutcomeRow.model_validate_json(outcome.model_dump_json())

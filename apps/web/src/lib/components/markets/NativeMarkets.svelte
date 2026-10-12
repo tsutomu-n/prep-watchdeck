@@ -181,8 +181,13 @@
     auditDetail.report.series?.settleAsset === selectedInstrument.settleAsset));
   let selectedMetrics = $derived(selectedInstrument ? metricFor(selectedInstrument) : null);
   let selectedVenueName = $derived(selectedInstrument?.venue === "bitget" ? "Bitget"
-    : selectedInstrument?.venue === "hyperliquid" ? "Hyperliquid" : "Aster");
+    : selectedInstrument?.venue === "hyperliquid" ? "Hyperliquid" : selectedInstrument?.venue === "mexc" ? "MEXC" : "Aster");
   let selectedOiObservedAt = $derived(selectedMetrics?.oiChange["15m"]?.endObservedAt ?? null);
+  let selectedOiUnsupportedReason = $derived(selectedMetrics?.oiChange["15m"]?.availability === "unsupported"
+    ? selectedMetrics.oiChange["15m"].reasonCode === "official_contract_unconfirmed"
+      ? "取得先・単位契約が未確認"
+      : "この取得元は数量OIに未対応"
+    : null);
 
   function metricFor(item: UniverseInstrumentArtifact): MarketMetricRow | null {
     if (!metrics || Math.abs(priceNow - Date.parse(metrics.generatedAt)) > 120_000) return null;
@@ -201,6 +206,7 @@
   }
 
   function metricLabel(value: MetricValue | undefined, maxAgeSeconds = 300): string {
+    if (value?.availability === "unsupported") return "未対応";
     const current = metricCurrent(value, maxAgeSeconds);
     return current === null ? "—" : formatPriceChange(current, $preferences.percentDecimals);
   }
@@ -747,7 +753,7 @@
     if (!saved || saved.view.mode !== "native") return;
     const view = saved.view;
     search = typeof view.search === "string" ? view.search : "";
-    venue = ["all", "bitget", "hyperliquid", "aster"].includes(String(view.venue))
+    venue = ["all", "bitget", "hyperliquid", "aster", "mexc"].includes(String(view.venue))
       ? view.venue as VenueFilter : "all";
     coverage = ["all", "multi", "single"].includes(String(view.coverage))
       ? view.coverage as CoverageFilter : "all";
@@ -815,7 +821,7 @@
   <title>取引所別 | Prep Watchdeck</title>
   <meta
     name="description"
-    content="Bitget、Hyperliquid、Asterの暗号資産Perpを会場別に確認するローカル監視画面"
+    content="Bitget、Hyperliquid、Aster、MEXCの暗号資産Perpを会場別に確認するローカル監視画面"
   />
 </svelte:head>
 
@@ -824,7 +830,7 @@
     <div class="identity">
       <p>PREP WATCHDECK</p>
       <h1>取引所別</h1>
-      <span>Bitget / Hyperliquid / Aster</span>
+      <span>Bitget / Hyperliquid / Aster / MEXC</span>
     </div>
     <div class="preferences" aria-label="市場画面の移動">
       <a class="ranking-link" href={returnHref()}>ランキングへ戻る</a>
@@ -921,6 +927,7 @@
               <option value="aster">Aster</option>
               <option value="bitget">Bitget</option>
               <option value="hyperliquid">Hyperliquid</option>
+              <option value="mexc">MEXC</option>
             </select>
           </label>
           <label><span>並べ替え</span><select aria-label="取引所別の並べ替え" bind:value={nativeSort}>
@@ -1141,7 +1148,7 @@
             <div>
               <dt>数量OI <small>直近15分の変化</small></dt>
               <dd>{metricLabel(selectedMetrics?.oiChange["15m"], 120)}</dd>
-              <small class="metric-timing">{selectedOiObservedAt ? `OI観測 ${formatTimestamp(selectedOiObservedAt)} JST` : "OI観測時刻なし"}</small>
+              <small class="metric-timing">{selectedOiUnsupportedReason ?? (selectedOiObservedAt ? `OI観測 ${formatTimestamp(selectedOiObservedAt)} JST` : "OI観測時刻なし")}</small>
             </div>
           </dl>
           {#if metricsError}<p class="metrics-warning operational-warning" role="status">{metricsError}。追加指標の取得時刻と鮮度を確認してください。</p>{/if}

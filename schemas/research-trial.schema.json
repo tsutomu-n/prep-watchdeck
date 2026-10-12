@@ -55,7 +55,7 @@
       "additionalProperties": false,
       "properties": {
         "instrument_id": {
-          "pattern": "^(bitget|hyperliquid|aster):[^\\s:]{1,150}$",
+          "pattern": "^(bitget|hyperliquid|aster|mexc):[^\\s:]{1,150}$",
           "title": "Instrument Id",
           "type": "string"
         },

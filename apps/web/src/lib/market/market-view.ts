@@ -6,7 +6,7 @@ export type RankingSort =
 
 export type RankingView = {
   search: string;
-  venue: "all" | "bitget" | "hyperliquid" | "aster";
+  venue: "all" | "bitget" | "hyperliquid" | "aster" | "mexc";
   includeUnranked: boolean;
   minRatio: number | null;
   ratioPeriod: "15m" | "1h";

@@ -1,8 +1,8 @@
 # Prep Watchdeck Agent Guide
 
-timestamp="2026-10-09(金)_00:39 JST"
+timestamp="2026-10-10(土)_09:16 JST"
 - 作成: `2026-06-26T16:12:22+09:00`
-- 更新: `2026-10-09T00:39:16+09:00`
+- 更新: `2026-10-10T09:16:44+09:00`
 - 検証: `2026-09-29T20:39:32+09:00`
 - 状態: `現行`
 
@@ -13,8 +13,8 @@ timestamp="2026-10-09(金)_00:39 JST"
 `prep-watchdeck`は、裁量トレーダーが市場から注目対象を発見し、分析し、比較し、最終判断を行うための
 local-first market intelligence workspaceである。
 
-現行productionはBitget、Hyperliquid Core、Asterのpublic crypto linear perpetualを扱うPerp Universe
-Explorerだが、この3 Venue、asset class、データ源、UI、ranking、Chart、保存期間、selection数等を
+現行productionはBitget、Hyperliquid Core、Aster、MEXCのpublic crypto linear perpetualを扱うPerp Universe
+Explorerだが、この4 Venue、asset class、データ源、UI、ranking、Chart、保存期間、selection数等を
 将来の永久制約として扱わない。
 
 最初に[`docs/current/product-boundary.md`](docs/current/product-boundary.md)と
@@ -104,7 +104,7 @@ Attentionは既存Market artifactとRanking loopback APIだけを読む。Provid
 - source、時刻、単位、finality、identity、quality、provenanceを失わない。
 - symbol名だけからalias、multiplier、cross-market identityを推測して同一視しない。
 - secretをGit、artifact、log、issue、文書へ残さない。
-- Rankingの価格・売買代金を元の3 Venueの値で補完しない。Market CoreのPostgres・Parquet・
+- Rankingの価格・売買代金を元のVenueの値で補完しない。Market CoreのPostgres・Parquet・
   artifactへRankingから書き込まず、TradingView Widgetは表示専用とする。
 - 明示承認なしにunitのinstall / enable / start / stop / restart、live DB
   migration、maintenance、backup、restore、deploy、cutover、旧state削除を行わない。

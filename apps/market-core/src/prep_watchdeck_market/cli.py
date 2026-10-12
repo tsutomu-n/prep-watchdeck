@@ -194,7 +194,7 @@ def recover_candles(
     settings = _load_settings()
     _require_database_target(settings)
     try:
-        if venue not in {None, "bitget", "hyperliquid", "aster"}:
+        if venue not in {None, "bitget", "hyperliquid", "aster", "mexc"}:
             raise ValueError("unsupported recovery venue")
         start = None if since is None else datetime.fromisoformat(since)
         end = None if until is None else datetime.fromisoformat(until)
@@ -203,7 +203,15 @@ def recover_candles(
             raise ValueError("instrument does not match venue")
 
         async def execute() -> CandleRecoveryState:
-            recovery = CandleRecovery(settings.database_url, settings.state_dir)
+            recovery = (
+                CandleRecovery(settings.database_url, settings.state_dir)
+                if settings.mexc_enabled
+                else CandleRecovery(
+                    settings.database_url,
+                    settings.state_dir,
+                    enabled_venues=("bitget", "hyperliquid", "aster"),
+                )
+            )
             if apply:
                 async with aiohttp.ClientSession() as session:
                     return await recovery.run(
@@ -305,7 +313,11 @@ def funding_sync() -> None:
     _require_database_target(settings)
     try:
         with exclusive_runtime_lock(settings.state_dir / "market-funding.lock"):
-            result = asyncio.run(run_funding_sync_once(settings.database_url))
+            result = asyncio.run(
+                run_funding_sync_once(settings.database_url)
+                if settings.mexc_enabled
+                else run_funding_sync_once(settings.database_url, mexc_enabled=False)
+            )
     except FundingStoreError as exc:
         logger.error("funding sync failed: {error_type}", error_type=type(exc).__name__)
         console.print("[red]funding sync failed[/red]")
@@ -397,6 +409,7 @@ def service() -> None:
                     settings.database_url,
                     settings.state_dir,
                     recovery_enabled=settings.candle_recovery_enabled,
+                    mexc_enabled=settings.mexc_enabled,
                 )
             )
     except KeyboardInterrupt:
@@ -415,7 +428,9 @@ def service() -> None:
         raise typer.Exit(code=2) from exc
 
 
-async def _serve(database_url: str, state_dir: Path, *, recovery_enabled: bool = False) -> None:
+async def _serve(
+    database_url: str, state_dir: Path, *, recovery_enabled: bool = False, mexc_enabled: bool = True
+) -> None:
     stop_event = asyncio.Event()
     loop = asyncio.get_running_loop()
     installed_signals: list[signal.Signals] = []
@@ -426,7 +441,15 @@ async def _serve(database_url: str, state_dir: Path, *, recovery_enabled: bool =
             continue
         installed_signals.append(signal_number)
     try:
-        if recovery_enabled:
+        if not mexc_enabled:
+            await run_market_service(
+                database_url,
+                state_dir,
+                stop_event,
+                recovery_enabled=recovery_enabled,
+                mexc_enabled=False,
+            )
+        elif recovery_enabled:
             await run_market_service(database_url, state_dir, stop_event, recovery_enabled=True)
         else:
             await run_market_service(database_url, state_dir, stop_event)

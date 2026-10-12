@@ -143,6 +143,7 @@ class SelectionRuntime:
         state_dir: Path,
         session: aiohttp.ClientSession | None,
         *,
+        enabled_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster", "mexc"),
         connection_factory: ConnectionFactory | None = None,
         stream_factory: StreamFactory | None = None,
         poll_seconds: float = SELECTION_POLL_SECONDS,
@@ -153,6 +154,7 @@ class SelectionRuntime:
     ) -> None:
         if poll_seconds <= 0 or queue_size <= 0 or batch_size <= 0 or batch_wait_seconds < 0:
             raise ValueError("selection runtime bounds must be positive")
+        self._enabled_venues = enabled_venues
         self._database_url = database_url
         self._state_dir = state_dir
         self._session = session
@@ -175,6 +177,7 @@ class SelectionRuntime:
         self._reconcile_at: datetime | None = None
         self._active_instrument_fingerprint: tuple[tuple[str, str], ...] = ()
         self._next_membership_check: datetime | None = None
+        self._retry_command_at: datetime | None = None
 
     async def run_forever(self, stop_event: asyncio.Event) -> None:
         if self._connection is not None:
@@ -220,6 +223,9 @@ class SelectionRuntime:
                     await controller.reconcile(now)
                 except InvalidSelectionCommandError:
                     await controller.stop()
+                    self._retry_command_at = now + timedelta(
+                        seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS
+                    )
             finally:
                 self._reconcile_at = None
             await self._refresh_active_membership(now)
@@ -236,43 +242,27 @@ class SelectionRuntime:
                 return
             if (
                 self._last_heartbeat_at is not None
-                and command.heartbeat_at <= self._last_heartbeat_at
+                and command.heartbeat_at < self._last_heartbeat_at
             ):
                 return
-            controller = self._require_controller()
-            active = controller.active
-            if active is None or active.expires_at <= now:
-                try:
-                    await self._run_db(
-                        lambda: _load_group_instruments(
-                            self._require_connection(),
-                            command.group_id,
-                            command.venue_instrument_id,
-                        )
-                    )
-                except InvalidSelectionCommandError:
-                    self._last_heartbeat_at = command.heartbeat_at
-                    return
-                self._last_heartbeat_at = command.heartbeat_at
-                controller.request(
-                    command.group_id,
-                    command.venue_instrument_id,
-                    command.requested_at,
-                )
+            if command.heartbeat_at == self._last_heartbeat_at and (
+                self._retry_command_at is None or now < self._retry_command_at
+            ):
                 return
-            await self._heartbeat_active(command)
-            self._last_heartbeat_at = command.heartbeat_at
-            return
 
         controller = self._require_controller()
         active = controller.active
-        if active is None or (
-            active.group_id != command.group_id
-            or active.primary_venue_instrument_id != command.venue_instrument_id
+        if (
+            active is None
+            or active.expires_at <= now
+            or (
+                active.group_id != command.group_id
+                or active.primary_venue_instrument_id != command.venue_instrument_id
+            )
         ):
             try:
                 await self._run_db(
-                    lambda: _load_group_instruments(
+                    lambda: self._enabled_group_instruments(
                         self._require_connection(),
                         command.group_id,
                         command.venue_instrument_id,
@@ -282,12 +272,15 @@ class SelectionRuntime:
                 self._last_requested_at = command.requested_at
                 self._last_identity = identity
                 self._last_heartbeat_at = command.heartbeat_at
+                self._retry_command_at = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
                 return
         self._last_requested_at = command.requested_at
         self._last_identity = identity
         self._last_heartbeat_at = command.heartbeat_at
+        self._retry_command_at = None
         if (
             active is not None
+            and active.expires_at > now
             and active.group_id == command.group_id
             and active.primary_venue_instrument_id == command.venue_instrument_id
         ):
@@ -297,6 +290,7 @@ class SelectionRuntime:
             command.group_id,
             command.venue_instrument_id,
             command.requested_at,
+            expires_at=command.heartbeat_at + SELECTION_TTL,
         )
 
     async def _heartbeat_active(self, command: SelectionCommand) -> None:
@@ -330,8 +324,13 @@ class SelectionRuntime:
         if reconcile_at is None:
             raise SelectionRuntimeError("selection activation occurred outside reconciliation")
         activated_at = max(reconcile_at, self._clock())
+        expires_at = self._require_controller().pending_expires_at
+        if expires_at is None:
+            raise SelectionRuntimeError("selection activation has no command deadline")
+        if expires_at <= activated_at:
+            raise InvalidSelectionCommandError("selection command expired before activation")
         instruments = await self._run_db(
-            lambda: _load_group_instruments(
+            lambda: self._enabled_group_instruments(
                 self._require_connection(),
                 group_id,
                 primary_venue_instrument_id,
@@ -344,6 +343,7 @@ class SelectionRuntime:
                 group_id=group_id,
                 primary_venue_instrument_id=primary_venue_instrument_id,
                 activated_at=activated_at,
+                expires_at=expires_at,
             )
         )
         await self._acknowledge_previous(transition, activated_at)
@@ -426,7 +426,7 @@ class SelectionRuntime:
         self._next_membership_check = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
         try:
             instruments = await self._run_db(
-                lambda: _load_group_instruments(
+                lambda: self._enabled_group_instruments(
                     self._require_connection(),
                     active.group_id,
                     active.primary_venue_instrument_id,
@@ -434,6 +434,7 @@ class SelectionRuntime:
             )
         except InvalidSelectionCommandError:
             await controller.stop()
+            self._retry_command_at = now + timedelta(seconds=ACTIVE_MEMBERSHIP_REFRESH_SECONDS)
             return
         fingerprint = _instrument_fingerprint(instruments)
         if fingerprint == self._active_instrument_fingerprint:
@@ -443,6 +444,7 @@ class SelectionRuntime:
             active.group_id,
             active.primary_venue_instrument_id,
             now,
+            expires_at=active.expires_at,
         )
 
     async def _emit(self, event: SelectedEvent) -> None:
@@ -557,6 +559,15 @@ class SelectionRuntime:
         if failures:
             raise BaseExceptionGroup("selection runtime shutdown failed", failures)
 
+    def _enabled_group_instruments(
+        self, connection: Connection[Any], group_id: str, primary_id: str
+    ) -> tuple[CatalogInstrument, ...]:
+        instruments = _load_group_instruments(connection, group_id, primary_id)
+        enabled = tuple(i for i in instruments if i.venue in self._enabled_venues)
+        if primary_id not in {i.venue_instrument_id for i in enabled}:
+            raise InvalidSelectionCommandError("selected primary Venue acquisition is disabled")
+        return enabled
+
     async def _run_db(self, operation: Callable[[], _T]) -> _T:
         async with self._db_lock:
             return await asyncio.to_thread(operation)
@@ -603,8 +614,14 @@ def _load_group_instruments(
                   AND upper(instrument.quote_asset) = ANY(%s)
                   AND upper(instrument.settle_asset) = ANY(%s)
                   AND upper(instrument.collateral_asset) = ANY(%s)
-                  AND instrument.quantity_unit = 'base'
-                  AND instrument.contract_multiplier = 1
+                  AND ((instrument.venue <> 'mexc' AND instrument.quantity_unit = 'base'
+                        AND instrument.contract_multiplier = 1)
+                    OR (instrument.venue = 'mexc' AND instrument.quantity_unit = 'contracts'
+                        AND instrument.contract_multiplier > 0
+                        AND instrument.raw_definition->'watchdeckIdentityEvidence'
+                            ->>'price_unit' = 'quote_per_base'
+                        AND instrument.raw_definition->'watchdeckQuantityEvidence'
+                            ->>'base_per_contract' = instrument.contract_multiplier::text))
                 ORDER BY instrument.venue, instrument.source_symbol
             """,
             (
@@ -639,7 +656,7 @@ def _instrument_from_row(row: Sequence[object]) -> CatalogInstrument:
     if len(row) != 17 or not isinstance(row[16], dict):
         raise SelectionRuntimeError("selected instrument row has an invalid shape")
     venue_text = str(row[0])
-    if venue_text not in {"bitget", "hyperliquid", "aster"}:
+    if venue_text not in {"bitget", "hyperliquid", "aster", "mexc"}:
         raise SelectionRuntimeError("selected instrument row has an invalid Venue")
     quantity_text = str(row[11])
     if quantity_text not in {"base", "contracts", "unknown"}:

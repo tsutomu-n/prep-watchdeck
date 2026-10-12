@@ -122,6 +122,17 @@
             }
           ],
           "title": "Errorcode"
+        },
+        "diagnostics": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PersistedCycleDiagnostics"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -200,6 +211,192 @@
         "errorCode"
       ],
       "title": "FreshnessArtifact",
+      "type": "object"
+    },
+    "PersistedCycleDiagnostics": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "persisted-l1-diagnostics-v1",
+          "default": "persisted-l1-diagnostics-v1",
+          "title": "Schemaversion",
+          "type": "string"
+        },
+        "cycleAt": {
+          "format": "date-time",
+          "title": "Cycleat",
+          "type": "string"
+        },
+        "venues": {
+          "items": {
+            "$ref": "#/$defs/PersistedVenueDiagnostics"
+          },
+          "maxItems": 4,
+          "title": "Venues",
+          "type": "array"
+        }
+      },
+      "required": [
+        "cycleAt",
+        "venues"
+      ],
+      "title": "PersistedCycleDiagnostics",
+      "type": "object"
+    },
+    "PersistedDiagnosticExample": {
+      "additionalProperties": false,
+      "properties": {
+        "venueInstrumentId": {
+          "title": "Venueinstrumentid",
+          "type": "string"
+        },
+        "venueInstrumentVersionId": {
+          "exclusiveMinimum": 0,
+          "title": "Venueinstrumentversionid",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "partial",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "errorCode": {
+          "title": "Errorcode",
+          "type": "string"
+        },
+        "missingFields": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missingfields",
+          "type": "array"
+        },
+        "observedAt": {
+          "format": "date-time",
+          "title": "Observedat",
+          "type": "string"
+        },
+        "sourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Sourceat"
+        }
+      },
+      "required": [
+        "venueInstrumentId",
+        "venueInstrumentVersionId",
+        "status",
+        "errorCode",
+        "missingFields",
+        "observedAt",
+        "sourceAt"
+      ],
+      "title": "PersistedDiagnosticExample",
+      "type": "object"
+    },
+    "PersistedQualityCounts": {
+      "additionalProperties": false,
+      "properties": {
+        "ready": {
+          "minimum": 0,
+          "title": "Ready",
+          "type": "integer"
+        },
+        "partial": {
+          "minimum": 0,
+          "title": "Partial",
+          "type": "integer"
+        },
+        "unavailable": {
+          "minimum": 0,
+          "title": "Unavailable",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ready",
+        "partial",
+        "unavailable"
+      ],
+      "title": "PersistedQualityCounts",
+      "type": "object"
+    },
+    "PersistedReasonCount": {
+      "additionalProperties": false,
+      "properties": {
+        "errorCode": {
+          "title": "Errorcode",
+          "type": "string"
+        },
+        "count": {
+          "exclusiveMinimum": 0,
+          "title": "Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "errorCode",
+        "count"
+      ],
+      "title": "PersistedReasonCount",
+      "type": "object"
+    },
+    "PersistedVenueDiagnostics": {
+      "additionalProperties": false,
+      "properties": {
+        "venue": {
+          "enum": [
+            "bitget",
+            "hyperliquid",
+            "aster",
+            "mexc"
+          ],
+          "title": "Venue",
+          "type": "string"
+        },
+        "qualityCounts": {
+          "$ref": "#/$defs/PersistedQualityCounts"
+        },
+        "reasonCounts": {
+          "items": {
+            "$ref": "#/$defs/PersistedReasonCount"
+          },
+          "maxItems": 64,
+          "title": "Reasoncounts",
+          "type": "array"
+        },
+        "explainedPartialCount": {
+          "minimum": 0,
+          "title": "Explainedpartialcount",
+          "type": "integer"
+        },
+        "examples": {
+          "items": {
+            "$ref": "#/$defs/PersistedDiagnosticExample"
+          },
+          "maxItems": 8,
+          "title": "Examples",
+          "type": "array"
+        }
+      },
+      "required": [
+        "venue",
+        "qualityCounts",
+        "reasonCounts",
+        "explainedPartialCount",
+        "examples"
+      ],
+      "title": "PersistedVenueDiagnostics",
       "type": "object"
     }
   },

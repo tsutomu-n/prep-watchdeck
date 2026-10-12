@@ -67,7 +67,7 @@ def _target_from_database(
     if ":" not in instrument_id:
         raise ReferenceError("reference_target_invalid")
     venue, symbol = instrument_id.split(":", 1)
-    if venue not in {"bitget", "hyperliquid", "aster"} or not symbol:
+    if venue not in {"bitget", "hyperliquid", "aster", "mexc"} or not symbol:
         raise ReferenceError("reference_target_invalid")
     try:
         with psycopg.connect(

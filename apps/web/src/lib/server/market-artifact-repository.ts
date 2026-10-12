@@ -19,6 +19,7 @@ export type MarketArtifactBundle = {
 
 export interface MarketArtifactRepository {
   latest(): Promise<MarketArtifactBundle>;
+  latestUniverse?(): Promise<UniverseSnapshotArtifact>;
 }
 
 const ajv = new Ajv2020({ allErrors: true, strict: false });
@@ -34,6 +35,10 @@ const validators = {
   selected: ajv.compile(selectedMarketSchema),
   service: ajv.compile(marketServiceStateSchema)
 };
+const MAX_UNIVERSE_READ_ATTEMPTS = 5;
+const UNIVERSE_READ_RETRY_DELAY_MS = 50;
+const MAX_PUBLICATION_RETRY_ATTEMPTS = 4;
+const PUBLICATION_RETRY_DELAY_MS = 50;
 
 export class LocalFileMarketArtifactRepository implements MarketArtifactRepository {
   constructor(
@@ -86,14 +91,81 @@ export class LocalFileMarketArtifactRepository implements MarketArtifactReposito
         if (attempt === 0) continue;
         throw new Error("market artifacts changed while being read");
       }
-      return { universe, chart, selected, service: serviceAfter };
+      return { universe: maskExpiredFunding(universe, this.now()), chart, selected, service: serviceAfter };
     }
     throw new Error("market artifacts changed while being read");
+  }
+
+  async latestUniverse(): Promise<UniverseSnapshotArtifact> {
+    for (let attempt = 0; attempt < MAX_UNIVERSE_READ_ATTEMPTS; attempt += 1) {
+      if (attempt > 0) await waitForUniverseReadRetry();
+      const serviceBefore = await readArtifact<MarketServiceStateArtifact>(
+        this.paths.serviceStatePath,
+        "service-state",
+        validators.service
+      );
+      assertFresh(serviceBefore.generatedAt, this.now(), "service-state");
+      const universe = await readArtifact<UniverseSnapshotArtifact>(
+        this.paths.universeSnapshotPath,
+        "universe-snapshot",
+        validators.universe
+      );
+      const serviceAfter = await readArtifact<MarketServiceStateArtifact>(
+        this.paths.serviceStatePath,
+        "service-state",
+        validators.service
+      );
+
+      if (serviceBefore.generatedAt !== serviceAfter.generatedAt) continue;
+      assertFresh(serviceAfter.generatedAt, this.now(), "service-state");
+      assertFresh(universe.generatedAt, this.now(), "universe-snapshot");
+      const universeState = serviceAfter.artifacts.find(
+        (artifact) => artifact.name === "universe-snapshot.json"
+      );
+      if (universeState?.status === "ready" && universeState.generatedAt === universe.generatedAt) {
+        return maskExpiredFunding(universe, this.now());
+      }
+    }
+    throw new Error("market universe changed while being read");
   }
 }
 
 const MAX_ARTIFACT_AGE_MS = 120_000;
 const MAX_SELECTED_MARKET_AGE_MS = 15_000;
+
+function maskExpiredFunding(
+  universe: UniverseSnapshotArtifact,
+  now: Date
+): UniverseSnapshotArtifact {
+  const nowMs = now.getTime();
+  return {
+    ...universe,
+    items: universe.items.map((item) => {
+      if (item.venue !== "mexc") return item;
+      const source = Date.parse(item.fundingSourceAt ?? "");
+      const observed = Date.parse(item.fundingObservedAt ?? "");
+      const expires = Date.parse(item.fundingValidUntil ?? "");
+      const settlement = Date.parse(item.nextFundingAt ?? "");
+      const reason = ![source, observed, expires, settlement].every(Number.isFinite)
+        ? "funding_metadata_missing"
+        : Math.max(source, observed) > nowMs
+          ? "funding_timestamp_future"
+          : nowMs >= Math.min(expires, source + 90_000, observed + 90_000, settlement)
+            ? "funding_expired"
+            : null;
+      if (reason === null) return item;
+      return {
+        ...item,
+        fundingRateRaw: null,
+        fundingRatePerHour: null,
+        fundingIntervalSeconds: null,
+        nextFundingAt: null,
+        quality: item.quality === "ready" ? "partial" as const : item.quality,
+        qualityReasons: [...new Set([...item.qualityReasons, reason])]
+      };
+    })
+  };
+}
 
 function assertFresh(
   generatedAt: string,
@@ -107,8 +179,36 @@ function assertFresh(
   }
 }
 
+function waitForUniverseReadRetry(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, UNIVERSE_READ_RETRY_DELAY_MS));
+}
+
+function waitForPublicationRetry(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, PUBLICATION_RETRY_DELAY_MS));
+}
+
 export function createMarketArtifactRepository(): MarketArtifactRepository {
-  return new LocalFileMarketArtifactRepository();
+  const source = new LocalFileMarketArtifactRepository();
+  return {
+    latest: () => retryArtifactPublication(() => source.latest()),
+    latestUniverse: () => source.latestUniverse()
+  };
+}
+
+export async function retryArtifactPublication<T>(read: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; attempt < MAX_PUBLICATION_RETRY_ATTEMPTS; attempt += 1) {
+    try {
+      return await read();
+    } catch (cause) {
+      const isPublicationMismatch = cause instanceof Error &&
+        cause.message === "market artifacts changed while being read";
+      if (!isPublicationMismatch || attempt === MAX_PUBLICATION_RETRY_ATTEMPTS - 1) {
+        throw cause;
+      }
+      await waitForPublicationRetry();
+    }
+  }
+  throw new Error("market artifact publication retry exhausted");
 }
 
 async function readArtifact<T>(path: string, name: string, validate: ValidateFunction): Promise<T> {

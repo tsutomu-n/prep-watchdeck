@@ -25,6 +25,7 @@ FUNDING_REQUEST_PACE_SECONDS: dict[Venue, float] = {
     "bitget": 0.10,
     "hyperliquid": 1.50,
     "aster": 0.10,
+    "mexc": 0.15,
 }
 
 InstrumentSupplier = Callable[[], Sequence[CatalogInstrument]]
@@ -47,7 +48,9 @@ class FundingSweepSummary:
     store: FundingStoreResult | None
 
 
-async def run_funding_sync_once(database_url: str) -> FundingSweepSummary:
+async def run_funding_sync_once(
+    database_url: str, *, mexc_enabled: bool = True
+) -> FundingSweepSummary:
     """Run one isolated public funding-history sync against the current DB catalog."""
 
     snapshot = await asyncio.to_thread(load_funding_catalog_url, database_url)
@@ -55,7 +58,7 @@ async def run_funding_sync_once(database_url: str) -> FundingSweepSummary:
         runtime = FundingRuntime(
             database_url,
             session,
-            lambda: snapshot.instruments,
+            lambda: tuple(i for i in snapshot.instruments if mexc_enabled or i.venue != "mexc"),
             lambda: snapshot.version_starts,
         )
         return await runtime.run_once(asyncio.Event())
@@ -109,7 +112,7 @@ class FundingRuntime:
                     sweep_at,
                     stop_event,
                 )
-                for venue in ("bitget", "hyperliquid", "aster")
+                for venue in ("bitget", "hyperliquid", "aster", "mexc")
             )
         )
         batches = tuple(batch for result in venue_results for batch in result[0])

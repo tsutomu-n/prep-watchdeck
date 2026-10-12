@@ -471,6 +471,8 @@ def _venue(value: str) -> Venue:
         return "bitget"
     if value == "hyperliquid":
         return "hyperliquid"
+    if value == "mexc":
+        return "mexc"
     if value == "aster":
         return "aster"
     raise FundingStoreError("database returned an unsupported Venue")

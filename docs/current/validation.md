@@ -1,9 +1,9 @@
 # prep-watchdeck 現行検証
 
-timestamp="2026-10-09(金)_15:03 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-09T15:03:11+09:00`
-- 検証: `2026-09-30T21:04:03+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
@@ -95,6 +95,11 @@ PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e
 ```
 
 fullではdesktopとmobileを実行する。CSSのsemantic roleとcontrast/accessibility testは維持する。
+E2E serverはbuild済みの`bun run start`を隔離state・loopback port 4174で使う。
+Vitestには圧縮・cache header・socket接続元・adapter設定境界のHTTP検証を含める。
+読込回帰では遅い応答中の一覧復帰、古い値の警告、条件変更、必要時だけの画面コードとnativeデータ取得を確認する。
+本番切替後は実際のHTTPS入口の圧縮・API認証・画面表示を別に確認する。
+速度比較は同じ回線/CPU条件とデータで行い、実機の体感受入と区別する。
 
 ## Ops / runtime safety gate
 
@@ -289,6 +294,36 @@ Repo rootのfull local gateにAttention package、schema checkとWebのDesktop/M
 
 Hosted CIは明示依頼時だけ実行する。workflowへのAttention gate追加とローカルcheckを、CI実行成功と読み替えない。候補の実運用での優位性は30日以上のprospective evidenceで別途評価し、synthetic planted-edge成功から推定しない。白色化・iidのminute sample推論は行わず、White/SPA/Romano-Wolfそのものの再現は主張しない。
 
+## MEXC・候補比較の検証境界
+
+Marketの関連pytestでは、確認済みcryptoの採否、契約係数と価格倍率の分離、exact versionでの数量換算、
+係数変更、WS板の連続性・無効化、約定重複、履歴回復、Funding間隔、MEXC収集無効化を確認する。
+Funding独立取得では遅延時のTicker継続、90秒/決済/定義変更、旧行null、旧archiveを検証する。
+共有予算はPython/Bunの実multiprocessでrolling枠・429・障害時停止を確認し、WSは1 shard障害の隔離を確認する。
+metricsはsnapshot完了後の時刻で未来判定し、開始時cutoffを分境界でも維持する。真のfutureとbounded診断も検証する。
+Rankingは新Venueの読取とexact map/evidence整合を既存schema・根拠checkerで確認する。
+`--require-ranking-qualified`と`--require-reviewed`を別々に扱い、既存の元数量・Widget未確認を成功へ置き換えない。
+現行mapの`bitget:1MCHEEMSUSDT`、`bitget:10000NEXUSDT`、`bitget:1000RATSUSDT`の数量と
+対応Widgetは未確認であり、strictな全確認gateの未達として報告する。
+
+Attentionの`test_discovery.py`は固定条件・source/time・同cutoff重複・連続性・欠測中断・再確認・identity変更・
+履歴上限・cursor・GET無副作用、summaryのraw不存在、詳細index・世代整合・transaction rollback・旧DB再読込を確認する。Webはworkspace v1読込とv2保存、4件上限、CAS、判断の重複排除と
+容量上限、対象再確認、見送りのepisode範囲、MEXCのChart/価格読取を検証する。
+`tests/e2e/discovery.e2e.ts`はDesktop/Mobileで候補保持、再読込、明示確認時だけのselection切替を確認する。
+schema生成・Web型生成後、変更に対応するpackage gateとRepositoryのfull local gateを実行する。CI実行は別の明示依頼が必要。
+
+実MEXCの受入は専用DB/state/portで、確認済み契約の取得、係数換算、Ranking→Attentionのexact identity、
+Chart・板・約定、60分の更新・欠測・rate limit・再接続・容量を記録する。
+Web healthや短い公開API到達、fixture成功をこの受入へ読み替えない。source検証・隔離実データ・本番配置・
+本人の操作受入を分け、判断時間の短縮や候補の収益性は未測定のまま断定しない。
+
+100銘柄への拡大では保持済みstateを再現した60世代の隔離負荷、最適化済み10件、50件2時間、
+100件24時間（通常maintenanceを含む）を別に判定する。OOM/予期しないrestart0、cycle<60秒、
+入力鮮度150秒以内、Discovery一覧/詳細p95<=1秒を確認する。Attention anonymous+kernel peakの
+目標は768MiBの80%以下で、超過時はprofile後に進む。回収可能file cache込み総量だけで失格にしない。
+100件24時間のSQLite/WAL/immutable/Market増分から30日予測を作り、予測増分＋50GiB空きを容量gateとする。
+加速replayは通常運転の実測時間に数えず、30日予測を30日実測と呼ばない。
+
 ## Research remediation
 
 Market packageの関連pytestでjournal改変・中断・未来版、隔離DBのread-only/RR、
@@ -300,3 +335,11 @@ CCXT capability inspectionはofflineでありProvider受入を代替しない。
 
 source/local検証、commit、live migration/deploy、24時間観測、30日evidence、OI取得契約、
 実約定・統計的独立性・優位性は別の証拠層。詳細は[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)を参照する。
+
+Attentionの周期受入は`/health`の`maxCycleDurationMs`で実処理時間を確認し、generation間隔と区別する。再起動後は値がリセットされるため、observerが稼働PID・再起動回数・各観測値を保存する。
+
+## Recovery・offline outcome・formal評価の回帰境界
+
+Unicode exact ID、通常running中の直接前回proofの限定freshness、別dayによるready outcome不変、日跨ぎ15/60分、map退出後のbar retention、未完了archive editionの保全と後続回収を確認する。正式入口ではprotocol/scope/source/policy/seed/bootstrapの一致、decisionAt window、計算前の一回予約、同一入力の再開、完了原結果の不変を検証する。streaming読みはgeneration単位で、保存copyの件数・RSS・入力statを別証拠として残す。
+
+容量はPostgres physical、outcome archive、copy/export/restore stagingを含め、unknownや24h未満を外挿成功へ昇格しない。finalizerは期限・SIGINT/SIGTERM時の子process回収と、親SIGKILL後のlock継続を確認する。release healthは設定だけでなく実PID/source、HTTP、freshで成功したL1周期を必要とする。これらのsource回帰と、現hostの全件品質・2h/24h/30日受入は別判定とする。

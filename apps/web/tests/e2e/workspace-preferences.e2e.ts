@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Page, type Route } from "@playwright/test";
 import { writeFile } from "node:fs/promises";
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
@@ -93,7 +93,17 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
 
 test("起動の初期条件・保存表示・URLを優先順どおり適用しチャートの初期足を選べる", async ({ page }) => {
   const errors = await prepare(page);
-  await page.goto("/settings");
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  const delayHydration = async (route: Route) => { await held; await route.continue(); };
+  await page.route("**/_app/immutable/**/*.js", delayHydration);
+  try {
+    await page.goto("/settings", { waitUntil: "domcontentloaded" });
+    await expect(page.getByLabel("最初に開く画面", { exact: true })).toBeDisabled();
+  } finally {
+    release();
+    await page.unroute("**/_app/immutable/**/*.js", delayHydration);
+  }
   await page.getByLabel("ランキングの初期比較期間", { exact: true }).selectOption("1h");
   await page.getByLabel("ランキングの初期並び順", { exact: true }).selectOption("losers");
   await page.getByLabel("ランキングの初期表示列", { exact: true }).selectOption("movement");

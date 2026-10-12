@@ -9,6 +9,7 @@ import os
 import stat
 import subprocess
 import sys
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any, Literal
@@ -155,7 +156,16 @@ def _change(
         stamp is not None and stamp > now
         for stamp in (source_at, observed_at, start_source_at, start_observed_at)
     ):
-        return _missing("future_timestamp", start_at, end_at)
+        return _missing("future_timestamp", start_at, end_at).model_copy(
+            update={
+                "start_source_at": start_source_at,
+                "start_observed_at": start_observed_at,
+                "end_source_at": source_at,
+                "end_observed_at": observed_at,
+                "end_finality": finality,
+                "unit": unit,
+            }
+        )
     if (now - end_at).total_seconds() > maximum_age_seconds or (
         source_at is not None and (now - source_at).total_seconds() > maximum_age_seconds
     ):
@@ -180,8 +190,10 @@ def _change(
     )
 
 
-def build_market_metrics(rows: list[dict[str, Any]], *, now: datetime) -> MarketMetricsArtifact:
-    cutoff = candle_cutoff(now)
+def build_market_metrics(
+    rows: list[dict[str, Any]], *, now: datetime, cutoff: datetime | None = None
+) -> MarketMetricsArtifact:
+    cutoff = candle_cutoff(now) if cutoff is None else cutoff
     results: list[MarketMetricRow] = []
     for row in rows:
         instrument_id = f"{row['venue']}:{row['source_symbol']}"
@@ -189,7 +201,14 @@ def build_market_metrics(rows: list[dict[str, Any]], *, now: datetime) -> Market
         latest_at = row["l_cycle_at"]
         for name, minutes in (("15m", 15), ("1h", 60)):
             anchor = latest_at - timedelta(minutes=minutes) if latest_at else None
-            if latest_at is None or anchor is None or row["l_oi_base"] is None:
+            if row.get("oi_capability_available") is False:
+                reason = row.get("oi_capability_reason")
+                if not isinstance(reason, str) or not reason.strip():
+                    reason = "source_capability_unavailable"
+                oi[name] = _missing(reason, anchor, latest_at).model_copy(
+                    update={"availability": "unsupported"}
+                )
+            elif latest_at is None or anchor is None or row["l_oi_base"] is None:
                 oi[name] = _missing("endpoint_missing", anchor, latest_at)
             else:
                 oi[name] = _change(
@@ -255,6 +274,8 @@ def build_market_metrics(rows: list[dict[str, Any]], *, now: datetime) -> Market
 METRICS_SQL = """
 SELECT vi.venue_instrument_version_id, vi.venue, vi.source_symbol,
        vi.quote_asset, vi.settle_asset, vi.price_tick,
+       oi_cap.available AS oi_capability_available,
+       oi_cap.details->'reason' AS oi_capability_reason,
        l.cycle_at AS l_cycle_at, l.open_interest_base AS l_oi_base,
        l.source_at AS l_source_at, l.observed_at AS l_observed_at,
        oi15.open_interest_base AS oi_15m_base, oi60.open_interest_base AS oi_1h_base,
@@ -269,6 +290,8 @@ SELECT vi.venue_instrument_version_id, vi.venue, vi.source_symbol,
        c1440.close_price AS c_24h_close, c1440.finality AS c_24h_finality,
        c1440.source_at AS c_24h_source_at, c1440.observed_at AS c_24h_observed_at
 FROM venue_instrument_versions vi
+LEFT JOIN capabilities oi_cap
+  ON oi_cap.venue = vi.venue AND oi_cap.capability = 'open_interest'
 LEFT JOIN latest_market_state l
   ON l.venue_instrument_version_id = vi.venue_instrument_version_id
 LEFT JOIN market_state_1m oi15
@@ -294,13 +317,18 @@ ORDER BY vi.venue, vi.source_symbol
 """
 
 
-def read_market_metrics(connection: Connection[Any], *, now: datetime) -> MarketMetricsArtifact:
+def read_market_metrics(
+    connection: Connection[Any], *, now: datetime, clock: Callable[[], datetime] | None = None
+) -> MarketMetricsArtifact:
     cutoff = candle_cutoff(now)
     with connection.transaction():
         connection.execute("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY")
         with connection.cursor(row_factory=dict_row) as cursor:
             rows = cursor.execute(METRICS_SQL, (cutoff,) * 4).fetchall()
-        artifact = build_market_metrics(rows, now=now)
+        # The query may see receipts newer than its caller's start clock. Validate
+        # after fetching, but keep the cutoff that selected these exact candles.
+        completed_at = datetime.now(UTC) if clock is None else clock()
+        artifact = build_market_metrics(rows, now=completed_at, cutoff=cutoff)
     return artifact
 
 

@@ -1,0 +1,11 @@
+[Unit]
+Description=archive closed UTC day before Ranking retention expires
+
+[Timer]
+OnCalendar=*-*-* 00:20:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+Unit=prep-watchdeck-outcome-archive.service
+
+[Install]
+WantedBy=timers.target

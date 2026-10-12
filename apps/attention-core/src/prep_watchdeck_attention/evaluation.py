@@ -8,12 +8,13 @@ is a sensitivity diagnostic, not additional independent evidence. Descriptive re
 metrics and normal-approximation power planning cannot establish statistical support.
 """
 
+import hashlib
 import math
 import random
 import time
 from collections import defaultdict
-from collections.abc import Sequence
-from dataclasses import dataclass
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass, field
 from statistics import NormalDist, fmean, median, stdev
 
 from .models import (
@@ -53,6 +54,9 @@ def _semantic(policy: CandidatePolicy) -> str:
 def _ranking(policy: CandidatePolicy, generation: Generation) -> list[str]:
     _, features, response = generation
     scores: dict[str, float] = {}
+    attention_rows = {}
+    for row in response.rows:
+        attention_rows.setdefault(row.asset_id, row)
     for row in features:
         if row.identity_status not in ("ready", "partial") or row.reference_key is None:
             continue
@@ -64,7 +68,7 @@ def _ranking(policy: CandidatePolicy, generation: Generation) -> list[str]:
                     value.value if policy.signal == "turnover-ratio" else abs(value.value)
                 )
         else:
-            attention = next((r for r in response.rows if r.asset_id == row.asset_id), None)
+            attention = attention_rows.get(row.asset_id)
             if attention is None:
                 continue
             component = next(
@@ -104,34 +108,37 @@ class _PolicyMetrics:
     mature_outcome_count: int
 
 
-def _metrics(
-    policy: CandidatePolicy,
-    k: int,
-    generations: Sequence[Generation],
-    outcomes: dict[tuple[str, str, int], OutcomeRow],
-) -> _PolicyMetrics:
-    recalls: list[float] = []
-    precisions: list[float] = []
-    ndcgs: list[float] = []
-    future: list[float] = []
-    lead: list[float] = []
-    coverages: list[float] = []
-    missing_rates: list[float] = []
-    universe_coverages: list[float] = []
-    churns: list[float] = []
-    rank_churns: list[float] = []
-    returns: dict[int, float] = {}
-    mature_outcome_count = 0
+@dataclass
+class _MetricsAccumulator:
+    policy: CandidatePolicy
+    k: int
+    recalls: list[float] = field(default_factory=list)
+    precisions: list[float] = field(default_factory=list)
+    ndcgs: list[float] = field(default_factory=list)
+    future: list[float] = field(default_factory=list)
+    lead: list[float] = field(default_factory=list)
+    coverages: list[float] = field(default_factory=list)
+    missing_rates: list[float] = field(default_factory=list)
+    universe_coverages: list[float] = field(default_factory=list)
+    churns: list[float] = field(default_factory=list)
+    rank_churns: list[float] = field(default_factory=list)
+    returns: dict[int, float] = field(default_factory=dict)
+    mature_outcome_count: int = 0
     previous: list[str] | None = None
     previous_map: str | None = None
-    for inputs, features, response in generations:
+    count: int = 0
+
+    def add(self, generation: Generation, outcomes: dict[tuple[str, str, int], OutcomeRow]) -> None:
+        inputs, features, response = generation
+        policy, k = self.policy, self.k
+        self.count += 1
         ranked = _ranking(policy, (inputs, features, response))
         selected = ranked[:k]  # Selection precedes looking at future outcomes. Never backfill.
         ready: dict[str, OutcomeRow] = {}
         for row in features:
             outcome = outcomes.get((inputs.generation_id, row.asset_id, policy.horizon_minutes))
             if outcome is not None and outcome.status != "pending":
-                mature_outcome_count += 1
+                self.mature_outcome_count += 1
             if (
                 row.identity_status in ("ready", "partial")
                 and row.reference_key is not None
@@ -143,63 +150,79 @@ def _metrics(
             ):
                 ready[row.asset_id] = outcome
         total = len(features)
-        coverages.append(len(ranked) / total if total else 0.0)
-        universe_coverages.append(len(ready) / total if total else 0.0)
-        missing_rates.append(
+        self.coverages.append(len(ranked) / total if total else 0.0)
+        self.universe_coverages.append(len(ready) / total if total else 0.0)
+        self.missing_rates.append(
             sum(asset not in ready for asset in selected) / len(selected) if selected else 1.0
         )
-        if previous is not None and previous_map == inputs.ranking_map_version:
-            union = set(previous) | set(selected)
-            churns.append(1 - len(set(previous) & set(selected)) / len(union) if union else 0.0)
-            common = set(previous) & set(selected)
+        if self.previous is not None and self.previous_map == inputs.ranking_map_version:
+            union = set(self.previous) | set(selected)
+            self.churns.append(
+                1 - len(set(self.previous) & set(selected)) / len(union) if union else 0.0
+            )
+            common = set(self.previous) & set(selected)
             if common:
-                rank_churns.append(
+                self.rank_churns.append(
                     fmean(
-                        abs(previous.index(a) - selected.index(a)) / max(k - 1, 1) for a in common
+                        abs(self.previous.index(a) - selected.index(a)) / max(k - 1, 1)
+                        for a in common
                     )
                 )
-        previous, previous_map = selected, inputs.ranking_map_version
+        self.previous, self.previous_map = selected, inputs.ranking_map_version
         if not selected or any(asset not in ready for asset in selected):
-            continue
+            return
         realized = sorted(ready, key=lambda a: (-float(ready[a].max_abs_return or 0), a))
         # Exact ceil(n / 10) set, with asset-ID tie breaking; all-zero outcomes have no opportunity.
         positive = [a for a in realized if (ready[a].max_abs_return or 0) > 0]
         relevant = set(positive[: math.ceil(len(realized) / 10)])
         hits = len(set(selected) & relevant)
         if relevant:
-            recalls.append(hits / len(relevant))
-            precisions.append(hits / min(k, total))
+            self.recalls.append(hits / len(relevant))
+            self.precisions.append(hits / min(k, total))
         gains = {a: float(ready[a].max_abs_return or 0) for a in realized}
         dcg = sum(gains[a] / math.log2(i + 2) for i, a in enumerate(selected))
         ideal = sum(gains[a] / math.log2(i + 2) for i, a in enumerate(realized[:k]))
         if ideal > 0:
-            ndcgs.append(dcg / ideal)
+            self.ndcgs.append(dcg / ideal)
         value = fmean(gains[a] for a in selected)
-        future.append(value)
-        returns[inputs.decision_at] = value
+        self.future.append(value)
+        self.returns[inputs.decision_at] = value
         for asset in selected:
             lead_time = ready[asset].time_to_top_decile_move
             if asset in relevant and lead_time is not None:
-                lead.append(lead_time)
-    count = len(generations)
-    return _PolicyMetrics(
-        metrics=EvaluationMetrics(
-            recall=_average(recalls),
-            precision=_average(precisions),
-            ndcg=_average(ndcgs),
-            mean_future_max_abs_return=_average(future),
-            median_lead_time=median(lead) if lead else None,
-            coverage=fmean(coverages) if count else 0,
-            unscorable_rate=fmean(missing_rates) if count else 1,
-            set_churn=_average(churns),
-            rank_churn=_average(rank_churns),
-            generation_count=count,
-        ),
-        returns=returns,
-        complete_fraction=len(returns) / count if count else 0,
-        universe_outcome_coverage=fmean(universe_coverages) if count else 0,
-        mature_outcome_count=mature_outcome_count,
-    )
+                self.lead.append(lead_time)
+
+    def finish(self) -> _PolicyMetrics:
+        return _PolicyMetrics(
+            metrics=EvaluationMetrics(
+                recall=_average(self.recalls),
+                precision=_average(self.precisions),
+                ndcg=_average(self.ndcgs),
+                mean_future_max_abs_return=_average(self.future),
+                median_lead_time=median(self.lead) if self.lead else None,
+                coverage=fmean(self.coverages) if self.count else 0,
+                unscorable_rate=fmean(self.missing_rates) if self.count else 1,
+                set_churn=_average(self.churns),
+                rank_churn=_average(self.rank_churns),
+                generation_count=self.count,
+            ),
+            returns=self.returns,
+            complete_fraction=len(self.returns) / self.count if self.count else 0,
+            universe_outcome_coverage=fmean(self.universe_coverages) if self.count else 0,
+            mature_outcome_count=self.mature_outcome_count,
+        )
+
+
+def _metrics(
+    policy: CandidatePolicy,
+    k: int,
+    generations: Sequence[Generation],
+    outcomes: dict[tuple[str, str, int], OutcomeRow],
+) -> _PolicyMetrics:
+    accumulator = _MetricsAccumulator(policy, k)
+    for generation in generations:
+        accumulator.add(generation, outcomes)
+    return accumulator.finish()
 
 
 @dataclass(frozen=True)
@@ -319,6 +342,9 @@ def evaluate_candidate_family(
     minimum_practical_delta: float,
     bootstrap_samples: int,
     seed: int,
+    evidence_rows: Iterable[tuple[Generation, tuple[OutcomeRow, ...]]] | None = None,
+    save: bool = True,
+    created_at_ms: int | None = None,
 ) -> AttentionEvaluationReport:
     if tuple(sorted(k_values)) != (10, 20):
         raise ValueError("initial evaluation requires fixed K=10,20")
@@ -353,23 +379,39 @@ def evaluate_candidate_family(
             raise ValueError("each candidate horizon needs all three frozen baselines")
     store.freeze_family(policies)  # Rechecks the immutable hashes, never creates a new family here.
     freeze_at = max(p.frozen_at for p in policies)
-    unique: dict[int, Generation] = {}
+    seen_cutoffs: set[int] = set()
     excluded = 0
-    for generation in sorted(
-        store.evidence_generations(), key=lambda g: (g[0].decision_at, g[0].generation_id)
-    ):
+    accumulators = {
+        (_semantic(policy), k): _MetricsAccumulator(policy, k)
+        for policy in policies
+        for k in sorted(k_values)
+    }
+    fingerprint_hash = hashlib.sha256()
+    rows = (
+        evidence_rows
+        if evidence_rows is not None
+        else (
+            (generation, store.outcomes_for_generation(generation[0].generation_id))
+            for generation in store.iter_evidence_generations()
+        )
+    )
+    for generation, outcome_rows in rows:
         inputs, _, _ = generation
         if inputs.decision_at <= freeze_at or inputs.ranking_cutoff <= freeze_at:
             excluded += 1
             continue
-        # One decision per source cutoff; repeated publication does not multiply evidence.
-        unique.setdefault(inputs.ranking_cutoff, generation)
-    generations = sorted(unique.values(), key=lambda g: (g[0].decision_at, g[0].generation_id))
-    outcomes = _outcomes(store.latest_outcomes())
-    cache: dict[tuple[str, int], _PolicyMetrics] = {}
-    for policy in policies:
-        for k in sorted(k_values):
-            cache.setdefault((_semantic(policy), k), _metrics(policy, k, generations, outcomes))
+        if inputs.ranking_cutoff in seen_cutoffs:
+            continue
+        seen_cutoffs.add(inputs.ranking_cutoff)
+        outcomes = _outcomes(outcome_rows)
+        fingerprint_hash.update(
+            content_digest(
+                [row.model_dump(mode="json", by_alias=True) for _, row in sorted(outcomes.items())]
+            ).encode()
+        )
+        for accumulator in accumulators.values():
+            accumulator.add(generation, outcomes)
+    cache = {key: accumulator.finish() for key, accumulator in accumulators.items()}
     comparisons: list[tuple[CandidatePolicy, CandidatePolicy, int, str]] = []
     series: Series = {}
     for candidate_id in sorted(set(policy_ids)):
@@ -428,15 +470,8 @@ def evaluate_candidate_family(
                 }
             )
         )
-    relevant_ids = {g[0].generation_id for g in generations}
-    fingerprint = content_digest(
-        [
-            row.model_dump(mode="json", by_alias=True)
-            for key, row in sorted(outcomes.items())
-            if key[0] in relevant_ids
-        ]
-    )
-    created_at = time.time_ns() // 1_000_000
+    fingerprint = fingerprint_hash.hexdigest()
+    created_at = created_at_ms if created_at_ms is not None else time.time_ns() // 1_000_000
     hashes = {p.id: content_digest(p.model_dump(mode="json", by_alias=True)) for p in policies}
     report = AttentionEvaluationReport(
         run_id=content_digest(
@@ -469,5 +504,6 @@ def evaluate_candidate_family(
             f"prefreeze_generations_excluded:{excluded}",
         ),
     )
-    store.save_evaluation(report)
+    if save:
+        store.save_evaluation(report)
     return report

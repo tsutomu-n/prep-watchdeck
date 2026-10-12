@@ -1,7 +1,10 @@
 """Prospective settlement from explicitly supplied offline, closed reference bars."""
 
+import hashlib
+import json
 import math
-from collections.abc import Sequence
+from collections import OrderedDict, defaultdict
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import Literal, Protocol
 
@@ -10,6 +13,7 @@ from pydantic import Field, model_validator
 
 from .models import (
     MINUTE,
+    AttentionResponse,
     Contract,
     FeatureSnapshotRow,
     InputReference,
@@ -57,7 +61,21 @@ class FixtureBarReader:
     def __init__(self, data: OutcomeInput) -> None:
         self.data = data
         self.map_version = data.map_version
+        timestamps = [bar.end for bar in data.bars] + [point.at for point in data.native]
+        self._scope = (min(timestamps), max(timestamps)) if timestamps else None
         self.reference_keys = frozenset(bar.reference_key for bar in data.bars)
+        grouped: dict[str, list[MinuteBar]] = defaultdict(list)
+        for bar in data.bars:
+            grouped[bar.reference_key].append(bar)
+        self._bars = {
+            key: tuple(sorted(values, key=lambda b: b.end)) for key, values in grouped.items()
+        }
+        native: dict[str, list[NativeOutcomePoint]] = defaultdict(list)
+        for point in data.native:
+            native[point.asset_id].append(point)
+        self._native = {
+            key: tuple(sorted(values, key=lambda p: p.at)) for key, values in native.items()
+        }
 
     @classmethod
     def from_payload(cls, payload: object) -> "FixtureBarReader":
@@ -67,25 +85,301 @@ class FixtureBarReader:
     def from_file(cls, path: Path) -> "FixtureBarReader":
         from .stable_files import read_stable_regular_file
 
-        return cls(
-            OutcomeInput.model_validate_json(
-                read_stable_regular_file(path, max_bytes=128 * 1024 * 1024)
+        if path.is_dir():
+            return cls.from_archive(path)
+        raw = read_stable_regular_file(path, max_bytes=128 * 1024 * 1024)
+        if json.loads(raw).get("schemaVersion") == "attention-outcome-bundle-v1":
+            return PartitionedFixtureBarReader(path, OutcomeBundle.model_validate_json(raw))
+        return cls(OutcomeInput.model_validate_json(raw))
+
+    @classmethod
+    def from_files(cls, paths: Sequence[Path]) -> "FixtureBarReader":
+        if not paths:
+            raise ValueError("at least one offline outcome input is required")
+        if len(paths) == 1:
+            return cls.from_file(paths[0])
+        readers = []
+        for path in paths:
+            reader = cls.from_file(path)
+            if isinstance(reader, PartitionedFixtureBarReader):
+                reader._cache.clear()
+            readers.append(reader)
+        return JoinedFixtureBarReader(tuple(readers))
+
+    @classmethod
+    def from_archive(cls, root: Path) -> "FixtureBarReader":
+        from .stable_files import read_stable_regular_file
+
+        if any(p.is_symlink() for p in (root, *root.parents)):
+            raise ValueError("archive must not be a symlink")
+        completions = sorted(root.glob("day-*/archive-completion.json"))
+        completions += sorted(root.glob("day-*/edition-*/archive-completion.json"))
+        completions += sorted(root.glob("edition-*/archive-completion.json"))
+        if (root / "archive-completion.json").is_file():
+            completions.append(root / "archive-completion.json")
+        paths = []
+        days: set[int] = set()
+        # The most recent verified edition for each day is authoritative; older editions remain.
+        for completion in reversed(sorted(completions)):
+            payload = json.loads(read_stable_regular_file(completion, max_bytes=16 * 1024 * 1024))
+            if payload.get("status") != "COMPLETE":
+                continue
+            day = payload["dayMs"]
+            if day in days:
+                continue
+            days.add(day)
+            for entry in payload["bundles"]:
+                relative = Path(entry["bundle"])
+                if relative.is_absolute() or ".." in relative.parts:
+                    raise ValueError("archive bundle path escapes its edition")
+                path = completion.parent / relative
+                raw = read_stable_regular_file(path, max_bytes=16 * 1024 * 1024)
+                if hashlib.sha256(raw).hexdigest() != entry["sha256"]:
+                    raise ValueError("archive bundle hash differs")
+                manifest = OutcomeBundle.model_validate_json(raw)
+                if (
+                    manifest.map_version != entry["mapVersion"]
+                    or manifest.after_ms != day
+                    or manifest.through_ms != day + 1440 * MINUTE
+                ):
+                    raise ValueError("archive bundle map differs")
+                paths.append(path)
+        return cls.from_files(paths)
+
+    def for_generation(self, inputs: InputReference) -> "FixtureBarReader | None":
+        cutoff = outcome_cutoff(inputs.decision_at)
+        return (
+            self
+            if (
+                inputs.ranking_map_version == self.map_version
+                and self._scope is not None
+                and self._scope[0] <= cutoff <= self._scope[1]
             )
+            else None
         )
+
+    def iter_generations(
+        self, store: AttentionStore
+    ) -> Iterator[tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]]:
+        if self._scope is None:
+            return
+        for generation in store.iter_evidence_generations(
+            start_ms=self._scope[0] - MINUTE + 1, end_ms=self._scope[1] + 1
+        ):
+            if self.for_generation(generation[0]) is not None:
+                yield generation
+
+    def bars(self, reference_key: str, *, after: int, through: int) -> Sequence[MinuteBar]:
+        return tuple(b for b in self._bars.get(reference_key, ()) if after < b.end <= through)
+
+    def native_points(
+        self, asset_id: str, *, after: int, through: int
+    ) -> tuple[NativeOutcomePoint, ...]:
+        return tuple(p for p in self._native.get(asset_id, ()) if after < p.at <= through)
+
+
+class OutcomeBundleFile(Contract):
+    name: str = Field(pattern=r"^[A-Za-z0-9._-]+\.json$")
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    reference_keys: tuple[str, ...]
+    asset_ids: tuple[str, ...]
+    after_ms: int
+    through_ms: int
+
+
+class OutcomeBundle(Contract):
+    schema_version: Literal["attention-outcome-bundle-v1"]
+    map_version: str
+    after_ms: int
+    through_ms: int
+    copy_manifest_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    files: tuple[OutcomeBundleFile, ...] = Field(min_length=1, max_length=2048)
+
+
+class PartitionedFixtureBarReader(FixtureBarReader):
+    """Bounded fragments form one input, so settlement cannot erase other fragments."""
+
+    def __init__(self, path: Path, manifest: OutcomeBundle) -> None:
+        from .stable_files import read_stable_regular_file
+
+        self.map_version = manifest.map_version
+        self.manifest = manifest
+        proof = path.parent / "copy-manifest.json"
+        if not proof.exists():
+            proof = path.parent.parent / "copy-manifest.json"
+        raw = read_stable_regular_file(proof, max_bytes=16 * 1024 * 1024)
+        if hashlib.sha256(raw).hexdigest() != manifest.copy_manifest_sha256:
+            raise ValueError("outcome copy manifest hash differs")
+        if json.loads(raw).get("status") != "COMPLETE":
+            raise ValueError("outcome source copy is incomplete")
+        self._directory = path.parent
+        self._reference_files: dict[str, list[OutcomeBundleFile]] = defaultdict(list)
+        self._native_files: dict[str, list[OutcomeBundleFile]] = defaultdict(list)
+        self._cache: OrderedDict[Path, FixtureBarReader] = OrderedDict()
+        names: set[str] = set()
+        for entry in manifest.files:
+            if entry.name in names:
+                raise ValueError("duplicate outcome fragment")
+            names.add(entry.name)
+            reader = self._load(entry)
+            if reader.map_version != self.map_version or reader.reference_keys != set(
+                entry.reference_keys
+            ):
+                raise ValueError("outcome fragment reference binding differs")
+            if set(reader._native) != set(entry.asset_ids):
+                raise ValueError("outcome fragment native binding differs")
+            if not manifest.after_ms <= entry.after_ms < entry.through_ms <= manifest.through_ms:
+                raise ValueError("outcome fragment window differs")
+            if any(
+                not entry.after_ms < bar.end <= entry.through_ms for bar in reader.data.bars
+            ) or any(
+                not entry.after_ms < point.at <= entry.through_ms for point in reader.data.native
+            ):
+                raise ValueError("outcome fragment contains a point outside its window")
+            for keys, index in (
+                (entry.reference_keys, self._reference_files),
+                (entry.asset_ids, self._native_files),
+            ):
+                for key in keys:
+                    if any(
+                        old.after_ms < entry.through_ms and entry.after_ms < old.through_ms
+                        for old in index[key]
+                    ):
+                        raise ValueError("overlapping identity across outcome fragments")
+                    index[key].append(entry)
+        self.reference_keys = frozenset(self._reference_files)
+
+    def for_generation(self, inputs: InputReference) -> "FixtureBarReader | None":
+        return (
+            self
+            if (
+                inputs.ranking_map_version == self.map_version
+                and self.manifest.after_ms < inputs.decision_at <= self.manifest.through_ms
+            )
+            else None
+        )
+
+    def iter_generations(
+        self, store: AttentionStore
+    ) -> Iterator[tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]]:
+        for generation in store.iter_evidence_generations(
+            start_ms=self.manifest.after_ms + 1, end_ms=self.manifest.through_ms + 1
+        ):
+            if self.for_generation(generation[0]) is not None:
+                yield generation
+
+    def _load(self, entry: OutcomeBundleFile) -> FixtureBarReader:
+        from .stable_files import read_stable_regular_file
+
+        cache_key = self._directory / entry.name
+        if cache_key not in self._cache:
+            raw = read_stable_regular_file(
+                self._directory / entry.name, max_bytes=128 * 1024 * 1024
+            )
+            if hashlib.sha256(raw).hexdigest() != entry.sha256:
+                raise ValueError("outcome fragment hash differs")
+            self._cache[cache_key] = FixtureBarReader(OutcomeInput.model_validate_json(raw))
+            if len(self._cache) > 2:
+                self._cache.popitem(last=False)
+        self._cache.move_to_end(cache_key)
+        return self._cache[cache_key]
 
     def bars(self, reference_key: str, *, after: int, through: int) -> Sequence[MinuteBar]:
         return tuple(
-            b
-            for b in self.data.bars
-            if b.reference_key == reference_key and after < b.end <= through
+            sorted(
+                (
+                    bar
+                    for entry in self._reference_files.get(reference_key, ())
+                    if entry.after_ms < through and after < entry.through_ms
+                    for bar in self._load(entry).bars(reference_key, after=after, through=through)
+                ),
+                key=lambda b: b.end,
+            )
         )
 
     def native_points(
         self, asset_id: str, *, after: int, through: int
     ) -> tuple[NativeOutcomePoint, ...]:
         return tuple(
-            p for p in self.data.native if p.asset_id == asset_id and after < p.at <= through
+            sorted(
+                (
+                    point
+                    for entry in self._native_files.get(asset_id, ())
+                    if entry.after_ms < through and after < entry.through_ms
+                    for point in self._load(entry).native_points(
+                        asset_id, after=after, through=through
+                    )
+                ),
+                key=lambda p: p.at,
+            )
         )
+
+
+class JoinedFixtureBarReader(FixtureBarReader):
+    """Compose authenticated day inputs without mixing map or reference revisions."""
+
+    def __init__(self, readers: tuple[FixtureBarReader, ...]) -> None:
+        if any(not isinstance(reader, PartitionedFixtureBarReader) for reader in readers):
+            raise ValueError("multiple inputs require window-bound outcome bundles")
+        self._readers = readers
+        self.reference_keys = frozenset(key for reader in readers for key in reader.reference_keys)
+        cache: OrderedDict[Path, FixtureBarReader] = OrderedDict()
+        for reader in readers:
+            if isinstance(reader, PartitionedFixtureBarReader):
+                reader._cache.clear()
+                reader._cache = cache
+        self.map_version = ""  # Settlement always selects an exact map below.
+
+    def for_generation(self, inputs: InputReference) -> "FixtureBarReader | None":
+        if not any(reader.for_generation(inputs) is not None for reader in self._readers):
+            return None
+        readers = tuple(
+            reader for reader in self._readers if reader.map_version == inputs.ranking_map_version
+        )
+        scoped = JoinedFixtureBarReader.__new__(JoinedFixtureBarReader)
+        scoped._readers = readers
+        scoped.reference_keys = frozenset(
+            key for reader in readers for key in reader.reference_keys
+        )
+        scoped.map_version = inputs.ranking_map_version
+        return scoped
+
+    def iter_generations(
+        self, store: AttentionStore
+    ) -> Iterator[tuple[InputReference, tuple[FeatureSnapshotRow, ...], AttentionResponse]]:
+        windows = [
+            reader.manifest
+            for reader in self._readers
+            if isinstance(reader, PartitionedFixtureBarReader)
+        ]
+        for generation in store.iter_evidence_generations(
+            start_ms=min(window.after_ms for window in windows) + 1,
+            end_ms=max(window.through_ms for window in windows) + 1,
+        ):
+            if any(reader.for_generation(generation[0]) is not None for reader in self._readers):
+                yield generation
+
+    def bars(self, reference_key: str, *, after: int, through: int) -> Sequence[MinuteBar]:
+        points = {}
+        for reader in self._readers:
+            for bar in reader.bars(reference_key, after=after, through=through):
+                old = points.get(bar.end)
+                if old is not None and old != bar:
+                    raise ValueError("conflicting archived reference evidence; select one edition")
+                points[bar.end] = bar
+        return tuple(points[key] for key in sorted(points))
+
+    def native_points(
+        self, asset_id: str, *, after: int, through: int
+    ) -> tuple[NativeOutcomePoint, ...]:
+        points = {}
+        for reader in self._readers:
+            for point in reader.native_points(asset_id, after=after, through=through):
+                old = points.get(point.at)
+                if old is not None and old != point:
+                    raise ValueError("conflicting archived native evidence; select one edition")
+                points[point.at] = point
+        return tuple(points[key] for key in sorted(points))
 
 
 def _reference_outcome(
@@ -266,10 +560,12 @@ def settle_generation_outcomes(
     generation_id: str,
     now_ms: int,
 ) -> tuple[OutcomeRow, ...]:
-    matches = [g for g in store.evidence_generations() if g[0].generation_id == generation_id]
-    if len(matches) != 1:
-        raise ValueError("outcomes require one saved evidence generation")
-    inputs, features, _ = matches[0]
+    inputs, features, _ = store.evidence_generation(generation_id)
+    if isinstance(ranking_store, FixtureBarReader):
+        scoped = ranking_store.for_generation(inputs)
+        if scoped is None:
+            return ()
+        ranking_store = scoped
     if now_ms < inputs.decision_at:
         raise ValueError("settlement clock precedes decision")
     results = []

@@ -59,7 +59,7 @@ class ResearchModel(BaseModel):
 
 
 class ResearchTarget(ResearchModel):
-    instrument_id: str = Field(pattern=r"^(bitget|hyperliquid|aster):[^\s:]{1,150}$")
+    instrument_id: str = Field(pattern=r"^(bitget|hyperliquid|aster|mexc):[^\s:]{1,150}$")
     version_id: int = Field(strict=True, ge=1)
     definition_hash: str = Field(pattern=HASH_PATTERN)
 
