@@ -1,9 +1,9 @@
 # 残件の実装計画 — 追加調査を反映した実行版
 
-timestamp="2026-10-11(日)_15:37 JST"
+timestamp="2026-10-12(月)_17:35 JST"
 - 作成: `2026-10-11T13:53:08+09:00`
-- 更新: `2026-10-11T15:37:59+09:00`
-- 検証: `2026-10-11T15:33:52+09:00`
+- 更新: `2026-10-12T17:35:34+09:00`
+- 検証: `2026-10-12T17:35:34+09:00`
 - 状態: `実装計画`
 - 実行状態: `PARTIAL`。source・対象unit反映済み。Recovery受入と2h/24h/30日、本人実機は未完了。
 
@@ -225,12 +225,12 @@ Bitgetの既存history-candles取得で429を観測した。[現行公式契約]
 - `/home/tn/watchdeck-local-archive/phase-a-production-20261011-1101/FINAL_REPORT.md`
 - `/home/tn/watchdeck-local-archive/acceptance-bundle-integrity-20261011-0825/verification-summary.json`
 - `/home/tn/watchdeck-local-archive/current-state-research-20261011-0915/RESEARCH_REPORT.md`
-- [/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/docs/plans/active/mexc-100-scale/PLAN.md](/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/docs/plans/active/mexc-100-scale/PLAN.md)
-- [/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/docs/plans/active/attention-core/acceptance.json](/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/docs/plans/active/attention-core/acceptance.json)
+- [/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/docs/plans/active/mexc-100-scale/PLAN.md](../mexc-100-scale/PLAN.md)
+- [/home/tn/.codex/worktrees/watchdeck-identity-recovery/prep-watchdeck/docs/plans/active/attention-core/acceptance.json](../attention-core/acceptance.json)
 
 ## 実行checkpoint
 
-timestamp="2026-10-11(日)_15:37 JST"
+timestamp="2026-10-12(月)_17:35 JST"
 
 - source: `6c06046f3c1e848237f94b80d07ba22d4969718e`を専用branch `ai/remaining-completion-20261011-1353`へcommit/push。元workspace4差分を保全。後続のcheckpoint更新は文書だけで、稼働source SHAとは別。
 - A: 周期終了時の全件品質・理由・説明可能partial件数と最大8例を同一transactionへ保存。後続Funding更新で診断は不変。限定Aster bid/ask不良は警告、未知原因・stale・利用可能入力0はfailure。closed schemaと生成型を更新し、互換readerを先に配置。 retained rawの13:00 MEXC16件Funding決済partialと13:06 Aster452 ready/1 SXT partialを、当時の50/453契約定義で現行parserへ再入力し、原payload hash一致を確認。bid/時刻/OIは補完していない。
