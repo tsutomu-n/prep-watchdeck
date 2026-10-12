@@ -317,6 +317,7 @@ def test_discovery_get_is_read_only_filtered_and_validates_queries(tmp_path):
             assert summary_result.status == 200
             summary = DiscoverySummary.model_validate(await summary_result.json())
             assert summary.rows[0].asset_id == "asset:BTC"
+            assert summary.generation_id is not None
             matching = await client.get(
                 "/discovery",
                 params={

@@ -162,6 +162,9 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up Bun for shared HTTP budget tests
+        uses: oven-sh/setup-bun@v2
+
       - name: Set up uv
         uses: astral-sh/setup-uv@v8.2.0
 
@@ -257,6 +260,20 @@ jobs:
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+
+      - name: Set up Python for audit CLI E2E fixtures
+        if: needs.changes.outputs.e2e == 'true'
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Set up uv for audit CLI E2E fixtures
+        if: needs.changes.outputs.e2e == 'true'
+        uses: astral-sh/setup-uv@v8.2.0
+
+      - name: Install audit CLI E2E dependencies
+        if: needs.changes.outputs.e2e == 'true'
+        run: uv sync --frozen --package prep-watchdeck-market --no-dev
 
       - name: Install web dependencies
         working-directory: apps/web

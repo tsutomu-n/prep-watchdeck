@@ -56,6 +56,7 @@ def test_registration_refuses_ledger_in_execution_source(tmp_path, package):
         )
     )
     spec = importlib.util.find_spec(package)
+    assert spec is not None and spec.origin is not None
     target = Path(spec.origin).parent / "never-created-formal-ledger.json"
     with pytest.raises(ValueError, match="execution source"):
         write_protocol(
