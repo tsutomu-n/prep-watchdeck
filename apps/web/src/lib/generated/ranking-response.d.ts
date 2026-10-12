@@ -5,16 +5,30 @@
  * and run json-schema-to-typescript to regenerate this file.
  */
 
-export type Schemaversion = "ranking-v3";
+export type Schemaversion = "ranking-v5";
 export type Generationid = string;
 export type Mapversion = string;
-export type Metricversion = "trade-close-quote-turnover-analysis-v3";
+export type Metricversion = "trade-close-quote-turnover-analysis-v4";
 export type Cutoff = number;
 export type Generatedat = number;
 export type Rostergeneratedat = number;
 export type Rosterstale = boolean;
+export type Status =
+  | "ready"
+  | "review_required"
+  | "source_unavailable"
+  | "source_stale"
+  | "source_incomplete"
+  | "source_invalid"
+  | "unconfigured";
+export type Catalogobservedat = number | null;
+export type Sourceinstruments = number | null;
+export type Addedinstrumentids = string[];
+export type Removedinstrumentids = string[];
+export type Changedinstrumentids = string[];
+export type Marketdataissueids = string[] | null;
 export type Stale = boolean;
-export type Status = "ready" | "partial" | "starting" | "stale";
+export type Status1 = "ready" | "partial" | "starting" | "stale";
 export type Period = "15m" | "1h" | "24h" | "daily";
 export type Dailyreferencejst = string;
 export type Anchor = number;
@@ -22,7 +36,7 @@ export type Order = "gainers" | "losers" | "turnover";
 export type Minturnover = number;
 export type Previousgenerationid = string | null;
 export type Previouscutoff = number | null;
-export type Sourceinstruments = number;
+export type Sourceinstruments1 = number;
 export type Rows = number;
 export type Cryptorows = number;
 export type Supported = number;
@@ -36,13 +50,13 @@ export type Asset = string;
  */
 export type Mappingstatus = "verified" | "unsupported" | "review" | "out_of_scope";
 export type Venues = string[];
-export type Venue = "bitget" | "hyperliquid" | "aster";
+export type Venue = "bitget" | "hyperliquid" | "aster" | "mexc";
 export type Instrumentid = string;
 export type Versionid = number;
 export type Symbol = string;
 export type Baseasset = string;
 /**
- * Original underlying quantity per unit; null means conversion is unverified. This does not determine fixed-reference ranking eligibility.
+ * Underlying asset units represented by one original quoted price unit; null means conversion is unverified. This is an asset-price identity multiplier, not base quantity per order contract (for example MEXC contractSize), and does not determine fixed-reference ranking eligibility.
  */
 export type Multiplier = number | null;
 export type Originals = OriginalInstrument[];
@@ -54,7 +68,7 @@ export type Quoteasset = "USDT";
 export type Settleasset = "USDT";
 export type Contracttype = "linear_perpetual";
 export type Revision = string;
-export type Status1 = "supported" | "unsupported" | "review";
+export type Status2 = "supported" | "unsupported" | "review";
 export type Symbol2 = string | null;
 export type Reason = string | null;
 export type Evidence = string[];
@@ -76,12 +90,12 @@ export type Reason1 = string | null;
 export type Returnpct = number | null;
 export type Quoteturnover = number | null;
 export type Rank = number | null;
-export type Status2 = "compared" | "new" | "unavailable" | "not_ranked";
+export type Status3 = "compared" | "new" | "unavailable" | "not_ranked";
 export type Previousrank = number | null;
 export type Delta = number | null;
 export type Reason2 = string | null;
 export type Value = number | null;
-export type Status3 =
+export type Status4 =
   | "ready"
   | "history_missing"
   | "no_baseline"
@@ -106,6 +120,10 @@ export type State1 =
   | "direction_excluded"
   | "invalid_data"
   | "reference_invalid";
+export type Anchor2 = number;
+export type Cutoff1 = number;
+export type Quoteturnover2 = number | null;
+export type Status5 = "ready" | "history_missing" | "starting" | "invalid_data" | "reference_unavailable";
 export type Rows1 = RankedRow[];
 
 export interface RankingResponse {
@@ -117,8 +135,9 @@ export interface RankingResponse {
   generatedAt: Generatedat;
   rosterGeneratedAt: Rostergeneratedat;
   rosterStale: Rosterstale;
+  rosterHealth: RosterHealth;
   stale: Stale;
-  status: Status;
+  status: Status1;
   period: Period;
   dailyReferenceJst: Dailyreferencejst;
   anchor: Anchor;
@@ -129,8 +148,17 @@ export interface RankingResponse {
   coverage: Coverage;
   rows: Rows1;
 }
-export interface Coverage {
+export interface RosterHealth {
+  status: Status;
+  catalogObservedAt: Catalogobservedat;
   sourceInstruments: Sourceinstruments;
+  addedInstrumentIds: Addedinstrumentids;
+  removedInstrumentIds: Removedinstrumentids;
+  changedInstrumentIds: Changedinstrumentids;
+  marketDataIssueIds: Marketdataissueids;
+}
+export interface Coverage {
+  sourceInstruments: Sourceinstruments1;
   rows: Rows;
   cryptoRows: Cryptorows;
   supported: Supported;
@@ -161,6 +189,7 @@ export interface RankedRow {
   referenceClose: Indicator2;
   windows: Windows;
   turnoverRatios: Turnoverratios;
+  turnoverComparison: TurnoverComparison;
 }
 export interface OriginalInstrument {
   venue: Venue;
@@ -181,29 +210,29 @@ export interface Reference {
   revision: Revision;
 }
 export interface Widget {
-  status: Status1;
+  status: Status2;
   symbol: Symbol2;
   reason: Reason;
   evidence: Evidence;
   referenceKey: Referencekey;
 }
 export interface RankChange {
-  status: Status2;
+  status: Status3;
   previousRank: Previousrank;
   delta: Delta;
   reason: Reason2;
 }
 export interface Indicator {
   value: Value;
-  status: Status3;
+  status: Status4;
 }
 export interface Indicator1 {
   value: Value;
-  status: Status3;
+  status: Status4;
 }
 export interface Indicator2 {
   value: Value;
-  status: Status3;
+  status: Status4;
 }
 export interface Windows {
   [k: string]: RankingWindow;
@@ -219,5 +248,18 @@ export interface Turnoverratios {
 }
 export interface Indicator3 {
   value: Value;
-  status: Status3;
+  status: Status4;
+}
+export interface TurnoverComparison {
+  current: TurnoverWindow;
+  previousDay: TurnoverWindow;
+  twoDaysAgo: TurnoverWindow;
+  previousDayRatio: Indicator3;
+  twoDaysAgoRatio: Indicator3;
+}
+export interface TurnoverWindow {
+  anchor: Anchor2;
+  cutoff: Cutoff1;
+  quoteTurnover: Quoteturnover2;
+  status: Status5;
 }

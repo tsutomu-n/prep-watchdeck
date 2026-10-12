@@ -5,7 +5,12 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 from typing import Literal
 
-from prep_watchdeck_market.models import CatalogInstrument, Venue, canonical_json_sha256
+from prep_watchdeck_market.models import (
+    CatalogInstrument,
+    Venue,
+    canonical_json_sha256,
+    quantity_normalizable,
+)
 
 USD_LIKE_ASSETS = frozenset({"USD", "USDC", "USDT"})
 TradeSide = Literal["buy", "sell"]
@@ -97,7 +102,28 @@ class SelectedTrade:
         return canonical_json_sha256(self.raw_payload)
 
 
-type SelectedEvent = SelectedDepth | SelectedTrade
+@dataclass(frozen=True, slots=True)
+class SelectedDepthInvalidated:
+    venue: Venue
+    source_symbol: str
+    received_at: datetime
+    source_channel: str
+    raw_payload: dict[str, object] = field(repr=False, compare=False)
+    source_at: datetime | None = None
+
+    def __post_init__(self) -> None:
+        _validate_common(self.source_symbol, self.source_at, self.received_at, self.source_channel)
+
+    @property
+    def venue_instrument_id(self) -> str:
+        return f"{self.venue}:{self.source_symbol}"
+
+    @property
+    def payload_hash(self) -> str:
+        return canonical_json_sha256(self.raw_payload)
+
+
+type SelectedEvent = SelectedDepth | SelectedTrade | SelectedDepthInvalidated
 
 
 def validate_selected_instrument(instrument: CatalogInstrument) -> None:
@@ -110,7 +136,7 @@ def validate_selected_instrument(instrument: CatalogInstrument) -> None:
         raise SelectedContractError("selected instrument must be a linear perpetual")
     if any(asset is None or asset.upper() not in USD_LIKE_ASSETS for asset in assets):
         raise SelectedContractError("selected instrument must use USD-like quote and settlement")
-    if instrument.quantity_unit != "base" or instrument.contract_multiplier != Decimal("1"):
+    if not quantity_normalizable(instrument):
         raise SelectedContractError("selected instrument size cannot be normalized to base units")
 
 

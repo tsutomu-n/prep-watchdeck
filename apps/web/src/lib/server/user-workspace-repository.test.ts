@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { LocalFileUserWorkspaceRepository } from "./user-workspace-repository";
+import { isFavoriteTarget, LocalFileUserWorkspaceRepository } from "./user-workspace-repository";
 
 test("favorite operations merge under lock and saved views use revision CAS", async () => {
   const root = await mkdtemp(join(tmpdir(), "watchdeck-workspace-"));
@@ -47,5 +47,80 @@ test("unknown schemas and capacity failures preserve the existing workspace byte
     await expect(repository.setFavorite(target, true)).rejects.toMatchObject({ status: 413 });
     await expect(repository.saveView({ id: "../bad", name: "bad", view: {} }, 2)).rejects.toMatchObject({ status: 400 });
     expect(await readFile(path, "utf-8")).toBe(full);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("v1 migration preserves favorites, views and revision; pins have a separate four-target CAS limit", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-pins-"));
+  const path = join(root, "workspace.json");
+  const repository = new LocalFileUserWorkspaceRepository(path);
+  const favorite = { kind: "reference" as const, id: "asset:BTC", referenceKey: "bybit:BTCUSDT:v1", originals: ["mexc:BTC_USDT:1"] };
+  const legacy = { schemaVersion: 1, revision: 9, favorites: [favorite], savedViews: [{ id: "kept", name: "監視", view: { period: "1h" } }] };
+  try {
+    await writeFile(path, JSON.stringify(legacy));
+    expect(await repository.read()).toEqual({ ...legacy, schemaVersion: 2, pins: [] });
+    expect(JSON.parse(await readFile(path, "utf-8"))).toEqual(legacy); // A read never rewrites storage.
+    for (let index = 0; index < 4; index++) {
+      await repository.setPin({ target: { kind: "instrument", id: `mexc:T${index}_USDT`, version: 1 },
+        episodeId: null, discoveredAt: 1000, snapshot: {} }, true, 9 + index);
+    }
+    const stored = await readFile(path, "utf-8");
+    await expect(repository.setPin({ target: { kind: "instrument", id: "mexc:FIFTH_USDT", version: 1 },
+      episodeId: null, discoveredAt: 1000, snapshot: {} }, true, 13)).rejects.toMatchObject({ status: 413 });
+    await expect(repository.setPin({ target: favorite, episodeId: "e1", discoveredAt: 1000, snapshot: {} }, true, 9))
+      .rejects.toMatchObject({ status: 409 });
+    expect(await readFile(path, "utf-8")).toBe(stored);
+    expect((await repository.read()).favorites).toEqual(legacy.favorites);
+    expect((await repository.read()).savedViews).toEqual(legacy.savedViews);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("reference favorite identity replacement requires explicit revision confirmation", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-recheck-"));
+  const repository = new LocalFileUserWorkspaceRepository(join(root, "workspace.json"));
+  const old = { kind: "reference" as const, id: "asset:BTC", referenceKey: "bybit:BTCUSDT:v1", originals: ["mexc:BTC_USDT:1"] };
+  const changed = { ...old, originals: ["mexc:BTC_USDT:2"] };
+  try {
+    const saved = await repository.setFavorite(old, true);
+    await expect(repository.setFavorite(changed, true)).rejects.toMatchObject({ status: 409 });
+    await expect(repository.setFavorite(changed, true, saved.revision - 1)).rejects.toMatchObject({ status: 409 });
+    expect((await repository.read()).favorites).toEqual([old]);
+    expect((await repository.setFavorite(changed, true, saved.revision)).favorites).toEqual([changed]);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+
+test("stale reconfirmation never resurrects a favorite deleted in another tab", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-recheck-delete-"));
+  const repository = new LocalFileUserWorkspaceRepository(join(root, "workspace.json"));
+  const old = { kind: "reference" as const, id: "asset:BTC", referenceKey: "bybit:BTCUSDT:v1", originals: ["mexc:BTC_USDT:1"] };
+  const changed = { ...old, originals: ["mexc:BTC_USDT:2"] };
+  try {
+    const saved = await repository.setFavorite(old, true);
+    const removed = await repository.setFavorite(old, false);
+    await expect(repository.setFavorite(changed, true, saved.revision)).rejects.toMatchObject({ status: 409 });
+    expect(await repository.read()).toEqual(removed);
+    const ordinary = await repository.setFavorite(changed, true);
+    expect(ordinary.favorites).toEqual([changed]);
+    expect(await repository.setFavorite(changed, true, saved.revision)).toEqual(ordinary);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test("Unicode market identities retain their exact values in favorites and comparison pins", async () => {
+  const root = await mkdtemp(join(tmpdir(), "watchdeck-unicode-target-"));
+  const path = join(root, "workspace.json");
+  const repository = new LocalFileUserWorkspaceRepository(path);
+  const target = { kind: "reference" as const, id: "crypto:我踏马来了",
+    referenceKey: "bybit:我踏马来了USDT:v1", originals: ["bitget:我踏马来了USDT:1"] };
+  const pin = { target, episodeId: "episode-unicode", discoveredAt: 1791585000000,
+    snapshot: { asset: "我踏马来了", referenceClose: { value: 0.001, unit: "USDT", source: "bybit" } } };
+  try {
+    const favorite = await repository.setFavorite(target, true);
+    const saved = await repository.setPin(pin, true, favorite.revision);
+    expect((await new LocalFileUserWorkspaceRepository(path).read()).favorites).toEqual([target]);
+    expect(saved.pins).toEqual([pin]);
+    for (const id of ["crypto:../bad", "crypto:BTC\n", "crypto:BTC\u0000", "crypto:BTC&assetId=ETH"]) {
+      expect(isFavoriteTarget({ ...target, id })).toBe(false);
+    }
   } finally { await rm(root, { recursive: true, force: true }); }
 });

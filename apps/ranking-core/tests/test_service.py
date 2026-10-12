@@ -6,7 +6,7 @@ import pytest
 
 from prep_watchdeck_ranking import service as module
 from prep_watchdeck_ranking.mapping import reference_revision
-from prep_watchdeck_ranking.models import MINUTE
+from prep_watchdeck_ranking.models import MINUTE, RosterHealth
 from prep_watchdeck_ranking.providers import PublicClient
 from prep_watchdeck_ranking.service import RankingService
 from prep_watchdeck_ranking.storage import Store
@@ -129,7 +129,22 @@ def test_repeated_http_reads_do_not_fetch_providers(store, monkeypatch):
             monkeypatch.setattr(public, "catalog", unexpected)
             monkeypatch.setattr(session, "_request", unexpected)
             service = RankingService(store, mapping("BTC"), public)
-            service.generation = Generation(service.mapping, CUTOFF, CUTOFF + 8000, store)
+            service.roster_health = RosterHealth(
+                status="ready",
+                catalog_observed_at=CUTOFF,
+                source_instruments=1,
+                market_data_issue_ids=("bitget:BTC",),
+            )
+            service.generation = Generation(
+                service.mapping,
+                CUTOFF,
+                CUTOFF + 8000,
+                store,
+                roster_health=service.roster_health,
+            )
+            monkeypatch.setattr(module, "now_ms", lambda: CUTOFF + 1_800_001)
+            assert service.health()["roster"]["details"]["status"] == "source_stale"
+            assert service.health()["roster"]["error"] == "roster_source_stale"
             async with TestClient(
                 TestServer(module.application(service), host="127.0.0.1")
             ) as client:
@@ -140,7 +155,10 @@ def test_repeated_http_reads_do_not_fetch_providers(store, monkeypatch):
                             "/rankings", params={"period": period, "dailyReferenceJst": "09:00"}
                         )
                         assert response.status == 200
-                        generations.add((await response.json())["generationId"])
+                        payload = await response.json()
+                        assert payload["rosterHealth"]["status"] == "source_stale"
+                        assert payload["rosterHealth"]["marketDataIssueIds"] is None
+                        generations.add(payload["generationId"])
                 assert len(generations) == 1
                 assert calls == []
 

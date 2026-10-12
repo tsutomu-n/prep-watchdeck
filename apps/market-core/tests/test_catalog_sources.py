@@ -249,3 +249,102 @@ def test_catalog_parsers_table(
             if capability.capability == "open_interest"
         )
         assert open_interest.available is False
+
+
+def test_aster_funding_config_units_missing_changes_and_timestamp_provenance() -> None:
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    config = [{"symbol": "BTCUSDT", "fundingIntervalHours": 8, "time": 1786701600000}]
+    batch = parse_aster_catalog(payload, observed_at=OBSERVED_AT, funding_payload=config)
+    original = batch.instruments[0]
+    assert original.funding_interval_seconds == 28800
+    assert original.raw_definition["fundingIntervalConfig"] == {
+        "endpoint": "/fapi/v3/fundingInfo",
+        "definition": {"symbol": "BTCUSDT", "fundingIntervalHours": 8},
+    }
+    assert batch.provenance.payload_hash == canonical_json_sha256(batch.raw_payload)
+    assert isinstance(batch.raw_payload, dict)
+    retained_config = batch.raw_payload["fundingInfo"]
+    assert isinstance(retained_config, list)
+    assert retained_config[0]["time"] == 1786701600000
+    config[0]["time"] += 1
+    refreshed = parse_aster_catalog(payload, observed_at=OBSERVED_AT, funding_payload=config)
+    assert refreshed.provenance.payload_hash != batch.provenance.payload_hash
+    assert refreshed.instruments[0].definition_sha256() == original.definition_sha256()
+    config[0]["fundingIntervalHours"] = 4
+    changed = parse_aster_catalog(payload, observed_at=OBSERVED_AT, funding_payload=config)
+    assert changed.instruments[0].funding_interval_seconds == 14400
+    assert changed.instruments[0].semantic_definition_sha256() != (
+        original.semantic_definition_sha256()
+    )
+    assert original.funding_interval_seconds == 28800
+    for missing in ([], [{"symbol": "BTCUSDT"}]):
+        unknown = parse_aster_catalog(payload, observed_at=OBSERVED_AT, funding_payload=missing)
+        assert unknown.instruments[0].funding_interval_seconds is None
+        assert unknown.instruments[0].definition_sha256() != original.definition_sha256()
+
+
+@pytest.mark.parametrize("hours", [True, False, 0, -1, 1.5, "8", "", 3600.0])
+def test_aster_rejects_invalid_funding_hour_units(hours: object) -> None:
+    from prep_watchdeck_market.sources.common import CatalogSourceError
+
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+    with pytest.raises(CatalogSourceError) as caught:
+        parse_aster_catalog(
+            payload,
+            observed_at=OBSERVED_AT,
+            funding_payload=[{"symbol": "BTCUSDT", "fundingIntervalHours": hours}],
+        )
+    assert caught.value.error_code == "invalid_source_payload"
+
+
+def test_aster_fetch_joins_funding_config_and_fails_closed_on_transport_error() -> None:
+    import asyncio
+    from typing import cast
+
+    import aiohttp
+
+    from prep_watchdeck_market.sources.aster import ASTER_FUNDING_CONFIG_URL, fetch_aster_catalog
+    from prep_watchdeck_market.sources.common import CatalogSourceError
+
+    payload = json.loads((FIXTURES / "aster.json").read_text(encoding="utf-8"))
+
+    class Response:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            pass
+
+        def raise_for_status(self):
+            pass
+
+        async def json(self, **kwargs):
+            return [{"symbol": "BTCUSDT", "fundingIntervalHours": 1}]
+
+    class CatalogResponse(Response):
+        async def json(self, **kwargs):
+            return payload
+
+    class Session:
+        def __init__(self, fail=False):
+            self.calls = []
+            self.fail = fail
+
+        def get(self, url, **kwargs):
+            self.calls.append(url)
+            if url == ASTER_CATALOG_URL:
+                return CatalogResponse()
+            if self.fail:
+                raise aiohttp.ClientError("private-secret-response")
+            return Response()
+
+    session = Session()
+    batch = asyncio.run(
+        fetch_aster_catalog(cast(aiohttp.ClientSession, session), observed_at=OBSERVED_AT)
+    )
+    assert session.calls == [ASTER_CATALOG_URL, ASTER_FUNDING_CONFIG_URL]
+    assert batch.instruments[0].funding_interval_seconds == 3600
+    with pytest.raises(CatalogSourceError) as caught:
+        asyncio.run(fetch_aster_catalog(cast(aiohttp.ClientSession, Session(fail=True))))
+    assert "private-secret-response" not in str(caught.value)
+    assert caught.value.__cause__ is None

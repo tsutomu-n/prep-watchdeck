@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "decision_start": "2099-01-01T00:00:00Z",
+  "train_end": "2099-01-01T08:00:00Z",
+  "validation_end": "2099-01-01T16:00:00Z",
+  "study_end": "2099-01-02T00:00:00Z",
+  "minimum_price_return": "0.001",
+  "minimum_activity_ratio": "1.2",
+  "minimum_oi_return": "0.001",
+  "holding_minutes": 5,
+  "initial_capital": "1000",
+  "trade_notional": "100",
+  "fee_rate": "0.001",
+  "slippage_rate": "0.001",
+  "fee_basis": "Example sensitivity assumption; replace with verified study cost basis.",
+  "slippage_basis": "Example sensitivity assumption; not actual execution evidence.",
+  "funding_policy": "explicit_zero_scenario",
+  "funding_basis": "Explicit example zero-funding sensitivity scenario; not observed cost.",
+  "minimum_independent_episodes": 30
+}

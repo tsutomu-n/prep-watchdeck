@@ -1,4 +1,7 @@
 <script lang="ts">
+  import { currentPreferences, preferences, nativeChartInterval } from "$lib/theme/workspace-preferences";
+  import { displayNumber } from "$lib/market/number-display";
+  import { formatPriceChange } from "$lib/market/price-change";
   import { onMount, tick, untrack } from "svelte";
   import { pushState, replaceState } from "$app/navigation";
   import { page } from "$app/state";
@@ -31,14 +34,11 @@
   import {
     coverageLabel,
     filterAndSortUniverse,
-    formatCompact,
-    formatFinite,
     formatPrice,
     formatBidAsk,
     spreadBps,
     sortNativeRows,
     type NativeSort,
-    formatRate,
     formatTimestamp,
     groupVenueCounts,
     type CoverageFilter,
@@ -48,6 +48,11 @@
   import type { MarketArtifactBundle } from "$lib/server/market-artifact-repository";
   import type { MarketMetricsArtifact, MarketMetricRow, MetricValue } from "$lib/generated/market-metrics";
 
+  const formatCompact = (value: number | null | undefined) => displayNumber(value, $preferences.quantityDecimals, true);
+  const formatFinite = (value: number | null | undefined, digits = $preferences.quantityDecimals) => displayNumber(value, digits);
+  const formatRate = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? "—" : `${displayNumber(value * 100, $preferences.percentDecimals)}%`;
+  let startupViewPending = true;
+  let startupCancelled = false;
   const artifactPollMs = 5_000;
   const heartbeatMs = 5 * 60 * 1_000;
 
@@ -176,8 +181,13 @@
     auditDetail.report.series?.settleAsset === selectedInstrument.settleAsset));
   let selectedMetrics = $derived(selectedInstrument ? metricFor(selectedInstrument) : null);
   let selectedVenueName = $derived(selectedInstrument?.venue === "bitget" ? "Bitget"
-    : selectedInstrument?.venue === "hyperliquid" ? "Hyperliquid" : "Aster");
+    : selectedInstrument?.venue === "hyperliquid" ? "Hyperliquid" : selectedInstrument?.venue === "mexc" ? "MEXC" : "Aster");
   let selectedOiObservedAt = $derived(selectedMetrics?.oiChange["15m"]?.endObservedAt ?? null);
+  let selectedOiUnsupportedReason = $derived(selectedMetrics?.oiChange["15m"]?.availability === "unsupported"
+    ? selectedMetrics.oiChange["15m"].reasonCode === "official_contract_unconfirmed"
+      ? "取得先・単位契約が未確認"
+      : "この取得元は数量OIに未対応"
+    : null);
 
   function metricFor(item: UniverseInstrumentArtifact): MarketMetricRow | null {
     if (!metrics || Math.abs(priceNow - Date.parse(metrics.generatedAt)) > 120_000) return null;
@@ -196,8 +206,9 @@
   }
 
   function metricLabel(value: MetricValue | undefined, maxAgeSeconds = 300): string {
+    if (value?.availability === "unsupported") return "未対応";
     const current = metricCurrent(value, maxAgeSeconds);
-    return current === null ? "—" : `${current > 0 ? "+" : ""}${current.toFixed(2)}%`;
+    return current === null ? "—" : formatPriceChange(current, $preferences.percentDecimals);
   }
   let selectedGroupId = $derived(selectedInstrument?.groupId ?? null);
   let selectedVersionId = $derived(selectedInstrument?.venueInstrumentVersionId);
@@ -223,6 +234,12 @@
   ]);
 
   onMount(() => {
+    const initial = currentPreferences();
+    chartTimeframe = nativeChartInterval(initial.chartInterval);
+    const startupUrl = page.url.href;
+    const cancelStartup = () => { startupCancelled = true; };
+    const interactionEvents = ["pointerdown", "keydown", "input", "change"];
+    for (const event of interactionEvents) document.addEventListener(event, cancelStartup, { once: true });
     const stopReferenceTime = subscribeReferenceTime((value) => {
       referenceTime = value;
       referenceReady = true;
@@ -233,7 +250,15 @@
     viewport.addEventListener("change", syncViewport);
     const loadWorkspace = () => {
       if (document.visibilityState !== "hidden") {
-        void readUserWorkspace().then((value) => { workspace = value; workspaceError = null; })
+        void readUserWorkspace().then((value) => { workspace = value; workspaceError = null;
+          if (startupViewPending) {
+            startupViewPending = false;
+            if (!startupCancelled && page.url.href === startupUrl && initial.nativeViewId
+              && [...page.url.searchParams.keys()].every(key => key === "mode")) {
+              if (value.savedViews.some(view => view.id === initial.nativeViewId && view.view.mode === "native")) applySavedView(initial.nativeViewId);
+              else workspaceError = "初期表示に指定した保存表示が見つかりません。初期値を使っています。";
+            }
+          } })
           .catch(() => workspaceError = "お気に入りを読み込めません");
       }
     };
@@ -294,6 +319,7 @@
     return () => {
       mounted = false;
       window.clearTimeout(initialDetailTimer);
+      for (const event of interactionEvents) document.removeEventListener(event, cancelStartup);
       stopReferenceTime();
       viewport.removeEventListener("change", syncViewport);
       window.clearInterval(timer);
@@ -727,7 +753,7 @@
     if (!saved || saved.view.mode !== "native") return;
     const view = saved.view;
     search = typeof view.search === "string" ? view.search : "";
-    venue = ["all", "bitget", "hyperliquid", "aster"].includes(String(view.venue))
+    venue = ["all", "bitget", "hyperliquid", "aster", "mexc"].includes(String(view.venue))
       ? view.venue as VenueFilter : "all";
     coverage = ["all", "multi", "single"].includes(String(view.coverage))
       ? view.coverage as CoverageFilter : "all";
@@ -795,7 +821,7 @@
   <title>取引所別 | Prep Watchdeck</title>
   <meta
     name="description"
-    content="Bitget、Hyperliquid、Asterの暗号資産Perpを会場別に確認するローカル監視画面"
+    content="Bitget、Hyperliquid、Aster、MEXCの暗号資産Perpを会場別に確認するローカル監視画面"
   />
 </svelte:head>
 
@@ -804,7 +830,7 @@
     <div class="identity">
       <p>PREP WATCHDECK</p>
       <h1>取引所別</h1>
-      <span>Bitget / Hyperliquid / Aster</span>
+      <span>Bitget / Hyperliquid / Aster / MEXC</span>
     </div>
     <div class="preferences" aria-label="市場画面の移動">
       <a class="ranking-link" href={returnHref()}>ランキングへ戻る</a>
@@ -901,6 +927,7 @@
               <option value="aster">Aster</option>
               <option value="bitget">Bitget</option>
               <option value="hyperliquid">Hyperliquid</option>
+              <option value="mexc">MEXC</option>
             </select>
           </label>
           <label><span>並べ替え</span><select aria-label="取引所別の並べ替え" bind:value={nativeSort}>
@@ -1121,7 +1148,7 @@
             <div>
               <dt>数量OI <small>直近15分の変化</small></dt>
               <dd>{metricLabel(selectedMetrics?.oiChange["15m"], 120)}</dd>
-              <small class="metric-timing">{selectedOiObservedAt ? `OI観測 ${formatTimestamp(selectedOiObservedAt)} JST` : "OI観測時刻なし"}</small>
+              <small class="metric-timing">{selectedOiUnsupportedReason ?? (selectedOiObservedAt ? `OI観測 ${formatTimestamp(selectedOiObservedAt)} JST` : "OI観測時刻なし")}</small>
             </div>
           </dl>
           {#if metricsError}<p class="metrics-warning operational-warning" role="status">{metricsError}。追加指標の取得時刻と鮮度を確認してください。</p>{/if}

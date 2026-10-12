@@ -15,6 +15,7 @@ from prep_watchdeck_market.models import Venue
 from prep_watchdeck_market.selected_market import (
     DepthLevel,
     SelectedDepth,
+    SelectedDepthInvalidated,
     SelectedEvent,
     SelectedTrade,
     TradeSide,
@@ -109,8 +110,13 @@ def activate_selection(
     group_id: str,
     primary_venue_instrument_id: str,
     activated_at: datetime,
+    expires_at: datetime | None = None,
 ) -> SelectionTransition:
     _require_utc(activated_at, "activated_at")
+    expires_at = expires_at or activated_at + SELECTION_TTL
+    _require_utc(expires_at, "expires_at")
+    if not activated_at < expires_at <= activated_at + SELECTION_TTL:
+        raise InvalidSelectionError("selection activation requires an unexpired bounded lease")
     if not group_id.strip():
         raise ValueError("selected group_id must not be empty")
     try:
@@ -144,7 +150,7 @@ def activate_selection(
                         SET heartbeat_at = %s, expires_at = %s
                         WHERE selection_id = %s
                     """,
-                    (activated_at, activated_at + SELECTION_TTL, selection_id),
+                    (activated_at, expires_at, selection_id),
                 )
                 return SelectionTransition(
                     current=_active_lease(
@@ -152,6 +158,7 @@ def activate_selection(
                         group_id,
                         primary_version_id,
                         activated_at,
+                        expires_at,
                     ),
                     previous=None,
                 )
@@ -187,6 +194,7 @@ def activate_selection(
                 group_id,
                 primary_version_id,
                 activated_at,
+                expires_at,
             )
             cursor.execute(
                 """
@@ -311,7 +319,13 @@ def store_selected_events(
                     )
                 _insert_raw_event(cursor, selection_id, lease.group_id, version_id, event)
                 raw_stored += 1
-                if isinstance(event, SelectedDepth):
+                if isinstance(event, SelectedDepthInvalidated):
+                    cursor.execute(
+                        "DELETE FROM selected_depth_levels WHERE selection_id = %s "
+                        "AND venue_instrument_version_id = %s",
+                        (selection_id, version_id),
+                    )
+                elif isinstance(event, SelectedDepth):
                     _replace_depth(cursor, selection_id, version_id, event)
                     depth_snapshots += 1
                 else:
@@ -507,7 +521,7 @@ def _selected_versions(
                 SELECT * FROM unnest(%s::text[], %s::text[])
             )
             SELECT instrument.venue, instrument.source_symbol,
-                   instrument.venue_instrument_version_id
+                   instrument.venue_instrument_version_id, instrument.contract_multiplier
             FROM requested
             JOIN venue_instrument_versions AS instrument
               USING (venue, source_symbol)
@@ -520,8 +534,14 @@ def _selected_versions(
               AND upper(instrument.quote_asset) = ANY(%s)
               AND upper(instrument.settle_asset) = ANY(%s)
               AND upper(instrument.collateral_asset) = ANY(%s)
-              AND instrument.quantity_unit = 'base'
-              AND instrument.contract_multiplier = 1
+              AND ((instrument.venue <> 'mexc' AND instrument.quantity_unit = 'base'
+                    AND instrument.contract_multiplier = 1)
+                OR (instrument.venue = 'mexc' AND instrument.quantity_unit = 'contracts'
+                    AND instrument.contract_multiplier > 0
+                    AND instrument.raw_definition->'watchdeckIdentityEvidence'
+                        ->>'price_unit' = 'quote_per_base'
+                    AND instrument.raw_definition->'watchdeckQuantityEvidence'
+                        ->>'base_per_contract' = instrument.contract_multiplier::text))
             FOR SHARE OF instrument, membership
         """,
         (
@@ -533,7 +553,16 @@ def _selected_versions(
             ["USD", "USDC", "USDT"],
         ),
     ).fetchall()
-    return {(_venue(row[0]), str(row[1])): int(row[2]) for row in rows}
+    versions = {(_venue(row[0]), str(row[1])): int(row[2]) for row in rows}
+    factors = {(str(row[0]), str(row[1])): row[3] for row in rows if row[0] == "mexc"}
+    for event in events:
+        if event.venue == "mexc" and not isinstance(event, SelectedDepthInvalidated):
+            factor = factors.get((event.venue, event.source_symbol))
+            if factor is None or event.raw_payload.get("watchdeckBasePerContract") != format(
+                factor, "f"
+            ):
+                raise InvalidSelectionError("MEXC selected quantity definition changed")
+    return versions
 
 
 def _selected_primary_version(
@@ -550,6 +579,7 @@ def _selected_primary_version(
             "bitget",
             "hyperliquid",
             "aster",
+            "mexc",
         }
     ):
         raise InvalidSelectionError("primary venue_instrument_id is invalid")
@@ -567,8 +597,14 @@ def _selected_primary_version(
               AND upper(instrument.quote_asset) = ANY(%s)
               AND upper(instrument.settle_asset) = ANY(%s)
               AND upper(instrument.collateral_asset) = ANY(%s)
-              AND instrument.quantity_unit = 'base'
-              AND instrument.contract_multiplier = 1
+              AND ((instrument.venue <> 'mexc' AND instrument.quantity_unit = 'base'
+                    AND instrument.contract_multiplier = 1)
+                OR (instrument.venue = 'mexc' AND instrument.quantity_unit = 'contracts'
+                    AND instrument.contract_multiplier > 0
+                    AND instrument.raw_definition->'watchdeckIdentityEvidence'
+                        ->>'price_unit' = 'quote_per_base'
+                    AND instrument.raw_definition->'watchdeckQuantityEvidence'
+                        ->>'base_per_contract' = instrument.contract_multiplier::text))
             LIMIT 1
         """,
         (
@@ -607,7 +643,7 @@ def _insert_raw_event(
             selection_id,
             group_id,
             version_id,
-            "depth" if isinstance(event, SelectedDepth) else "trade",
+            "depth" if isinstance(event, (SelectedDepth, SelectedDepthInvalidated)) else "trade",
             event.received_at,
             event.source_at,
             event.payload_hash,
@@ -710,6 +746,7 @@ def _active_lease(
     group_id: str,
     primary_version_id: int,
     activated_at: datetime,
+    expires_at: datetime,
 ) -> SelectionLease:
     return SelectionLease(
         selection_id=selection_id,
@@ -717,7 +754,7 @@ def _active_lease(
         primary_venue_instrument_version_id=primary_version_id,
         activated_at=activated_at,
         heartbeat_at=activated_at,
-        expires_at=activated_at + SELECTION_TTL,
+        expires_at=expires_at,
         superseded_at=None,
         cleanup_deadline_at=None,
         cleaned_at=None,
@@ -746,7 +783,7 @@ def _datetime(value: object) -> datetime:
 
 def _venue(value: object) -> Venue:
     text = str(value)
-    if text not in {"bitget", "hyperliquid", "aster"}:
+    if text not in {"bitget", "hyperliquid", "aster", "mexc"}:
         raise SelectedStoreError("selected Venue has an invalid database value")
     return text  # type: ignore[return-value]
 

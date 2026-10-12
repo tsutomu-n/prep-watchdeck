@@ -1,5 +1,48 @@
 {
   "$defs": {
+    "RecoveryEvidence": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "scope": {
+          "enum": [
+            "full-candle-window",
+            "metric-endpoints"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "roster": {
+          "items": {
+            "$ref": "#/$defs/RecoveryTargetIdentity"
+          },
+          "title": "Roster",
+          "type": "array"
+        },
+        "rosterDigest": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Rosterdigest",
+          "type": "string"
+        },
+        "rosterUnchanged": {
+          "title": "Rosterunchanged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "scope",
+        "roster",
+        "rosterDigest",
+        "rosterUnchanged"
+      ],
+      "title": "RecoveryEvidence",
+      "type": "object"
+    },
     "RecoverySummary": {
       "additionalProperties": false,
       "properties": {
@@ -282,6 +325,30 @@
       ],
       "default": null,
       "title": "Errorcode"
+    },
+    "evidence": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RecoveryEvidence"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "previousCompletedRunId": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{32}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previouscompletedrunid"
     }
   },
   "required": [

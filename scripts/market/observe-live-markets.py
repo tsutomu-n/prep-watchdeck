@@ -395,7 +395,7 @@ def main() -> int:
                 received_at = requests[-1]["receivedAt"]
                 ages = validate_bundle(bundle, timestamp(received_at))
                 if not selected_ids:
-                    for venue in ("bitget", "hyperliquid", "aster"):
+                    for venue in ("bitget", "hyperliquid", "aster", "mexc"):
                         rows = [
                             row
                             for row in bundle["universe"]["items"]

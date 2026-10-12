@@ -179,3 +179,58 @@ def _batch(venue: str, symbol: str, rate: str) -> FundingBatch:
         events=(event,),
         raw_payload=cast(list[object], raw),
     )
+
+
+def test_new_aster_config_does_not_normalize_past_funding_with_current_interval() -> None:
+    from dataclasses import replace
+    from datetime import timedelta
+
+    from prep_watchdeck_market.funding_store import (
+        _InstrumentVersion,
+        _upsert_event,
+        _version_covering,
+    )
+
+    old = _InstrumentVersion(1, "aster", "BTCUSDT", VALID_FROM, OBSERVED, None)
+    current = _InstrumentVersion(2, "aster", "BTCUSDT", OBSERVED, None, 14400)
+    past = FundingEvent(
+        venue="aster",
+        source_symbol="BTCUSDT",
+        funding_at=FUNDING_AT,
+        funding_rate_raw=Decimal("0.0004"),
+        observed_at=OBSERVED,
+        raw_payload={"fundingRate": "0.0004"},
+    )
+    present = replace(past, funding_at=OBSERVED)
+    later = replace(
+        current,
+        version_id=3,
+        valid_from=OBSERVED + timedelta(hours=1),
+        funding_interval_seconds=28800,
+    )
+    current = replace(current, valid_to=later.valid_from)
+    versions = (old, current, later)
+
+    class Cursor:
+        query = ""
+
+        def __init__(self):
+            self.written = []
+
+        def execute(self, query, params):
+            self.query = query
+            if "INSERT INTO funding_events" in query:
+                self.written.append(params)
+            return self
+
+        def fetchone(self):
+            return None
+
+    cursor = Cursor()
+    for event in (past, present, replace(past, funding_at=later.valid_from)):
+        version = _version_covering(event, versions)
+        assert version is not None
+        assert _upsert_event(cursor, uuid.uuid4(), version, event) == "written"
+    assert [row[3] for row in cursor.written] == [None, 14400, 28800]
+    assert [row[4] for row in cursor.written] == [None, Decimal("0.0001"), Decimal("0.00005")]
+    assert all(row[2] == Decimal("0.0004") for row in cursor.written)

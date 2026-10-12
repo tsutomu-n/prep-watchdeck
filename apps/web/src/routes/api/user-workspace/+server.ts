@@ -3,7 +3,7 @@ import { isLocalhostRequest, LocalRequestError, readLocalJson } from "$lib/serve
 import { createMarketArtifactRepository } from "$lib/server/market-artifact-repository";
 import { RankingReader } from "$lib/server/ranking";
 import {
-  createUserWorkspaceRepository, isFavoriteTarget, isSavedView, UserWorkspaceError,
+  createUserWorkspaceRepository, isComparisonPin, isFavoriteTarget, isSavedView, UserWorkspaceError,
   type FavoriteTarget, type SavedView
 } from "$lib/server/user-workspace-repository";
 import type { RequestEvent } from "./$types";
@@ -27,6 +27,17 @@ export async function POST(event: RequestEvent) {
         keys(value, ["action", "target", "enabled"])) {
       if (value.enabled) await assertCurrent(value.target);
       return json(await repository.setFavorite(value.target, value.enabled), { headers });
+    }
+    if (value.action === "reconfirmFavorite" && keys(value, ["action", "target", "expectedRevision"]) &&
+        isFavoriteTarget(value.target) && Number.isSafeInteger(value.expectedRevision)) {
+      await assertCurrent(value.target);
+      return json(await repository.setFavorite(value.target, true, value.expectedRevision as number), { headers });
+    }
+    if (value.action === "setPin" && keys(value, ["action", "pin", "enabled", "expectedRevision"]) &&
+        isComparisonPin(value.pin) && typeof value.enabled === "boolean" &&
+        Number.isSafeInteger(value.expectedRevision)) {
+      if (value.enabled) await assertCurrent(value.pin.target);
+      return json(await repository.setPin(value.pin, value.enabled, value.expectedRevision as number), { headers });
     }
     if (value.action === "saveView" && keys(value, ["action", "id", "name", "view", "expectedRevision"]) &&
         Number.isSafeInteger(value.expectedRevision)) {

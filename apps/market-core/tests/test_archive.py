@@ -14,7 +14,13 @@ import pytest
 from psycopg import sql
 from psycopg.types.json import Jsonb
 
-from prep_watchdeck_market.archive import archive_partition
+from prep_watchdeck_market.archive import (
+    _partition_frame,
+    _PartitionRows,
+    _rows_digest,
+    _verify_readback,
+    archive_partition,
+)
 from prep_watchdeck_market.database import apply_migrations
 from prep_watchdeck_market.maintenance import _archive_dates, _archive_present_partitions
 from prep_watchdeck_market.retention import (
@@ -23,6 +29,62 @@ from prep_watchdeck_market.retention import (
 )
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+@pytest.mark.parametrize("dataset", ["market_state_1m", "candle_1m", "funding_events"])
+def test_archive_retains_nullable_values_after_first_hundred_missing_rows(
+    tmp_path: Path, dataset: str
+) -> None:
+    observed_at = datetime(2026, 10, 9, tzinfo=UTC)
+    timestamp_column = "funding_at" if dataset == "funding_events" else "bucket_at"
+    later_values: dict[str, Any] = {"source_at": observed_at + timedelta(minutes=100)}
+    if dataset == "market_state_1m":
+        later_values.update(
+            funding_interval_seconds=14400,
+            funding_rate_per_hour=Decimal("0.000025"),
+            open_interest_raw_unit="base",
+            volume_24h_unit="quote",
+        )
+    elif dataset == "candle_1m":
+        later_values.update(
+            trade_count=7,
+            volume_base=Decimal("0.125"),
+            finalized_at=observed_at + timedelta(minutes=101),
+        )
+    else:
+        later_values.update(
+            funding_interval_seconds=14400, funding_rate_per_hour=Decimal("0.000025")
+        )
+    columns = ("venue_instrument_version_id", timestamp_column, *later_values)
+    rows = tuple(
+        (
+            1,
+            observed_at + timedelta(minutes=index),
+            *[value if index == 100 else None for value in later_values.values()],
+        )
+        for index in range(101)
+    )
+    partition = _PartitionRows(
+        columns, ("venue_instrument_version_id", timestamp_column), timestamp_column, rows
+    )
+    path = tmp_path / f"{dataset}.parquet"
+    _partition_frame(partition).write_parquet(path)
+    _verify_readback(
+        path,
+        partition,
+        expected_min=observed_at,
+        expected_max=observed_at + timedelta(minutes=100),
+        expected_rows_digest=_rows_digest(columns, rows),
+    )
+    restored = pl.read_parquet(path)
+    for column, value in later_values.items():
+        assert restored.get_column(column).to_list() == [*[None] * 100, value]
+        if isinstance(value, datetime):
+            assert restored.schema[column] == pl.Datetime("us", "UTC")
+        elif isinstance(value, int):
+            assert restored.schema[column] == pl.Int64
+        elif isinstance(value, str):
+            assert restored.schema[column] == pl.String
 
 
 @pytest.mark.skipif(
@@ -372,3 +434,59 @@ def _seed_market_state(connection: psycopg.Connection[Any], partition_date: date
         ),
     )
     return version_id
+
+
+def test_candle_archive_additive_finalization_column_roundtrips_unknown_and_explicit(
+    tmp_path: Path,
+) -> None:
+    from contextlib import nullcontext
+    from typing import cast
+
+    from prep_watchdeck_market.archive import _fetch_partition, _partition_frame
+
+    bucket = datetime(2026, 8, 14, 10, 0, tzinfo=UTC)
+    receipt = bucket + timedelta(seconds=30)
+    decision = bucket + timedelta(minutes=1, seconds=9)
+    row = (
+        1,
+        "hyperliquid",
+        "BTC",
+        bucket,
+        Decimal("100"),
+        Decimal("110"),
+        Decimal("90"),
+        Decimal("101"),
+        Decimal("5"),
+        None,
+        10,
+        "derived_final",
+        bucket + timedelta(minutes=1),
+        receipt,
+    )
+
+    class Cursor:
+        def execute(self, query, params):
+            assert "candle.finalized_at" in query
+            return self
+
+        def fetchall(self):
+            return [(*row, None), (2, "hyperliquid", "ETH", *row[3:], decision)]
+
+    class Connection:
+        def transaction(self):
+            return nullcontext()
+
+        def cursor(self):
+            return nullcontext(Cursor())
+
+    partition = _fetch_partition(
+        cast(psycopg.Connection[Any], Connection()), "candle_1m", "hyperliquid", bucket.date()
+    )
+    assert partition.columns[-2:] == ("observed_at", "finalized_at")
+    frame = _partition_frame(partition)
+    path = tmp_path / "candles.parquet"
+    frame.write_parquet(path)
+    readback = pl.read_parquet(path)
+    assert readback.columns == list(partition.columns)
+    assert readback["finalized_at"].to_list() == [None, decision]
+    assert readback["observed_at"].to_list() == [receipt, receipt]

@@ -292,3 +292,19 @@ def test_cli_bad_numeric_option_is_argument_error(value):
     with pytest.raises(SystemExit) as error:
         main(args)
     assert error.value.code == 2
+
+
+def test_early_receipt_requires_retained_finalization_and_asof_excludes_late_decision(tmp_path):
+    data = snapshot()
+    row = data["records"][0]
+    bucket = datetime.fromisoformat(row["bucket_at"])
+    row["observed_at"] = (bucket + timedelta(seconds=30)).isoformat()
+    legacy = run(tmp_path, data, data)
+    assert legacy["outcome"] == "incomplete"
+    assert legacy["sources"]["left"]["findings"][0]["reason"] == "observed_before_close"
+    row["finalized_at"] = (bucket + timedelta(minutes=1, seconds=5)).isoformat()
+    assert run(tmp_path, data, data)["outcome"] == "match"
+    row["finalized_at"] = (AS_OF + timedelta(seconds=1)).isoformat()
+    late = run(tmp_path, data, data)
+    assert late["outcome"] == "incomplete"
+    assert late["sources"]["left"]["findings"][0]["reason"] == "unavailable_at_as_of"

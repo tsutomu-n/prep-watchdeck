@@ -124,7 +124,7 @@ def _read_database(
     if ":" not in instrument_id or version_id < 1:
         raise BundleError("fixture_target_invalid")
     venue, source_symbol = instrument_id.split(":", 1)
-    if venue not in {"bitget", "hyperliquid", "aster"} or not source_symbol:
+    if venue not in {"bitget", "hyperliquid", "aster", "mexc"} or not source_symbol:
         raise BundleError("fixture_target_invalid")
     try:
         with (
@@ -175,7 +175,7 @@ def _read_database(
                 """
                     SELECT venue_instrument_version_id, bucket_at, open_price, high_price,
                            low_price, close_price, volume_base, volume_notional, trade_count,
-                           finality, source_at, observed_at, collector_run_id
+                           finality, source_at, observed_at, finalized_at, collector_run_id
                     FROM candle_1m WHERE venue_instrument_version_id = %s
                       AND bucket_at >= %s AND bucket_at < %s ORDER BY bucket_at
                     """,
@@ -189,7 +189,8 @@ def _read_database(
                            mark_price, reference_price, reference_price_kind, best_bid, best_ask,
                            funding_rate_raw, funding_interval_seconds, funding_rate_per_hour,
                            open_interest_raw, open_interest_raw_unit, open_interest_base,
-                           open_interest_notional, volume_24h_raw, volume_24h_unit
+                           open_interest_notional, volume_24h_raw, volume_24h_unit,
+                           funding_source_at, funding_observed_at, funding_valid_until
                     FROM market_state_1m WHERE venue_instrument_version_id = %s
                       AND bucket_at >= %s AND bucket_at < %s ORDER BY bucket_at
                     """,
@@ -251,6 +252,9 @@ def _native_candle_snapshot(
                 "finality": row["finality"],
                 "source_at": None if row["source_at"] is None else _iso(row["source_at"]),
                 "observed_at": _iso(row["observed_at"]),
+                "finalized_at": (
+                    None if row.get("finalized_at") is None else _iso(row["finalized_at"])
+                ),
             }
             for row in rows
         ],

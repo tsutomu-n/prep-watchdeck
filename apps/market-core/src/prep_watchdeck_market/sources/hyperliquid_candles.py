@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import datetime, timedelta
 
 from prep_watchdeck_market.candles import (
@@ -20,13 +21,13 @@ DERIVED_FINAL_DELAY = timedelta(seconds=5)
 class HyperliquidCandleFinalizer:
     def __init__(self) -> None:
         self._pending: dict[tuple[Venue, str, datetime], Candle1m] = {}
-        self._finalized_through: dict[tuple[Venue, str], datetime] = {}
 
     def ingest(self, payload: object, *, observed_at: datetime) -> None:
         candle = _parse_hyperliquid_candidate(payload, observed_at=observed_at)
-        instrument_key = (candle.venue, candle.source_symbol)
-        finalized_through = self._finalized_through.get(instrument_key)
-        if finalized_through is None or candle.bucket_start > finalized_through:
+        # Later same-bucket receipts are corrections, including after emission.
+        # Canonical storage keeps its existing newest-receipt/finality precedence.
+        previous = self._pending.get(candle.storage_key)
+        if previous is None or candle.observed_at > previous.observed_at:
             self._pending[candle.storage_key] = candle
 
     def finalize(self, *, now: datetime) -> tuple[Candle1m, ...]:
@@ -35,17 +36,13 @@ class HyperliquidCandleFinalizer:
             (
                 candle
                 for candle in self._pending.values()
-                if candle.bucket_end + DERIVED_FINAL_DELAY <= now
+                if max(candle.bucket_end + DERIVED_FINAL_DELAY, candle.observed_at) <= now
             ),
             key=lambda candle: candle.storage_key,
         )
         for candle in eligible:
             self._pending.pop(candle.storage_key)
-            instrument_key = (candle.venue, candle.source_symbol)
-            previous = self._finalized_through.get(instrument_key)
-            if previous is None or candle.bucket_start > previous:
-                self._finalized_through[instrument_key] = candle.bucket_start
-        return tuple(eligible)
+        return tuple(replace(candle, finalized_at=now) for candle in eligible)
 
     @property
     def pending_count(self) -> int:

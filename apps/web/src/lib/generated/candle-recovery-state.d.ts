@@ -37,6 +37,12 @@ export type Errorcode = string | null;
 export type Details = RecoveryTargetDetail[];
 export type Detailstruncated = boolean;
 export type Errorcode1 = string | null;
+export type Schemaversion1 = 1;
+export type Scope = "full-candle-window" | "metric-endpoints";
+export type Roster = RecoveryTargetIdentity[];
+export type Rosterdigest = string;
+export type Rosterunchanged = boolean;
+export type Previouscompletedrunid = string | null;
 
 export interface CandleRecoveryState {
   schemaVersion?: Schemaversion;
@@ -51,6 +57,8 @@ export interface CandleRecoveryState {
   details: Details;
   detailsTruncated: Detailstruncated;
   errorCode?: Errorcode1;
+  evidence?: RecoveryEvidence | null;
+  previousCompletedRunId?: Previouscompletedrunid;
 }
 export interface RecoveryWindow {
   start: Start;
@@ -79,4 +87,11 @@ export interface RecoveryTargetIdentity {
   venueInstrumentId: Venueinstrumentid;
   venueInstrumentVersionId: Venueinstrumentversionid;
   definitionHash: Definitionhash;
+}
+export interface RecoveryEvidence {
+  schemaVersion?: Schemaversion1;
+  scope: Scope;
+  roster: Roster;
+  rosterDigest: Rosterdigest;
+  rosterUnchanged: Rosterunchanged;
 }

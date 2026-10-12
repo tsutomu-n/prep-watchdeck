@@ -33,6 +33,7 @@ def inputs() -> dict[str, Any]:
             {
                 "runKind": "catalog",
                 "status": "succeeded",
+                "completedAt": timestamp,
                 "recordsReceived": len(roster["items"]),
                 "recordsWritten": len(roster["items"]),
             }
@@ -88,6 +89,18 @@ def test_incomplete_or_stale_evidence_cannot_remove_contracts(inputs: dict, fail
         value["definitions"]["sessionReadOnly"] = False
     with pytest.raises(ValueError):
         prepare(**value)
+
+
+def test_roster_refresh_accepts_complete_catalog_despite_price_partial(inputs: dict) -> None:
+    value = copy.deepcopy(inputs)
+    value["roster"].update(
+        sourceStatus="partial", sourceQualityReasons=["contains_non_ready_instruments"]
+    )
+    value["service"].update(status="partial", qualityReasons=["l1_partial"])
+    value["service"]["l1"]["status"] = "partial"
+    candidate, roster, _evidence = prepare(**value)
+    assert candidate["sourceInstrumentCount"] == len(roster["items"])
+    assert roster["sourceStatus"] == "partial"
 
 
 def test_new_version_does_not_requalify_changed_quantity(inputs: dict) -> None:

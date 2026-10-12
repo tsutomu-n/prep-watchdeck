@@ -17,6 +17,10 @@
       article { border-top: 1px solid #364047; margin-top: 1.5rem; padding-top: 1.5rem; }
       .identity { display: flex; align-items: center; gap: .75rem; }
       img { width: 32px; height: 32px; object-fit: contain; }
+      .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: .85rem; padding: 0; list-style: none; }
+      .logo-grid li { display: flex; align-items: center; gap: .5rem; }
+      .logo-grid img { border-radius: 50%; flex: none; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
       small { color: #abb4b8; }
       nav { display: flex; flex-wrap: wrap; gap: 1rem; }
       nav a { display: inline-flex; align-items: center; min-height: 44px; }
@@ -25,7 +29,11 @@
         a { color: #22667f; }
         a:focus-visible { outline-color: #22667f; }
         article { border-color: #cbd4d8; }
-        small { color: #54656e; }
+        .logo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); gap: .85rem; padding: 0; list-style: none; }
+      .logo-grid li { display: flex; align-items: center; gap: .5rem; }
+      .logo-grid img { border-radius: 50%; flex: none; }
+      pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
+      small { color: #54656e; }
       }
     </style>
   </head>
@@ -36,7 +44,7 @@
         <a href="/rankings">ランキング</a>
       </nav>
       <h1>ロゴ出典</h1>
-      <p>確認できた原資産のロゴを掲載しています。画像はブランド色を保ち、未改変で配信しています。</p>
+      <p>確認できた原資産のロゴを掲載しています。各画像の出典と変更内容を以下に記載しています。銘柄の識別を目的とし、各プロジェクトとの提携・推奨を示すものではありません。</p>
       <article>
         <div class="identity">
           <img src="/asset-logos/bitcoin-b0231779b54f.png" alt="" width="32" height="32" />
@@ -61,6 +69,64 @@
           · <a href="https://www.getmonero.org/legal/#copyright">利用条件</a>
         </p>
         <small>変更なし。The Monero Projectによる本ツールの支持・推奨を示すものではありません。</small>
+      </article>
+      <article>
+        <h2>Web3 Icons · 主要28銘柄</h2>
+        <p>Copyright (c) 2024 0xa3k5 — MIT License</p>
+        <p><a href="https://github.com/0xa3k5/web3icons/blob/763a55d66a03b21b603eb249f2df7c64a7522089/README.md">素材と出典</a> · <a href="https://github.com/0xa3k5/web3icons/blob/763a55d66a03b21b603eb249f2df7c64a7522089/LICENCE">利用条件</a> · <a href="/asset-logos/provenance.json">画像ごとの出典</a></p>
+        <ul class="logo-grid">
+          <li><img src="/asset-logos/ethereum-d20d1aebf125.png" alt="" width="32" height="32" /><span>Ethereum · ETH</span></li>
+          <li><img src="/asset-logos/solana-bbab786a5948.png" alt="" width="32" height="32" /><span>Solana · SOL</span></li>
+          <li><img src="/asset-logos/ripple-51d4a4909ef7.png" alt="" width="32" height="32" /><span>XRP · XRP</span></li>
+          <li><img src="/asset-logos/binancecoin-af3691d357ca.png" alt="" width="32" height="32" /><span>BNB · BNB</span></li>
+          <li><img src="/asset-logos/dogecoin-1260c4889c9c.png" alt="" width="32" height="32" /><span>Dogecoin · DOGE</span></li>
+          <li><img src="/asset-logos/cardano-835ad595b7f7.png" alt="" width="32" height="32" /><span>Cardano · ADA</span></li>
+          <li><img src="/asset-logos/chainlink-9e6db600f4d3.png" alt="" width="32" height="32" /><span>Chainlink · LINK</span></li>
+          <li><img src="/asset-logos/avalanche-2-b4c6515244ae.png" alt="" width="32" height="32" /><span>Avalanche · AVAX</span></li>
+          <li><img src="/asset-logos/polkadot-7e442ebef606.png" alt="" width="32" height="32" /><span>Polkadot · DOT</span></li>
+          <li><img src="/asset-logos/litecoin-d43fe148e886.png" alt="" width="32" height="32" /><span>Litecoin · LTC</span></li>
+          <li><img src="/asset-logos/bitcoin-cash-2ab9a5546df4.png" alt="" width="32" height="32" /><span>Bitcoin Cash · BCH</span></li>
+          <li><img src="/asset-logos/uniswap-16a5a9a3d6dc.png" alt="" width="32" height="32" /><span>Uniswap · UNI</span></li>
+          <li><img src="/asset-logos/cosmos-53633107db68.png" alt="" width="32" height="32" /><span>Cosmos Hub · ATOM</span></li>
+          <li><img src="/asset-logos/near-b117364b458d.png" alt="" width="32" height="32" /><span>NEAR Protocol · NEAR</span></li>
+          <li><img src="/asset-logos/aave-39ffcadff6b4.png" alt="" width="32" height="32" /><span>Aave · AAVE</span></li>
+          <li><img src="/asset-logos/ethereum-classic-e570d8e65129.png" alt="" width="32" height="32" /><span>Ethereum Classic · ETC</span></li>
+          <li><img src="/asset-logos/filecoin-e09edb41d788.png" alt="" width="32" height="32" /><span>Filecoin · FIL</span></li>
+          <li><img src="/asset-logos/stellar-b81f778f5885.png" alt="" width="32" height="32" /><span>Stellar · XLM</span></li>
+          <li><img src="/asset-logos/tron-05c2bff91189.png" alt="" width="32" height="32" /><span>TRON · TRX</span></li>
+          <li><img src="/asset-logos/internet-computer-ea57310754ba.png" alt="" width="32" height="32" /><span>Internet Computer · ICP</span></li>
+          <li><img src="/asset-logos/hedera-hashgraph-3cbca63af305.png" alt="" width="32" height="32" /><span>Hedera · HBAR</span></li>
+          <li><img src="/asset-logos/sui-602aa77c8a37.png" alt="" width="32" height="32" /><span>Sui · SUI</span></li>
+          <li><img src="/asset-logos/aptos-2fc599145f9a.png" alt="" width="32" height="32" /><span>Aptos · APT</span></li>
+          <li><img src="/asset-logos/arbitrum-c6d5a334755e.png" alt="" width="32" height="32" /><span>Arbitrum · ARB</span></li>
+          <li><img src="/asset-logos/optimism-50baa344eb7d.png" alt="" width="32" height="32" /><span>Optimism · OP</span></li>
+          <li><img src="/asset-logos/injective-protocol-5f4bb3f3b827.png" alt="" width="32" height="32" /><span>Injective · INJ</span></li>
+          <li><img src="/asset-logos/shiba-inu-c03932fe4df2.png" alt="" width="32" height="32" /><span>Shiba Inu · SHIB</span></li>
+          <li><img src="/asset-logos/pepe-118c8a5f1eaf.png" alt="" width="32" height="32" /><span>Pepe · PEPE</span></li>
+        </ul>
+        <p>配布元のSVGを128pxのPNGへ変換。絵柄・色は保持し、XLMのみ白いマークの背景に黒を追加しています。</p>
+        <p>素材のライセンスは商標権の譲渡を意味しません。</p>
+        <details><summary>MIT License 全文</summary><pre>MIT License
+
+Copyright (c) 2024 0xa3k5
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the &quot;Software&quot;), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre></details>
       </article>
     </main>
   </body>

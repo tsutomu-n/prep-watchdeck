@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-09T16:18:47+09:00",
+  "source_status": "PASS",
+  "overall_runtime_acceptance": "PARTIAL",
+  "branch": "ai/research-remediation-20261009-1428",
+  "scope": "source remediation completed; branch push, production rollout and initial real-data capture performed; long-term and statistical acceptance remains separate",
+  "checks": {
+    "market_pytest": {
+      "status": "PASS",
+      "passed": 279,
+      "skipped": 0,
+      "failed": 0,
+      "seconds": 21.41,
+      "isolated_postgres": true,
+      "production_database_used": false
+    },
+    "ruff_check": "PASS",
+    "ruff_format": "PASS",
+    "pyrefly": {
+      "status": "PASS",
+      "errors": 0,
+      "suppressed": 18,
+      "warnings_not_shown": 7
+    },
+    "research_schema_check": "PASS",
+    "docs_metadata": "PASS",
+    "docs_links": "PASS",
+    "git_diff_check": "PASS",
+    "optional_tools": {
+      "numpy": "2.5.3",
+      "ccxt": "4.5.85",
+      "npz_roundtrip": "PASS",
+      "ccxt_capability_inspection": "PASS",
+      "provider_requests": 0,
+      "runtime_dependencies_added": false
+    },
+    "phase0_preservation": {
+      "verified_sha256_entries": 201,
+      "result": "PASS"
+    },
+    "reviews": {
+      "provider": "APPROVED",
+      "evaluator": "APPROVED",
+      "integration": "APPROVED",
+      "open_P0_P1_P2": 0
+    },
+    "release_gate": {
+      "source_sha": "35de6f2dcf7d60d1704b3a6e1ae0ace5549ad9cf",
+      "status": "PASS",
+      "exit_code": 0,
+      "market_tests": 279,
+      "ranking_tests": 156,
+      "attention_tests": 56,
+      "web_vitest_tests": 221,
+      "web_e2e_tests": 136,
+      "isolated_database": true,
+      "CI_used": false,
+      "at": "2026-10-09T15:48:15.145990+09:00"
+    },
+    "map_refresh": {
+      "pytest": {
+        "passed": 25,
+        "failed": 0
+      },
+      "schema_check": "PASS",
+      "evidence_check": "PASS",
+      "ranking_qualification": "PASS",
+      "require_reviewed": {
+        "exit_code": 1,
+        "reason": "existing 3 unreviewed quantities and 3 Widgets preserved"
+      },
+      "original_identity_or_quantity_changes": 0,
+      "native_version_changes": 454
+    },
+    "rollout_review": {
+      "at": "2026-10-09T16:16:17.315474+09:00",
+      "review_status": "IMPORTANT_FINDINGS_FIXED",
+      "critical": 0,
+      "important": 2,
+      "open_important": 0,
+      "minor": 0,
+      "rollback": {
+        "before": "unpatched previous source is NOT schema5 compatible",
+        "prepared_release": "/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat",
+        "production_activated": false,
+        "manifest": "/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat/RELEASE_COMPAT.json",
+        "regression_red": "MigrationError health and CandleStoreError on late update",
+        "regression_green": "health ready, late update stored, absent new finalization remains NULL",
+        "validation": {
+          "schema5_health": "PASS",
+          "post_finalization_late_update": "PASS; unknown finalization stays NULL",
+          "market_pytest": {
+            "passed": 219,
+            "failed": 0,
+            "seconds": 19.03,
+            "isolated_postgres": true
+          },
+          "ruff_check": "PASS",
+          "ruff_format": "PASS",
+          "pyrefly": "0 errors; 18 suppressed; 6 warnings not shown"
+        },
+        "runtime_limits": [
+          "retain schema5-aware maintenance and monitor",
+          "stop research before fallback; old producers lack finalization evidence",
+          "catalog changes require current native map review after actual fallback"
+        ]
+      },
+      "finalizer": {
+        "installed_at": "2026-10-09T16:13:33.142632+09:00",
+        "finalizer_sha256": "8045f8df7014836401ec6e85e39b24fbbc7bfe750238141bc5c40433a2a995fa",
+        "regression": "short qualified capture + oom-kill formerly PASS; now PARTIAL",
+        "green_cases": 6,
+        "capture_service_restarted": false,
+        "frozen_evaluator_or_rules_changed": false,
+        "systemd_environment_check": "PASS: normal exit produces PASS; actual SIGKILL produces PARTIAL with killed/KILL",
+        "systemd_signal_evidence": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/finalizer-systemd-signal-validation.json"
+      },
+      "declined_judgements": [
+        "24h/30d and profitability remain outside start acceptance",
+        "Aster OI and hft engine need unavailable inputs",
+        "existing quantity3 and Widget3 unreviewed preserved",
+        "backup restore drill not claimed",
+        "review reused current source and saved Provider/test evidence",
+        "prior source reviews retained; this review emphasized integration/deployment"
+      ]
+    }
+  },
+  "remediations": [
+    {
+      "gap": "reader_observed_editions",
+      "source": "PASS",
+      "implementation": "immutable journal, post-publication receipt, causal as-of verifier",
+      "runtime": "pilot verified and bounded daily capture running; gaps retained"
+    },
+    {
+      "gap": "self_contained_context",
+      "source": "PASS",
+      "implementation": "RR identity/local-validity/group/capability/native rows; offline context/hash/finality checks"
+    },
+    {
+      "gap": "hyperliquid_receipt_finality",
+      "source": "PASS",
+      "implementation": "nullable finalized_at, late corrections, store/archive/export/audit propagation",
+      "runtime": "deployed; newly finalized rows observed for all 3 Venues"
+    },
+    {
+      "gap": "aster_funding_interval",
+      "source": "PASS",
+      "implementation": "official config provenance and versioned interval; missing remains unknown",
+      "runtime": "deployed; interval and fundingInfo provenance observed on 452 active contracts"
+    },
+    {
+      "gap": "aster_oi",
+      "source": "PASS_EXCLUSION",
+      "implementation": "missing/unknown-unit OI excluded from shared A/B cohort; no fabrication",
+      "acceptance": "unverified_provider_contract"
+    },
+    {
+      "gap": "archive_gaps",
+      "source": "PASS",
+      "implementation": "Polars gap/cohort, native OHLC/activity/trade/finality reconciliation; original-preserving candidate output",
+      "historical_backfill": "not_run"
+    },
+    {
+      "gap": "fixed_ab_evaluator",
+      "source": "PASS",
+      "implementation": "pre-registered rules/source/input, causal fills, finite cash, funding ordering/cadence, corrected mark, split/purge and cash control",
+      "real_data_comparison": "future rules registered; capture running; pilot ineligible due gaps"
+    },
+    {
+      "gap": "data_operations_monitor",
+      "source": "PASS",
+      "implementation": "detailed removed/unmapped/version/identity samples and matching map/port template placeholders",
+      "runtime_map_adoption": "PASS; c0b276f328e1ad423f448bfa, 1096 matched, 0 mismatch, no operational failures"
+    }
+  ],
+  "reuse": {
+    "attention": "immutable edition and freeze design adapted in separate state",
+    "classic_bitget": "funding lineage and quality concepts adapted without package dependency",
+    "polars": "existing runtime dependency used",
+    "ccxt": "optional offline capability and exact-input comparison",
+    "hftbacktest": "feed qualification and native event/NPZ preparation; engine acceptance remains conditional"
+  },
+  "not_run": [
+    "CI",
+    "PR/main merge",
+    "backup restore drill",
+    "completed 24-hour observation",
+    "30-day evidence",
+    "hftbacktest engine/full-feed acceptance",
+    "actual execution/PnL acceptance",
+    "production activation of compatibility rollback release"
+  ],
+  "commit_policy": "only rollout map/docs scope; push this explicit branch; no main merge or CI",
+  "production_rollout": {
+    "status": "PASS",
+    "source_sha": "35de6f2dcf7d60d1704b3a6e1ae0ace5549ad9cf",
+    "source_release": "/home/tn/releases/prep-watchdeck/35de6f2",
+    "branch_push": "verified remote source SHA; final map/docs push recorded by completion commit",
+    "migration": {
+      "at": "2026-10-09T15:49:42.366392+09:00",
+      "before": {
+        "ready": false,
+        "current_version": 4,
+        "latest_version": 5,
+        "pending": 1
+      },
+      "migration": {
+        "applied": [
+          5
+        ],
+        "current_version": 5,
+        "pending": 0
+      },
+      "after": {
+        "ready": true,
+        "current_version": 5,
+        "latest_version": 5,
+        "pending": 0
+      }
+    },
+    "backup": {
+      "path": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/database/prep-watchdeck-market-20261009T064422Z.dump",
+      "sha256": "9aa968caf7333ed5cede3a30aa4a1367822a4a3378d1773df9b22969408b564d",
+      "archive_list_and_database": "PASS",
+      "restore_drill": "not_run"
+    },
+    "ranking_map": "/home/tn/releases/prep-watchdeck-ranking-maps/c0b276f328e1ad423f448bfa/initial-map.json",
+    "map_version": "c0b276f328e1ad423f448bfa",
+    "monitor": {
+      "checked_at": "2026-10-09T06:59:18.511139+00:00",
+      "matched": 1096,
+      "version_mismatch": 0,
+      "operational_failures": [],
+      "warnings": [
+        "candleRecovery_incomplete",
+        "candleRecovery_native_history_missing",
+        "endpointRecovery_incomplete",
+        "native_metric_unavailable"
+      ]
+    },
+    "protected_workspace_and_selection_hashes": "unchanged",
+    "raw_evidence_root": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223",
+    "rollback": {
+      "prepared_release": "/home/tn/releases/prep-watchdeck/5b82a7d-schema5-compat",
+      "validation": {
+        "schema5_health": "PASS",
+        "post_finalization_late_update": "PASS; unknown finalization stays NULL",
+        "market_pytest": {
+          "passed": 219,
+          "failed": 0,
+          "seconds": 19.03,
+          "isolated_postgres": true
+        },
+        "ruff_check": "PASS",
+        "ruff_format": "PASS",
+        "pyrefly": "0 errors; 18 suppressed; 6 warnings not shown"
+      },
+      "activated": false,
+      "unpatched_previous_source_compatible": false,
+      "procedure": "stop research, explicitly use prepared compatible Market override, retain new maintenance/monitor, review any fresh catalog/map differences; preserve schema/data; no automatic restore",
+      "backup_before_activation_required": true
+    },
+    "maintenance": {
+      "status": "PASS",
+      "completed_at": "2026-10-09T16:08:17+09:00",
+      "funding_sync": {
+        "attempted": 178,
+        "succeeded": 178,
+        "written": 356,
+        "failures": 0
+      },
+      "policy": "existing scheduled retention ran; no manual purge added"
+    },
+    "delivery_receipt": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/delivery-receipt.json"
+  },
+  "initial_data_capture": {
+    "status": "STARTED_WITH_QUALITY_GAPS",
+    "unit": "prep-watchdeck-research-bitget-btc-20261009.service",
+    "root": "/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550",
+    "target": {
+      "instrument_id": "bitget:BTCUSDT",
+      "version_id": 1
+    },
+    "samples": 1440,
+    "interval_seconds": 60,
+    "maximum_duration_hours": 24,
+    "restart": "no",
+    "pilot": {
+      "at": "2026-10-09T06:53:47.888595+00:00",
+      "kind": "pilot",
+      "acceptance": "PARTIAL",
+      "snapshot": "/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550/pilot/snapshots/cd757e14128c49989b85021e9d203545",
+      "snapshot_sha256": "1e3afe2a707fee932a4e05e350241505220523b0e695ac57420e2778baec934a",
+      "replay_valid": true,
+      "qualified_for_ab": false,
+      "observed_evidence": true,
+      "reasons": [
+        "research_candle_gap",
+        "research_state_gap"
+      ],
+      "observations": 3,
+      "quality": "/home/tn/.local/share/prep-watchdeck-research/20261009-bitget-btc-v1-1550/pilot/quality/6e846dae6f7e4a7fb4ae3e460d5a12e9"
+    },
+    "cost_basis": "explicit sensitivity scenario; not observed fee/slippage/funding",
+    "finalization": "automatic immutable snapshot, quality, fixed trial/result and daily-outcome JSON after stop",
+    "long_term_acceptance": "pending",
+    "finalizer": {
+      "installed_at": "2026-10-09T16:13:33.142632+09:00",
+      "finalizer_sha256": "8045f8df7014836401ec6e85e39b24fbbc7bfe750238141bc5c40433a2a995fa",
+      "regression": "short qualified capture + oom-kill formerly PASS; now PARTIAL",
+      "green_cases": 6,
+      "capture_service_restarted": false,
+      "frozen_evaluator_or_rules_changed": false,
+      "systemd_environment_check": "PASS: normal exit produces PASS; actual SIGKILL produces PARTIAL with killed/KILL",
+      "systemd_signal_evidence": "/home/tn/.local/share/prep-watchdeck-research-rollouts/20261009-154223/finalizer-systemd-signal-validation.json"
+    },
+    "live_check": {
+      "at": "2026-10-09T16:18:47.155030+09:00",
+      "receipts": 25,
+      "first_available": "2026-10-09T06:54:04.788666Z",
+      "last_available": "2026-10-09T07:18:04.784629Z",
+      "recorded_gap_reasons": [
+        "research_candle_gap",
+        "research_state_gap"
+      ],
+      "research_state_bytes": 277280,
+      "service_restart_count": "0"
+    }
+  }
+}

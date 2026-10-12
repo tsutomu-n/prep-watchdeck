@@ -1,14 +1,14 @@
 # prep-watchdeck 現行ドキュメント
 
-timestamp="2026-10-02(金)_21:49 JST"
+timestamp="2026-10-12(月)_17:28 JST"
 - 作成: `2026-06-22T06:38:13+09:00`
-- 更新: `2026-10-02T21:49:01+09:00`
-- 検証: `2026-10-02T21:49:01+09:00`
+- 更新: `2026-10-12T17:28:00+09:00`
+- 検証: `2026-10-12T17:28:00+09:00`
 - 状態: `現行`
 
 ---
 
-このindexは、現行production runtimeと、今後のWatchdeck製品境界を分けて案内する。
+このindexは、Repositoryの現行仕様、稼働中のproduction runtime、将来の製品境界を区別して案内する。
 
 開発中のMarkets workspaceは[実装計画](plans/active/markets-workspace/GOAL.md)と[再開記録](plans/active/markets-workspace/RESUME.md)を参照する。稼働releaseへの反映は別工程。
 保存足の品質機能は[実装計画](plans/active/prep-quality-completion/GOAL.md)と[再開記録](plans/active/prep-quality-completion/RESUME.md)、[全体受入台帳](plans/active/prep-quality-completion/acceptance.json)、[Audit受入台帳](plans/active/prep-quality-completion/audit-acceptance.json)を参照する。
@@ -18,12 +18,13 @@ timestamp="2026-10-02(金)_21:49 JST"
 
 - [product-boundary.md](current/product-boundary.md): **製品境界と将来拡張の最優先正本**
 - [0012 Product evolution boundary](decisions/0012-product-evolution-boundary.md): 製品境界更新の設計判断
-- [user-manual.md](current/user-manual.md): 現行production UIの操作・読み方
-- [overview.md](current/overview.md): 現在の製品価値とproduction実装範囲
+- [user-manual.md](current/user-manual.md): RepositoryのUI操作・読み方。稼働版への反映は別途確認
+- [overview.md](current/overview.md): 製品価値とRepositoryの実装範囲
 - [architecture.md](current/architecture.md): 現行market-core、Postgres、Parquet、artifact、Webの境界
 
 ## 現行runtime仕様
 
+- [/home/tn/projects/prep-watchdeck/docs/current/research.md](current/research.md): 独立研究reader、固定A/B、品質/外部入力検査
 - [data-contracts.md](current/data-contracts.md): 現在実装済みのidentity、保存単位、schema、API
 - [ui-workflow.md](current/ui-workflow.md): 現在実装済みのUniverse、selection、Chart、depth/trade、Past Note
 - [operations.md](current/operations.md): 専用Postgres、systemd、state、maintenance、backup、rollback
@@ -47,7 +48,19 @@ localhost配置等は現在実装を説明する。`product-boundary.md`に反�
 Decision 0002およびDecision 0003、0004、0006〜0010は当時の設計履歴として参照できるが、Decision 0012と
 現行product boundaryに反する部分を将来機能の禁止根拠にしない。
 
+- [/home/tn/projects/prep-watchdeck/docs/decisions/0016-reader-observed-research.md](decisions/0016-reader-observed-research.md): Reader観測版と固定比較の証拠境界。
+
 ## 実装計画
+
+
+- [残件の実装・運転・実利用受入](plans/active/remaining-completion/PLAN.md): 理由診断、容量、研究終了処理、Recovery、50/100段階受入、outcomeと長期評価。
+
+- [MEXC 100銘柄への段階拡大](plans/active/mexc-100-scale/PLAN.md): Funding/共有予算/Discovery最適化、銘柄審査、2h/24h運転と容量受入。
+
+
+- [Research remediation](plans/active/research-remediation/GOAL.md): 将来観測、時点再生、固定A/Bとデータ品質。[実装手順](plans/active/research-remediation/PLAN.md)。
+- [Attention Core](plans/active/attention-core/GOAL.md): F0–F7 source実装済み。未実行のF8 capacity・production/実データ受入を再開対象とする。
+- [Decision 0015](decisions/0015-attention-core.md): read-only inputとmanual selection保全。
 
 ランキング・チャート統合とD05稼働受入は完了した。現行の運用・検証正本へ結果を反映し、
 完了planは削除した。過去の要求・試行・証拠台帳はPR #15のGit履歴で参照する。

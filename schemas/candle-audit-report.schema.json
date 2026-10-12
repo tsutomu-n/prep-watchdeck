@@ -431,7 +431,8 @@
           "enum": [
             "bitget",
             "hyperliquid",
-            "aster"
+            "aster",
+            "mexc"
           ],
           "title": "Venue",
           "type": "string"
@@ -504,7 +505,7 @@
       "properties": {
         "venueInstrumentId": {
           "maxLength": 160,
-          "pattern": "^(bitget|hyperliquid|aster):[^\\x00-\\x20\\x7f]+$",
+          "pattern": "^(bitget|hyperliquid|aster|mexc):[^\\x00-\\x20\\x7f]+$",
           "title": "Venueinstrumentid",
           "type": "string"
         },

@@ -9,13 +9,40 @@ import type { FavoriteTarget, UserWorkspace } from "../../src/lib/server/user-wo
 import { rankingFixture } from "../../src/lib/market/ranking-test-fixture";
 
 type Original = RankedRow["originals"][number];
-type MapRow = { id: string; asset: string; originals: Original[] };
-const mapping = JSON.parse(readFileSync(resolve(process.cwd(), "../ranking-core/data/initial-map.json"), "utf8")) as { rows: MapRow[] };
+type LogoFixtureRow = { id: string; asset: string; originals: Original[] };
+// Contract snapshot reviewed for the logo bindings' map c1381b1848be8f107fcacfea.
+// Current ranking-map revisions are separate identities and may correctly have no reviewed logo.
+const reviewedLogoFixtures: LogoFixtureRow[] = [
+  { id: "crypto:BTC", asset: "BTC", originals: [
+    { venue: "aster", instrumentId: "aster:BTCUSDT", versionId: 640, symbol: "BTCUSDT", baseAsset: "BTC", multiplier: 1 },
+    { venue: "bitget", instrumentId: "bitget:BTCUSDT", versionId: 1, symbol: "BTCUSDT", baseAsset: "BTC", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:BTC", versionId: 463, symbol: "BTC", baseAsset: "BTC", multiplier: 1 }
+  ] },
+  { id: "crypto:ETH", asset: "ETH", originals: [
+    { venue: "aster", instrumentId: "aster:ETHUSDT", versionId: 641, symbol: "ETHUSDT", baseAsset: "ETH", multiplier: 1 },
+    { venue: "bitget", instrumentId: "bitget:ETHUSDT", versionId: 2, symbol: "ETHUSDT", baseAsset: "ETH", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:ETH", versionId: 464, symbol: "ETH", baseAsset: "ETH", multiplier: 1 }
+  ] },
+  { id: "crypto:SOL", asset: "SOL", originals: [
+    { venue: "aster", instrumentId: "aster:SOLUSDT", versionId: 643, symbol: "SOLUSDT", baseAsset: "SOL", multiplier: 1 },
+    { venue: "bitget", instrumentId: "bitget:SOLUSDT", versionId: 7643, symbol: "SOLUSDT", baseAsset: "SOL", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:SOL", versionId: 467, symbol: "SOL", baseAsset: "SOL", multiplier: 1 }
+  ] },
+  { id: "crypto:SHIB", asset: "SHIB", originals: [
+    { venue: "aster", instrumentId: "aster:1000SHIBUSDT", versionId: 650, symbol: "1000SHIBUSDT", baseAsset: "1000SHIB", multiplier: 1000 },
+    { venue: "bitget", instrumentId: "bitget:SHIBUSDT", versionId: 26, symbol: "SHIBUSDT", baseAsset: "SHIB", multiplier: 1 },
+    { venue: "hyperliquid", instrumentId: "hyperliquid:kSHIB", versionId: 493, symbol: "kSHIB", baseAsset: "kSHIB", multiplier: 1000 }
+  ] }
+];
+const unreviewedLogoOriginal: Original = {
+  venue: "aster", instrumentId: "aster:AIUSDT", versionId: 9538, symbol: "AIUSDT", baseAsset: "AI", multiplier: 1
+};
+const logoManifest = JSON.parse(readFileSync(resolve(process.cwd(), "src/lib/assets/asset-logos.json"), "utf8")) as { logos: { path: string }[] };
 const runtimeRoot = resolve(process.cwd(), "../../var/tmp/e2e/runtime");
 const errors = new WeakMap<Page, string[]>();
 
-function mapped(asset: string): MapRow {
-  const row = mapping.rows.find(entry => entry.asset === asset);
+function reviewedLogoFixture(asset: string): LogoFixtureRow {
+  const row = reviewedLogoFixtures.find(entry => entry.asset === asset);
   if (!row) throw new Error(`Missing reviewed fixture identity: ${asset}`);
   return row;
 }
@@ -59,11 +86,11 @@ async function prepare(page: Page, unknownVersion = false) {
       ? route.fallback() : route.abort();
   });
   const generatedAt = new Date().toISOString();
-  const btc = mapped("BTC");
+  const btc = reviewedLogoFixture("BTC");
   const originals = btc.originals.filter(entry => entry.venue === "bitget" || entry.venue === "hyperliquid")
     .map(entry => ({ ...entry, versionId: entry.versionId + (unknownVersion ? 900000 : 0) }));
-  const shib = mapped("SHIB").originals.find(entry => entry.venue === "aster")!;
-  const ai = mapped("AI").originals[0];
+  const shib = reviewedLogoFixture("SHIB").originals.find(entry => entry.venue === "aster")!;
+  const ai = unreviewedLogoOriginal;
   const bundle: MarketArtifactBundle = {
     universe: { schemaVersion: 1, generatedAt, status: "ready", qualityReasons: [],
       parityAssumption: { code: "usd_usdc_usdt_reference_only", appliedTo: "reference_mark_median_only",
@@ -84,7 +111,7 @@ async function prepare(page: Page, unknownVersion = false) {
   await Promise.all(Object.entries({ "universe-snapshot": bundle.universe, "market-chart": bundle.chart,
     "selected-market": bundle.selected, "service-state": bundle.service }).map(([name, payload]) =>
     writeFile(resolve(runtimeRoot, "artifacts", `${name}.json`), JSON.stringify(payload))));
-  let workspace: UserWorkspace = { schemaVersion: 1, revision: 0, favorites: [], savedViews: [] };
+  let workspace: UserWorkspace = { schemaVersion: 2, revision: 0, favorites: [], savedViews: [], pins: [] };
   await page.route("**/api/user-workspace", async route => {
     if (route.request().method() === "POST") {
       const request = route.request().postDataJSON() as { target: FavoriteTarget; enabled: boolean };
@@ -103,7 +130,7 @@ async function prepare(page: Page, unknownVersion = false) {
   await page.route("**/api/rankings?*", async route => {
     const payload = rankingFixture(new URL(route.request().url()).searchParams);
     for (const row of payload.rows) {
-      const identity = mapping.rows.find(entry => entry.asset === row.asset);
+      const identity = reviewedLogoFixtures.find(entry => entry.asset === row.asset);
       if (identity) { row.id = identity.id; row.originals = identity.originals; }
       if (row.asset === "BTC" && unknownVersion) row.originals = originals;
     }
@@ -117,18 +144,29 @@ async function showList(page: Page) {
   if (await back.isVisible()) await back.click();
 }
 
-async function verifiedLogo(icon: Locator, size: number) {
+async function expectLogoFrame(icon: Locator, size: number) {
+  await expect(icon).toHaveCSS("width", `${size}px`);
+  await expect(icon).toHaveCSS("height", `${size}px`);
+  const scaled = await icon.evaluate(element =>
+    document.documentElement.dataset.layout === "ultra" &&
+    matchMedia("(max-width: 960px)").matches &&
+    element.closest(".ranking-page .asset-icon-slot") !== null);
+  const displayedSize = scaled ? size * 0.8 : size;
+  const box = await icon.boundingBox();
+  expect(box?.width).toBeCloseTo(displayedSize, 2);
+  expect(box?.height).toBeCloseTo(displayedSize, 2);
+}
+
+async function verifiedLogo(icon: Locator, size: number, assetId = "crypto:BTC") {
   await expect(icon).toHaveAttribute("data-logo-state", "verified");
-  await expect(icon).toHaveAttribute("data-asset-id", "crypto:BTC");
+  await expect(icon).toHaveAttribute("data-asset-id", assetId);
   await expect(icon).toHaveAttribute("aria-hidden", "true");
   const image = icon.locator("img");
   await expect(image).toHaveAttribute("alt", "");
   await expect.poll(() => image.evaluate(node => (node as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   const src = await image.getAttribute("src");
   expect(src).toMatch(/^\/asset-logos\//);
-  const box = await icon.boundingBox();
-  expect(box?.width).toBe(size);
-  expect(box?.height).toBe(size);
+  await expectLogoFrame(icon, size);
   return src;
 }
 
@@ -139,12 +177,16 @@ test.afterEach(async ({ page }) => {
   expect(errors.get(page) ?? [], "ブラウザの未処理例外").toEqual([]);
 });
 
-test("確認済みロゴはランキング・詳細・取引所別・お気に入りで同じ資産を示す", async ({ page }) => {
+test("確認済みロゴはランキング・詳細・取引所別・お気に入りで同じ資産を示す", async ({ page }, testInfo) => {
   const probe = await prepare(page);
   await page.goto("/rankings?includeUnranked=1");
   const row = page.locator('[data-testid="ranking-row"][data-asset="BTC"]');
   await expect(row).toBeVisible();
   const logo = await verifiedLogo(row.getByTestId("asset-icon"), 22);
+  for (const asset of ["ETH", "SOL"]) {
+    const addedRow = page.locator(`[data-testid="ranking-row"][data-asset="${asset}"]`);
+    expect(await verifiedLogo(addedRow.getByTestId("asset-icon"), 22, `crypto:${asset}`)).not.toBe(logo);
+  }
   await expect(row.locator(".select-row")).toContainText("BTC");
   const missing = page.locator('[data-testid="ranking-row"][data-asset="MISSING"]');
   await expect(missing.getByTestId("asset-icon")).toHaveAttribute("data-logo-state", "fallback");
@@ -168,12 +210,28 @@ test("確認済みロゴはランキング・詳細・取引所別・お気に�
   await expect(page.locator('button.instrument-select[data-instrument-id="aster:AIUSDT"]').getByTestId("asset-icon")).toHaveAttribute("data-logo-state", "fallback");
   await expect(page.locator('button.instrument-select[data-instrument-id="aster:1000SHIBUSDT"]')).toContainText("1000SHIB");
   await expect(page.locator('button.instrument-select[data-instrument-id="aster:1000SHIBUSDT"]')).toContainText("aster · 1000SHIBUSDT");
+  await verifiedLogo(page.locator('button.instrument-select[data-instrument-id="aster:1000SHIBUSDT"]').getByTestId("asset-icon"), 22, "crypto:SHIB");
   await page.getByRole("button", { name: "BTC bitgetをお気に入り登録", exact: true }).click();
   await page.getByLabel("お気に入りのみ", { exact: true }).check();
   await expect(page.locator("button.instrument-select")).toHaveCount(1);
   expect(await verifiedLogo(native.getByTestId("asset-icon"), 22)).toBe(logo);
   expect(probe.externalRequests).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto("/asset-logos/credits.html");
+  const images = page.locator("main img");
+  await expect(images).toHaveCount(logoManifest.logos.length);
+  // Decode every actual local image, including those outside the ranking fixture.
+  await images.evaluateAll(elements => Promise.all(elements.map(element => (element as HTMLImageElement).decode())));
+  expect(await images.evaluateAll(elements => elements.every(element => (element as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  const paths = await images.evaluateAll(elements => elements.map(element => element.getAttribute("src")));
+  expect(paths.sort()).toEqual(logoManifest.logos.map(entry => entry.path).sort());
+  await expect(page.getByText("MIT License 全文", { exact: true })).toBeVisible();
+  for (const colorScheme of ["dark", "light"] as const) {
+    await page.emulateMedia({ colorScheme });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.screenshot({ path: testInfo.outputPath(`asset-logos-${colorScheme}.png`), fullPage: true });
+  }
+  expect(probe.externalRequests).toEqual([]);
 });
 
 async function geometry(row: Locator) {
@@ -202,7 +260,7 @@ test("ロゴの404でも行と数値の位置が変わらず選択できる", as
   await expect(row.locator(".select-row")).toContainText("BTC");
   const after = await geometry(row);
   expect(after).toEqual(before);
-  expect(after.frame?.width).toBe(22); expect(after.frame?.height).toBe(22);
+  await expectLogoFrame(icon, 22);
   const viewport = page.viewportSize()!;
   for (const numeric of [after.change!, after.turnover!]) {
     expect(numeric.x).toBeGreaterThanOrEqual(0);

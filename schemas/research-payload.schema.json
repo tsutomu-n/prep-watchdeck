@@ -1,0 +1,99 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "evidence_kind": {
+      "enum": [
+        "observed",
+        "synthetic"
+      ],
+      "title": "Evidence Kind",
+      "type": "string"
+    },
+    "snapshot_at": {
+      "format": "date-time",
+      "title": "Snapshot At",
+      "type": "string"
+    },
+    "window_start": {
+      "format": "date-time",
+      "title": "Window Start",
+      "type": "string"
+    },
+    "window_end": {
+      "format": "date-time",
+      "title": "Window End",
+      "type": "string"
+    },
+    "instrument": {
+      "additionalProperties": true,
+      "title": "Instrument",
+      "type": "object"
+    },
+    "groups": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "maxItems": 20000,
+      "title": "Groups",
+      "type": "array"
+    },
+    "capabilities": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "maxItems": 200,
+      "title": "Capabilities",
+      "type": "array"
+    },
+    "candles": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "maxItems": 20000,
+      "title": "Candles",
+      "type": "array"
+    },
+    "states": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "maxItems": 20000,
+      "title": "States",
+      "type": "array"
+    },
+    "funding": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "maxItems": 20000,
+      "title": "Funding",
+      "type": "array"
+    }
+  },
+  "required": [
+    "evidence_kind",
+    "snapshot_at",
+    "window_start",
+    "window_end",
+    "instrument",
+    "groups",
+    "capabilities",
+    "candles",
+    "states",
+    "funding"
+  ],
+  "title": "ResearchPayload",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

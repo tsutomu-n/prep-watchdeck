@@ -32,12 +32,19 @@ def extract_roster(path: Path) -> dict[str, Any]:
     if not isinstance(payload.get("items"), list):
         raise ValueError("universe roster has no items")
     entries = []
+    market_data_issues: list[str] = []
+    quality_known = True
     for item in payload["items"]:
         if item.get("active") is not True or item.get("marketType") != "linear_perpetual":
             continue
-        if item.get("venue") not in ("bitget", "hyperliquid", "aster"):
+        if item.get("venue") not in ("bitget", "hyperliquid", "aster", "mexc"):
             raise ValueError("unexpected original venue")
         entries.append({name: item[name] for name in IDENTITY_FIELDS})
+        quality = item.get("quality")
+        if quality not in ("ready", "partial", "stale", "unavailable"):
+            quality_known = False
+        elif quality != "ready":
+            market_data_issues.append(item["venueInstrumentId"])
     entries.sort(key=lambda item: item["venueInstrumentId"])
     if not entries or len({item["venueInstrumentId"] for item in entries}) != len(entries):
         raise ValueError("empty or duplicate original roster")
@@ -45,8 +52,11 @@ def extract_roster(path: Path) -> dict[str, Any]:
         "sourcePath": str(resolved),
         "generatedAt": payload["generatedAt"],
         "sourceStatus": payload["status"],
+        "sourceQualityReasons": payload.get("qualityReasons", []),
+        "sourceCatalogCount": len(payload["items"]),
         "items": entries,
         "catalogFingerprint": content_digest(entries),
+        "marketDataIssueIds": sorted(market_data_issues) if quality_known else None,
     }
 
 

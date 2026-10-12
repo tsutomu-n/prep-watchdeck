@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 from datetime import UTC, datetime, timedelta
+from typing import Any, cast
 
 import psycopg
 import pytest
@@ -88,6 +89,93 @@ def test_later_endpoint_correction_recomputes_without_cached_values() -> None:
     assert after.oi_change["15m"].value < before.oi_change["15m"].value
 
 
+@pytest.mark.parametrize(
+    "reason,expected",
+    [
+        ("official_contract_unconfirmed", "official_contract_unconfirmed"),
+        (None, "source_capability_unavailable"),
+    ],
+)
+def test_unavailable_oi_capability_preserves_null_and_reason(reason, expected) -> None:
+    now = datetime(2026, 9, 28, 12, 6, 30, tzinfo=UTC)
+    source = dict(row(now), oi_capability_available=False, oi_capability_reason=reason)
+    source["l_oi_base"] = None
+    result = build_market_metrics([source], now=now)
+    metric = result.rows[0]
+    for value in metric.oi_change.values():
+        assert value.availability == "unsupported"
+        assert value.reason_code == expected
+        assert value.value is None
+        assert value.start_value is None and value.end_value is None
+    assert metric.trade_change["15m"].value == pytest.approx(10)
+    assert metric.venue_instrument_id == "bitget:BTCUSDT"
+    assert metric.venue_instrument_version_id == 7
+    assert result.candle_cutoff == datetime(2026, 9, 28, 12, 3, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("available", [True, None])
+def test_missing_oi_stays_missing_without_unavailable_capability(available) -> None:
+    now = datetime(2026, 9, 28, 12, 6, 30, tzinfo=UTC)
+    source = dict(
+        row(now),
+        l_oi_base=None,
+        oi_capability_available=available,
+        oi_capability_reason="official_contract_unconfirmed",
+    )
+    metric = build_market_metrics([source], now=now).rows[0]
+    for value in metric.oi_change.values():
+        assert value.availability == "missing"
+        assert value.reason_code == "endpoint_missing"
+        assert value.value is None
+
+
+@pytest.mark.parametrize("future", [False, True])
+def test_snapshot_completion_clock_preserves_query_cutoff_and_future_evidence(future) -> None:
+    from contextlib import nullcontext
+
+    started = datetime(2026, 10, 10, 1, 34, 59, 950000, tzinfo=UTC)
+    completed = started + timedelta(milliseconds=200)
+    observed = started + timedelta(milliseconds=300 if future else 100)
+    source = row(started)
+    source["c_end_observed_at"] = observed
+
+    class Cursor:
+        fetched = False
+
+        def execute(self, query, params):
+            assert params == (candle_cutoff(started),) * 4
+            return self
+
+        def fetchall(self):
+            self.fetched = True
+            return [source]
+
+    cursor = Cursor()
+
+    class Connection:
+        def transaction(self):
+            return nullcontext()
+
+        def execute(self, query):
+            assert query == "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY"
+
+        def cursor(self, **kwargs):
+            return nullcontext(cursor)
+
+    def clock():
+        assert cursor.fetched
+        return completed
+
+    result = read_market_metrics(cast(Any, Connection()), now=started, clock=clock)
+    assert result.generated_at == completed
+    assert result.candle_cutoff == candle_cutoff(started) != candle_cutoff(completed)
+    metric = result.rows[0].trade_change["15m"]
+    assert metric.end_at == candle_cutoff(started)
+    assert metric.end_observed_at == observed
+    assert metric.availability == ("missing" if future else "available")
+    assert metric.reason_code == ("future_timestamp" if future else None)
+
+
 def seed_metrics_database(connection, now):
     """Shared isolated SQL fixture; timestamps describe observations, not DB commits."""
     cutoff = candle_cutoff(now)
@@ -161,7 +249,7 @@ def test_metrics_query_uses_migrated_schema_without_writing() -> None:
             now = datetime(2026, 9, 28, 12, 6, 30, tzinfo=UTC)
             cutoff = candle_cutoff(now)
             version_id, raw_id = seed_metrics_database(connection, now)
-            artifact = read_market_metrics(connection, now=now)
+            artifact = read_market_metrics(connection, now=now, clock=lambda: now)
             assert artifact.metric_version == "native-endpoints-v1"
             assert len(artifact.rows) == 1
             assert artifact.rows[0].oi_change["15m"].value == pytest.approx(10)
@@ -171,7 +259,7 @@ def test_metrics_query_uses_migrated_schema_without_writing() -> None:
                 "close_price=95 WHERE venue_instrument_version_id=%s AND bucket_at=%s",
                 (version_id, cutoff - timedelta(minutes=1)),
             )
-            revised = read_market_metrics(connection, now=now)
+            revised = read_market_metrics(connection, now=now, clock=lambda: now)
             assert revised.rows[0].trade_change["15m"].value == pytest.approx(-5)
             connection.execute(
                 "INSERT INTO venue_instrument_versions "
@@ -184,7 +272,7 @@ def test_metrics_query_uses_migrated_schema_without_writing() -> None:
                 ("c" * 64, now - timedelta(days=2), raw_id),
             )
             started = time.perf_counter()
-            full_universe = read_market_metrics(connection, now=now)
+            full_universe = read_market_metrics(connection, now=now, clock=lambda: now)
             elapsed = time.perf_counter() - started
             assert len(full_universe.rows) == 1201
             assert elapsed < 10
@@ -380,7 +468,7 @@ def test_current_version_does_not_splice_oi_or_infer_unknown_quantity(isolated_m
         "FROM latest_market_state WHERE venue_instrument_version_id=%s",
         (replacement, version),
     )
-    result = read_market_metrics(connection, now=now)
+    result = read_market_metrics(connection, now=now, clock=lambda: now)
     assert len(result.rows) == 1
     assert result.rows[0].venue_instrument_version_id == replacement
     assert result.rows[0].oi_change["15m"].value is None
@@ -391,7 +479,50 @@ def test_current_version_does_not_splice_oi_or_infer_unknown_quantity(isolated_m
         "venue_instrument_version_id=%s",
         (replacement,),
     )
-    assert read_market_metrics(connection, now=now).rows[0].oi_change["15m"].value is None
+    assert (
+        read_market_metrics(connection, now=now, clock=lambda: now).rows[0].oi_change["15m"].value
+        is None
+    )
+
+
+def test_metrics_query_tracks_saved_oi_capability(isolated_metrics_database):
+    _, connection = isolated_metrics_database
+    now = datetime.now(UTC)
+    version, _ = seed_metrics_database(connection, now)
+    connection.execute(
+        "INSERT INTO capabilities "
+        "(venue, capability, available, source_kind, observed_at, details) VALUES "
+        "('bitget', 'funding', true, 'native_rest', %s, '{}'), "
+        "('bitget', 'open_interest', false, 'native_rest', %s, "
+        '\'{"reason":"official_contract_unconfirmed"}\')',
+        (now, now),
+    )
+    unsupported = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert len(unsupported.rows) == 1
+    for value in unsupported.rows[0].oi_change.values():
+        assert value.availability == "unsupported"
+        assert value.reason_code == "official_contract_unconfirmed"
+        assert value.value is None
+    assert unsupported.rows[0].trade_change["15m"].value == pytest.approx(10)
+    connection.execute(
+        "UPDATE capabilities SET available=true WHERE venue='bitget' AND capability='open_interest'"
+    )
+    supported = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert supported.rows[0].oi_change["15m"].value == pytest.approx(10)
+    connection.execute(
+        "UPDATE latest_market_state SET open_interest_base=NULL "
+        "WHERE venue_instrument_version_id=%s",
+        (version,),
+    )
+    missing = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert missing.rows[0].oi_change["15m"].availability == "missing"
+    assert missing.rows[0].oi_change["15m"].reason_code == "endpoint_missing"
+    connection.execute(
+        "DELETE FROM capabilities WHERE venue='bitget' AND capability='open_interest'"
+    )
+    unknown = read_market_metrics(connection, now=now, clock=lambda: now)
+    assert unknown.rows[0].oi_change["15m"].availability == "missing"
+    assert unknown.rows[0].oi_change["15m"].reason_code == "endpoint_missing"
 
 
 def test_real_statement_timeout_releases_projection_connection(isolated_metrics_database, tmp_path):
@@ -434,10 +565,10 @@ def test_projection_snapshot_is_repeatable_read_only(isolated_metrics_database, 
     _, connection = isolated_metrics_database
     original = metrics.build_market_metrics
 
-    def inspect(rows, *, now):
+    def inspect(rows, *, now, cutoff):
         assert connection.execute("SHOW transaction_read_only").fetchone()[0] == "on"
         assert connection.execute("SHOW transaction_isolation").fetchone()[0] == "repeatable read"
-        return original(rows, now=now)
+        return original(rows, now=now, cutoff=cutoff)
 
     monkeypatch.setattr(metrics, "build_market_metrics", inspect)
     metrics.read_market_metrics(connection, now=datetime.now(UTC))

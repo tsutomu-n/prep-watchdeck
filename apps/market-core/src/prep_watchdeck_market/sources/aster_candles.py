@@ -46,4 +46,5 @@ def parse_aster_candle(payload: object, *, observed_at: datetime) -> Candle1m | 
         finality="confirmed",
         source_at=timestamp_milliseconds(event.get("E"), field_name="Aster event time"),
         observed_at=observed_at,
+        finalized_at=observed_at,
     )

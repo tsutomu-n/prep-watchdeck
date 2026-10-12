@@ -111,8 +111,8 @@ def test_late_correction_and_retention_never_reconstruct_published_input(store: 
     assert rows[0].asset == "BBB" and rows[0].rank_change.delta == 1
     for minute in range(50):
         current.response("daily", f"00:{minute:02}", "turnover", minute, current.generated_at)
-    assert len(current.cache) == 32
-    assert current.previous is not None and len(current.previous.cache) <= 32
+    assert len(current.cache) == 8
+    assert current.previous is not None and len(current.previous.cache) <= 8
     assert current.previous.previous is None
     third = Generation(
         current.mapping,

@@ -1,16 +1,16 @@
 # prep-watchdeck 現行データ契約
 
-timestamp="2026-10-02(金)_21:34 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T21:34:33+09:00`
-- 検証: `2026-10-02T21:34:33+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
 
 ## この文書の範囲
 
-この文書はRepositoryの3 Venue Perp実装のdata contractを記述する。稼働releaseの版と反映状況は別に確認する。
+この文書はRepositoryの4 Venue Perp実装のdata contractを記述する。稼働releaseの版と反映状況は別に確認する。
 現在のfield、Venue、artifact数、timeframe、retention等を将来の永久上限として扱わない。
 製品境界は[`product-boundary.md`](product-boundary.md)を正本とする。
 
@@ -21,6 +21,12 @@ timestamp="2026-10-02(金)_21:34 JST"
 - `groupId=crypto:<BASE>:linear-perp`
 - `mappingMethod=exact_base_heuristic`は、active、crypto、linear perpetual、base完全一致、base数量、
   multiplier 1、Venue内候補1件をすべて確認した場合だけ設定する
+- MEXCの`mappingMethod=verified_native_contract`は確認済みregistryとnative定義が一致する契約だけに設定する。
+  source registryは既存10件とnative-only追加40件、計50件の固定採用。`typeLabel=0`だけでcryptoと判定しない
+- native資産は確認済みでも他Venueとの同一性が未確認の場合、registry evidenceの`identity_scope=native_only`を保持し、
+  `groupId=native:mexc:<exact source symbol>:linear-perp`の単独groupを使う。取得可否を切り替えるflagではない。
+  他Venueの参考mark中央値・乖離率から分離し、単独の価格・OI・Chart・手動selection・板・約定は利用できる。
+  審査済み10/50/100件registryはdata bundleとして保持し、sourceの実効50件と稼働配置・受入段階を区別する。
 
 現行Perp coreではalias、`1000X`、同一Venue衝突、quantity unit不明、HIP-3、RWA、synthetic/RFQを
 自動group化しない。
@@ -32,6 +38,11 @@ timestamp="2026-10-02(金)_21:34 JST"
 
 - `markPrice`と`referencePrice`を分け、`referencePriceKind=index|oracle|none`を保持する
 - Fundingはraw、interval、nextFundingを保存し、interval確認時だけper-hourを公開する
+- MEXC Current Fundingはnullableな`fundingSourceAt`、`fundingObservedAt`、`fundingValidUntil`を持つ。
+  source/observedの90秒期限と次回決済時刻の最小が有効期限で、Ticker更新で延長しない。
+  独立保存は最新行と既存Ticker bucketのFundingだけを更新し、価格・OI・Ticker時刻・標本数を維持する。
+  L1保存で再結合したFundingも、対応するnative versionと取得時刻付きの原文を同じtransactionの
+  `raw_market_observations`（`dataset=funding_current`）へ保存する。Tickerの原文・hashとは区別する。
 - OIはraw値とraw unitを保持し、確認できる時だけbase/notionalへ派生する
 - 24h volumeはsource由来値とunitを保持する
 - source timestampがない場合はnullを維持する
@@ -45,6 +56,24 @@ Catalogの完全なraw payloadと版のdefinition hashは保全する。Bitget�
 新しい完全なcatalog原文は別raw payloadとして記録する。
 
 現行参考mark中央値以外でUSD/USDC/USDT parityを無条件に仮定しない。
+
+MEXC Catalogのquantityは`contracts`、`contract_multiplier=Decimal(contractSize)`は1契約当たりbase数量、
+`amount_step=volUnit`は契約枚数の刻み。OI・保存足volume・selected depth/tradeはexact versionの係数でbaseへ
+変換し、価格には掛けない。係数違いのL1・candle・selected観測を別versionへ流用しない。
+Fundingの符号、実際の`collectCycle`、次回時刻を保持し、8時間固定にしない。`amount24`等のquote売買代金を
+base数量から再推計しない。Webの直接取得足は係数を確認できないためbase volumeをnullにし、quote volumeを保持する。
+MEXCの完全raw Catalogを保存し、意味が変わらないと確認した表示・fee・leverage項目を版の比較から除外する。
+取引数量上限の`maxVol`・`limitMaxVol`、リスク枠の`riskBaseVol`・`riskIncrVol`、
+`riskLimitCustom`各entryの`maxVol`も、資産・価格単位・数量換算とは独立した設定として版の比較から除外する。
+`tagIdList`は非負整数だけの配列の場合、fieldの存在を保持してhash内で空配列へ投影する。
+表示タグ値の変更で版を分けず、欠損・不正な型・未知fieldは区別する。
+完全rawと既存versionのhashは保持し、risk tierのlevel・件数・順序・その他のfieldは比較を続ける。
+未知項目や資産・価格刻み・数量係数・上場lifecycleの変更は版を分ける。
+MEXC Fundingの取得失敗・期限切れ・決済通過・定義変更はFunding4値だけをnullにする。
+必須Ticker値・時刻・exact数量換算が正常な場合だけ`funding_only_partial:<reason>`を設定し、
+既存のactive・同cycle・120秒以内・2Venue以上・skew30秒以内等を満たせば参考mark比較に参加できる。
+一般的なpartialは参加しない。Migration 0006はlatest/minute stateへ3時刻列をnullableで追加し、
+旧行をbackfillしない。Parquet/fixtureは追加列を保持し、旧archiveの欠落列は未知のまま扱う。
 
 将来のranking/feature engineeringでは、意味、unit、window、timestamp、identityを確認できるfeatureについて
 正規化、集約、比較できる。比較不能な値を無理にscoreへ入れない。
@@ -70,7 +99,7 @@ readback/digest/checksum確認前に対応するhistoryを削除しない。
 
 ## 現行JSON read model
 
-現在は次のschemaを使う。
+基幹4 artifactは次のschemaを使う。任意のnative metrics/activityは別契約として下記に記す。
 
 - `schemas/universe-snapshot.schema.json`
 - `schemas/market-chart.schema.json`
@@ -112,6 +141,8 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 
 現行collector/artifactのfreshnessとwrite結果を持つ。Web process healthとmarket data qualityを混同しない。
 
+L1 collectorの`diagnostics`は任意の`persisted-l1-diagnostics-v1`で、cycle時刻と最大4 Venueの配列を持つ。各Venueは保存後のready/partial/unavailable件数、理由別件数、説明可能なpartial件数、最大8件のexact native ID/version・欠測field・source/observed時刻を持つ。収集終了の同一transactionで保存し、後続の独立Funding更新では変更しない。collector metricsのJSONBと公開artifactは表現形式を分け、公開objectは閉じたschemaを維持する。診断のない旧artifactも読める。配置は互換readerを先に更新する。
+
 ## 現行Selection command
 
 現在のWebは`control/selection.json`をlock付きatomic replaceする。
@@ -127,6 +158,9 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 ```
 
 現行validationはactive grouped instrument、timestamp、expiry等をfail-closedに確認する。
+保存済みselectionの再起動復元でも有効期限は最後のcommand heartbeatから15分であり、再起動や
+group membershipの再購読で延長しない。Venue取得が無効の間はselectionを開かず、有効化後に
+未期限切れの同じcommandを再評価できる。
 将来、単独instrument、複数selection、pinned/watch queue等の別command contractを追加できる。
 
 ## 現行Past Note
@@ -141,9 +175,14 @@ barはOHLC、volume、trade count、finality、source/observed時刻、complete�
 | method | path | 現行contract |
 | --- | --- | --- |
 | GET | `/api/market-data` | 現行artifact bundle、`no-store` |
+| GET | `/api/native-activity` | Bitget短時間activityの任意artifact。schema・意味整合性を検証し、未生成・不正は503 |
 | GET | `/api/chart-history?instrument=<id>&timeframe=<tf>&before=<ISO UTC>` | 選択Venueのnative足。beforeは排他的 |
 | GET | `/api/price-change?instrument=<id>&referenceTime=<HH:mm>` | 指定JST時刻基準の約定騰落率 |
 | GET | `/api/rankings` | 固定参照の独立ランキング。下記の期間・方向・下限で問い合わせ |
+| GET | `/api/discovery` | Attentionの固定条件・最新raw・episode読取。`assetId`最大4件、任意`generationId`、履歴`limit`最大50、cursor |
+| GET | `/api/discovery-summary` | 軽量な一覧・identity・generation/cutoff。raw/native treeを含まない |
+| GET / POST | `/api/user-workspace` | お気に入り・保存view・最大4比較pin。更新の競合と容量上限を検証 |
+| GET / POST | `/api/decisions` | Web所有の監視/見送りと表示根拠snapshot。条件付き・重複排除保存 |
 | POST | `/api/selection` | 許可済みlocal / Tailscale接続でselection write |
 | GET | `/api/market-past-notes?venueInstrumentId=...` | Past Note読取 |
 | POST | `/api/market-past-notes` | 許可済みlocal / Tailscale接続で保存 |
@@ -219,7 +258,7 @@ mapは元の全instrument ID・version、名簿fingerprint・確認時刻、共�
 原資産・数量倍率、固定参照のProvider・symbol・quote/settle・perpetual種別・revision、
 Widgetの別symbolと根拠を持つ。`verified / unsupported / review / out_of_scope`を区別する。
 `review`を対応済みとして価格取得せず、異なる原資産や数量を名前だけで結合しない。
-`ranking-map-v2`の行statusと`ranking-v3`応答の`mappingStatus`は、元の原資産同一性と
+`ranking-map-v2`の行statusと`ranking-v5`応答の`mappingStatus`は、元の原資産同一性と
 固定参照契約の採用資格を表す。元契約の`originals[].multiplier=null`は数量換算未確認であり、
 確認済み参照契約によるランキングを止めない。元数量を使う換算には利用できない。
 Widget symbolは独立に照合し、参照契約keyへ結び付ける。Widgetの`review`はChartだけを停止する。
@@ -236,6 +275,11 @@ Widget symbolは独立に照合し、参照契約keyへ結び付ける。Widget�
 旧map/APIのv1を自動変換せず、明示的な再審査・再生成を要する。map digestはschema世代も含み、
 新旧mapの順位差は比較不可となる。SQLite形式・metricVersion・計算式はこの改訂では変更しない。
 
+MEXC originalの`multiplier=1`は原資産の価格identityを表し、Marketの`contractSize`による数量換算とは別である。
+根拠はnative定義hash・raw entry hash・exact instrument/version・固定参照を結び付ける。
+同梱MEXC mapのversion scopeは隔離catalog captureであり、本番のSCD2 IDを保証しない。
+本番への採用には対象DBで取得したcurrent versionから再照合する。
+
 全行のTは同じUTC分境界。C(t)はtで終了する確定1分足の約定終値で、Mark・Indexは代入しない。
 15分・1時間は `(C(T)/C(T-w)-1)*100`、JST HH:mmはT以下で最後に到来した基準Aから
 `(C(T)/C(A)-1)*100`を計算する。売買代金は `[T-w,T)` または `[A,T)` の確定足のquote turnover合計。
@@ -248,17 +292,34 @@ Binanceはklineのquote asset volume、Bybitはturnoverを用いる。原資産�
 T=Aは`starting`とし、順位を作らない。
 
 `GET /api/rankings?period=15m&dailyReferenceJst=00:00&order=gainers&minTurnover=0` は
-独立APIの同一世代だけを返す。期間は`15m / 1h / daily`、順序は`gainers / losers / turnover`。
+独立APIの同一世代だけを返す。期間は`15m / 1h / 24h / daily`、順序は`gainers / losers / turnover`。
 応答はgeneration ID、map/metric version、T・A・生成時刻、件数と除外理由、全行を含む。
 `history_missing / source_delayed / source_unavailable / reference_invalid / invalid_data` と、
 mapの要確認・未対応・対象外、下限未満・方向対象外を分ける。最新Tから150秒を超えた結果は`stale`、
-名簿確認から24時間を超えた状態は`rosterStale`。古い値の時刻を新しく付け替えない。
-専用API未起動・初回世代待ち・不正な応答はWebで503、問い合わせ不正は400にする。
+名簿の照合が失敗した状態や確認期限を超えた状態は`rosterStale`。
+`rosterGeneratedAt`は審査済みsnapshotの時刻、または完全なcatalog取得と全identity/version一致を
+確認した最新catalogの観測時刻。後者はmapの`verifiedAt`や参照revisionを更新しない。
+必須の`rosterHealth`は`status`、`catalogObservedAt`、`sourceInstruments`、
+`addedInstrumentIds / removedInstrumentIds / changedInstrumentIds`、`marketDataIssueIds`を含む。
+`ready`は完全なcatalogと採用済み名簿の一致、`review_required`は名簿差分の確認待ちを示す。
+取得元の問題は`source_unavailable / source_stale / source_incomplete / source_invalid`、
+確認元の未設定は`unconfigured`。確認待ちでは新しいcatalog時刻と最後に一致した時刻を分ける。
+identity fingerprintだけが異なる場合も確認待ちとし、列挙したIDが全差分を表すとは限らない。
 
+元artifactとcatalog成功記録は30分以内、catalogはその`maxAgeSeconds`以内でなければならない。
+catalog成功件数はsnapshot全件数と一致し、成功記録の完了時刻はcatalog観測時刻と同じで、
+両artifactの生成時刻以前である必要がある。新しい成功記録を古いsnapshotへ流用しない。
+全体statusがpartialでも、品質警告が取引所L1だけであればcatalog照合を継続する。
+未知の警告、部分catalog、古い・不正な入力は拒否する。応答時にもcatalog観測から30分を超えれば
+`source_stale`へ変更し、現在の差分・価格品質を未確認へ戻す。最後の名簿一致から24時間も上限とする。
+`marketDataIssueIds`は同時に読んだ元Universeの価格品質がready以外のIDで、参照ランキングの価格品質とは別。
+空配列は確認対象なし、nullは未確認として画面に表示する。価格欠測を理由に採用済み名簿の一致判定を失敗させない。
+`/health`の名簿診断にも応答時の同じ期限切れ判定を適用する。
+専用API未起動・初回世代待ち・不正な応答はWebで503、問い合わせ不正は400にする。
 
 ### 順位比較と追加指標
 
-`metricVersion`は`trade-close-quote-turnover-analysis-v3`。応答の`previousGenerationId`と
+`metricVersion`は`trade-close-quote-turnover-analysis-v4`。応答の`previousGenerationId`と
 `previousCutoff`は比較元として保持した発行済み世代を示す。現在Tに対してT−60,000msの世代を、
 同じmap/metric version、期間、順序、下限、JST HH:mmで再計算する。JST可変期間の基準日時が
 切り替わる世代間は比較しない。初回とprocess再起動では比較元を持たず、保存済みsnapshotや
@@ -282,17 +343,82 @@ Webも取得停止時のclockで無効化する。過去世代の入力は後着
   範囲外の数値は`invalid_data`とし、0〜100への丸め込みで隠さない。
 
 high/lowと売買代金は世代作成時にSQLiteから一度読み、指標を固定する。Web/APIの読取り時には
-DBを再参照しない。SQLiteの表・保存期間は変更せず、指標は保存済みOHLCにも適用できる。
+DBを再参照しない。SQLiteの表は共通で、保存済みOHLCにも適用できる。
+
+### 昨日・一昨日の同時間帯との売買代金比較
+
+各行の`turnoverComparison`は、選択期間の`current / previousDay / twoDaysAgo`と
+`previousDayRatio / twoDaysAgoRatio`を持つ。各区間は`anchor / cutoff / quoteTurnover / status`を
+保持し、現在の[A,T)を24時間・48時間ずらした同じ長さで比較する。15分・1時間・24時間と、
+指定JST HH:mmからTまでの可変期間に対応する。値は同じ参照契約・revisionの確定1分足の
+USDT建てquote turnover合計であり、異なる銘柄、取引所、数量単位を混ぜない。
+
+現在をQ0、昨日をQ1、一昨日をQ2としてQ0/Q1、Q0/Q2を返す。期間内の全足がそろった場合だけ
+`ready`とし、足が1本でも欠ければ該当区間とその比較は`history_missing`。売買代金だけの比較に
+anchorで終了する足の終値は要求しない。長さ0は`starting`、参照を利用できない場合は
+`reference_unavailable`、非有限値等は`invalid_data`。実測の0は区間値として保持するが、
+分母0の倍率は`no_baseline`でnullにする。Q0=0かつ分母が正の場合は倍率0を返す。
+
+過去日の不足は現在の順位適格性や既存24時間平常比を失効させない。3日分の入力と必要な価格境界
+（4,321本）を世代作成時に固定し、前世代も後着訂正で書き換えない。SQLiteは4日と1分を保持する。mapから外れたreference keyも同じ時間retentionまで残し、collection対象からの退出だけで過去barを削除しない。
+比較は選択中の1期間分だけ返し、`windows`各期間へ同じ比較を重複格納しない。
 
 ### Markets workspaceの追加契約
 
-Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
+Ranking応答`ranking-v5`は同じgenerationの15分、1時間、直近24時間、指定JST HH:mmからの変化を`windows`に保持する。`dailyReferenceJst`は従来どおり指定時刻であり、`dayRangePosition`だけがJST 00:00基準である。画面のlocal filterとsortはサーバーの全体順位を再計算しない。
 
 `market-metrics.json`は既存4 artifactから独立した任意の読取laneで、`native-endpoints-v1`、`generationId`、`candleCutoff`、現行ID/version別の`oiChange`と`tradeChange`を保持する。数量OIは同一versionのL1 bucketの15分・1時間差。終値変化は全行共通cutoffの確定1分足の15分・1時間・24時間差であり、JST騰落率とは別の値である。180秒lagと300秒上限は設計初期値で、実データから測定した数値ではない。欠損や古い値を0へ置換しない。
 
+数量OIの`availability`は、保存済みの同Venueの`open_interest` capabilityがfalseなら`unsupported`とし、
+文字列の契約理由または`source_capability_unavailable`を`reasonCode`へ残す。capabilityがtrueまたは未確認の
+対象で終点が欠ける場合は`missing` / `endpoint_missing`のまま。unsupportedを0や取得失敗へ置き換えない。
+
 `GET /api/market-metrics`はartifactだけをschema検証して返す。未生成・不正は503、正常な古いartifactは元の時刻のまま返し、Browserで鮮度を判定する。`GET/POST /api/user-workspace`はfavoriteの望む状態と名前付きviewの条件付き更新を扱う。メモは読取bytesのSHA-256 tokenを条件に保存し、`context`を添付する保存ではNoteFile v2へ移る。旧v1項目も読み続ける。
 
+`user-workspace.json`の現行schemaVersionは2で、favorite最大200件・saved view最大20件に加え、
+exact target・episode ID・追加時刻・根拠snapshotを持つ`pins`を最大4件保持する。全体上限は64 KiB。
+原資産IDはUnicodeの文字・数字を保持し、比較取得と保存で同じ文字種を許可する。正規化や別名推測はしない。
+v1のfavorite/view/revisionを保持してpins空として読み、更新時だけv2を書き込む。
+pin/viewは`expectedRevision`、lock、atomic writeで競合を拒否する。同じ対象keyの参照key/original集合が
+変わっても保存対象を自動で置換しない。favoriteは再確認付き更新、pinは明示解除・再追加を要求する。
+
+`manual-decisions.json`は別のWeb-owned schemaVersion 1で、`watch|skip`、理由、exact target、episode ID、
+表示時の根拠snapshot、記録時刻を保持する。`POST /api/decisions`は`decision`と`expectedRevision`を受け、
+同一ID・同内容の再送は重複作成せず、ID衝突・revision競合は409、1,000件または16 MiB超過は413とする。
+自動削除せず、自動条件履歴が期限切れになっても手動snapshotを読める。見送りは当該episodeだけに適用する。
+これらの保存はMarket selectionやAttentionの監視対象を書き換えない。
+
 メモcontextは`ui-observation-v1`のnativeまたはreference観測。nativeは数量OI/確定終値15m、referenceはProvider・symbol・revision・cutoff・比較期間・JST設定・期限切れ状態と5個の数値を保存する。参照の保存先は現行UniverseとID/versionが一致する元契約だけ。自由形式metrics/raw/secret key、非有限数、長すぎる文字列を拒否し、最大16指標より小さい固定shapeと64KiBのPOST上限を維持する。過去の市場真実を再認証する署名ではない。
+
+## Bitget短時間activity
+
+任意artifact `native-activity.json`は`schemas/native-activity.schema.json`に従い、
+`schemaVersion=1`、`metricVersion=bitget-activity-v1`、`generationId`、`generatedAt`、
+`candleCutoff`、`rows`を持つ。対象はactiveなBitget crypto linear perpetualの現行契約版で、
+quote/settleはUSDT。同一`venueInstrumentId`・versionの保存`candle_1m.volume_notional`だけを使い、
+旧版、base数量の換算、reference市場、Hyperliquidの短時間値で補完しない。
+
+`candleCutoff`は生成時刻のUTC分境界−180秒。`windows`は`15m`と`1h`で、それぞれ
+`current`、現在を右端とする古い順の非重複4窓`history`、`baselineTurnover`、`baselineDays`、
+採用日の終了時刻`baselineEndTimes`、`relativeRatio`、`previousChangePct`を持つ。
+各sampleは`[startAt,endAt)`の全1分足のquote turnoverと、開始直前・終了直前の足の終値による
+`priceChangePct`を分けて返す。足は`confirmed`または`derived_final`で、分境界・全分の存在・
+非負有限のquote turnover・source/observed時刻が生成時刻より未来でないことを確認する。
+価格の開始endpointだけが欠ける場合は価格変化のみ欠測とし、完全な売買代金は保持する。
+
+普段比の分母は過去7日の同時刻・同長窓のうち、完全な3日以上の売買代金の中央値。
+前区間比は直前の同長窓からの百分率変化である。数値は`{value,status}`で、`ready`だけが有限値を持ち、
+`history_missing`、`invalid_data`、`no_baseline`、`low_baseline`では`value=null`とする。
+分母0は`no_baseline`、15分1,000 USDT未満／1時間4,000 USDT未満は`low_baseline`で、
+普段比・前区間比の両方へ適用する。元の区間値や中央値は失わず、baseline不足でも現在値・直近推移は
+独立して返す。実測0は0として保持し、有効な分母に対する現在値0は倍率0・前区間比−100%となる。
+
+`GET /api/native-activity`は`no-store`でartifactを返し、DB照会や取得を開始しない。
+schemaに加え、重複identity、窓の長さ・順序・共通cutoff、現在値とhistory末尾の一致、baseline日数・
+時刻、status/valueと分母条件の整合性を検証し、不正または未生成なら503を返す。
+正常な古いartifactは元時刻のまま返す。Browserは生成から120秒、cutoffから300秒を超える値を
+利用不可とし、生成時刻の未来許容は1秒まで、未来cutoffは拒否する。対象のBitget originalが1契約に
+定まり、ID・version・source symbolが一致する場合だけ表示する。参照ランキングのAPI・順位・Chart契約は維持する。
 
 ## 保存足の補助契約
 
@@ -300,6 +426,9 @@ Ranking応答`ranking-v3`は同じgenerationの15分、1時間、直近24時間�
 対象の現行ID・version・definitionHash、半開UTC窓、scan/insert/rescan件数、失敗と未処理を分ける。
 `execution=running|succeeded|partial|failed`で、部分成功を全契約成功へ昇格しない。
 手動scanだけではartifactを更新しない。
+Hyperliquidの直近5,000本の履歴上限より古い窓では、その対象に`history_limit`を残し、他Venueの
+scan/回収を継続する。dry-run/applyとも全体は`partial`で、未検査対象の欠損件数と全体の残件数は`null`。
+applyは全体の件数・終了理由をDB auditへ、対象別診断を`candle-recovery-state.json`へ残す。
 同じschemaを使う`candle-endpoint-recovery-state.json`は指標のexact endpointだけを回復した
 別runを記録する。通常履歴の全時間格子に対する完了状態とは別であり、endpointの成功から
 全履歴の完全性を主張しない。両runはversion/hashを再確認し、既存足を上書きしない。
@@ -325,3 +454,73 @@ OpenMarketの手動mappingと取得receiptは`schemas/reference-mapping.schema.j
 Referenceは確認済みnative契約の別取得経路で、独立性は未確立。FixtureのDB datasetは同一
 read-only repeatable-read snapshot、後から読んだartifactは別時刻と記録する。空0行、未取得、
 失敗をmanifestで分ける。SHA256はファイル改変検出であり、市場の真実性署名ではない。
+
+## Attentionの契約
+
+正本は`apps/attention-core/src/prep_watchdeck_attention/models.py`。公開schemaは`attention-response-v1`、`attention-evaluation-v1`、`attention-shadow-allocation-v1`。Web型はresponse schemaから生成する。時刻はUTC milliseconds。`decisionAt`、Ranking cutoff/generatedAt、universe/service generatedAt、任意のmetrics generation/candleCutoffと`inputSkewSeconds`を分離する。未来、stale、異なるcontract versionを現在値で補完しない。
+
+AssetはRankingのoriginal instrument ID + versionと現行universeの完全一致で結合する。元の対応と現行membershipを`originals`へ残し、UIは`current=false`のnative linkを出さない。未レビュー対応・version違いは採点対象外。成分の`score`/`rank`、方向、quality reason、coverageは別の値で、算出不能はscore/rank=null。percentileのminimum peersは20、同値はmidrank、confluenceは4成分すべてreadyの場合だけ平均する。異なるmap/policy間でrank changeを計算しない。
+
+Stateは`PREP_WATCHDECK_ATTENTION_STATE_DIR`。Market/Rankingとの同一・包含・被包含、repo varとの重複、symlinkを拒否する。SQLiteはsingle writer / WAL / foreign keysで、generationの同一ID・異なる内容を拒否する。初版は自動削除を行わず、health/CLIがDB/WALサイズを報告する。
+
+将来outcomeの`cutoff`は`ceil(decisionAt / 60000) * 60000`の評価開始境界で、入力Ranking cutoffとは別である。参照契約のその境界の確定終値をexportに要求し、以後の完全な15本・60本だけから高安の最大絶対returnと終値returnを求める。判断時刻をまたぐ足は最大変動へ含めず、保存時の古い終値で代用しない。lead timeはdecisionAtから閾値へ初めて到達した足の終了時刻までの秒。欠損・revision/map違いはunscorable、未完了horizonはpending。訂正はeditionを増やし、既存評価と出力projectionをstale化する。
+
+Offline入力は`attention-outcome-input-v1`のJSON（`mapVersion`、Ranking `MinuteBar`の`bars`、任意の`native`）に限定する。native結果は現行のexact originalsが2 Venue以上あり、全分の観測が揃う場合だけ別familyへ保存する。
+
+既定候補群は3 baselineと5 componentを15分・60分の各horizonで固定した16 policy。K=10/20、実用差分しきい値はreturnのpercentage pointで0.1を初期値とし、freeze後に変更できない。全比較を同時にUTC day blockで再標本化するsingle-step max-Tと6h感度分析を用いる。世代なし・将来結果待ち・block不足はnot_estimable、感度矛盾はinconclusive、実測coverage悪化はrejected_coverage。power/MDEはplanning-onlyで、優位性判定を上書きしない。
+
+### Discoveryの契約
+
+`discovery-response-v1`は既存Attention応答と別契約で、正本はAttentionの`discovery_models.py`。
+固定policy `discovery-reference-turnover-15m-v1`は、verifiedかつcurrent exact originalsの対象について、
+参照15分売買代金の昨日・一昨日同時刻比がともにreadyで3倍以上なら`matched`とする。
+参照15分returnが+2%以上はup、−2%以下はdown、それ以外はturnover、価格欠損はunknown方向。
+方向だけの変化でepisodeを増やさず、OI/Funding/native値は条件へ混ぜず個別のsource・unit・window・qualityを保持する。
+Browserの強調設定、直近24時間の窓中央値による平常比、Bitgetの過去7日基準はこの固定policyとは別である。
+
+行の状態は`matched / not_matched / unknown`。新Ranking cutoffを一度だけ評価し、比較可能な隣接世代の
+非成立→成立だけをnew、初回をinitial_confirmation、欠測・停止後をreconfirmationとする。
+episodeは`active / interrupted / ended`で、欠測・stale・row消失を条件解除にしない。
+再確認は同じepisodeのfirstObservedAtを保ち、連続確認数を1へ戻し、空白をobservedDurationMsへ加算しない。
+identity/policy変更は旧episodeを終了し、新対象へ継承しない。各状態にsource generationとcutoffを残す。
+
+latest raw projectionは置換し、終了episodeはendedAt基準7日・最大10,000件で古いものから削除する。
+active/interruptedは削除しない。`historyAvailableFrom`はquery scope内で保持している最古のfirstObservedAtで、
+空ならnull。欠測なしの連続履歴や、終了履歴が全件残っている保証ではない。
+既存Attention evidenceとimmutable responseの保持方針は変更しない。
+
+`GET /discovery`はloopback-only/no-store、`/api/discovery`は既存local access判定を通すproxy。
+重複しない`assetId`を最大4件、`limit=1..50`（既定50）、対象scopeへ束縛したopaque cursorを受ける。
+未知・重複parameterや不正cursorは400、生成前は503、古い世代は元の時刻を残してstale/unknownとする。
+GETから入力取得・再計算・DB write・pruneを行わない。
+
+`GET /discovery-summary`とWebの`/api/discovery-summary`は独立`discovery-summary-v1`を返す。
+最新詳細はasset ID主キーで取得し、summary/metadata/detailは同じSQLite transactionで更新する。
+filtered `/discovery`に任意の`generationId`を渡せる。不一致は409 `discovery_generation_changed`。
+既存の無指定full応答と保存済みevidence/episodeは互換性を維持する。
+
+## Candle receipt / finalizationと研究snapshot
+
+`candle_1m.finalized_at`はnullableなfinality decision時刻で、`observed_at`は候補/Provider応答の受信時刻。
+新しいdecision時刻はbucket endおよびreceipt以後である。Migration 0005は旧行をNULLのまま残す。
+Hyperliquidは足終了5秒後以降のdecisionを記録し、後続receiptの同bucket訂正も受理する。
+`derived_final`とProvider `confirmed`は別のまま。Candle Store、回収、archive、Fixture Export、Auditで
+optional/nullを保持し、旧Fixture bytesやfalse-PIT契約を変更しない。
+Aster fundingInfoはraw provenanceと観測されたintervalをcatalog versionへ保持する。
+
+新しい研究snapshotはpayload/receiptの別edition、chain/hash、local temporal contextを含む。
+Schemaとavailability、A/B資格は別判定。詳細と生成コマンドは[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)。
+
+Recovery stateの任意`evidence`は全対象のexact ID/version/definition hashとroster digestを保持する。`previousCompletedRunId`で現在のrunningと直接の終了結果を結ぶ。終了したpartial/failedもlatest-completedへ公開し、古いsuccessを再採用しない。表示用detailsは128件で、不良対象を優先する。history audit v2は固定scope・DB identity・contract validity・catalog不明区間・境界minuteを保存し、Provider取得やMarket書込を行わない。
+
+## Offline outcome bundle
+
+`attention-outcome-bundle-v1`はexport対象のexact map、afterMs/throughMs、完了copy-manifest SHA、各fragmentのSHA・reference revision・native asset ID・時刻範囲を保持する。fragmentは`attention-outcome-input-v1`を使い128MiB以下とする。同じidentityの時刻範囲が重なるfragment、hash変更、宣言と実体の違いを拒否する。native-provenanceは元のavailableAt、source feature SHA、mark/OIのsource clockとqualityを保持する。native outcomeのunscorableと参照価格outcomeのreadyを合算して全評価成功にしない。
+
+`attention-formal-protocol-v1`はfutureの30 UTC day blocksとfrozen family全体、source/map/scope hash、K=10/20、15/60分、seed0、bootstrap2000、formal look1、coverage0.8、coverage regression0.05、practical delta0.1を固定する。補正は原editionを保持した別editionとし、途中診断をformal lookに含めない。
+
+Recoveryのexact native IDはUnicodeを保ち、空venue/symbol、whitespace・controlを拒否する。通常candle周期のrunningが直接の前回完了run、同じrosterとproofを示す場合だけ、終了→開始900秒以内・経過615秒以内の範囲でproof age上限を1515秒とする。他の状態は従来1080秒の上限を維持し、endpoint gateを緩めない。
+
+Offline settlementは入力day/mapの範囲だけを変更し、隣接dayの同じexact map/revisionを結合して15/60分を評価する。競合した重複barは拒否する。archive completionはcopy-manifest SHAと各bundle/fragmentを照合し、editionを保全する。
+
+正式評価は`attention-formal-scope-v1`の具体的identity集合と`attention-formal-look-v1`のSTARTED/COMPLETE ledgerを用いる。protocolにledger絶対pathを固定し、計算前のinput SHA・availability cutoffと原結果SHAを保存する。同じinputだけ再開し、別inputによる二回目のformal lookを拒否する。

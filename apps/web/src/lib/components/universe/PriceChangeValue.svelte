@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { preferences } from "$lib/theme/workspace-preferences";
   import {
     PRICE_CHANGE_MAX_AGE_MS,
     dailyBaselineAt,
@@ -43,7 +44,7 @@
 
 <span class="price-change" class:detailed {title}>
   {#if change !== null}
-    <strong class:up={change >= 0.005} class:down={change <= -0.005}>{formatPriceChange(change)}</strong>
+    <strong class:up={change >= 0.005} class:down={change <= -0.005}>{formatPriceChange(change, $preferences.percentDecimals)}</strong>
   {:else}
     <span class="missing">— <small>{reason}</small></span>
   {/if}

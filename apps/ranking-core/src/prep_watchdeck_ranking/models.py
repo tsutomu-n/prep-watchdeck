@@ -10,7 +10,10 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 from pydantic.alias_generators import to_camel
 
 MINUTE = 60_000
-METRIC_VERSION = "trade-close-quote-turnover-analysis-v3"
+CATALOG_MAX_AGE_MS = 30 * MINUTE
+HISTORY_MINUTES = 3 * 1440
+RETENTION_MINUTES = 4 * 1440 + 1
+METRIC_VERSION = "trade-close-quote-turnover-analysis-v4"
 MAP_SCHEMA_VERSION = "ranking-map-v2"
 Provider = Literal["bybit", "binance"]
 MappingStatus = Literal["verified", "unsupported", "review", "out_of_scope"]
@@ -72,15 +75,17 @@ class Widget(Contract):
 
 
 class OriginalInstrument(Contract):
-    venue: Literal["bitget", "hyperliquid", "aster"]
+    venue: Literal["bitget", "hyperliquid", "aster", "mexc"]
     instrument_id: str
     version_id: int
     symbol: str
     base_asset: str
     multiplier: int | None = Field(
         gt=0,
-        description="Original underlying quantity per unit; null means conversion is unverified. "
-        "This does not determine fixed-reference ranking eligibility.",
+        description="Underlying asset units represented by one original quoted price unit; "
+        "null means conversion is unverified. This is an asset-price identity multiplier, "
+        "not base quantity per order contract (for example MEXC contractSize), and does not "
+        "determine fixed-reference ranking eligibility.",
     )
 
 
@@ -202,6 +207,29 @@ class RankingWindow(Contract):
     state: RowState
 
 
+class TurnoverWindow(Contract):
+    anchor: int
+    cutoff: int
+    quote_turnover: float | None = Field(default=None, ge=0)
+    status: Literal["ready", "history_missing", "starting", "invalid_data", "reference_unavailable"]
+
+    @model_validator(mode="after")
+    def consistent(self) -> Self:
+        if self.anchor > self.cutoff or self.anchor % MINUTE or self.cutoff % MINUTE:
+            raise ValueError("invalid turnover window")
+        if (self.status == "ready") != (self.quote_turnover is not None):
+            raise ValueError("only ready turnover windows can contain a value")
+        return self
+
+
+class TurnoverComparison(Contract):
+    current: TurnoverWindow
+    previous_day: TurnoverWindow
+    two_days_ago: TurnoverWindow
+    previous_day_ratio: Indicator
+    two_days_ago_ratio: Indicator
+
+
 class RankedRow(Contract):
     id: str
     asset: str
@@ -224,6 +252,7 @@ class RankedRow(Contract):
     reference_close: Indicator = Indicator(status="history_missing")
     windows: dict[str, RankingWindow]
     turnover_ratios: dict[str, Indicator]
+    turnover_comparison: TurnoverComparison
 
     @model_validator(mode="after")
     def complete_windows(self) -> Self:
@@ -246,15 +275,56 @@ class Coverage(Contract):
     reasons: dict[str, int]
 
 
+RosterStatus = Literal[
+    "ready",
+    "review_required",
+    "source_unavailable",
+    "source_stale",
+    "source_incomplete",
+    "source_invalid",
+    "unconfigured",
+]
+
+
+class RosterHealth(Contract):
+    status: RosterStatus
+    catalog_observed_at: int | None = Field(default=None, ge=0)
+    source_instruments: int | None = Field(default=None, ge=0)
+    added_instrument_ids: tuple[str, ...] = ()
+    removed_instrument_ids: tuple[str, ...] = ()
+    changed_instrument_ids: tuple[str, ...] = ()
+    market_data_issue_ids: tuple[str, ...] | None = None
+
+    def at_time(self, now: int) -> Self:
+        if self.catalog_observed_at is not None and (
+            now - self.catalog_observed_at > CATALOG_MAX_AGE_MS
+        ):
+            return type(self)(status="source_stale", catalog_observed_at=self.catalog_observed_at)
+        return self
+
+    @model_validator(mode="after")
+    def complete_observation(self) -> Self:
+        if self.status in ("ready", "review_required") and (
+            self.catalog_observed_at is None or self.source_instruments is None
+        ):
+            raise ValueError("catalog observation requires time and instrument count")
+        if self.status == "ready" and (
+            self.added_instrument_ids or self.removed_instrument_ids or self.changed_instrument_ids
+        ):
+            raise ValueError("unreviewed roster changes cannot be ready")
+        return self
+
+
 class RankingResponse(Contract):
-    schema_version: Literal["ranking-v3"] = "ranking-v3"
+    schema_version: Literal["ranking-v5"] = "ranking-v5"
     generation_id: str
     map_version: str
-    metric_version: Literal["trade-close-quote-turnover-analysis-v3"] = METRIC_VERSION
+    metric_version: Literal["trade-close-quote-turnover-analysis-v4"] = METRIC_VERSION
     cutoff: int
     generated_at: int
     roster_generated_at: int
     roster_stale: bool
+    roster_health: RosterHealth
     stale: bool
     status: Literal["ready", "partial", "starting", "stale"]
     period: Literal["15m", "1h", "24h", "daily"]

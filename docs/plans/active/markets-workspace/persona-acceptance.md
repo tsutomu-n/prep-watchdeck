@@ -1,9 +1,9 @@
 # MKT-003 / MKT-004 代理操作と実データ受入
 
-timestamp="2026-10-01(木)_20:31 JST"
+timestamp="2026-10-07(水)_19:06 JST"
 
 - 作成: `2026-10-01T20:20:15+09:00`
-- 更新: `2026-10-01T20:31:46+09:00`
+- 更新: `2026-10-07T19:06:07+09:00`
 - 検証: `2026-10-01T20:31:46+09:00`
 - 状態: `実装計画`
 
@@ -18,7 +18,7 @@ Chromium入力4件、実データ操作4件、候補Webの新規processからの
 現役はMarket `dc2a8d7`、Web/Ranking `d1c44d5`。Ranking v2、新metrics HTTP404。
 候補の製品sourceは`1a0a1b7`で、今回は受入script・Playwright・台帳だけを変更した。
 
-正式な集計とhashは[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.json](/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.json)に記録する。
+正式な集計とhashは[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.json](persona-acceptance.json)に記録する。
 
 ## ペルソナと操作
 
@@ -67,7 +67,7 @@ Ruff check/format、Web check（0errors/0warnings）、fresh build、文書metad
 
 ## 再実行と残る条件
 
-[/home/tn/projects/prep-watchdeck/scripts/market/run-persona-acceptance.sh](/home/tn/projects/prep-watchdeck/scripts/market/run-persona-acceptance.sh)は明示した採用map・既存env file・新しい専用run rootを使う。
+[/home/tn/projects/prep-watchdeck/scripts/market/run-persona-acceptance.sh](../../../../scripts/market/run-persona-acceptance.sh)は明示した採用map・既存env file・新しい専用run rootを使う。
 隔離RankingはRepo内var/tmpを使い、bubblewrapの/tmp隠蔽を避ける。artifact mirrorは候補Web再起動まで継続する。
 次のcommandは現役の読取りと隔離stateへの書込を行う。対象release/map/envの確認後に実行する。
 

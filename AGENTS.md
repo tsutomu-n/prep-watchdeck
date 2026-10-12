@@ -1,7 +1,8 @@
 # Prep Watchdeck Agent Guide
 
+timestamp="2026-10-10(土)_09:16 JST"
 - 作成: `2026-06-26T16:12:22+09:00`
-- 更新: `2026-09-29T20:39:32+09:00`
+- 更新: `2026-10-10T09:16:44+09:00`
 - 検証: `2026-09-29T20:39:32+09:00`
 - 状態: `現行`
 
@@ -12,8 +13,8 @@
 `prep-watchdeck`は、裁量トレーダーが市場から注目対象を発見し、分析し、比較し、最終判断を行うための
 local-first market intelligence workspaceである。
 
-現行productionはBitget、Hyperliquid Core、Asterのpublic crypto linear perpetualを扱うPerp Universe
-Explorerだが、この3 Venue、asset class、データ源、UI、ranking、Chart、保存期間、selection数等を
+現行productionはBitget、Hyperliquid Core、Aster、MEXCのpublic crypto linear perpetualを扱うPerp Universe
+Explorerだが、この4 Venue、asset class、データ源、UI、ranking、Chart、保存期間、selection数等を
 将来の永久制約として扱わない。
 
 最初に[`docs/current/product-boundary.md`](docs/current/product-boundary.md)と
@@ -38,6 +39,8 @@ Decision Memo / Trade Journal自体は禁止しない。
 - Ranking Core / tests: `apps/ranking-core/src/prep_watchdeck_ranking/`、`apps/ranking-core/tests/`
 - Ranking map / evidence: `apps/ranking-core/data/`
 - Ranking検証・隔離実行: `scripts/ranking/`
+- Attention Core / tests: `apps/attention-core/src/prep_watchdeck_attention/`、`apps/attention-core/tests/`
+- Attention schema / isolation: `scripts/attention/`、`schemas/attention-*.schema.json`
 - Web: `apps/web/src/`
 - Browser tests: `apps/web/tests/e2e/`
 - Artifact schema: `schemas/`
@@ -45,6 +48,8 @@ Decision Memo / Trade Journal自体は禁止しない。
 - Dedicated Postgres: `deploy/market-postgres/`
 - Market runtime state: `PREP_WATCHDECK_MARKET_STATE_DIR`。既定は
   `~/.local/share/prep-watchdeck-market`で、Repoの`var/`はtest用だけに使う。
+- Attention runtime state: `PREP_WATCHDECK_ATTENTION_STATE_DIR`。既定は
+  `~/.local/share/prep-watchdeck-attention`。Market/Ranking stateとの同一・包含・被包含とrepo var、symlinkを拒否する。
 - Ranking runtime state: `PREP_WATCHDECK_RANKING_STATE_DIR`。既定は
   `~/.local/share/prep-watchdeck-ranking`。Market stateと同一・内包関係のdirectoryを使わない。
 
@@ -82,6 +87,8 @@ test resultsはsourceではない。Rankingのmap・名簿・根拠JSONは管理
 versionとは別の状態である。`docs/plans/active/`には未完了作業のplanだけを置き、[docs index](docs/README.md)
 からリンクされたplanだけを候補としてcodeと現在差分へ照合する。
 
+Attentionは既存Market artifactとRanking loopback APIだけを読む。Provider取得、Market/Ranking writer、manual selection、actual captureを追加しない。隔離runnerはLinux bubblewrapを必須とし、production配置・capacity・30日evidenceは別受入である。
+
 ## 作業規則
 
 - 最初に `git status --short`、`git branch --show-current`、必要な `git diff` を確認する。
@@ -97,7 +104,7 @@ versionとは別の状態である。`docs/plans/active/`には未完了作業�
 - source、時刻、単位、finality、identity、quality、provenanceを失わない。
 - symbol名だけからalias、multiplier、cross-market identityを推測して同一視しない。
 - secretをGit、artifact、log、issue、文書へ残さない。
-- Rankingの価格・売買代金を元の3 Venueの値で補完しない。Market CoreのPostgres・Parquet・
+- Rankingの価格・売買代金を元のVenueの値で補完しない。Market CoreのPostgres・Parquet・
   artifactへRankingから書き込まず、TradingView Widgetは表示専用とする。
 - 明示承認なしにunitのinstall / enable / start / stop / restart、live DB
   migration、maintenance、backup、restore、deploy、cutover、旧state削除を行わない。
@@ -163,7 +170,7 @@ type生成、build、Playwrightを実行する。`generate:types`と`verify-loca
 
 変更箇所に近い確認から実行する。文書・ignore規則だけの変更で全体gateを機械的に実行しない。
 
-- Market Core / Ranking Core: 各packageで関連pytest → Ruff check / format --check → Pyrefly。
+- Market Core / Ranking Core / Attention Core: 各packageで関連pytest → Ruff check / format --check → Pyrefly。
   広い変更は当該packageの全pytest。
 - Rankingのmodel・map・根拠を変更した場合は、Repo rootで次も実行する。
 
@@ -173,6 +180,7 @@ type生成、build、Playwrightを実行する。`generate:types`と`verify-loca
   uv run watchdeck-ranking validate-map apps/ranking-core/data/initial-map.json --require-reviewed
   ```
 
+- Attention schema変更時はRepo rootで`uv run --package prep-watchdeck-attention python scripts/attention/generate-schema.py --check`も実行する。
 - Web: `apps/web/`で `bun run test`（Vitest）→ `bun run check` → `bun run build`。
   interaction / route / responsive は関連 E2E。Repoのmaintenance用 `bun test` と区別する。
 - Docs: Repo rootで次を実行する。対象文書を引数に指定すると局所確認できる。

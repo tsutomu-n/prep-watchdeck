@@ -3,21 +3,35 @@
 import asyncio
 import json
 import time
+from pathlib import Path
 from typing import Any, cast
 
 import aiohttp
 from aiohttp import web
 
 from .mapping import reference_revision
-from .models import MINUTE, Provider, RankingMap, Reference
+from .models import HISTORY_MINUTES, MINUTE, Provider, RankingMap, Reference, RosterHealth
 from .providers import PublicClient, now_ms
 from .ranking import Generation, Order, Period
+from .roster import check_roster
 from .storage import Store, atomic_json
 
 
 class RankingService:
-    def __init__(self, store: Store, mapping: RankingMap, client: PublicClient) -> None:
+    def __init__(
+        self,
+        store: Store,
+        mapping: RankingMap,
+        client: PublicClient,
+        *,
+        original_state: Path | None = None,
+    ) -> None:
         self.store, self.mapping, self.client = store, mapping, client
+        self.original_artifacts = (
+            original_state.expanduser().resolve() / "artifacts" if original_state else None
+        )
+        self.roster_checked_at: int | None = None
+        self.roster_health = RosterHealth(status="unconfigured")
         self.generation: Generation | None = None
         self.queues: dict[Provider, asyncio.Queue[tuple[Reference, int]]] = {
             "bybit": asyncio.Queue(maxsize=2000),
@@ -59,7 +73,7 @@ class RankingService:
                 self.tasks.append(asyncio.create_task(self.backfill_worker(provider)))
         cutoff = now_ms() // MINUTE * MINUTE
         for reference in self.references:
-            first = cutoff - 1440 * MINUTE
+            first = cutoff - HISTORY_MINUTES * MINUTE
             present = {row[0] for row in self.store.window(reference.key, first, cutoff)}
             missing = next(
                 (end for end in range(first, cutoff + MINUTE, MINUTE) if end not in present), None
@@ -75,7 +89,7 @@ class RankingService:
             return
         self.pending.add(reference.key)
         cutoff = now_ms() // MINUTE * MINUTE
-        first = cutoff - (min(1441, max(2, minutes)) - 1) * MINUTE
+        first = cutoff - (min(HISTORY_MINUTES + 1, max(2, minutes)) - 1) * MINUTE
         self.queues[reference.provider].put_nowait((reference, first))
 
     async def check_catalogs(self) -> None:
@@ -148,7 +162,7 @@ class RankingService:
                     continue
                 cutoff = now_ms() // MINUTE * MINUTE
                 bars = await self.client.history(
-                    reference, max(first, cutoff - 1440 * MINUTE), cutoff
+                    reference, max(first, cutoff - HISTORY_MINUTES * MINUTE), cutoff
                 )
                 self.store.put(bars, now_ms())
             except (aiohttp.ClientError, TimeoutError, ValueError, KeyError, TypeError) as exc:
@@ -170,12 +184,20 @@ class RankingService:
                 continue
             started = time.monotonic()
             try:
+                if self.original_artifacts is not None:
+                    self.roster_health = check_roster(
+                        self.mapping, self.original_artifacts, now_ms()
+                    )
+                    if self.roster_health.status == "ready":
+                        self.roster_checked_at = self.roster_health.catalog_observed_at
                 candidate = Generation(
                     self.mapping,
                     cutoff,
                     now_ms(),
                     self.store,
                     previous=self.generation,
+                    roster_checked_at=self.roster_checked_at,
+                    roster_health=self.roster_health,
                     invalid_keys=self.invalid_contracts,
                     unavailable_keys={
                         ref.key
@@ -194,11 +216,14 @@ class RankingService:
                     if series is None:
                         continue
                     last_attempt = self.last_backfill.get(reference.key, 0)
-                    if series.closes[-1] is None:
+                    if series.close_at(-1) is None:
                         latest = self.store.latest(reference.key)
-                        self.enqueue(reference, (cutoff - latest) // MINUTE + 2 if latest else 1441)
+                        self.enqueue(
+                            reference,
+                            (cutoff - latest) // MINUTE + 2 if latest else HISTORY_MINUTES + 1,
+                        )
                     elif series.missing_prefix[-1] and now_ms() - last_attempt >= 300_000:
-                        self.enqueue(reference, 1441)
+                        self.enqueue(reference, HISTORY_MINUTES + 1)
                 self.store.prune(cutoff, {reference.key for reference in self.references})
                 default = candidate.response("15m", "00:00", "gainers", 0, now_ms())
                 payload = default.model_dump(mode="json", by_alias=True)
@@ -235,6 +260,7 @@ class RankingService:
                 )
 
     def health(self) -> dict[str, Any]:
+        roster_health = self.roster_health.at_time(now_ms())
         for provider, queue in self.queues.items():
             self.client.health[provider].backfill_pending = queue.qsize()
         return {
@@ -246,6 +272,13 @@ class RankingService:
             "lastDurationMs": self.last_duration_ms,
             "lastError": self.last_error,
             "invalidContracts": sorted(self.invalid_contracts),
+            "roster": {
+                "checkedAt": self.roster_checked_at,
+                "error": (
+                    None if roster_health.status == "ready" else f"roster_{roster_health.status}"
+                ),
+                "details": roster_health.model_dump(mode="json", by_alias=True),
+            },
             "providers": {p: h.public() for p, h in self.client.health.items()},
         }
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Literal
 
@@ -35,12 +36,29 @@ class RecoveryTargetIdentity(ArtifactModel):
     definition_hash: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class RecoveryEvidence(ArtifactModel):
+    schema_version: Literal[1] = 1
+    scope: Literal["full-candle-window", "metric-endpoints"]
+    roster: tuple[RecoveryTargetIdentity, ...]
+    roster_digest: str = Field(pattern=r"^[0-9a-f]{64}$")
+    roster_unchanged: bool
+
+
 class RecoveryTargetDetail(ArtifactModel):
     target: RecoveryTargetIdentity
     missing_before: int | None = Field(ge=0)
     inserted: int = Field(ge=0)
     remaining: int | None = Field(ge=0)
     error_code: str | None = Field(default=None, max_length=100)
+
+
+def bounded_recovery_details(
+    details: Sequence[RecoveryTargetDetail],
+) -> tuple[RecoveryTargetDetail, ...]:
+    """Keep unresolved targets visible before truncating healthy diagnostic rows."""
+    return tuple(
+        sorted(details, key=lambda item: not (item.error_code or item.remaining != 0))[:128]
+    )
 
 
 class CandleRecoveryState(ArtifactModel):
@@ -56,3 +74,5 @@ class CandleRecoveryState(ArtifactModel):
     details: tuple[RecoveryTargetDetail, ...] = Field(max_length=128)
     details_truncated: bool
     error_code: str | None = Field(default=None, max_length=100)
+    evidence: RecoveryEvidence | None = None
+    previous_completed_run_id: str | None = Field(default=None, pattern=r"^[0-9a-f]{32}$")

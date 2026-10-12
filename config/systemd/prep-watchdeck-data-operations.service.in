@@ -5,6 +5,6 @@ After=prep-watchdeck-market.service prep-watchdeck-ranking.service
 [Service]
 Type=oneshot
 WorkingDirectory=@REPO_ROOT@
-ExecStart=@REPO_ROOT@/.venv/bin/python @REPO_ROOT@/scripts/market/check-data-operations.py --market-state-dir @MARKET_STATE_ROOT@ --mapping @REPO_ROOT@/apps/ranking-core/data/initial-map.json --ranking-url http://127.0.0.1:8769 --json
+ExecStart=@REPO_ROOT@/.venv/bin/python @REPO_ROOT@/scripts/market/check-data-operations.py --market-state-dir @MARKET_STATE_ROOT@ --mapping @RANKING_MAP@ --ranking-url http://127.0.0.1:@RANKING_PORT@ --json
 TimeoutStartSec=20s
 UMask=0077

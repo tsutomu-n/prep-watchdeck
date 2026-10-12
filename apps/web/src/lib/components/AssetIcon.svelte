@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import { logoPlaceholder, resolveAssetLogo, type AssetLogoIdentity } from "$lib/assets/asset-logo";
 
   type Props = AssetLogoIdentity & { symbol: string; size?: 20 | 22 | 24 | 32 };
@@ -8,6 +9,21 @@
   let failedPath = $state<string | null>(null);
   const visible = $derived(Boolean(logo && loadedPath === logo.path && failedPath !== logo.path));
   const placeholder = $derived(logoPlaceholder(symbol));
+
+  function readCompletedImage(image: HTMLImageElement) {
+    let active = true;
+    // Finish mounting before publishing readiness, including immediately cached images.
+    // The decode promise handles completion even when no load event reaches this instance.
+    void tick().then(async () => {
+      if (!active) return;
+      try { await image.decode(); } catch { /* A failed decode is inspected below. */ }
+      if (!active || !image.complete) return;
+      const path = image.getAttribute("src");
+      if (image.naturalWidth > 0) loadedPath = path;
+      else failedPath = path;
+    });
+    return { destroy() { active = false; } };
+  }
 </script>
 
 <span
@@ -24,14 +40,13 @@
   {#if logo && failedPath !== logo.path}
     {#key logo.path}
       <img
+        use:readCompletedImage
         src={logo.path}
         alt=""
         width={size}
         height={size}
         class:visible
         decoding="async"
-        onload={(event) => { loadedPath = event.currentTarget.getAttribute("src"); }}
-        onerror={(event) => { failedPath = event.currentTarget.getAttribute("src"); }}
       />
     {/key}
   {/if}

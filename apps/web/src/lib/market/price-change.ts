@@ -1,3 +1,4 @@
+import { displayNumber } from "./number-display";
 export const DEFAULT_REFERENCE_TIME = "00:00";
 export const REFERENCE_TIME_STORAGE_KEY = "prep-watchdeck:daily-change-reference";
 export const PRICE_CHANGE_REFRESH_MS = 60_000;
@@ -48,10 +49,11 @@ export function calculatePriceChange(current: number, baseline: number): number 
   return Number.isFinite(change) ? change : null;
 }
 
-export function formatPriceChange(value: number): string {
+export function formatPriceChange(value: number, digits = 2): string {
+  if (value !== 0 && Math.abs(value) < 0.5 * 10 ** -digits) return `${displayNumber(value, digits, false, true)}%`;
   return `${new Intl.NumberFormat("ja-JP", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
     signDisplay: "exceptZero"
   }).format(value)}%`;
 }

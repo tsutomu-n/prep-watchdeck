@@ -36,6 +36,7 @@ from prep_watchdeck_market.candle_recovery_store import (
 )
 from prep_watchdeck_market.candle_store import upsert_candles
 from prep_watchdeck_market.candles import Candle1m
+from prep_watchdeck_market.models import Venue
 from prep_watchdeck_market.runtime_lock import exclusive_runtime_lock
 from prep_watchdeck_market.sources.bitget_candles import parse_bitget_history_candles
 from prep_watchdeck_market.sources.candle_history import (
@@ -177,6 +178,181 @@ def test_automatic_recovery_resumes_after_served_targets_when_request_budget_is_
         assert served[:5] == [target.instrument_id for target in targets]
 
     asyncio.run(exercise())
+
+
+@pytest.mark.parametrize("venue", [None, "hyperliquid"])
+def test_history_limit_dry_run_keeps_target_unknown_and_scans_supported_venues(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, venue: Venue | None
+) -> None:
+    start = _now() - timedelta(days=4)
+    bitget = _target("BTCUSDT", start)
+    hyperliquid = replace(bitget, version_id=2, venue="hyperliquid", source_symbol="BTC")
+    mexc = replace(bitget, version_id=3, venue="mexc")
+    targets = (bitget, hyperliquid, mexc) if venue is None else (hyperliquid,)
+    scanned: list[RecoveryTarget] = []
+
+    class Connection:
+        def close(self):
+            pass
+
+    async def open_connection(*_args, **kwargs):
+        assert kwargs["apply"] is False
+        return Connection()
+
+    def scan(_connection, target, **_kwargs):
+        scanned.append(target)
+        return ()
+
+    module = "prep_watchdeck_market.candle_recovery."
+    monkeypatch.setattr(module + "_open_connection", open_connection)
+    monkeypatch.setattr(module + "load_recovery_targets", lambda *_a, **_k: targets)
+    monkeypatch.setattr(module + "scan_missing_candles", scan)
+
+    state = asyncio.run(
+        CandleRecovery("unused", tmp_path).run(
+            None,
+            RecoveryWindowRequest(start, start + timedelta(hours=1)),
+            apply=False,
+            venue=venue,
+        )
+    )
+
+    assert scanned == ([bitget, mexc] if venue is None else [])
+    assert state.execution == "partial" and state.error_code == "recovery_target_failed"
+    assert state.summary.target_count == (3 if venue is None else 1)
+    assert state.summary.scanned_target_count == (2 if venue is None else 0)
+    assert state.summary.failed_targets == 1 and state.summary.deferred_targets == 0
+    assert state.summary.missing_before is None and state.summary.remaining is None
+    assert state.summary.http_requests == 0 and state.summary.inserted == 0
+    details = {detail.target.venue_instrument_id: detail for detail in state.details}
+    limited = details["hyperliquid:BTC"]
+    assert limited.error_code == "history_limit"
+    assert limited.missing_before is None and limited.remaining is None
+    assert all(detail.remaining == 0 for key, detail in details.items() if key != "hyperliquid:BTC")
+    assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize("minutes_ago,history_limited", [(5760, True), (4999, False)])
+def test_applying_recovery_continues_other_venues_and_finalizes_history_limit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, minutes_ago: int, history_limited: bool
+) -> None:
+    start = _now() - timedelta(minutes=minutes_ago)
+    bitget = _target("BTCUSDT", start)
+    hyperliquid = replace(bitget, version_id=2, venue="hyperliquid", source_symbol="BTC")
+    mexc = replace(bitget, version_id=3, venue="mexc")
+    targets = (bitget, hyperliquid, mexc)
+    repaired: set[RecoveryTarget] = set()
+    scanned: list[RecoveryTarget] = []
+    completed: list[dict[str, object]] = []
+    connections = []
+
+    class Connection:
+        closed = False
+
+        def close(self):
+            self.closed = True
+
+    async def open_connection(*_args, **kwargs):
+        assert kwargs["apply"] is True
+        connection = Connection()
+        connections.append(connection)
+        return connection
+
+    def scan(_connection, target, **_kwargs):
+        scanned.append(target)
+        return () if target in repaired else (start,)
+
+    def insert(_connection, target, candles, **_kwargs):
+        assert [candle.bucket_start for candle in candles] == [start]
+        repaired.add(target)
+        return 1
+
+    def finish(_connection, _run_id, _finished_at, **kwargs):
+        completed.append(kwargs)
+
+    class Client:
+        def __init__(self, *_args, **_kwargs):
+            self.request_count = 0
+
+        async def fetch_missing(self, target, missing, **_kwargs):
+            assert missing == (start,)
+            self.request_count += 1
+            return HistoryFetchResult(
+                (
+                    Candle1m(
+                        venue=target.venue,
+                        source_symbol=target.source_symbol,
+                        bucket_start=start,
+                        open_price=Decimal("100"),
+                        high_price=Decimal("102"),
+                        low_price=Decimal("99"),
+                        close_price=Decimal("101"),
+                        volume_base=None,
+                        volume_notional=None,
+                        trade_count=None,
+                        finality="confirmed" if target.venue == "bitget" else "derived_final",
+                        source_at=None,
+                        observed_at=_now(),
+                    ),
+                ),
+                0,
+                1,
+            )
+
+    module = "prep_watchdeck_market.candle_recovery."
+    monkeypatch.setattr(module + "_open_connection", open_connection)
+    monkeypatch.setattr(module + "load_recovery_targets", lambda *_a, **_k: targets)
+    monkeypatch.setattr(module + "scan_missing_candles", scan)
+    monkeypatch.setattr(module + "insert_missing_candles", insert)
+    monkeypatch.setattr(module + "start_recovery_run", lambda *_a, **_k: None)
+    monkeypatch.setattr(module + "finish_recovery_run", finish)
+    monkeypatch.setattr(module + "NativeCandleHistoryClient", Client)
+
+    async def exercise():
+        async with aiohttp.ClientSession() as session:
+            return await CandleRecovery("unused", tmp_path).run(
+                session,
+                RecoveryWindowRequest(start, start + timedelta(hours=1)),
+                apply=True,
+            )
+
+    state = asyncio.run(exercise())
+    expected = (bitget, mexc) if history_limited else targets
+    assert scanned == [*expected, *expected]
+    assert repaired == set(expected)
+    assert state.summary.scanned_target_count == len(expected)
+    assert state.summary.inserted == state.summary.http_requests == len(expected)
+    assert state.summary.failed_targets == int(history_limited)
+    assert state.summary.deferred_targets == 0
+    if history_limited:
+        assert state.execution == "partial" and state.error_code == "recovery_target_failed"
+        assert state.summary.missing_before is None and state.summary.remaining is None
+        assert state.summary.newly_present is None
+    else:
+        assert state.execution == "succeeded" and state.error_code is None
+        assert state.summary.missing_before == 3 and state.summary.remaining == 0
+        assert state.summary.newly_present == 3
+    details = {detail.target.venue_instrument_id: detail for detail in state.details}
+    limited = details["hyperliquid:BTC"]
+    assert limited.error_code == ("history_limit" if history_limited else None)
+    assert limited.remaining == (None if history_limited else 0)
+    assert all(details[target.instrument_id].remaining == 0 for target in expected)
+    assert len(completed) == 1 and completed[0]["status"] == state.execution
+    assert completed[0]["error_code"] == state.error_code
+    assert isinstance(metrics := completed[0]["metrics"], dict)
+    assert metrics["remaining"] == state.summary.remaining
+    assert connections[0].closed
+    saved = json.loads((tmp_path / "artifacts" / "candle-recovery-state.json").read_text())
+    assert saved["execution"] == state.execution
+    assert saved["summary"]["failedTargets"] == int(history_limited)
+    assert saved["summary"]["remaining"] == state.summary.remaining
+    if history_limited:
+        diagnostic = next(
+            detail
+            for detail in saved["details"]
+            if detail["target"]["venueInstrumentId"] == "hyperliquid:BTC"
+        )
+        assert diagnostic["errorCode"] == "history_limit"
 
 
 def test_hyperliquid_close_timestamp_and_partial_page_budget() -> None:
@@ -606,7 +782,12 @@ def test_cancel_while_connecting_closes_the_returned_connection(
 
     asyncio.run(exercise())
     assert len(connections) == 1 and connections[0].closed
-    assert not (tmp_path / "artifacts" / "candle-recovery-state.json").exists()
+    cancelled_state = json.loads(
+        (tmp_path / "artifacts" / "candle-recovery-state.json").read_text()
+    )
+    assert cancelled_state["execution"] == "failed"
+    assert cancelled_state["errorCode"] == "recovery_run_failed"
+    assert cancelled_state["summary"]["missingBefore"] is None
     with exclusive_runtime_lock(tmp_path / "control" / "candle-recovery.lock"):
         pass
 

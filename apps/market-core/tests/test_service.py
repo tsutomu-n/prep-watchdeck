@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
-from typing import cast
+from typing import Any, cast
 from uuid import uuid4
 
 import aiohttp
@@ -29,7 +29,11 @@ def test_catalog_is_published_only_for_venues_that_persist(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def scenario() -> None:
-        service = MarketService("postgresql://not-used", Path("/not-used"))
+        service = MarketService(
+            "postgresql://not-used",
+            Path("/not-used"),
+            enabled_venues=("bitget", "hyperliquid", "aster"),
+        )
         service._session = cast(aiohttp.ClientSession, object())
         old_hyperliquid = _batch("hyperliquid", "OLD")
         service._catalogs["hyperliquid"] = old_hyperliquid
@@ -94,7 +98,11 @@ def test_empty_catalog_is_a_source_failure_and_retains_last_safe_catalog(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     async def scenario() -> None:
-        service = MarketService("postgresql://not-used", Path("/not-used"))
+        service = MarketService(
+            "postgresql://not-used",
+            Path("/not-used"),
+            enabled_venues=("bitget", "hyperliquid", "aster"),
+        )
         service._session = cast(aiohttp.ClientSession, object())
         previous_aster = _batch("aster", "BTCUSDT")
         service._catalogs["aster"] = previous_aster
@@ -312,7 +320,9 @@ def test_recovery_startup_failure_is_isolated_and_periodic_run_follows(
         triggers: list[str] = []
 
         class FakeRecovery:
-            def __init__(self, _database_url: str, _state_dir: Path, *, on_inserted) -> None:
+            def __init__(
+                self, _database_url: str, _state_dir: Path, *, on_inserted, enabled_venues
+            ) -> None:
                 self.on_inserted = on_inserted
 
             async def run(self, _session, _window, *, apply: bool, trigger: str):
@@ -349,7 +359,7 @@ def test_endpoint_recovery_failure_is_isolated_and_runs_on_minute_grid(
         grids: list[int] = []
 
         class FakeRecovery:
-            def __init__(self, _database_url, _state_dir, *, on_inserted):
+            def __init__(self, _database_url, _state_dir, *, on_inserted, enabled_venues):
                 self.on_inserted = on_inserted
 
             async def run(self, _session, *, trigger: str):
@@ -411,3 +421,206 @@ def test_recovery_service_stop_cancels_and_joins_active_run(
         assert joined.is_set()
 
     asyncio.run(scenario())
+
+
+def test_activity_worker_keeps_projection_failure_optional(monkeypatch, tmp_path):
+    async def scenario():
+        service = MarketService("unused", tmp_path)
+        stop = asyncio.Event()
+        loop = asyncio.get_running_loop()
+        calls = []
+
+        def publish(*args, **kwargs):
+            calls.append(1)
+            loop.call_soon_threadsafe(stop.set)
+            raise ValueError("isolated activity failure")
+
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.publish_native_activity", publish, raising=False
+        )
+        await asyncio.wait_for(service._activity_loop(stop), timeout=1)
+        assert calls == [1]
+
+    asyncio.run(scenario())
+
+
+def test_service_entrypoint_disables_all_mexc_runtime_acquisition(monkeypatch, tmp_path):
+    from prep_watchdeck_market.service import run_market_service
+
+    enabled = []
+
+    async def run(self, stop_event):
+        enabled.extend(f.venue for f in self._l1_fetchers())
+        assert self._enabled_venues == ("bitget", "hyperliquid", "aster")
+        # Real catalog refresh runs only enabled fetches; any MEXC call is a regression.
+        self._session = cast(aiohttp.ClientSession, object())
+        await self.refresh_catalog()
+
+    monkeypatch.setattr(MarketService, "run_forever", run)
+
+    async def fetch(venue, session):
+        return _batch(venue, "BTC")
+
+    for venue in ("bitget", "hyperliquid", "aster"):
+
+        async def current(session, venue=venue):
+            return await fetch(venue, session)
+
+        monkeypatch.setattr("prep_watchdeck_market.service.fetch_" + venue + "_catalog", current)
+
+    async def forbidden(session):
+        raise AssertionError("MEXC acquisition disabled")
+
+    monkeypatch.setattr("prep_watchdeck_market.service.fetch_mexc_catalog", forbidden)
+    monkeypatch.setattr(
+        "prep_watchdeck_market.service._persist_catalog_refresh", lambda *_: tuple(enabled)
+    )
+    monkeypatch.setattr(
+        "prep_watchdeck_market.service._load_current_candle_version_starts_url", lambda *_: {}
+    )
+    asyncio.run(run_market_service("unused", tmp_path, asyncio.Event(), mexc_enabled=False))
+    assert enabled == ["bitget", "hyperliquid", "aster"]
+
+
+def test_initial_mexc_catalog_failure_keeps_service_running_and_funding_recovers(
+    monkeypatch, tmp_path
+):
+    from prep_watchdeck_market.market_state import MarketBatch
+    from prep_watchdeck_market.sources.common import CatalogSourceError
+
+    async def scenario():
+        service = MarketService("unused", tmp_path)
+        stop = asyncio.Event()
+        funded = asyncio.Event()
+        mexc_attempts = 0
+        persisted_venues = []
+        funding_writes = []
+        other_venues: tuple[Venue, ...] = ("bitget", "hyperliquid", "aster")
+
+        for venue in other_venues:
+
+            async def fetch(session, venue: Venue = venue):
+                return _batch(venue, "BTC")
+
+            monkeypatch.setattr("prep_watchdeck_market.service.fetch_" + venue + "_catalog", fetch)
+
+        async def fetch_mexc(session):
+            nonlocal mexc_attempts
+            mexc_attempts += 1
+            if mexc_attempts == 1:
+                raise CatalogSourceError("catalog unavailable")
+            return _batch("mexc", "BTC_USDT")
+
+        async def fetch_funding(session, endpoint, **kwargs):
+            assert endpoint == "/api/v1/contract/funding_rate/BTC_USDT"
+            funded.set()
+            timestamp = int(datetime.now(UTC).timestamp() * 1000)
+            return {
+                "success": True,
+                "code": 0,
+                "data": {
+                    "symbol": "BTC_USDT",
+                    "fundingRate": "0.0001",
+                    "collectCycle": 8,
+                    "timestamp": timestamp,
+                    "nextSettleTime": timestamp + 3_600_000,
+                },
+            }
+
+        def persist_cycle(database_url, cycle_at, started_at, batches, **kwargs):
+            persisted_venues.extend(batch.venue for batch in batches)
+            return _store_result()
+
+        def persist_funding(database_url, updates, as_of):
+            funding_writes.extend(updates)
+            assert updates["BTC_USDT"][1].native_version_id == 7
+            return len(updates)
+
+        async def wait(self, event):
+            await event.wait()
+
+        async def collect(self, event):
+            runtime = service._mexc_funding
+            assert runtime is not None
+            assert tuple(runtime._instruments()) == ()
+            with pytest.raises(CatalogSourceError, match="mexc catalog is unavailable"):
+                service._instruments("mexc")
+            assert await service._flush_mexc_funding() == 0
+            now = datetime.now(UTC)
+            batches = tuple(
+                MarketBatch(venue, now, now, "unused", "0" * 64, (), {}) for venue in other_venues
+            )
+            await service._persist_l1_cycle(now, now, batches)
+            assert (await service.refresh_catalog()).status == "succeeded"
+            await funded.wait()
+            assert await service._flush_mexc_funding() == 1
+            event.set()
+
+        monkeypatch.setattr("prep_watchdeck_market.service.fetch_mexc_catalog", fetch_mexc)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service._persist_catalog_refresh",
+            lambda database_url, changed, *_: tuple(batch.provenance.venue for batch in changed),
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service._load_current_candle_version_starts_url", lambda *_: {}
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.load_current_mexc_version_ids_url",
+            lambda *_: {"BTC_USDT": 7},
+        )
+        monkeypatch.setattr("prep_watchdeck_market.service.persist_market_cycle_url", persist_cycle)
+        monkeypatch.setattr(
+            "prep_watchdeck_market.service.persist_mexc_funding_url", persist_funding
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_funding.fetch_mexc_json", fetch_funding
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_funding.FUNDING_SWEEP_SECONDS", 0.01
+        )
+        monkeypatch.setattr(
+            "prep_watchdeck_market.sources.mexc_funding.FUNDING_START_INTERVAL_SECONDS", 0.01
+        )
+        monkeypatch.setattr("prep_watchdeck_market.service.L1Scheduler.run_forever", collect)
+        monkeypatch.setattr("prep_watchdeck_market.service.CandleRuntime.run_forever", wait)
+        monkeypatch.setattr("prep_watchdeck_market.service.SelectionRuntime.run_forever", wait)
+        for name in (
+            "_catalog_loop",
+            "_artifact_loop",
+            "_selected_artifact_loop",
+            "_metrics_loop",
+            "_activity_loop",
+            "_funding_flush_loop",
+        ):
+            monkeypatch.setattr(MarketService, name, wait)
+
+        await asyncio.wait_for(service.run_forever(stop), timeout=1)
+        assert persisted_venues == ["bitget", "hyperliquid", "aster"]
+        assert funding_writes == ["BTC_USDT"]
+        assert service._session is None
+
+    asyncio.run(scenario())
+
+
+def test_disabled_selection_runtime_excludes_saved_mexc_members(monkeypatch, tmp_path):
+    from prep_watchdeck_market.selection_runtime import (
+        InvalidSelectionCommandError,
+        SelectionRuntime,
+    )
+
+    original = _batch("bitget", "BTCUSDT").instruments[0]
+    mexc = replace(original, venue="mexc", source_symbol="BTC_USDT")
+    monkeypatch.setattr(
+        "prep_watchdeck_market.selection_runtime._load_group_instruments",
+        lambda *_: (original, mexc),
+    )
+    runtime = SelectionRuntime(
+        "unused", tmp_path, None, enabled_venues=("bitget", "hyperliquid", "aster")
+    )
+    assert runtime._enabled_group_instruments(
+        cast(Any, object()), "crypto:BTC:linear-perp", "bitget:BTCUSDT"
+    ) == (original,)
+    with pytest.raises(InvalidSelectionCommandError):
+        runtime._enabled_group_instruments(
+            cast(Any, object()), "crypto:BTC:linear-perp", "mexc:BTC_USDT"
+        )

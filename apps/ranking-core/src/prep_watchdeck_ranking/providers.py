@@ -9,7 +9,7 @@ from typing import Any
 
 import aiohttp
 
-from .models import MINUTE, MinuteBar, Provider, Reference
+from .models import HISTORY_MINUTES, MINUTE, MinuteBar, Provider, Reference
 
 REST = {"bybit": "https://api.bybit.com", "binance": "https://fapi.binance.com"}
 WS = {
@@ -234,9 +234,9 @@ class PublicClient:
 
     async def history(self, reference: Reference, first: int, last: int) -> list[MinuteBar]:
         found: dict[int, MinuteBar] = {}
-        # Initial 1,441 bars take at most two 1,000-bar pages; gap repair is also bounded.
+        # Three days plus the price boundary: at most five 1,000-bar pages.
         end = last
-        for _ in range(3):
+        for _ in range((HISTORY_MINUTES + 1000) // 1000):
             if end < first:
                 break
             if reference.provider == "bybit":

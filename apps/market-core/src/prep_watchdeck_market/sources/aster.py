@@ -10,6 +10,7 @@ from prep_watchdeck_market.models import (
     CatalogExclusion,
     CatalogInstrument,
     CatalogProvenance,
+    JsonPayload,
     SourceCapability,
     canonical_json_sha256,
 )
@@ -25,6 +26,8 @@ from prep_watchdeck_market.sources.common import (
 
 ASTER_CATALOG_URL = "https://fapi.asterdex.com/fapi/v3/exchangeInfo"
 ASTER_CATALOG_ENDPOINT = "/fapi/v3/exchangeInfo"
+ASTER_FUNDING_CONFIG_ENDPOINT = "/fapi/v3/fundingInfo"
+ASTER_FUNDING_CONFIG_URL = "https://fapi.asterdex.com" + ASTER_FUNDING_CONFIG_ENDPOINT
 ASTER_DOCUMENTATION_URL = (
     "https://github.com/asterdex/api-docs/blob/master/V3%28Recommended%29/EN/"
     "aster-finance-futures-api-v3.md"
@@ -45,15 +48,36 @@ async def fetch_aster_catalog(
         ) as response:
             response.raise_for_status()
             payload = await response.json(content_type=None)
-    except (aiohttp.ClientError, TimeoutError, ValueError) as exc:
-        raise CatalogSourceError("Aster catalog fetch failed") from exc
-    return parse_aster_catalog(payload, observed_at=observed_at or observed_now())
+        async with session.get(
+            ASTER_FUNDING_CONFIG_URL,
+            timeout=aiohttp.ClientTimeout(total=20),
+        ) as response:
+            response.raise_for_status()
+            funding_payload = await response.json(content_type=None)
+        require_list(funding_payload, field_name="Aster funding config")
+    except (aiohttp.ClientError, TimeoutError, ValueError):
+        raise CatalogSourceError("Aster catalog fetch failed") from None
+    return parse_aster_catalog(
+        payload, observed_at=observed_at or observed_now(), funding_payload=funding_payload
+    )
 
 
-def parse_aster_catalog(payload: object, *, observed_at: datetime) -> CatalogBatch:
+def parse_aster_catalog(
+    payload: object, *, observed_at: datetime, funding_payload: object | None = None
+) -> CatalogBatch:
     root = require_mapping(payload, field_name="Aster catalog")
     rows = require_list(root.get("symbols"), field_name="Aster symbols")
-    semantic_payload = sorted(rows, key=_definition_symbol)
+    catalog_rows = sorted(rows, key=_definition_symbol)
+    funding_by_symbol = _funding_configs(funding_payload)
+    # Retain the source time in raw observation provenance, never the instrument definition.
+    semantic_payload: JsonPayload = (
+        catalog_rows
+        if funding_payload is None
+        else {
+            "exchangeInfo": catalog_rows,
+            "fundingInfo": sorted(funding_by_symbol.values(), key=_definition_symbol),
+        }
+    )
     instruments: list[CatalogInstrument] = []
     exclusions: list[CatalogExclusion] = []
 
@@ -84,6 +108,16 @@ def parse_aster_catalog(payload: object, *, observed_at: datetime) -> CatalogBat
 
         base_asset = text(row.get("baseAsset"))
         assert symbol is not None and base_asset is not None
+        config = funding_by_symbol.get(symbol)
+        interval_hours = None if config is None else config.get("fundingIntervalHours")
+        definition = dict(row)
+        if funding_payload is not None:
+            definition["fundingIntervalConfig"] = {
+                "endpoint": ASTER_FUNDING_CONFIG_ENDPOINT,
+                "definition": None
+                if config is None
+                else {key: value for key, value in config.items() if key != "time"},
+            }
         instruments.append(
             CatalogInstrument(
                 venue="aster",
@@ -101,8 +135,10 @@ def parse_aster_catalog(payload: object, *, observed_at: datetime) -> CatalogBat
                 contract_multiplier=Decimal("1"),
                 price_tick=_filter_decimal(row, filter_type="PRICE_FILTER", field_name="tickSize"),
                 amount_step=_filter_decimal(row, filter_type="LOT_SIZE", field_name="stepSize"),
-                funding_interval_seconds=None,
-                raw_definition=dict(row),
+                funding_interval_seconds=(
+                    interval_hours * 3600 if type(interval_hours) is int else None
+                ),
+                raw_definition=definition,
             )
         )
 
@@ -121,6 +157,31 @@ def parse_aster_catalog(payload: object, *, observed_at: datetime) -> CatalogBat
         capabilities=_aster_capabilities(),
         raw_payload=semantic_payload,
     )
+
+
+def _funding_configs(payload: object | None) -> dict[str, dict[str, object]]:
+    if payload is None:
+        return {}
+    configs: dict[str, dict[str, object]] = {}
+    for value in require_list(payload, field_name="Aster funding config"):
+        row = require_mapping(value, field_name="Aster funding config row")
+        symbol = text(row.get("symbol"))
+        hours = row.get("fundingIntervalHours")
+        if symbol is None or symbol in configs:
+            raise CatalogSourceError(
+                "Aster funding config identity invalid", error_code="invalid_source_payload"
+            )
+        if hours is not None and (type(hours) is not int or not 0 < hours <= 2_147_483_647 // 3600):
+            raise CatalogSourceError(
+                "Aster funding interval must be positive integer hours",
+                error_code="invalid_source_payload",
+            )
+        if row.get("time") is not None and timestamp_from_milliseconds(row["time"]) is None:
+            raise CatalogSourceError(
+                "Aster funding config time invalid", error_code="invalid_source_payload"
+            )
+        configs[symbol] = dict(row)
+    return configs
 
 
 def _aster_exclusion_reason(row: dict[str, object], *, symbol: str | None) -> str | None:
@@ -203,6 +264,15 @@ def _aster_capabilities() -> tuple[SourceCapability, ...]:
             endpoint_or_channel="/fapi/v3/fundingRate",
             documentation_url=ASTER_DOCUMENTATION_URL,
             details={"capture": "settled_events", "catchupHours": 48},
+        ),
+        SourceCapability(
+            venue="aster",
+            capability="funding_interval",
+            available=True,
+            source_kind="native_rest",
+            endpoint_or_channel=ASTER_FUNDING_CONFIG_ENDPOINT,
+            documentation_url=ASTER_DOCUMENTATION_URL,
+            details={"sourceUnit": "hours", "normalizedUnit": "seconds", "missing": "null"},
         ),
         SourceCapability(
             venue="aster",

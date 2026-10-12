@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from collections.abc import Iterator
+from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
 
@@ -41,3 +42,10 @@ def isolated_feature_database(request: pytest.FixtureRequest) -> Iterator[None]:
         finally:
             module.TEST_DATABASE_URL = previous
             admin.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(database)))
+
+
+def required_row(cursor: psycopg.Cursor) -> tuple[Any, ...]:
+    """Require the fixture query to return the row used by its assertions."""
+    row = cursor.fetchone()
+    assert row is not None
+    return row

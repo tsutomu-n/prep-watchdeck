@@ -1,0 +1,1185 @@
+{
+  "baseCommit": "5b82a7df4d9784b442bed068d41d8734737faf27",
+  "branch": "ai/attention-core-20261008-2347",
+  "items": [
+    {
+      "id": "ATT-001",
+      "requirement": "`apps/attention-core`がuv workspace packageとして独立",
+      "status": "pass",
+      "evidence": [
+        "pyproject.toml",
+        "apps/attention-core/pyproject.toml",
+        "uv lock --check"
+      ]
+    },
+    {
+      "id": "ATT-002",
+      "requirement": "Attention stateがMarket/Ranking stateと非重複",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_foundation.py::test_state_isolation_and_reserved_ports"
+      ]
+    },
+    {
+      "id": "ATT-003",
+      "requirement": "Market/Ranking writerへ接続しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/service.py",
+        "apps/attention-core/src/prep_watchdeck_attention/storage.py",
+        "isolationSmoke"
+      ]
+    },
+    {
+      "id": "ATT-004",
+      "requirement": "Providerへ直接接続しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/ranking_input.py",
+        "apps/attention-core/tests/test_service.py",
+        "independentReview"
+      ]
+    },
+    {
+      "id": "ATT-005",
+      "requirement": "manual `selection.json`を書かない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_service.py",
+        "apps/web/tests/e2e/attention.e2e.ts",
+        "isolationSmoke"
+      ]
+    },
+    {
+      "id": "ATT-006",
+      "requirement": "actual captureを実装しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/allocation.py",
+        "independentReview"
+      ]
+    },
+    {
+      "id": "ATT-010",
+      "requirement": "service-state前後一致でMarket bundle固定",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_market_optional_metrics_and_generation",
+        "apps/attention-core/tests/test_inputs.py::test_market_generation_mismatch"
+      ]
+    },
+    {
+      "id": "ATT-011",
+      "requirement": "bundle変更時1回再試行",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_market_read_retries_only_once"
+      ]
+    },
+    {
+      "id": "ATT-012",
+      "requirement": "2回変化でgeneration拒否",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_market_read_retries_only_once"
+      ]
+    },
+    {
+      "id": "ATT-013",
+      "requirement": "metrics missingをpartialとして保持",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_market_optional_metrics_and_generation"
+      ]
+    },
+    {
+      "id": "ATT-014",
+      "requirement": "Ranking canonical queryは1回だけ",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_loopback_read_one_request"
+      ]
+    },
+    {
+      "id": "ATT-015",
+      "requirement": "stale/future Rankingを拒否",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_ranking_hostile_http",
+        "apps/attention-core/src/prep_watchdeck_attention/ranking_input.py"
+      ]
+    },
+    {
+      "id": "ATT-016",
+      "requirement": "read APIでProvider取得なし",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_service.py::test_service_publishes_only_committed_generations_and_api_never_reads_inputs"
+      ]
+    },
+    {
+      "id": "ATT-020",
+      "requirement": "exact ID+version join",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_exact_identity_and_duplicate_rejection"
+      ]
+    },
+    {
+      "id": "ATT-021",
+      "requirement": "symbol-only joinなし",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/identity.py",
+        "independentReview"
+      ]
+    },
+    {
+      "id": "ATT-022",
+      "requirement": "wrong version補完なし",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_inputs.py::test_metrics_wrong_version_never_joins"
+      ]
+    },
+    {
+      "id": "ATT-023",
+      "requirement": "mapping reviewへ値を補完しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/identity.py",
+        "apps/attention-core/tests/test_inputs.py::test_exact_identity_and_duplicate_rejection"
+      ]
+    },
+    {
+      "id": "ATT-024",
+      "requirement": "各input時刻を個別保持",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py",
+        "apps/attention-core/src/prep_watchdeck_attention/models.py"
+      ]
+    },
+    {
+      "id": "ATT-025",
+      "requirement": "`decisionAt`後の値を拒否",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_future_native_observation_rejected"
+      ]
+    },
+    {
+      "id": "ATT-026",
+      "requirement": "input skewを保存",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/features.py",
+        "apps/attention-core/tests/test_features.py"
+      ]
+    },
+    {
+      "id": "ATT-030",
+      "requirement": "mark dispersion手計算一致",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_feature_arithmetic_and_native_zero",
+        "apps/attention-core/tests/test_features.py::test_unknown_multiplier_missing_and_normalized_marks"
+      ]
+    },
+    {
+      "id": "ATT-031",
+      "requirement": "spread bps手計算一致",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_feature_arithmetic_and_native_zero"
+      ]
+    },
+    {
+      "id": "ATT-032",
+      "requirement": "funding max/range一致",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_oi_medians_and_funding"
+      ]
+    },
+    {
+      "id": "ATT-033",
+      "requirement": "OI median一致",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_oi_medians_and_funding"
+      ]
+    },
+    {
+      "id": "ATT-034",
+      "requirement": "zeroとmissingを区別",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_foundation.py::test_features_distinguish_zero_missing_and_nonfinite",
+        "apps/attention-core/tests/test_features.py::test_feature_arithmetic_and_native_zero"
+      ]
+    },
+    {
+      "id": "ATT-035",
+      "requirement": "stale native値を除外",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_stale_l1_excluded_with_observation_and_invalid_bbo"
+      ]
+    },
+    {
+      "id": "ATT-036",
+      "requirement": "`tradeChange`を売買代金と誤用しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/features.py",
+        "apps/attention-core/tests/test_components.py::test_component_missing_is_not_zero"
+      ]
+    },
+    {
+      "id": "ATT-037",
+      "requirement": "volume unit不明を合成しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_features.py::test_unknown_multiplier_missing_and_normalized_marks",
+        "apps/attention-core/src/prep_watchdeck_attention/features.py"
+      ]
+    },
+    {
+      "id": "ATT-040",
+      "requirement": "midrank percentileが順序不変",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_foundation.py::test_midrank_ties_order_and_minimum_peers"
+      ]
+    },
+    {
+      "id": "ATT-041",
+      "requirement": "tiesが同score",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_foundation.py::test_midrank_ties_order_and_minimum_peers"
+      ]
+    },
+    {
+      "id": "ATT-042",
+      "requirement": "minimum peers未達はunavailable",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_foundation.py::test_midrank_ties_order_and_minimum_peers",
+        "apps/attention-core/src/prep_watchdeck_attention/components.py"
+      ]
+    },
+    {
+      "id": "ATT-043",
+      "requirement": "movement direction保持",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_components.py::test_component_raw_policy_direction_order_and_comparability"
+      ]
+    },
+    {
+      "id": "ATT-044",
+      "requirement": "activity欠測を0補完しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_components.py::test_component_missing_is_not_zero"
+      ]
+    },
+    {
+      "id": "ATT-045",
+      "requirement": "confluenceは4 component必須",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_components.py::test_component_missing_is_not_zero",
+        "apps/web/src/lib/server/attention.test.ts"
+      ]
+    },
+    {
+      "id": "ATT-046",
+      "requirement": "scoreとquality/coverage分離",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/models.py",
+        "apps/web/tests/e2e/attention.e2e.ts"
+      ]
+    },
+    {
+      "id": "ATT-047",
+      "requirement": "policy version変更時rank change無効",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_components.py::test_component_raw_policy_direction_order_and_comparability"
+      ]
+    },
+    {
+      "id": "ATT-050",
+      "requirement": "SQLite WAL / foreign keys",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_storage.py::test_transaction_readback_immutability_and_single_writer"
+      ]
+    },
+    {
+      "id": "ATT-051",
+      "requirement": "generation idempotency",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_storage.py::test_transaction_readback_immutability_and_single_writer"
+      ]
+    },
+    {
+      "id": "ATT-052",
+      "requirement": "same ID/different content conflict",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_storage.py::test_transaction_readback_immutability_and_single_writer"
+      ]
+    },
+    {
+      "id": "ATT-053",
+      "requirement": "transaction failureで部分保存なし",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_storage.py::test_transaction_failure_does_not_publish_and_non_evidence_stays_separate"
+      ]
+    },
+    {
+      "id": "ATT-054",
+      "requirement": "readback hash一致後publish",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_storage.py::test_evidence_child_readback_must_match_before_publication",
+        "apps/attention-core/tests/test_service.py::test_database_failure_prevents_new_publication"
+      ]
+    },
+    {
+      "id": "ATT-055",
+      "requirement": "currentと5分evidenceを分離",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_storage.py::test_transaction_failure_does_not_publish_and_non_evidence_stays_separate",
+        "apps/attention-core/src/prep_watchdeck_attention/service.py"
+      ]
+    },
+    {
+      "id": "ATT-056",
+      "requirement": "state symlink/escape拒否",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_foundation.py::test_state_isolation_and_reserved_ports",
+        "apps/attention-core/tests/test_storage.py::test_database_symlink_rejected_before_any_write"
+      ]
+    },
+    {
+      "id": "ATT-060",
+      "requirement": "input cutoff barをoutcomeへ含めない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_outcomes.py::test_closed_future_path_gaps_revisions_and_correction",
+        "independentReview"
+      ]
+    },
+    {
+      "id": "ATT-061",
+      "requirement": "horizon全bar不足はpending/unscorable",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_outcomes.py::test_closed_future_path_gaps_revisions_and_correction"
+      ]
+    },
+    {
+      "id": "ATT-062",
+      "requirement": "interior gapを0-returnにしない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_outcomes.py::test_closed_future_path_gaps_revisions_and_correction"
+      ]
+    },
+    {
+      "id": "ATT-063",
+      "requirement": "revision changeで履歴連結なし",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_outcomes.py::test_closed_future_path_gaps_revisions_and_correction"
+      ]
+    },
+    {
+      "id": "ATT-064",
+      "requirement": "max absolute/close return一致",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_outcomes.py::test_closed_future_path_gaps_revisions_and_correction"
+      ]
+    },
+    {
+      "id": "ATT-065",
+      "requirement": "correctionはnew edition",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_outcomes.py::test_closed_future_path_gaps_revisions_and_correction"
+      ]
+    },
+    {
+      "id": "ATT-070",
+      "requirement": "candidate family固定",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_cli_schema.py::test_freeze_is_idempotent_and_cannot_silently_change_family",
+        "apps/attention-core/tests/test_evaluation.py::test_freeze_contract_and_prefreeze_rows_excluded"
+      ]
+    },
+    {
+      "id": "ATT-071",
+      "requirement": "Recall/Precision/NDCG手計算一致",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_known_retrieval_arithmetic_and_no_future_selection_backfill"
+      ]
+    },
+    {
+      "id": "ATT-072",
+      "requirement": "minute rowsをiid扱いしない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/src/prep_watchdeck_attention/evaluation.py",
+        "apps/attention-core/tests/test_evaluation.py::test_order_outcome_generation_and_semantic_duplicate_invariance"
+      ]
+    },
+    {
+      "id": "ATT-073",
+      "requirement": "exact duplicateで証拠強化なし",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_order_outcome_generation_and_semantic_duplicate_invariance"
+      ]
+    },
+    {
+      "id": "ATT-074",
+      "requirement": "chance winnerをsupportしない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_many_chance_candidates_joint_correction_does_not_support_winner"
+      ]
+    },
+    {
+      "id": "ATT-075",
+      "requirement": "stable edgeを検出",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_variable_planted_edge_supported_and_power_is_planning_only"
+      ]
+    },
+    {
+      "id": "ATT-076",
+      "requirement": "day/6h sensitivity矛盾はinconclusive",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_day_six_hour_disagreement_is_inconclusive"
+      ]
+    },
+    {
+      "id": "ATT-077",
+      "requirement": "block不足はnot_estimable",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_few_days_and_constant_nonzero_edge_cannot_fabricate_support",
+        "apps/attention-core/tests/test_evaluation.py::test_empty_prospective_evidence_is_not_a_candidate_rejection",
+        "apps/attention-core/tests/test_evaluation.py::test_pending_outcomes_do_not_reject_candidate_coverage"
+      ]
+    },
+    {
+      "id": "ATT-078",
+      "requirement": "coverage regressionを棄却",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_coverage_loss_rejects_even_when_observed_edge_is_large"
+      ]
+    },
+    {
+      "id": "ATT-079",
+      "requirement": "MDE/powerはplanning only",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_evaluation.py::test_high_planned_power_cannot_override_frozen_practical_delta"
+      ]
+    },
+    {
+      "id": "ATT-080",
+      "requirement": "top-K deterministic",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_allocation.py::test_shadow_topk_hold_buffer_cost_and_manual_context"
+      ]
+    },
+    {
+      "id": "ATT-081",
+      "requirement": "hysteresis buffer/hold",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_allocation.py::test_shadow_topk_hold_buffer_cost_and_manual_context"
+      ]
+    },
+    {
+      "id": "ATT-082",
+      "requirement": "cost-aware switch抑制",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_allocation.py::test_shadow_topk_hold_buffer_cost_and_manual_context"
+      ]
+    },
+    {
+      "id": "ATT-083",
+      "requirement": "stale assetを選ばない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_allocation.py::test_shadow_freshness_and_policy_map_comparability"
+      ]
+    },
+    {
+      "id": "ATT-084",
+      "requirement": "manual selectionを変更しない",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_service.py",
+        "apps/web/tests/e2e/attention.e2e.ts",
+        "isolationSmoke"
+      ]
+    },
+    {
+      "id": "ATT-085",
+      "requirement": "added/removed/retained/churn保存",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_allocation.py::test_shadow_topk_hold_buffer_cost_and_manual_context"
+      ]
+    },
+    {
+      "id": "ATT-086",
+      "requirement": "map/policy変更で比較不可",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_allocation.py::test_shadow_freshness_and_policy_map_comparability"
+      ]
+    },
+    {
+      "id": "ATT-090",
+      "requirement": "loopback APIのみ",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_service.py",
+        "apps/web/src/lib/server/attention.test.ts",
+        "apps/web/src/routes/api/attention/+server.ts"
+      ]
+    },
+    {
+      "id": "ATT-091",
+      "requirement": "unknown query拒否",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_service.py",
+        "apps/web/src/routes/api/attention/+server.ts"
+      ]
+    },
+    {
+      "id": "ATT-092",
+      "requirement": "schema validation",
+      "status": "pass",
+      "evidence": [
+        "apps/web/src/lib/server/attention.test.ts",
+        "apps/attention-core/tests/test_cli_schema.py::test_schema_check_mode_detects_drift"
+      ]
+    },
+    {
+      "id": "ATT-093",
+      "requirement": "no-store",
+      "status": "pass",
+      "evidence": [
+        "apps/attention-core/tests/test_service.py",
+        "apps/web/src/lib/server/attention.test.ts",
+        "apps/web/src/routes/api/attention/+server.ts"
+      ]
+    },
+    {
+      "id": "ATT-094",
+      "requirement": "unavailable reason表示",
+      "status": "pass",
+      "evidence": [
+        "apps/web/tests/e2e/attention.e2e.ts"
+      ]
+    },
+    {
+      "id": "ATT-095",
+      "requirement": "scoreを利益確率と表示しない",
+      "status": "pass",
+      "evidence": [
+        "apps/web/src/lib/attention/AttentionWorkspace.svelte",
+        "independentReview"
+      ]
+    },
+    {
+      "id": "ATT-096",
+      "requirement": "favoritesがmarket rankを変更しない",
+      "status": "pass",
+      "evidence": [
+        "apps/web/src/lib/attention/attention.test.ts",
+        "apps/web/tests/e2e/attention.e2e.ts"
+      ]
+    },
+    {
+      "id": "ATT-097",
+      "requirement": "keyboard/focus",
+      "status": "pass",
+      "evidence": [
+        "apps/web/tests/e2e/attention.e2e.ts"
+      ]
+    },
+    {
+      "id": "ATT-098",
+      "requirement": "390px横overflowなし",
+      "status": "pass",
+      "evidence": [
+        "apps/web/tests/e2e/attention.e2e.ts",
+        "independentReview"
+      ]
+    },
+    {
+      "id": "ATT-099",
+      "requirement": "stale warning",
+      "status": "pass",
+      "evidence": [
+        "apps/web/tests/e2e/attention.e2e.ts"
+      ]
+    },
+    {
+      "id": "ATT-100",
+      "requirement": "Market Core全pytest",
+      "status": "pass",
+      "evidence": [
+        "fullLocalGate.marketPytest"
+      ]
+    },
+    {
+      "id": "ATT-101",
+      "requirement": "Ranking Core全pytest",
+      "status": "pass",
+      "evidence": [
+        "fullLocalGate.rankingPytest"
+      ]
+    },
+    {
+      "id": "ATT-102",
+      "requirement": "Attention Core全gate",
+      "status": "pass",
+      "evidence": [
+        "fullLocalGate.attentionPytest",
+        "fullLocalGate.pythonChecks"
+      ]
+    },
+    {
+      "id": "ATT-103",
+      "requirement": "Web unit/check/build",
+      "status": "pass",
+      "evidence": [
+        "fullLocalGate.webTests",
+        "finalWebDelta"
+      ]
+    },
+    {
+      "id": "ATT-104",
+      "requirement": "Desktop/Mobile E2E",
+      "status": "pass",
+      "evidence": [
+        "fullLocalGate.playwright",
+        "finalWebDelta"
+      ]
+    },
+    {
+      "id": "ATT-105",
+      "requirement": "full `verify-local.sh`",
+      "status": "pass",
+      "evidence": [
+        "fullLocalGate"
+      ]
+    },
+    {
+      "id": "ATT-106",
+      "requirement": "docs metadata/link",
+      "status": "pass",
+      "evidence": [
+        "documentationChecks"
+      ]
+    },
+    {
+      "id": "ATT-107",
+      "requirement": "no production state write",
+      "status": "pass",
+      "evidence": [
+        "operationAudit",
+        "isolationSmoke"
+      ]
+    },
+    {
+      "id": "ATT-108",
+      "requirement": "no systemd/deploy operation",
+      "status": "pass",
+      "evidence": [
+        "operationAudit"
+      ]
+    },
+    {
+      "id": "ATT-109",
+      "requirement": "rollback: Attention停止で既存画面継続",
+      "status": "pass",
+      "evidence": [
+        "isolationSmoke",
+        "fullLocalGate.playwright",
+        "apps/web/tests/e2e/attention.e2e.ts"
+      ]
+    },
+    {
+      "id": "ATT-120",
+      "requirement": "production unit install",
+      "status": "pass",
+      "evidence": [
+        "productionRollout",
+        "config/systemd/prep-watchdeck-attention.service.in"
+      ],
+      "reason": "Explicitly authorized; installed/enabled and active with the recorded release, read-only input mounts and verified cgroup limits."
+    },
+    {
+      "id": "ATT-121",
+      "requirement": "production capacity",
+      "status": "partial",
+      "evidence": [
+        "productionRollout.preflight",
+        "productionRollout.liveData.finalUnit"
+      ],
+      "reason": "Startup resource and disk growth measured; 30-day capacity including outcomes and retention/archive remains unverified."
+    },
+    {
+      "id": "ATT-122",
+      "requirement": "30日prospective evidence",
+      "status": "not_run",
+      "evidence": [],
+      "reason": "Prospective production collection started; 30 UTC days have not elapsed and live outcome settlement is pending."
+    },
+    {
+      "id": "ATT-123",
+      "requirement": "family-adjusted candidate superiority",
+      "status": "not_run",
+      "evidence": [],
+      "reason": "Needs the frozen family, 30-day prospective evidence and settled offline outcomes; no superiority claim is made."
+    },
+    {
+      "id": "ATT-124",
+      "requirement": "actual multi-capture design",
+      "status": "not_run",
+      "evidence": [],
+      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+    },
+    {
+      "id": "ATT-125",
+      "requirement": "actual multi-capture live acceptance",
+      "status": "not_run",
+      "evidence": [],
+      "reason": "Requires separate production/actual-capture authorization and prospective runtime evidence."
+    },
+    {
+      "id": "ATT-126",
+      "requirement": "user daily-use acceptance",
+      "status": "not_run",
+      "evidence": [],
+      "reason": "Desktop/mobile automation passed; acceptance by the user in daily operation has not been supplied."
+    }
+  ],
+  "verifiedSourceCommit": "3ea11242423b9de0856da00c26e12c54a3d24ffc",
+  "verifiedAt": "2026-10-09T00:50:44+09:00",
+  "summary": {
+    "sourceImplementation": "PASS",
+    "productValidation": "PARTIAL",
+    "productionAttention": "PASS",
+    "actualCapture": "not_run",
+    "sourcePassItems": 86,
+    "remainingItems": 6,
+    "liveInputAcceptance": "PASS_WITH_ISSUES",
+    "productionCapacity": "PARTIAL",
+    "productionPassItems": 1
+  },
+  "fullLocalGate": {
+    "command": "bash scripts/verify-local.sh",
+    "workingDirectory": "/home/tn/projects/prep-watchdeck",
+    "exitCode": 0,
+    "localLog": "/tmp/attention-verify-local.log",
+    "logSha256": "474cfc5c87486a1b2f84314ea8aa3b8fa516bfa0e4785b3c74ef64fc42a4a380",
+    "repositoryTests": 18,
+    "marketPytest": 216,
+    "rankingPytest": 156,
+    "attentionPytest": 56,
+    "webTests": 221,
+    "webTestFiles": 33,
+    "playwright": {
+      "passed": 136,
+      "projects": [
+        "desktop-1440",
+        "mobile-390"
+      ]
+    },
+    "pythonChecks": "Ruff check/format and Pyrefly passed for Market, Ranking and Attention; checked schema generators passed",
+    "webCheck": "0 errors, 0 warnings",
+    "webBuild": "passed",
+    "scopeNote": "Full gate passed before the final per-row data-as-of label. That display change was subsequently verified by the complete Web gate and both Attention E2E projects. Source CI filter dependency propagation was parsed separately; hosted CI was not run."
+  },
+  "finalWebDelta": {
+    "commands": [
+      "bun run test",
+      "bun run check",
+      "bun run build",
+      "PREP_WATCHDECK_FULL_E2E=1 bun run test:e2e tests/e2e/attention.e2e.ts"
+    ],
+    "workingDirectory": "/home/tn/projects/prep-watchdeck/apps/web",
+    "exitCode": 0,
+    "webTests": 221,
+    "svelteErrors": 0,
+    "svelteWarnings": 0,
+    "attentionE2ePassed": 2,
+    "change": "Display and assert each row dataAsOf."
+  },
+  "isolationSmoke": {
+    "command": "uv run --package prep-watchdeck-attention python scripts/attention/run-isolated.py with explicit temporary Market/Ranking/Attention roots, available loopback ports and --run-seconds 2",
+    "exitCode": 0,
+    "mode": "Linux bubblewrap: root and input roots read-only; only dedicated Attention state writable",
+    "attentionDatabaseCreated": true,
+    "selectionSha256Unchanged": true,
+    "marketFilesAfter": [
+      "selection.json"
+    ],
+    "rankingFilesAfter": [],
+    "processStopped": true,
+    "scope": "Startup/isolation/stop evidence with unavailable scratch inputs; not production/data-quality acceptance."
+  },
+  "independentReview": {
+    "status": "PASS",
+    "unresolvedFindings": 0,
+    "localReport": "/tmp/attention-core-review.md",
+    "reportSha256": "4ff0ce1e856475a86bfae04aba2e3c01cbbf72a055fd3cb199572c6306309b56",
+    "scope": "Python contracts/inputs/features/scoring/storage/outcomes/evaluation/allocation/API, Web reader/proxy/UI, isolated runner and verification source changes. Parent checked current docs and final display change.",
+    "resolved": [
+      "Exclude all bars overlapping or preceding decision; exact forward baseline for both horizons",
+      "Classify empty and wholly pending prospective evidence as not_estimable",
+      "Verify child evidence readback, invalidate exported reports on correction, freeze both horizons, unify group switch cost"
+    ]
+  },
+  "documentationChecks": {
+    "commands": [
+      "bun scripts/maintenance/check-document-metadata.mjs",
+      "bun scripts/maintenance/check-document-links.mjs",
+      "git diff --check"
+    ],
+    "status": "pass"
+  },
+  "operationAudit": {
+    "scope": "Source diff and executed operations; isolated test roots only",
+    "productionMarketDatabaseConnection": false,
+    "productionRankingWrite": false,
+    "attentionProviderRequest": false,
+    "manualSelectionWrite": false,
+    "systemdOperation": false,
+    "deploy": false,
+    "push": false,
+    "hostedCi": false,
+    "note": "Full gate created and removed its own Postgres container with random loopback port 32796. New Attention executions used temporary roots. Existing collector-driven production changes were not frozen or claimed absent."
+  },
+  "adaptations": [
+    "Use matrix acceptance IDs, not the conflicting short task-1 list.",
+    "UTC millisecond contracts align with Ranking.",
+    "Outcome baseline is ceil(decisionAt/minute), excluding overlapping bars and requiring a new exact baseline close.",
+    "Original references retain current membership; stale versions never gain native links.",
+    "Outcome development adapter uses explicit offline export, no active Ranking SQLite connection.",
+    "Linux runner fails closed without bubblewrap.",
+    "AttentionWorkspace is colocated in lib/attention with its presentation/validation helpers."
+  ],
+  "productionRollout": {
+    "authorizedAt": "2026-10-09T07:03:01+09:00",
+    "completedAt": "2026-10-09T07:17:08+09:00",
+    "deployedSourceCommit": "944f91bf810ab9e437ee4639407aea1b8be5c3e0",
+    "releaseDirectory": "/home/tn/releases/prep-watchdeck/944f91b",
+    "branch": "ai/attention-core-20261008-2347",
+    "pushedReleaseCommit": true,
+    "url": "https://ubuntu.narluga-gecko.ts.net:8444/attention",
+    "evidenceDirectory": "/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212",
+    "releaseBuild": {
+      "uvSyncFrozen": true,
+      "bunInstallFrozen": true,
+      "bunBuild": true,
+      "logSha256": "b24c878f2766c8bba2aaa6fd3fab820c8c8ee1facbcabc4563a4f4d80be25a01",
+      "trackedSourceOnly": true
+    },
+    "preflight": {
+      "sourceCommit": "194d49c",
+      "runtimeSourceSameAsRelease": true,
+      "generations": 8,
+      "evidenceGenerations": 2,
+      "firstDecisionAt": 1791497131838,
+      "lastDecisionAt": 1791497532015,
+      "durationSeconds": 420,
+      "sqliteQuickCheck": "ok",
+      "totalBytes": 35337370,
+      "estimatedGiBPerDayBeforeOutcomes": 5.113683622330427,
+      "estimatedGiBPer30DaysBeforeOutcomes": 153.41050866991282,
+      "note": "Short startup sample; no outcome rows or retention; not a long-term capacity guarantee.",
+      "apiLatencyMs": [
+        17.6,
+        12.8,
+        12.6,
+        11.9,
+        11.8
+      ],
+      "peakRssKiB": 252056
+    },
+    "liveData": {
+      "sampledAt": "2026-10-08T22:15:17.298073+00:00",
+      "status": "PASS WITH ISSUES",
+      "schemaValidated": true,
+      "storageMatchesArtifact": true,
+      "sqliteQuickCheck": "ok",
+      "generationId": "d742ba8ded4835afa681f11b02dd6e4f9223d9af228a9a2407efd05302d54871",
+      "inputs": {
+        "decisionAt": 1791497712031,
+        "featureVersion": "attention-features-v1",
+        "generationId": "d742ba8ded4835afa681f11b02dd6e4f9223d9af228a9a2407efd05302d54871",
+        "inputSkewSeconds": 191.588,
+        "marketMetricsCandleCutoff": 1791497520000,
+        "marketMetricsGeneratedAt": 1791497708456,
+        "marketMetricsGenerationId": "2026-10-08T22:12:00+00:00:d35ab7fbafe248f8997dbea9ef0af797",
+        "qualityReasons": [],
+        "rankingCutoff": 1791497700000,
+        "rankingGeneratedAt": 1791497708022,
+        "rankingGenerationId": "c1381b1848be8f107fcacfea:1791497700000:1791497708022",
+        "rankingMapVersion": "c1381b1848be8f107fcacfea",
+        "rankingMetricVersion": "trade-close-quote-turnover-analysis-v4",
+        "serviceGeneratedAt": 1791497711588,
+        "universeGeneratedAt": 1791497711588
+      },
+      "coverage": {
+        "componentReady": {
+          "activity": 534,
+          "dislocation": 466,
+          "movement": 534,
+          "positioning": 470
+        },
+        "confluenceReady": 461,
+        "eligible": 534,
+        "rows": 577
+      },
+      "identityCounts": {
+        "ready": 373,
+        "partial": 161,
+        "excluded": 41,
+        "invalid": 2
+      },
+      "qualityReasonCategories": {
+        "single_native_venue": 161,
+        "native_l1_stale": 360,
+        "original_multiplier_unknown": 3,
+        "mapping_unsupported": 41,
+        "original_version_mismatch": 4
+      },
+      "rowContracts": {
+        "nonReadyScoresNull": true,
+        "confluenceNeedsAllFour": true,
+        "dataAtOrBeforeDecision": true
+      },
+      "immutableGenerationCount": 5,
+      "evidenceGenerations": 1,
+      "frozenPolicies": 16,
+      "health": {
+        "status": "partial",
+        "reason": "incomplete_component_coverage",
+        "generationId": "d742ba8ded4835afa681f11b02dd6e4f9223d9af228a9a2407efd05302d54871",
+        "lastAttemptAt": 1791497712031,
+        "cycles": 2,
+        "databaseBytes": 24109776,
+        "providerRequests": 0,
+        "mode": "shadow_only"
+      },
+      "services": {
+        "attention": {
+          "MainPID": "180401",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-attention.service",
+          "MemoryCurrent": "228237312",
+          "MemoryPeak": "250949632",
+          "CPUUsageNSec": "2134836000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/944f91b",
+          "ActiveState": "active"
+        },
+        "web": {
+          "MainPID": "178946",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-web.service",
+          "MemoryCurrent": "450060288",
+          "MemoryPeak": "616075264",
+          "CPUUsageNSec": "7333662000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/944f91b/apps/web",
+          "ActiveState": "active"
+        },
+        "market": {
+          "MainPID": "3870006",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-market.service",
+          "MemoryCurrent": "213532672",
+          "MemoryPeak": "371023872",
+          "CPUUsageNSec": "4758027952000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/5b82a7d/apps/market-core",
+          "ActiveState": "active"
+        },
+        "ranking": {
+          "MainPID": "2917818",
+          "NRestarts": "0",
+          "ControlGroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/prep-watchdeck-ranking.service",
+          "MemoryCurrent": "237789184",
+          "MemoryPeak": "243535872",
+          "CPUUsageNSec": "5801762135000",
+          "WorkingDirectory": "/home/tn/releases/prep-watchdeck/d4aa5f9",
+          "ActiveState": "active"
+        }
+      },
+      "inputMounts": {
+        "/home/tn/.local/share/prep-watchdeck-market": "ro,nosuid,nodev,relatime",
+        "/home/tn/.local/share/prep-watchdeck-ranking": "ro,nosuid,nodev,relatime",
+        "/home/tn/.local/share/prep-watchdeck-attention": "rw,nosuid,nodev,relatime"
+      },
+      "limitations": [
+        "Unreviewed original version changes remain visible and excluded where necessary.",
+        "Unsupported mappings and unavailable native inputs remain unavailable.",
+        "30-day outcomes, candidate superiority, long-term retention and daily-use acceptance pending."
+      ],
+      "finalHealth": {
+        "status": "partial",
+        "reason": "incomplete_component_coverage",
+        "generationId": "6272a0311382cc7b744542ff317ec9b7060a357165ba471a61149da662473d2d",
+        "lastAttemptAt": 1791497772043,
+        "cycles": 3,
+        "databaseBytes": 24109776,
+        "providerRequests": 0,
+        "mode": "shadow_only"
+      },
+      "finalUnit": {
+        "MainPID": "180401",
+        "NRestarts": "0",
+        "MemoryCurrent": "235913216",
+        "MemoryPeak": "259133440",
+        "CPUQuotaPerSecUSec": "1s",
+        "MemoryMax": "536870912",
+        "TasksMax": "32",
+        "LimitNOFILE": "128",
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "finalCheckedAt": "2026-10-09T07:17:08+09:00",
+      "diskFreeGiB": 313.27,
+      "prospectiveFreezeBeforeFirstEvidence": true
+    },
+    "browser": {
+      "sampledAt": "2026-10-08T22:13:26.616Z",
+      "results": [
+        {
+          "viewport": {
+            "width": 1440,
+            "height": 960
+          },
+          "total": 577,
+          "status": "一部の成分は未算出",
+          "cutoff": "一部の成分は未算出\n参照基準 10/09 07:13:00 JST",
+          "search": "BTC visible with source time and direction",
+          "overflow": false,
+          "errors": [],
+          "attemptedWrites": [],
+          "screenshot": "/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212/attention-1440.png"
+        },
+        {
+          "viewport": {
+            "width": 390,
+            "height": 844
+          },
+          "total": 577,
+          "status": "一部の成分は未算出",
+          "cutoff": "一部の成分は未算出\n参照基準 10/09 07:13:00 JST",
+          "search": "BTC visible with source time and direction",
+          "overflow": false,
+          "errors": [],
+          "attemptedWrites": [],
+          "screenshot": "/home/tn/.local/share/prep-watchdeck-attention-rollouts/20261009-071212/attention-390.png"
+        }
+      ]
+    },
+    "tailscale": [
+      {
+        "url": "https://ubuntu.narluga-gecko.ts.net:8444/attention",
+        "status": 200,
+        "bytes": 31588,
+        "cacheControl": "no-store"
+      },
+      {
+        "url": "https://ubuntu.narluga-gecko.ts.net:8444/api/attention",
+        "status": 200,
+        "bytes": 1026162,
+        "cacheControl": "no-store"
+      }
+    ],
+    "stopRecovery": {
+      "startedAt": "2026-10-08T22:14:25.726Z",
+      "before": {
+        "/home/tn/.local/share/prep-watchdeck-market/control/selection.json": "0f8b5a2841cfcab37b647bcf9c60d29f99d8c4703b583c647bf051bdaae0ec76",
+        "/home/tn/.local/share/prep-watchdeck-market/user-workspace.json": "841f04309697d167442de9005bdde02c90f7752a029648a6ec2117817ea6bd39"
+      },
+      "stoppedAttentionApi": {
+        "status": 503,
+        "cacheControl": "no-store"
+      },
+      "retainedRows": 577,
+      "retainedCutoff": "参照基準 10/09 07:14:00 JST",
+      "existingEndpoints": [
+        {
+          "endpoint": "/api/health",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/market-data",
+          "status": 200
+        },
+        {
+          "endpoint": "/api/rankings?period=15m&dailyReferenceJst=00:00&order=turnover&minTurnover=0",
+          "status": 200
+        },
+        {
+          "endpoint": "/rankings",
+          "status": 200
+        },
+        {
+          "endpoint": "/",
+          "status": 200
+        }
+      ],
+      "after": {
+        "/home/tn/.local/share/prep-watchdeck-market/control/selection.json": "0f8b5a2841cfcab37b647bcf9c60d29f99d8c4703b583c647bf051bdaae0ec76",
+        "/home/tn/.local/share/prep-watchdeck-market/user-workspace.json": "841f04309697d167442de9005bdde02c90f7752a029648a6ec2117817ea6bd39"
+      },
+      "status": "PASS",
+      "finishedAt": "2026-10-08T22:14:31.903Z"
+    },
+    "rollback": "Stop and disable only prep-watchdeck-attention.service; move zzzz-attention-release.conf back to this rollout directory; daemon-reload and restart only prep-watchdeck-web.service. Retain state and releases.",
+    "notPerformed": [
+      "CI",
+      "PR",
+      "main merge",
+      "Market/Ranking service restart",
+      "live Market DB migration",
+      "actual capture",
+      "credential changes"
+    ],
+    "dataAcceptanceScope": "confirmed by user: actual market data; initial live input acceptance completed with recorded issues; 30-day evaluation and long-term capacity acceptance remain pending",
+    "scopeClarifiedAt": "2026-10-09T12:56:21+09:00"
+  }
+}

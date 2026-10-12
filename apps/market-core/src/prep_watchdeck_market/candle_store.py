@@ -70,13 +70,13 @@ def upsert_candles(
                             venue_instrument_version_id, bucket_at,
                             open_price, high_price, low_price, close_price,
                             volume_base, volume_notional, trade_count, finality,
-                            source_at, observed_at, collector_run_id
+                            source_at, observed_at, finalized_at, collector_run_id
                         )
                         VALUES (
                             %s, %s,
                             %s, %s, %s, %s,
                             %s, %s, %s, %s,
-                            %s, %s, %s
+                            %s, %s, %s, %s
                         )
                         ON CONFLICT (venue_instrument_version_id, bucket_at) DO UPDATE SET
                             open_price = EXCLUDED.open_price,
@@ -89,6 +89,7 @@ def upsert_candles(
                             finality = EXCLUDED.finality,
                             source_at = EXCLUDED.source_at,
                             observed_at = EXCLUDED.observed_at,
+                            finalized_at = EXCLUDED.finalized_at,
                             collector_run_id = EXCLUDED.collector_run_id
                         WHERE
                             (
@@ -113,6 +114,7 @@ def upsert_candles(
                         candle.finality,
                         candle.source_at,
                         candle.observed_at,
+                        candle.finalized_at,
                         collector_run_id,
                     ),
                 )
@@ -162,7 +164,7 @@ def _versions_covering_candles(
                 SELECT * FROM unnest(%s::text[], %s::text[], %s::timestamptz[])
             )
             SELECT requested.venue, requested.source_symbol, requested.bucket_at,
-                   vi.venue_instrument_version_id
+                   vi.venue_instrument_version_id, vi.contract_multiplier
             FROM venue_instrument_versions AS vi
             JOIN requested AS requested
               ON requested.venue = vi.venue
@@ -178,8 +180,13 @@ def _versions_covering_candles(
     ).fetchall()
     versions: dict[tuple[str, str, datetime], int] = {}
     ambiguous: set[tuple[str, str, datetime]] = set()
+    by_key: dict[tuple[str, str, datetime], Candle1m] = {
+        candle.storage_key: candle for candle in candles
+    }
     for row in rows:
         key = (str(row[0]), str(row[1]), row[2])
+        if key[0] == "mexc" and by_key[key].source_contract_multiplier != row[4]:
+            ambiguous.add(key)
         if key in versions:
             ambiguous.add(key)
         versions[key] = int(row[3])

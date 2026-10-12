@@ -1,20 +1,22 @@
 # 初期の銘柄対応表
 
-timestamp="2026-10-02(金)_14:34 JST"
+timestamp="2026-10-09(金)_16:01 JST"
 
 - 作成: `2026-09-12T09:20:26+09:00`
-- 更新: `2026-10-02T14:34:34+09:00`
+- 更新: `2026-10-09T16:01:26+09:00`
 - 状態: `現行`
 
 このdirectoryは価格を含まない、手動照合済みの対応表とidentity根拠を保存する。
-現map version `d5bfc5975f303258223b3288`（`ranking-map-v2`）は2026-10-02の完全な元名簿1,095契約を576行に保持する。
+現map version `c0b276f328e1ad423f448bfa`（`ranking-map-v2`）は2026-10-09の完全な元名簿1,096契約を577行に保持する。
 536行に固定参照契約がある（Bybit 484、Binance 52）。Widget対応は532行。
-40行は根拠を確認した未対応、原資産・参照の要確認は0行。旧名簿にだけ存在した127契約は
-完全な現行catalogとの照合で除外し、新しい19契約と既存287件のversion変更を明示確認した。
+41行は根拠を確認した未対応、原資産・参照の要確認は0行。今回のrefreshはAster 452件と
+Bitget 2件のnative version更新だけを反映し、追加・削除、固定参照、数量換算、Widget判断は変更しない。
+AsterのFunding interval一次情報追加、既存の注文保護設定とmetadata差分、Bitgetのinterval変更を
+公式catalogと専用DBのread-only定義auditで確認した。根拠と結論は`rosterRefresh`へ保持する。
 元数量換算とWidgetの未確認はそれぞれ3件であり、
 ランキングの採用資格と別に管理する。取得・連続更新の実データ受入は対応表照合と別の証拠である。
 
-未対応40行は、採用したBybit/Binanceに同一資産の対応契約がない37行、参照契約の取扱い終了・
+2026-10-02の未対応40行は、採用したBybit/Binanceに同一資産の対応契約がない37行、参照契約の取扱い終了・
 清算中1行、別資産として確認した元契約に参照契約がない1行、同名の外部参照が株式の別資産である1行。
 各判断は保存済みのidentity・catalog根拠に結び付ける。
 Aster AIはArtificial InuのCAとMEXC別名AIINUを確認し、採用2社の全catalog/指数から
@@ -27,7 +29,7 @@ XDPとSTONKのWidgetは通常の公開Widgetのexact metadataと実描画を確�
 既存の固定参照、数量換算、CHEEMS・NEX・RATSの未確認状態を変更していない。
 
 最新catalogの全取得・pagination完了とhashは`catalogCapture`、全listingの必要なidentity項目は
-`catalogIdentityIndex`へ保存する。`catalogs`は採用元1,095契約と固定参照536契約のfull entryだけを
+`catalogIdentityIndex`へ保存する。`catalogs`は採用元1,096契約と固定参照536契約のfull entryだけを
 保持し、未使用契約の運用設定を増殖させない。追加・除外・version照合の根拠は`rosterRefresh`へ記録する。
 
 元数量換算が未確認の3契約は次の一次情報が不足している。詳しい根拠と不足は

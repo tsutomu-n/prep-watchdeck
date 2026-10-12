@@ -1,12 +1,14 @@
 <script lang="ts">
+  import WorkspaceSettings from "$lib/components/WorkspaceSettings.svelte";
   import DailyReferenceSetting from "$lib/components/DailyReferenceSetting.svelte";
   import FontSelector from "$lib/components/FontSelector.svelte";
   import ThemeSelector from "$lib/components/ThemeSelector.svelte";
+  import TurnoverDisplaySetting from "$lib/components/TurnoverDisplaySetting.svelte";
 </script>
 
 <svelte:head>
   <title>設定 · Prep Watchdeck</title>
-  <meta name="description" content="フォント、配色、騰落率の日本時間の基準時刻を設定します。" />
+  <meta name="description" content="レイアウト、数値表示、起動時の表示、強調条件、チャート、騰落率の基準時刻を設定します。" />
 </svelte:head>
 
 <main class="settings-page">
@@ -27,6 +29,11 @@
     </div>
   </section>
 
+  <section aria-labelledby="turnover-title">
+    <div class="section-heading"><h2 id="turnover-title">売買代金の表示</h2></div>
+    <TurnoverDisplaySetting />
+  </section>
+
   <section aria-labelledby="reference-title">
     <div class="section-heading">
       <h2 id="reference-title">騰落率の計算</h2>
@@ -41,6 +48,8 @@
       <div><dt>JST当日の高安位置</dt><dd>JST 00:00からの高安を使います。騰落率の基準時刻とは別の指標です。</dd></div>
     </dl>
   </section>
+
+  <WorkspaceSettings />
 
   <aside class="storage-help" aria-label="設定の保存先">
     <h2>このブラウザーに保存</h2>

@@ -66,6 +66,7 @@ def parse_bitget_history_candles(
             finality="confirmed",
             source_at=source_at,
             observed_at=observed_at,
+            finalized_at=observed_at,
         )
         key = candle.bucket_start
         if key in rejected:

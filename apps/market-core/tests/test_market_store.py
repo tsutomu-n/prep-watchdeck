@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import uuid
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
@@ -17,6 +18,96 @@ from prep_watchdeck_market.market_store import persist_market_cycle
 from prep_watchdeck_market.models import Venue, canonical_json_sha256
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
+
+
+@pytest.mark.skipif(not TEST_DATABASE_URL, reason="requires isolated PostgreSQL")
+def test_persisted_diagnostics_preserve_final_reason_and_bound_examples() -> None:
+    assert TEST_DATABASE_URL is not None
+    schema = f"persisted_diagnostics_{uuid.uuid4().hex}"
+    at = datetime(2026, 10, 11, 4, 6, tzinfo=UTC)
+    with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as connection:
+        connection.execute(sql.SQL("CREATE SCHEMA {}").format(sql.Identifier(schema)))
+        connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
+        try:
+            apply_migrations(connection)
+            _insert_instruments(connection, at - timedelta(minutes=1))
+            aster = _ready_batch("aster", at)
+            aster = replace(
+                aster,
+                observations=(
+                    replace(
+                        aster.observations[0],
+                        funding_rate_raw=Decimal("0.0001"),
+                        next_funding_at=at + timedelta(hours=1),
+                        source_at=at,
+                        reference_price=Decimal("100"),
+                        reference_price_kind="index",
+                    ),
+                ),
+            )
+            observations = list(aster.observations)
+            for index in range(9):
+                symbol = f"PARTIAL{index}USDT"
+                _insert_instrument(connection, at - timedelta(minutes=1), "aster", symbol)
+                observations.append(
+                    replace(
+                        aster.observations[0],
+                        venue_instrument_id=f"aster:{symbol}",
+                        source_symbol=symbol,
+                        best_bid=None,
+                        status="partial",
+                        error_code="incomplete_source_row",
+                    )
+                )
+            _insert_instrument(connection, at - timedelta(minutes=1), "aster", "UNKNOWNUSDT")
+            observations.append(
+                replace(
+                    observations[-1],
+                    source_symbol="UNKNOWNUSDT",
+                    venue_instrument_id="aster:UNKNOWNUSDT",
+                    source_at=None,
+                )
+            )
+            result = persist_market_cycle(
+                connection,
+                at,
+                at,
+                (
+                    _failed_batch("bitget", at),
+                    _ready_batch("hyperliquid", at),
+                    replace(aster, observations=tuple(observations)),
+                ),
+            )
+            row = connection.execute(
+                "SELECT metrics FROM collector_runs WHERE run_id=%s", (result.run_id,)
+            ).fetchone()
+            assert row is not None
+            metrics = row[0]
+            assert metrics.get("persistedQualityCountsByVenue") == {
+                "aster": {"ready": 1, "partial": 10, "unavailable": 0},
+                "bitget": {"ready": 0, "partial": 0, "unavailable": 1},
+                "hyperliquid": {"ready": 1, "partial": 0, "unavailable": 0},
+            }
+            assert metrics["persistedReasonCountsByVenue"] == {
+                "aster": {"incomplete_source_row": 10},
+                "bitget": {"source_unavailable": 1},
+                "hyperliquid": {},
+            }
+            assert metrics["persistedExplainedPartialCountsByVenue"] == {
+                "aster": 9,
+                "bitget": 0,
+                "hyperliquid": 0,
+            }
+            examples = metrics["persistedDiagnosticExamples"]
+            assert len(examples["aster"]) == 8
+            assert len(examples["bitget"]) == 1
+            assert examples["aster"][0]["missingFields"] == ["bestBid"]
+            assert examples["aster"][0]["sourceAt"] == at.isoformat()
+            assert examples["aster"][0]["venueInstrumentVersionId"] > 0
+            assert "rawPayload" not in examples["aster"][0]
+        finally:
+            connection.execute("RESET search_path")
+            connection.execute(sql.SQL("DROP SCHEMA {} CASCADE").format(sql.Identifier(schema)))
 
 
 @pytest.mark.skipif(

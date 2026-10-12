@@ -1,9 +1,9 @@
 # Markets workspace 実装
 
-timestamp="2026-10-01(木)_20:31 JST"
+timestamp="2026-10-07(水)_19:06 JST"
 
 - 作成: `2026-09-28T20:00:00+09:00`
-- 更新: `2026-10-01T20:31:46+09:00`
+- 更新: `2026-10-07T19:06:07+09:00`
 - 状態: `実装計画`
 
 ---
@@ -45,5 +45,5 @@ timestamp="2026-10-01(木)_20:31 JST"
 4. 現役artifactと公開RESTから得た実数値を使う隔離候補Webで、Desktop/390pxの参照→native→保存→再訪→次銘柄を確認。
 
 完了条件は上記の代理操作と観測を根拠付きで記録すること。OS候補窓・物理端末・本人の主観、本番配置と本番起動復帰は別の未確認事項として残す。
-証拠と再実行方法は[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md](/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md)へ記録する。
+証拠と再実行方法は[/home/tn/projects/prep-watchdeck/docs/plans/active/markets-workspace/persona-acceptance.md](persona-acceptance.md)へ記録する。
 本番へのPOST、unit操作、DB変更、map修復は行わない。rollbackは今回起動した隔離processを終了すること。

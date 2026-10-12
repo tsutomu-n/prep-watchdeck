@@ -33,7 +33,9 @@ async def serve(args: argparse.Namespace) -> None:
         store = Store(state, Path(args.original_state_dir))
         timeout = aiohttp.ClientTimeout(total=20, connect=10)
         async with aiohttp.ClientSession(timeout=timeout, trust_env=False) as session:
-            service = RankingService(store, mapping, PublicClient(session))
+            service = RankingService(
+                store, mapping, PublicClient(session), original_state=Path(args.original_state_dir)
+            )
             runner = web.AppRunner(application(service), access_log=None)
             stopped = asyncio.Event()
             loop = asyncio.get_running_loop()

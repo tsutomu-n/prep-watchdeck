@@ -1,0 +1,111 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "observation_id": {
+      "pattern": "^[0-9a-f]{32}$",
+      "title": "Observation Id",
+      "type": "string"
+    },
+    "sequence": {
+      "maximum": 2000,
+      "minimum": 1,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "kind": {
+      "enum": [
+        "observation",
+        "gap"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "payload_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Payload Sha256"
+    },
+    "previous_receipt_sha256": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Receipt Sha256"
+    },
+    "read_started_at": {
+      "format": "date-time",
+      "title": "Read Started At",
+      "type": "string"
+    },
+    "read_completed_at": {
+      "format": "date-time",
+      "title": "Read Completed At",
+      "type": "string"
+    },
+    "payload_readback_completed_at": {
+      "format": "date-time",
+      "title": "Payload Readback Completed At",
+      "type": "string"
+    },
+    "available_at": {
+      "format": "date-time",
+      "title": "Available At",
+      "type": "string"
+    },
+    "elapsed_seconds": {
+      "maximum": 3600,
+      "minimum": 0,
+      "title": "Elapsed Seconds",
+      "type": "number"
+    },
+    "clock_error_seconds": {
+      "maximum": 30,
+      "minimum": 0,
+      "title": "Clock Error Seconds",
+      "type": "number"
+    },
+    "reasons": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 50,
+      "title": "Reasons",
+      "type": "array"
+    }
+  },
+  "required": [
+    "observation_id",
+    "sequence",
+    "kind",
+    "read_started_at",
+    "read_completed_at",
+    "payload_readback_completed_at",
+    "available_at",
+    "elapsed_seconds",
+    "clock_error_seconds",
+    "reasons"
+  ],
+  "title": "ObservationReceipt",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

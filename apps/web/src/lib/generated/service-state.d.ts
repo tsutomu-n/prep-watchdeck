@@ -18,16 +18,44 @@ export type Ageseconds = number;
 export type Recordsreceived = number;
 export type Recordswritten = number;
 export type Errorcode = string | null;
+export type Schemaversion1 = "persisted-l1-diagnostics-v1";
+export type Cycleat1 = string;
+export type Venue = "bitget" | "hyperliquid" | "aster" | "mexc";
+export type Ready = number;
+export type Partial = number;
+export type Unavailable = number;
+export type Errorcode1 = string;
+export type Count = number;
+/**
+ * @maxItems 64
+ */
+export type Reasoncounts = PersistedReasonCount[];
+export type Explainedpartialcount = number;
+export type Venueinstrumentid = string;
+export type Venueinstrumentversionid = number;
+export type Status2 = "partial" | "unavailable";
+export type Errorcode2 = string;
+export type Missingfields = string[];
+export type Observedat = string;
+export type Sourceat = string | null;
+/**
+ * @maxItems 8
+ */
+export type Examples = PersistedDiagnosticExample[];
+/**
+ * @maxItems 4
+ */
+export type Venues = PersistedVenueDiagnostics[];
 export type Collectors = CollectorRunArtifact[];
-export type Status2 = "ready" | "partial" | "unavailable" | "stale";
+export type Status3 = "ready" | "partial" | "unavailable" | "stale";
 export type Latestat = string | null;
 export type Ageseconds1 = number | null;
 export type Maxageseconds = number;
-export type Errorcode1 = string | null;
+export type Errorcode3 = string | null;
 export type Name = string;
-export type Status3 = "ready" | "unavailable";
+export type Status4 = "ready" | "unavailable";
 export type Generatedat1 = string | null;
-export type Errorcode2 = string | null;
+export type Errorcode4 = string | null;
 export type Artifacts = ArtifactFileStatus[];
 
 export interface MarketServiceStateArtifact {
@@ -50,17 +78,48 @@ export interface CollectorRunArtifact {
   recordsReceived: Recordsreceived;
   recordsWritten: Recordswritten;
   errorCode: Errorcode;
+  diagnostics?: PersistedCycleDiagnostics | null;
+}
+export interface PersistedCycleDiagnostics {
+  schemaVersion?: Schemaversion1;
+  cycleAt: Cycleat1;
+  venues: Venues;
+}
+export interface PersistedVenueDiagnostics {
+  venue: Venue;
+  qualityCounts: PersistedQualityCounts;
+  reasonCounts: Reasoncounts;
+  explainedPartialCount: Explainedpartialcount;
+  examples: Examples;
+}
+export interface PersistedQualityCounts {
+  ready: Ready;
+  partial: Partial;
+  unavailable: Unavailable;
+}
+export interface PersistedReasonCount {
+  errorCode: Errorcode1;
+  count: Count;
+}
+export interface PersistedDiagnosticExample {
+  venueInstrumentId: Venueinstrumentid;
+  venueInstrumentVersionId: Venueinstrumentversionid;
+  status: Status2;
+  errorCode: Errorcode2;
+  missingFields: Missingfields;
+  observedAt: Observedat;
+  sourceAt: Sourceat;
 }
 export interface FreshnessArtifact {
-  status: Status2;
+  status: Status3;
   latestAt: Latestat;
   ageSeconds?: Ageseconds1;
   maxAgeSeconds: Maxageseconds;
-  errorCode: Errorcode1;
+  errorCode: Errorcode3;
 }
 export interface ArtifactFileStatus {
   name: Name;
-  status: Status3;
+  status: Status4;
   generatedAt: Generatedat1;
-  errorCode: Errorcode2;
+  errorCode: Errorcode4;
 }

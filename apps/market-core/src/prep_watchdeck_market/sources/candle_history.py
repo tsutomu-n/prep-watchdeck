@@ -6,6 +6,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from urllib.parse import urlsplit
 
 import aiohttp
 
@@ -19,6 +20,7 @@ from prep_watchdeck_market.candles import (
     require_mapping,
     timestamp_milliseconds,
 )
+from prep_watchdeck_market.mexc_budget import MexcBudgetUnavailable, MexcHttpBudget
 from prep_watchdeck_market.sources.bitget_candles import parse_bitget_history_candles
 
 BITGET_HISTORY_URL = "https://api.bitget.com/api/v2/mix/market/history-candles"
@@ -135,7 +137,14 @@ class NativeCandleHistoryClient:
         params: dict[str, str] | None = None,
         body: dict[str, object] | None = None,
     ) -> tuple[object, datetime]:
-        for attempt in range(3):
+        mexc_budget = None
+        if urlsplit(url).hostname == "api.mexc.com":
+            try:
+                mexc_budget = MexcHttpBudget.from_env()
+            except MexcBudgetUnavailable:
+                raise HistoryFetchError("MEXC shared budget unavailable") from None
+
+        async def start_attempt() -> None:
             self._check_budget()
             now = asyncio.get_running_loop().time()
             if self._last_started is not None:
@@ -145,16 +154,42 @@ class NativeCandleHistoryClient:
                         raise HistoryBudgetExceeded("recovery deadline reached")
                     await asyncio.sleep(wait)
             self._check_budget()
+            if mexc_budget is not None:
+                try:
+                    await mexc_budget.acquire(
+                        "recovery",
+                        timeout_seconds=max(
+                            0.001, self._deadline - asyncio.get_running_loop().time()
+                        ),
+                    )
+                except MexcBudgetUnavailable:
+                    raise HistoryFetchError("MEXC shared budget unavailable") from None
+            self._check_budget()
             self._last_started = asyncio.get_running_loop().time()
             self.request_count += 1
+
+        async def admit_attempt(
+            request: aiohttp.ClientRequest, handler: aiohttp.ClientHandlerType
+        ) -> aiohttp.ClientResponse:
+            # Count and admit every actual send, including aiohttp's internal GET retry.
+            await start_attempt()
+            return await handler(request)
+
+        for attempt in range(3):
+            if mexc_budget is None:
+                await start_attempt()
             try:
                 async with self._session.request(
                     method,
                     url,
                     params=params,
                     json=body,
+                    allow_redirects=mexc_budget is None,
+                    middlewares=(admit_attempt,) if mexc_budget is not None else None,
                     timeout=aiohttp.ClientTimeout(
-                        total=min(20.0, max(0.001, self._deadline - self._last_started))
+                        total=min(
+                            20.0, max(0.001, self._deadline - asyncio.get_running_loop().time())
+                        )
                     ),
                 ) as response:
                     if response.status in {418, 429}:
@@ -167,6 +202,11 @@ class NativeCandleHistoryClient:
                             and 0 < int(raw_retry) <= 86_400
                             else None
                         )
+                        if mexc_budget is not None:
+                            try:
+                                await mexc_budget.cooldown(retry or 2)
+                            except MexcBudgetUnavailable:
+                                raise HistoryFetchError("MEXC shared budget unavailable") from None
                         raise HistoryRateLimited(retry)
                     if response.status in {401, 403}:
                         raise HistoryFetchError("history authorization failed")
@@ -224,7 +264,9 @@ class NativeCandleHistoryClient:
 
         async def fetch_pages() -> None:
             nonlocal pages
-            page_minutes = {"bitget": 200, "hyperliquid": 360, "aster": 500}[target.venue]
+            page_minutes = {"bitget": 200, "hyperliquid": 360, "aster": 500, "mexc": 500}[
+                target.venue
+            ]
             ranges = _ranges(missing, max_span_minutes=page_minutes if coalesce else None)
             for range_start, range_end in reversed(ranges) if newest_first else ranges:
                 if target.venue == "bitget":
@@ -290,7 +332,7 @@ class NativeCandleHistoryClient:
                                 },
                             )
                             candles = _parse_hyperliquid_page(payload, target, observed_at=observed)
-                        else:
+                        elif target.venue == "aster":
                             payload, observed = await self._request_json(
                                 "GET",
                                 ASTER_HISTORY_URL,
@@ -303,6 +345,57 @@ class NativeCandleHistoryClient:
                                 },
                             )
                             candles = _parse_aster_page(payload, target, observed_at=observed)
+                        elif target.venue == "mexc":
+                            from prep_watchdeck_market.models import CatalogInstrument
+                            from prep_watchdeck_market.sources.mexc_candles import (
+                                parse_mexc_history,
+                            )
+
+                            if (
+                                target.quantity_unit != "contracts"
+                                or target.contract_multiplier is None
+                            ):
+                                raise HistoryPayloadInvalid(
+                                    "MEXC recovery quantity definition invalid"
+                                )
+                            factor = target.contract_multiplier
+                            instrument = CatalogInstrument(
+                                "mexc",
+                                target.source_symbol,
+                                True,
+                                "0",
+                                "crypto",
+                                "linear_perpetual",
+                                "clob",
+                                target.base_asset,
+                                target.quote_asset,
+                                target.settle_asset,
+                                target.settle_asset,
+                                "contracts",
+                                factor,
+                                None,
+                                None,
+                                None,
+                                {
+                                    "contractSize": format(factor, "f"),
+                                    "watchdeckQuantityEvidence": {
+                                        "base_per_contract": format(factor, "f")
+                                    },
+                                },
+                            )
+                            payload, observed = await self._request_json(
+                                "GET",
+                                "https://api.mexc.com/api/v1/contract/kline/"
+                                + target.source_symbol,
+                                params={
+                                    "interval": "Min1",
+                                    "start": str(int(chunk_start.timestamp())),
+                                    "end": str(int(chunk_end.timestamp()) - 1),
+                                },
+                            )
+                            candles = parse_mexc_history(payload, instrument, observed_at=observed)
+                        else:
+                            raise HistoryPayloadInvalid("unsupported candle history Venue")
                         pages += 1
                         for candle in candles:
                             _accept(candle, target, expected, accepted, rejected)

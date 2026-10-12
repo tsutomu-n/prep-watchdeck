@@ -178,10 +178,17 @@ def load_snapshot(path: Path, *, start: datetime, end: datetime, as_of: datetime
                 finality=cast(CandleFinality, finality),
                 source_at=source_at,
                 observed_at=_time(record.get("observed_at")),
+                finalized_at=(
+                    None if record.get("finalized_at") is None else _time(record["finalized_at"])
+                ),
             )
-            if candle.bucket_end > candle.observed_at:
+            if candle.bucket_end > candle.observed_at and candle.finalized_at is None:
                 raise ValueError("observed_before_close")
-            if candle.observed_at > as_of or (source_at is not None and source_at > as_of):
+            if (
+                candle.observed_at > as_of
+                or (source_at is not None and source_at > as_of)
+                or (candle.finalized_at is not None and candle.finalized_at > as_of)
+            ):
                 raise ValueError("unavailable_at_as_of")
             rows[bucket] = candle
         except (ValueError, DecimalException) as exc:

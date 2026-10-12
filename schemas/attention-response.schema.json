@@ -1,0 +1,784 @@
+{
+  "$defs": {
+    "AllocationPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "top-k-v1",
+            "hysteresis-v1",
+            "cost-aware-greedy-v1"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "component": {
+          "default": "confluence",
+          "enum": [
+            "movement",
+            "activity",
+            "positioning",
+            "dislocation",
+            "confluence"
+          ],
+          "title": "Component",
+          "type": "string"
+        },
+        "k": {
+          "exclusiveMinimum": 0,
+          "maximum": 100,
+          "title": "K",
+          "type": "integer"
+        },
+        "buffer": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Buffer",
+          "type": "integer"
+        },
+        "minimumHoldMinutes": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Minimumholdminutes",
+          "type": "integer"
+        },
+        "switchPenalty": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Switchpenalty",
+          "type": "number"
+        },
+        "warmUpCost": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Warmupcost",
+          "type": "number"
+        }
+      },
+      "required": [
+        "id",
+        "kind",
+        "component",
+        "k",
+        "buffer",
+        "minimumHoldMinutes",
+        "switchPenalty",
+        "warmUpCost"
+      ],
+      "title": "AllocationPolicy",
+      "type": "object"
+    },
+    "AttentionComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "policyVersion": {
+          "title": "Policyversion",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "ready",
+            "unavailable"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Score"
+        },
+        "rawValue": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rawvalue"
+        },
+        "rank": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rank"
+        },
+        "rankChange": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rankchange"
+        },
+        "direction": {
+          "default": "unknown",
+          "enum": [
+            "up",
+            "down",
+            "flat",
+            "mixed",
+            "unknown"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "inputs": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Inputs",
+          "type": "array"
+        },
+        "peerCount": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Peercount",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "policyVersion",
+        "status",
+        "score",
+        "rawValue",
+        "rank",
+        "rankChange",
+        "direction",
+        "reason",
+        "inputs",
+        "peerCount"
+      ],
+      "title": "AttentionComponent",
+      "type": "object"
+    },
+    "AttentionCoverage": {
+      "additionalProperties": false,
+      "properties": {
+        "rows": {
+          "minimum": 0,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "eligible": {
+          "minimum": 0,
+          "title": "Eligible",
+          "type": "integer"
+        },
+        "confluenceReady": {
+          "minimum": 0,
+          "title": "Confluenceready",
+          "type": "integer"
+        },
+        "componentReady": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "title": "Componentready",
+          "type": "object"
+        }
+      },
+      "required": [
+        "rows",
+        "eligible",
+        "confluenceReady",
+        "componentReady"
+      ],
+      "title": "AttentionCoverage",
+      "type": "object"
+    },
+    "AttentionRow": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "asset": {
+          "title": "Asset",
+          "type": "string"
+        },
+        "referenceKey": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Referencekey"
+        },
+        "originals": {
+          "items": {
+            "$ref": "#/$defs/OriginalReference"
+          },
+          "title": "Originals",
+          "type": "array"
+        },
+        "components": {
+          "additionalProperties": {
+            "$ref": "#/$defs/AttentionComponent"
+          },
+          "propertyNames": {
+            "enum": [
+              "movement",
+              "activity",
+              "positioning",
+              "dislocation",
+              "confluence"
+            ]
+          },
+          "title": "Components",
+          "type": "object"
+        },
+        "readyComponentCount": {
+          "maximum": 4,
+          "minimum": 0,
+          "title": "Readycomponentcount",
+          "type": "integer"
+        },
+        "totalComponentCount": {
+          "const": 4,
+          "default": 4,
+          "title": "Totalcomponentcount",
+          "type": "integer"
+        },
+        "coverageRatio": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Coverageratio",
+          "type": "number"
+        },
+        "qualityReasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        },
+        "dataAsOf": {
+          "title": "Dataasof",
+          "type": "integer"
+        },
+        "identityStatus": {
+          "enum": [
+            "ready",
+            "partial",
+            "invalid",
+            "excluded"
+          ],
+          "title": "Identitystatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "assetId",
+        "asset",
+        "referenceKey",
+        "originals",
+        "components",
+        "readyComponentCount",
+        "totalComponentCount",
+        "coverageRatio",
+        "qualityReasons",
+        "dataAsOf",
+        "identityStatus"
+      ],
+      "title": "AttentionRow",
+      "type": "object"
+    },
+    "InputReference": {
+      "additionalProperties": false,
+      "properties": {
+        "generationId": {
+          "minLength": 1,
+          "title": "Generationid",
+          "type": "string"
+        },
+        "featureVersion": {
+          "const": "attention-features-v1",
+          "default": "attention-features-v1",
+          "title": "Featureversion",
+          "type": "string"
+        },
+        "decisionAt": {
+          "exclusiveMinimum": 0,
+          "title": "Decisionat",
+          "type": "integer"
+        },
+        "rankingCutoff": {
+          "exclusiveMinimum": 0,
+          "title": "Rankingcutoff",
+          "type": "integer"
+        },
+        "rankingGeneratedAt": {
+          "exclusiveMinimum": 0,
+          "title": "Rankinggeneratedat",
+          "type": "integer"
+        },
+        "rankingGenerationId": {
+          "minLength": 1,
+          "title": "Rankinggenerationid",
+          "type": "string"
+        },
+        "rankingMapVersion": {
+          "minLength": 1,
+          "title": "Rankingmapversion",
+          "type": "string"
+        },
+        "rankingMetricVersion": {
+          "minLength": 1,
+          "title": "Rankingmetricversion",
+          "type": "string"
+        },
+        "universeGeneratedAt": {
+          "exclusiveMinimum": 0,
+          "title": "Universegeneratedat",
+          "type": "integer"
+        },
+        "serviceGeneratedAt": {
+          "exclusiveMinimum": 0,
+          "title": "Servicegeneratedat",
+          "type": "integer"
+        },
+        "marketMetricsGenerationId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marketmetricsgenerationid"
+        },
+        "marketMetricsGeneratedAt": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marketmetricsgeneratedat"
+        },
+        "marketMetricsCandleCutoff": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Marketmetricscandlecutoff"
+        },
+        "inputSkewSeconds": {
+          "minimum": 0,
+          "title": "Inputskewseconds",
+          "type": "number"
+        },
+        "qualityReasons": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Qualityreasons",
+          "type": "array"
+        }
+      },
+      "required": [
+        "generationId",
+        "featureVersion",
+        "decisionAt",
+        "rankingCutoff",
+        "rankingGeneratedAt",
+        "rankingGenerationId",
+        "rankingMapVersion",
+        "rankingMetricVersion",
+        "universeGeneratedAt",
+        "serviceGeneratedAt",
+        "marketMetricsGenerationId",
+        "marketMetricsGeneratedAt",
+        "marketMetricsCandleCutoff",
+        "inputSkewSeconds",
+        "qualityReasons"
+      ],
+      "title": "InputReference",
+      "type": "object"
+    },
+    "OriginalReference": {
+      "additionalProperties": false,
+      "properties": {
+        "instrumentId": {
+          "title": "Instrumentid",
+          "type": "string"
+        },
+        "versionId": {
+          "exclusiveMinimum": 0,
+          "title": "Versionid",
+          "type": "integer"
+        },
+        "venue": {
+          "title": "Venue",
+          "type": "string"
+        },
+        "groupId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Groupid"
+        },
+        "multiplier": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Multiplier"
+        },
+        "current": {
+          "default": true,
+          "title": "Current",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "instrumentId",
+        "versionId",
+        "venue",
+        "groupId",
+        "multiplier",
+        "current"
+      ],
+      "title": "OriginalReference",
+      "type": "object"
+    },
+    "ShadowAllocation": {
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "const": "attention-shadow-allocation-v1",
+          "default": "attention-shadow-allocation-v1",
+          "title": "Schemaversion",
+          "type": "string"
+        },
+        "generationId": {
+          "title": "Generationid",
+          "type": "string"
+        },
+        "decisionAt": {
+          "title": "Decisionat",
+          "type": "integer"
+        },
+        "mapVersion": {
+          "title": "Mapversion",
+          "type": "string"
+        },
+        "policy": {
+          "$ref": "#/$defs/AllocationPolicy"
+        },
+        "scorePolicyVersion": {
+          "title": "Scorepolicyversion",
+          "type": "string"
+        },
+        "mode": {
+          "const": "shadow_only",
+          "default": "shadow_only",
+          "title": "Mode",
+          "type": "string"
+        },
+        "manualSelectionId": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Manualselectionid"
+        },
+        "manualSelectionMutated": {
+          "const": false,
+          "default": false,
+          "title": "Manualselectionmutated",
+          "type": "boolean"
+        },
+        "comparable": {
+          "title": "Comparable",
+          "type": "boolean"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "slots": {
+          "items": {
+            "$ref": "#/$defs/ShadowSlot"
+          },
+          "title": "Slots",
+          "type": "array"
+        },
+        "added": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Added",
+          "type": "array"
+        },
+        "removed": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Removed",
+          "type": "array"
+        },
+        "retained": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Retained",
+          "type": "array"
+        },
+        "addedGroups": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Addedgroups",
+          "type": "array"
+        },
+        "removedGroups": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "title": "Removedgroups",
+          "type": "array"
+        },
+        "churn": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Churn",
+          "type": "number"
+        },
+        "estimatedSwitchCost": {
+          "minimum": 0,
+          "title": "Estimatedswitchcost",
+          "type": "number"
+        },
+        "costStatus": {
+          "const": "estimated",
+          "default": "estimated",
+          "title": "Coststatus",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "generationId",
+        "decisionAt",
+        "mapVersion",
+        "policy",
+        "scorePolicyVersion",
+        "mode",
+        "manualSelectionId",
+        "manualSelectionMutated",
+        "comparable",
+        "reason",
+        "slots",
+        "added",
+        "removed",
+        "retained",
+        "addedGroups",
+        "removedGroups",
+        "churn",
+        "estimatedSwitchCost",
+        "costStatus"
+      ],
+      "title": "ShadowAllocation",
+      "type": "object"
+    },
+    "ShadowSlot": {
+      "additionalProperties": false,
+      "properties": {
+        "assetId": {
+          "title": "Assetid",
+          "type": "string"
+        },
+        "groupIds": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Groupids",
+          "type": "array"
+        },
+        "enteredAt": {
+          "title": "Enteredat",
+          "type": "integer"
+        },
+        "score": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Score",
+          "type": "number"
+        },
+        "rank": {
+          "minimum": 1,
+          "title": "Rank",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "assetId",
+        "groupIds",
+        "enteredAt",
+        "score",
+        "rank"
+      ],
+      "title": "ShadowSlot",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": {
+      "const": "attention-response-v1",
+      "default": "attention-response-v1",
+      "title": "Schemaversion",
+      "type": "string"
+    },
+    "generationId": {
+      "title": "Generationid",
+      "type": "string"
+    },
+    "decisionAt": {
+      "title": "Decisionat",
+      "type": "integer"
+    },
+    "status": {
+      "enum": [
+        "ready",
+        "partial",
+        "unavailable",
+        "stale"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Reason"
+    },
+    "policyVersion": {
+      "title": "Policyversion",
+      "type": "string"
+    },
+    "inputs": {
+      "$ref": "#/$defs/InputReference"
+    },
+    "coverage": {
+      "$ref": "#/$defs/AttentionCoverage"
+    },
+    "rows": {
+      "items": {
+        "$ref": "#/$defs/AttentionRow"
+      },
+      "title": "Rows",
+      "type": "array"
+    },
+    "shadowAllocations": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/ShadowAllocation"
+      },
+      "title": "Shadowallocations",
+      "type": "array"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "generationId",
+    "decisionAt",
+    "status",
+    "reason",
+    "policyVersion",
+    "inputs",
+    "coverage",
+    "rows",
+    "shadowAllocations"
+  ],
+  "title": "AttentionResponse",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

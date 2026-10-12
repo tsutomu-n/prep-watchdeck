@@ -1,16 +1,17 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-02(金)_21:30 JST"
+timestamp="2026-10-11(日)_19:47 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-02T21:30:37+09:00`
-- 検証: `2026-10-02T21:30:37+09:00`
+- 更新: `2026-10-11T19:47:45+09:00`
+- 検証: `2026-10-11T19:47:45+09:00`
 - 状態: `現行`
 
 ---
 
 ## この文書の範囲
 
-この文書は**現在productionの3 Venue Perp runtime**を安全に運用する手順を記述する。
+この文書はBitget・Hyperliquid Core・Aster・MEXCのPerp runtimeとDiscoveryを安全に運用する手順を記述する。
+Repositoryの仕様と各hostの稼働releaseは別に確認し、MEXC対応版の切替には下記の配置境界を適用する。
 port、path、unit、artifact数、retention、public API構成等は現在のruntime contractであり、
 [product boundary](product-boundary.md)が許可する将来機能を禁止するものではない。
 
@@ -36,6 +37,18 @@ Markets workspaceを配置する場合はMarket Core、Ranking Core、Webの契�
 
 metrics workerは投影ごとに子processを1つだけ起動し、DB接続・投影・破損保全・発行の処理を10秒で打ち切る。timeoutでは子processをkill・回収してから次を処理し、停止時も進行中処理を待つ。DBのstatement上限5秒・transaction上限8秒・接続上限2秒も維持する。process起動時のDB資格は標準入力に渡し、command lineや例外logへ載せない。OS停止などを含む厳密な応答時間保証ではない。
 
+Bitget短時間activityの導入対象はMarket CoreとWebで、Ranking Coreの契約・配置は変更しない。
+本節はRepositoryのsource仕様を示し、稼働反映を証明するものではない。配置・service操作は別承認で行い、
+稼働版の採用と実データの履歴充足を別々に確認する。DB migrationや自動backfillは追加しない。
+切戻しは検証済みのMarket Core/Webの組へ戻し、保存足・旧state・保全artifactを自動削除しない。
+
+activity workerは起動時から独立した60秒周期で投影し、既存metricsの最短5秒周期へ連動させない。
+専用lockとread-only repeatable-read接続を使い、接続2秒・statement5秒・transaction8秒・
+子process全体10秒の上限、timeout時のkill/回収、標準入力での資格情報受渡しをmetricsと同様に守る。
+JSON破損または既知schemaの検証破損だけを`native-activity.json.corrupt-<id>`へ原文bytesで保全・fsync・readbackして
+atomicに再生成し、未知schema/metricVersion、権限・保全失敗、並行変更、lock競合では更新を停止する。
+保全物は自動削除しない。投影失敗はerrorTypeを記録し、他の収集・発行laneを停止させない。
+
 これらの具体的project名、port、pathは現行runtime値であり、将来の新app/sourceへ永久固定しない。
 
 ## P0 completionの扱い
@@ -50,6 +63,7 @@ Watchdeck v1 P0のRepository実装とproduction qualificationは完了済み。P
 [README](../../README.md)の専用stateと`postgres.env`を作る。実credentialをcommit、terminal log、issue、文書へ
 貼らない。
 
+Webはrelease directoryの`apps/web/`で`bun install --frozen-lockfile`、`bun run build`を実行してから配置する。
 unit renderだけ確認する。
 
 ```bash
@@ -64,6 +78,22 @@ bash scripts/ops/install-user-services.sh --repo-root /absolute/clean-release --
 ```
 
 installerは既存unitをbackupする。installとruntime start/restartを同一操作とみなさない。
+
+## Webの本番配信
+
+Web unitは`bun run start`でadapter-nodeのbuildを配信し、`HOST=127.0.0.1`、`PORT=5173`を使う。
+開発時の`bun run dev`とは別で、source更新後はbuildと承認済みrestartが必要。
+HTML/APIは`no-store`で配信し、clientの受容形式に合わせgzip/Brotli等で応答を圧縮する。
+ハッシュ付き静的assetはadapterの事前圧縮とimmutable cacheを使う。
+listenerはloopback hostnameと設定済みTailscale authority以外のHostを全routeで拒否する。
+APIの認証・Origin・socket接続元検証は維持し、forwarded addressをadapterのclient addressへ代入しない。
+`PREP_WATCHDECK_WEB_`接頭辞の`ORIGIN`、`ADDRESS_HEADER`、`HOST_HEADER`、`PORT_HEADER`設定による
+上書きは拒否する。
+
+Webだけの互換な変更は、検証済みcommitから別release directoryへ配置し、WebのWorkingDirectoryとExecStartだけを
+切り替える。旧releaseと既存drop-inを保持し、health・実際のHTTPS入口・認証・主要画面を確認する。
+失敗時は今回のWeb用drop-inだけを戻し、daemon-reloadとWeb restartを行う。
+Market/Ranking/Attentionの収集process、DB、stateの切替はこのWeb更新に含めない。
 
 ## 起動と停止
 
@@ -100,7 +130,7 @@ Webのlistenerは`127.0.0.1:5173`を維持し、既存Tailscale ServeのHTTPS pr
 `https://ubuntu.narluga-gecko.ts.net:8444/`。スマホ本人による接続確認はserver検証と別に行う。
 
 Web unitに`PREP_WATCHDECK_TRUSTED_TAILSCALE_ORIGIN=https://ubuntu.narluga-gecko.ts.net:8444`を
-指定する。Viteの既存allowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
+指定する。開発時はViteのallowed host設定も保持する。設定したoriginとloopbackのproxy接続に加え、
 Serveの認証済みuser identity headerが揃った場合にlocal APIを利用できる。
 
 タグ付き端末にはuser identity headerが付かないため、このサーバー自身から同じHTTPS URLを開く場合は
@@ -113,7 +143,7 @@ socketが読めない、timeout、不正response、別端末、Funnel経由の�
 
 JSON更新には引き続き設定したHTTPS originとの一致が必要。検証時にidentity headerを手作業で付けて
 認証成功と扱わない。serverからのHTTP・ブラウザー検証と、スマホ実機での本人操作確認を分ける。
-URL変更時はこのoriginとVite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
+URL変更時はこのoriginと開発用Vite allowed hostを一組で更新する。Tailscale ACLやFunnelを自動で変更しない。
 
 ```bash
 systemctl --user show \
@@ -141,10 +171,16 @@ PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' uv run watchdeck-market hea
 
 ## Artifactとfreshness
 
-現在のWeb read modelは`$PREP_WATCHDECK_MARKET_STATE_DIR/artifacts/`に4 JSONを持つ。
+基幹Web read modelは`$PREP_WATCHDECK_MARKET_STATE_DIR/artifacts/`に4 JSONを持つ。
 missing、invalid、staleを前回値で上書きしない。
 
-4 artifactは現在の実装数であり、ranking/model/Stocks等の新artifactを追加できる。
+任意の`market-metrics.json`と`native-activity.json`は別発行・別検証で、欠測しても基幹4 artifactを失効させない。
+activityの`GET /api/native-activity`成功だけで履歴充足とは判断せず、ID/version、生成・cutoff時刻、
+各窓のstatusと`baselineDays`を確認する。生成120秒・cutoff300秒の表示上限と、過去7日中3日以上の
+完全な同時刻窓を別に確認する。履歴不足を0や他契約で埋めず、保存済みの同じ契約版を調べる。
+既存のendpoint回復が成功しても、activityが必要とする窓内の全分がそろった証拠にはならない。
+
+基幹4 artifactを永久固定せず、ranking/model/Stocks等の新artifactを追加できる。
 
 定期更新停止、freshness閾値超過、restart loop等は現在のruntime障害として扱う。
 
@@ -181,6 +217,7 @@ PREP_WATCHDECK_MARKET_DATABASE_URL='<dedicated-url>' \
 
 現在のmaintenanceは、normalized Parquetのreadback、row count、key、timestamp、row digest、SHA-256、active manifestを
 確認した後だけ対応sourceを削除する。空datasetをarchive成功として捏造しない。
+Parquet列はSQL projectionの型を明示する。先頭の行が欠測でも後続の値を保持し、欠測を0へ補完しない。
 
 現在の保持期間:
 
@@ -308,8 +345,11 @@ uv run --package prep-watchdeck-ranking python scripts/ranking/run-isolated.py \
 直接`watchdeck-ranking serve`を呼ぶ場合、source上の検査は働くがOSの書込み制限は付かない。
 通常の手動起動にもwrapperを使う。
 
-各Providerはcatalog取得も含めREST 2 request/秒・同時2、WS最大3接続、接続再試行上限60秒、履歴約48時間、
-現在と直前1世代それぞれにHH:mm別cache 32件。全体1,500参照契約を超えるmapは再測定を要する。通常は分境界8秒後に
+各Providerはcatalog取得も含めREST 2 request/秒・同時2、WS最大3接続、接続再試行上限60秒。
+履歴は4日と1分を保持し、起動時と欠落回復時は3日分と価格境界の4,321本を補完する。
+1契約のREST履歴取得は1,000本ずつ最大5ページで、rate limitとbackoffは維持する。
+現在と直前1世代それぞれに応答cache 8件、HH:mm別の期間計算cache 8件を保持する。
+3日分の数値は変更不能なコンパクト配列で固定する。全体1,500参照契約を超えるmapは再測定を要する。通常は分境界8秒後に
 発行し、処理が12秒を超えた世代は公開しない。150秒以上古い比較結果は更新停止表示になる。
 初期履歴不足、取得停止、catalog変更、古い名簿はそれぞれ別の状態として示す。
 
@@ -322,12 +362,11 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 独立ランキングを切り離す場合は、そのcollectorを停止し、WebのUniverse Explorerを使う。
 元DBのmigration・rollback・既存unitの変更は必要ない。stateや未commitの差分を自動削除しない。
 
-
 ### 初回準備と再開を区別する
 
 | 入力・操作 | 起きること | 次へ進める条件 |
 | --- | --- | --- |
-| 空の専用stateで制限付き起動する | 最初の世代までは準備中。その後、契約ごとに24時間分の確定足を補完する。 | 対応数を縮めず、有効数と各行の履歴不足の減少を確認する。新規上場等で必要な履歴自体がない場合は不足を維持する。 |
+| 空の専用stateで制限付き起動する | 最初の世代までは準備中。その後、契約ごとに3日分と価格境界の確定足を補完する。 | 対応数を縮めず、有効数と各行の履歴不足の減少を確認する。新規上場等で必要な履歴自体がない場合は不足を維持する。 |
 | 正当な保存済みstate・同じmapで同じ専用processを起動する | 既存OHLCを読み、不足分だけを補完する。旧snapshotを発行済み順位の比較元へ復元しない。 | 初回の順位変化は「比較不可（初回・再起動後）」、直前の分の世代がそろった次回以降に比較する。 |
 | 画面で更新停止を確認する | 比較時刻が残る。今回または前回の比較時刻から150秒超なら順位変化も比較不可になる。 | 専用APIのhealth・Providerのlast_error・backfill_pendingを確認し、該当する専用processだけを復旧する。 |
 | APIは動作中だが履歴不足が続く | 確定足の欠測、取得制約、履歴準備、上場直後などを示す。 | 同じ参照契約の履歴を確認する。別Providerで補完したり、欠測を0へ変更したりしない。 |
@@ -353,9 +392,19 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 足りない場合は拒否する。live mapやサービスを自動変更しない。引数は`--help`で確認し、
 出力候補へ上記のmap/evidence検査を適用する。日付だけの更新で名簿の古さを隠さない。
 
+candidate作成と通常照合は同じcatalog判定を使う。L1だけのpartialは許容するが、catalogの完全性・
+成功件数・鮮度・同じ取得世代の確認は省略しない。`/health`の`roster.details`とランキング応答の
+`rosterHealth`で、取得元の失敗、名簿変更の確認待ち、元取引所の価格欠測を区別する。
+確認待ちでは追加・削除・契約変更IDを根拠と照合し、固定参照先・数量換算を自動変更しない。
+Repositoryの採用mapは1,096契約・577行（verified 536、unsupported 41）で、
+RLC追加とDRV/NULLMASK契約版変更を反映している。元数量換算3件・Widget3件は未確認を維持する。
+これはsourceの採用状態であり、稼働processのmap採用は別途反映と確認を要する。
+
 削除した契約は新mapの参照対象から外れ、通常の専用stateの保存整理の対象になる。
-追加指標の導入自体は表・保存形式・保存期間を変更しない。旧revisionの履歴を新revisionへ
-つなぎ直さない。旧mapへ切り戻す場合に整理済み履歴が不足すれば、同じ旧契約の公開APIで補完する。
+過去日比較の導入では表・保存形式を変えず、保存期間を4日と1分へ延長する。旧revisionの履歴を
+新revisionへつなぎ直さない。旧mapへ切り戻す場合に整理済み履歴が不足すれば、同じ旧契約の公開APIで補完する。
+新しい版の初回は過去日が欠けていても、現在の順位条件がそろえば順位を表示し、過去日比較だけを
+履歴不足にする。初期充足時間・実Provider負荷・稼働hostでの容量は別途実データで受け入れる。
 
 ### 追加機能を切り戻す
 
@@ -363,6 +412,8 @@ templateの上限はMemoryMax 768M、CPUQuota 100%、TasksMax 32、LimitNOFILE 1
 SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須fieldが異なる場合があるため、
 片側だけを戻すとWebは形式不一致として取得待ちになる。必要なsource/mapを別の場所に保全し、
 既存の未commit差分を上書きしない。切戻し時も専用collectorの停止・再開以外に元DBの操作を加えない。
+`ranking-v5`の名簿診断・過去日比較を読むWebは同じ契約のRanking Coreと組み合わせる。表のmigrationは不要。
+保持期間が短い旧版のcollectorへ戻すと、追加取得した古い足は旧版の通常pruneで削除される。
 
 ### 通常稼働への配置記録
 
@@ -384,9 +435,14 @@ SQLiteの表は共通だが、APIのschemaVersion・metricVersionと必須field�
 実際に旧UniverseのHTTP 200・旧WorkingDirectory・ランキング停止を確認した後、
 ランキングの再起動と全件受入を経て追加drop-inを再適用し、配置版の画面を再確認した。
 
-元数量換算とWidgetの各3件は未確認を維持する。名簿は固定の審査済みsnapshotであり、
-24時間経過後の「取扱い名簿の更新が止まっています」は仕様どおり表示する。現在の全上場銘柄を
-自動追随したことや、全Widgetの個別描画を確認したことを、この配置結果から主張しない。
+元数量換算とWidgetの各3件は未確認を維持する。上記配置時点の名簿は固定snapshotだった。
+現行Rankingは`--original-state-dir`のUniverse/service artifactを毎世代read-onlyで照合し、
+新しい完全なcatalog取得と審査済みfingerprintが一致した場合に名簿の観測日時を更新する。
+一致する限り、mapを再配置しなくても24時間後の警告は再発しない。
+新規・削除・version変更は自動採用せず警告を残し、上の候補更新手順で審査する。
+`/health`の`roster.checkedAt`と`roster.error`で照合時刻・失敗理由を確認できる。
+元artifactが不完全・古い・読めない場合も警告を残すが、独立した価格・売買代金の収集は継続する。
+全上場銘柄の自動審査や全Widgetの個別描画を確認したことを、この照合から主張しない。
 詳細な検証結果は
 [/home/tn/projects/prep-watchdeck/.ai-work/ranking-chart-release-20260916-2117/docs/current/validation.md](validation.md)を参照する。
 
@@ -419,6 +475,11 @@ Repo rootで`bun scripts/assets/generate-logo-bindings.mjs`を実行し、画像
 許可済み対象への`--apply`はnative履歴を取得し、欠損だけ挿入する。現行契約の版・定義hashが変わったら
 対象を停止する。自動実行は`PREP_WATCHDECK_CANDLE_RECOVERY_ENABLED=true`を明示したserviceだけで有効。
 falseに戻しても追加済みの正当な保存足を自動削除しない。
+
+Hyperliquidの直近5,000本の履歴上限を超える古い窓は、その対象の`history_limit`として扱い、
+他Venueのscan/回収を続ける。結果は`partial`、未検査件数は`null`であり、全履歴の完了とは扱わない。
+dry-runは状態を保存せず、applyは全体の件数・終了理由をDB auditへ、対象別診断を
+`candle-recovery-state.json`へ残す。
 
 有効なserviceでは15分ごとの履歴回復に加え、毎分の不足endpoint回復が動く。
 後者は各対象の取得直前にcutoffを再確認し、現在・15分・1時間・24時間の必要足を
@@ -464,7 +525,8 @@ Asterの上場境界`onboardDate`を確認できる`PERPETUAL`では、`createTi
 価格・秘密情報・個人メモをlogへ出さない。
 
 `config/systemd/prep-watchdeck-data-operations.service.in`と対応timerはread-only確認の任意template。
-`@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用stateへ置換してuser unitへ
+`@REPO_ROOT@`を検証済みrelease、`@MARKET_STATE_ROOT@`を専用state、`@RANKING_MAP@`と
+`@RANKING_PORT@`をRanking serviceと同じ実値へ置換してuser unitへ
 配置した場合だけ、timerを明示的にenable/startする。5分ごとに確認し、結果は
 `journalctl --user -u prep-watchdeck-data-operations.service`で読む。
 timer停止は監視だけを止める。回復を止める場合は上記の有効化設定をfalseへ戻す。
@@ -496,3 +558,125 @@ Core用の固定証拠は`watchdeck-market export-fixture --instrument <ID> --ve
 監査run、Reference bundle、Fixture bundleを自動削除しない。Recoveryで追加した行の削除は
 run_idを特定した別の修復判断とする。本番でのbackup、exact sourceの配置、実ProviderとUIの確認は
 [作業計画](../plans/active/prep-quality-completion/GOAL.md)の受入台帳を通して行う。
+
+## Attention Coreの隔離実行と運用
+
+Repositoryには`watchdeck-attention` CLIがあるが、production unitのinstall/enable/startや既存releaseの更新は別の明示承認対象である。既定stateは`~/.local/share/prep-watchdeck-attention`、portは8770。Market/Rankingとは別のdirectory・portを指定する。既定portやrootは製品の永久制約ではない。
+
+承認された配置では[Attention専用unit template](../../config/systemd/prep-watchdeck-attention.service.in)をreleaseの絶対pathと専用state/portでrenderする。MemoryMaxは768 MiB、CPUQuotaは100%、TasksMaxは32、LimitNOFILEは128。Linux bubblewrapでrootとMarket/Ranking stateをread-onlyにし、Attention stateだけを書込み可能にする。Market/Ranking unitを新規起動する依存は持たず、既存の収集processを変更しない。Webには`PREP_WATCHDECK_ATTENTION_PORT`を設定する。広域の`install-user-services.sh`をAttention配置のために実行しない。
+
+Discoveryの全件取得と比較取得を重ねたwarm負荷ではPython RSSだけで500 MiBを超えるため、旧512 MiB上限は使わない。容量受入では保持済みDBと複数世代・実HTTP取得を含め、RSS、cgroupのanonymous/file内訳、OOMと再起動回数を確認する。短時間のOOMなしだけでは容量余裕を証明しない。
+
+Attention `/health`の`lastCycleDurationMs`と`maxCycleDurationMs`は、generation lock取得後から入力読取・保存・Discovery更新までをmonotonic clockで計測する。失敗した試行も含み、起動後未試行はnull、maxはprocess lifetimeの最大値。世代間の時刻差を処理時間の代用にしない。
+
+配置前は旧WebのWorkingDirectory/drop-inとunitの有無を保存し、tracked sourceから独立releaseを作る。配置後は`/health`、`/attention`、Webの`/api/attention`と`/attention`、少なくとも2回の世代更新を確認する。`partial`は欠損を含む有効応答であり、全銘柄の全成分が有効という意味ではない。確認ではcoverageとquality reason、元の2 collectorのPID/更新継続も記録する。
+
+容量は専用stateのSQLite、WAL、immutable artifactsを合計する。2026-10-09の577銘柄の短時間観測では、outcome未保存で約5.1 GiB/日、30日換算約153 GiBと推定した。これは長期実測や容量保証ではない。自動削除は未実装であり、outcome・訂正版と他serviceの増加分を含むretention/archive受入は別checkpointに残す。空き容量50 GiB未満、または直近の実測増加から7日分を確保できない場合はAttentionの新規蓄積を停止し、保存済みstateを保持して容量方針を再判断する。停止はこの条件を確認した運用操作であり、自動監視機能ではない。
+
+Repo rootからread-only状態確認は`uv run watchdeck-attention status`。`validate-state`は既存current artifactの形式だけを検証し、DB整合性・鮮度・稼働受入を代替しない。`serve`は専用stateを作成し、初回の実時刻で候補群を固定する。過去へfreeze時刻を遡らせない。
+
+隔離開発では`uv run --package prep-watchdeck-attention python scripts/attention/run-isolated.py --state-dir <専用Attention root> --market-state-dir <読取用Market copy> --ranking-state-dir <読取用Ranking root> --ranking-port <隔離Ranking API port> --port <隔離Attention port> --run-seconds 60`を使う。Linux bubblewrapを必須とし、Attention stateだけをwrite可能にする。入力rootは事前に存在するread-only copyを指定し、Ranking APIも隔離したfixture/APIを使用する。制限なしのfallbackやunit操作は行わない。
+
+`freeze-family --family-id <新family>`、`settle-outcomes --fixture <offline export.json>`、`evaluate-family --family-id <固定family>`は専用SQLiteへ書くため、Attention serviceを停止した状態で実行する。共通の`--state-dir`等を指定できる。後二者はProvider取得やactive Ranking DB接続を行わない。評価結果はstdoutと`artifacts/evaluation.json`へ出る。訂正後のstale reportは再評価が必要。
+
+停止・rollbackは起動したAttention process、または承認された`prep-watchdeck-attention.service`だけを停止する。Webも戻す場合は保存した旧drop-inを復元してWebだけを再起動する。新しいAttention APIが利用不能になっても、既存ランキング・取引所別・手動selectionは独立して継続する。専用stateを削除する必要はない。容量/retention、30日prospective evidence、実データでの候補優位性は別の受入で確認する。
+
+## MEXC・Discovery対応sourceの配置境界
+
+MEXCを含むsourceを配置するときは、先にMarket artifact、Ranking original、Attention、Webのreaderを
+対応させ、取得を無効にした互換構成で確認してから収集を有効化する。既定値は
+`PREP_WATCHDECK_MARKET_MEXC_ENABLED=true`で、reader先行配置では明示的に`false`を設定する。
+この設定はMarket CoreのMEXC Catalog/L1/candle/recovery/funding/selected収集を止め、既存stateを削除しない。
+Webから明示要求する表示用Chart履歴・約定騰落率の公開API読取は別経路であり、この設定では停止しない。
+このWeb readはfreshなUniverseと対応するservice manifestだけを必要とし、Venueのactive selectionや`selected-market.json`の利用可否には依存しない。
+
+採用範囲は審査済みregistryの10 USDT perpetualだけで、未審査catalogの全件収集ではない。
+同梱Ranking mapのMEXC versionは隔離DBのcatalog captureに基づく。本番DBのcurrent instrument/versionを
+取得し、定義・数量係数・原資産・固定参照の根拠を再照合してから採用する。
+隔離captureの内部SCD2 IDを本番へそのままコピーしない。参照価格のProviderはBybit/Binanceのまま維持する。
+`prepare-mexc-map.py --capture-scope production_read_only`は専用DBのread-only snapshot、全current roster、
+MEXCのcurrent version・保存済み定義と30分以内の観測を照合する。既存Venueのidentityに差分があれば、
+先に独立したroster refreshを行う。既存の数量・Widget未確認をMEXC追加だけで承認済みにしない。
+取得無効時はcatalogも停止するため、採番にはMarketとmaintenanceを停止し、同じruntime lock下で
+catalogを一度だけ保存する。単独MEXC catalogは一時的に全件coverageを満たさないため、対応mapを
+配置して通常serviceを再開した後、全Venue catalog成功・件数整合・version一致を確認する。
+maintenance writerとdata-operations readerのrelease/mapも配置対象に含める。
+
+最適化版の配置ではMigration 0006とFunding時刻3列を理解する互換releaseを使う。
+Web/Attention等のreaderを先行させ、maintenanceの次回起動を制御してからmigration、Market writerを
+切り替える。旧行のFundingは未知のままにし、schema5専用binaryへは戻さない。
+審査済みregistryを10→50→100と固定して順に配置し、本番のcurrent SCD2 versionでmapを再作成する。
+追加mapの再実行では既存根拠とreview日時を保ち、同じ入力でversionを変えない。
+参照未確認のnative-onlyもrosterへ残し、Ranking/Widgetの資格gateは弱めない。
+段階rollbackはMEXC取得停止→直前registry→単一writer catalog→current versionでmap再資格→再開とする。
+履歴削除・古いversion ID mapの単純復元は行わない。
+
+共有予算は`PREP_WATCHDECK_MEXC_BUDGET_DB`に絶対pathで指定し、business DBとは別のSQLiteにする。
+親directoryを先に作成し、Market/Web/maintenanceの専用budget-only環境file
+`~/.config/prep-watchdeck-market/mexc-budget.env`へ同じ値を設定する。templateはこのfileをoptionalで読み、
+未設定ならMEXC HTTPはfail closedになる。WebにPostgres credential fileを読ませない。
+CLIのrecovery/maintenanceと実Providerを使う隔離検証にも同じ変数を明示して渡す。
+予算・429待機の共有以外は隔離DB/state/portを使う。Candle shardの接続数・ACK失敗・再接続・
+無更新時間・観測したforward gapはMarket journalの`MEXC candle shard=`で確認できる。
+このgap counterだけでは全欠損を証明できないため、保存足coverageも確認する。
+
+Discoveryは既存Attention serviceのwriterで動き、専用の新serviceを追加しない。
+Webの`/api/discovery-summary`、`/api/discovery`、`/api/decisions`と比較操作は対応Webのbuildで提供する。
+配置確認では実際のsource版とstateを特定し、固定条件、連続世代、欠測時の中断、保存候補、
+明示確認以外でselectionが変わらないことを、source testと別に確認する。
+
+rollbackもMEXCを読める互換版を使い、Market側の取得を無効化して保存データを保持する。
+MEXC入りartifact/mapを旧3 Venue readerへ戻さず、user-workspace v2を書いた後にv1専用Webへ戻さない。
+比較pinとfavorite/view、`manual-decisions.json`、Attention SQLiteを保全対象に含める。
+終了Discovery episodeの7日/10,000件制限は既存Attention evidence全体のretentionではない。
+手動判断は1,000件/16 MiBで新規保存を拒否し、自動削除しない。満杯時は保存済み内容を保全して容量方針を再判断する。
+
+## Researchと新しいcandle finalityの配置境界
+
+[/home/tn/projects/prep-watchdeck/docs/current/research.md](research.md)は手動で上限付きの観測を行い、offline検証・固定比較へ出力する。
+sourceを更新しただけで常駐観測やproduction適用は始まらない。
+新しいcandle writerを稼働させる前には、明示許可された本番DBでMigration 0005が必要。
+旧行の`finalized_at`はNULLのままで、過去の受信/公開時刻を書き換えない。
+Migration 0005後は未修正の旧sourceへそのまま戻さない。旧healthはmigration履歴5を認識できず、
+旧candle upsertは`finalized_at`を残して`observed_at`だけ更新するため、後着更新が新CHECKに違反する。
+切戻しにはMigration 0005とfinality対応のcandle model・通常writer・recovery writerを含む
+互換releaseを別directoryに用意し、schema5 healthと後着更新を隔離DBで検証する。
+旧Providerが確定時刻を持たない更新はNULLとし、古い確定時刻を新しい訂正版へ流用しない。
+切戻し直前の専用DB backupを追加保全し、研究観測を停止・保全する。
+finalityを保持する現行maintenanceを維持する。catalog版が変われば
+稼働mapも新しい全件根拠で再確認する。nullable列・原本・旧releaseは保全し、downgradeや
+backup restoreを自動で行わない。
+
+Aster catalogはexchangeInfoに加え公式fundingInfoを観測する。取得失敗はcatalog失敗を維持し、
+設定欠落はinterval unknownとする。新しいintervalは新versionとして扱い、過去fundingへ遡及しない。
+monitorのremoved/unmapped/versionMismatch/identity差分はsample付きで残る。
+mapの根拠review・validation・稼働採用・採用後monitor成功を別々に確認し、監視無効化を修復としない。
+
+管理unitで上限付きresearch観測を行う場合、終了処理はsample数、process終了、snapshot品質、
+統計的推定可否を分けて記録する。`SERVICE_RESULT`・`EXIT_CODE`・`EXIT_STATUS`が不明、
+強制終了、件数不足の場合は、残ったsnapshotの品質が良くてもcapture完了のPASSにしない。
+CLI終了3による品質不適格は、全sampleを保存したかどうかと別に残す。
+
+## 周期診断、容量と隔離copy
+
+`check-data-operations.py`はfreshな`venue_partial_failure`でも、完全な周期診断が全native件数を説明し、各Venueにready入力があり、Asterの不良がbid/ask欠測だけの場合に対象別partialを警告として記録する。不良rowの値・品質は補完しない。stale/unavailable、未知理由、診断欠落、identity不一致、利用可能入力0はfailureを維持する。Funding限定partialの一般除外は追加していない。exit 0は全rowの品質PASSを意味しない。
+
+周期diagnosticsを出すwriterへの切替は、closed artifactを受けるWeb/Attention readerを先に更新する。切戻しでは所有する追加設定だけをhash確認して戻し、旧releaseの機能復帰を確認する。`scripts/ops/verify-release-health.py --expected-release <absolute-release> --map-version <version> --after <UTC-time>`は設定上のWorkingDirectory、現PIDのcommand/cwd、各HTTP health、切替後のfreshなL1と成功collector周期を照合する。artifact形式の互換性だけで成功にしない。DB・map・evidenceの削除やdowngradeは行わない。機能healthは全row品質や長期受入とは別である。
+
+`scripts/ops/check-runtime-capacity.py`はMarket/Ranking/Attention、`--postgres-root`と`--outcome-archive`をread-onlyで測り、新しい外部JSONへ保存する。parent traversal、symlink、state内への出力を拒否する。権限不足はunknownとし、Postgres physical bytesは同一root/device・60秒以内の`runtime-capacity-supplement-v1`を`--trusted-supplement`で渡せる。logical bytesで代用しない。`--copy-staging-bytes`、`--export-staging-bytes`、`--restore-staging-bytes`を分け、copy/restoreには保存bytesからの下限を置く。export未測定、範囲不足、24h未満は30日外挿を`not_validated`とする。維持処理を含むnet増分の線形外挿は、実30日観測を代替しない。50 GiBと実測増分7日分の停止条件は維持し、このscriptは蓄積を停止・削除しない。
+
+`scripts/ops/copy-runtime-evidence.py`はread-only SQLite online backupを新しい隔離rootへ作り、SQLite内の全generationとimmutable Attention fileの内容・checksumを照合する。完成したcopyのreaderは`mode=ro&immutable=1`を使う。稼働DB/WAL/SHMの単純copyを行わない。Ranking/Attention間の共通transactionはなく、各copyのmapVersionと取得窓をmanifestへ保存する。incomplete copyの再開は、保存済みfile hashと元入力pathが一致する場合だけ。
+
+研究の`finalize_capture`は原本と重ならない出力に`capture-completion.json`を必要とする。実processのresult/exit code/statusと根拠を記録し、source manifestを固定する。verify/quality/evaluateを有限な子processとして実行し、期限切れは`INCOMPLETE`とphase/checkpointを残す。exit 3と必要件数の一致はcapture完了になり得るが、品質不適格なら評価は`NOT_RUN`。既存入力やcheckpointのhashが変わった再開を拒否する。子processもlockを保持し、期限切れ・SIGINT/SIGTERMではprocess groupを終了して回収する。親SIGKILL後も存続する子がlockを保持し、重複writerを拒否する。
+
+Recovery受入では`--require-complete-recovery`により、同じnative rosterの完了周期、0 remaining、正しい通常6h/endpoint windowと時刻を要求する。通常監視の警告分類と別のgateであり、runningの0 targetやnullを完了へ昇格しない。`audit-candle-history.py`はread-only、`reconcile-candle-history.py`は原本と同一scopeの回復ledgerを照合、`prepare-acceptance-bundle.py`はtracked source・map・helper・unit bindingsを新しいimmutable bundleへ固定する。unit反映やlive repairを実行するcommandではない。
+
+## Offline outcome入力とprospective protocol
+
+`export-outcome-input.py`は完了copyのSHAを照合し、保存済みgenerationのexact mapとreference revisionだけで閉じた最大24hをexportする。現Ranking mapとは別の過去mapも保存済みinputのmapVersionで分離し、symbolから参照を作らない。128MiB以下のfragmentを一つのbundleとして読み、native観測時刻は分へ切り上げる。5分間隔のnative evidenceで1分経路の穴を補完しない。settlementの`--fixture`は複数回指定でき、archive rootも読める。隣接日をexact map/revisionで結合し、日跨ぎ15/60分を評価する。入力時刻/map外のgenerationは変更せず、参照fragmentのcacheは入力全体で2件までとする。保存generationとoutcomeもgeneration単位で読む。
+
+`archive-outcome-day.py`は完了UTC日のSQLite online backupとimmutable generation照合を行い、day/map別bundleとcopy manifestを保存する。日を指定しなければ保存済みevidence・archive ledgerの最古日から欠日を回収し、完了editionはSHAを確認して再利用する。未完了editionは保全し、別editionで再試行する。fsyncと内容検証後に日次COMPLETEを公開する。期限切れ日はFAILEDを残し、後続の回収可能日を退避したうえで全体を非成功終了する。容量不足やcopy不整合は停止する。日次jobはRankingの4日retentionより前に実行する。終了時に削除するのは所有する一時copyだけで、入力DB・過去editionをpruneしない。
+
+`freeze-formal-protocol.py`は認証したoffline policy copyから将来の30 UTC日、K=10/20、15/60分、seed0、2000 bootstrap、family/source/scope/map hashを固定する。cutoffやfamilyを変更して既存protocolへ上書きしない。common-eligible poolはfuture outcomeを見る前に入力から固定する診断で、元のcoverage guardを置換しない。正式評価の開始は運転・容量受入後とし、最終cutoffから60分と30日blockの成立は別に確認する。具体的scopeは`attention-formal-scope-v1`のfamilyId、mapVersion、assetId→exact referenceKey/nullで固定する。`watchdeck-attention evaluate-formal --protocol <file> --scope <file> --ledger <file>`は登録済みwindow内のdecisionAtだけをstreamingで読み、seed/bootstrap、推移的な実行source hash、policyとscopeを照合する。入力Ranking cutoffは判断以前の時刻を許容し、future outcome cutoffとは区別する。protocolに固定したledgerへ計算前に一回判定を予約し、同一入力だけ再開できる。訂正・追加outcomeや別ledgerによる再判定を拒否し、完了済み原結果を保持する。
+
+Offline copy/export/archiveの入出力とstate rootはparent traversalを拒否する。SQLite backupは所有する一時ファイルへ作成し、整合検証後に既存宛先を上書きせず確定する。期限切れでは一時copyだけを終了し、元DBを維持してINCOMPLETE manifestから再試行できる。

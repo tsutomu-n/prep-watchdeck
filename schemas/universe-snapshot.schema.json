@@ -113,7 +113,8 @@
             "enum": [
               "bitget",
               "hyperliquid",
-              "aster"
+              "aster",
+              "mexc"
             ],
             "type": "string"
           },
@@ -225,7 +226,8 @@
           "enum": [
             "bitget",
             "hyperliquid",
-            "aster"
+            "aster",
+            "mexc"
           ],
           "title": "Venue",
           "type": "string"
@@ -470,6 +472,45 @@
             }
           ],
           "title": "Nextfundingat"
+        },
+        "fundingSourceAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fundingsourceat"
+        },
+        "fundingObservedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fundingobservedat"
+        },
+        "fundingValidUntil": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fundingvaliduntil"
         },
         "openInterestRaw": {
           "anyOf": [
