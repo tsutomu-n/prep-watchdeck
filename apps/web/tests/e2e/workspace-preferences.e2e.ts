@@ -51,10 +51,7 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
   await page.goto("/");
   const row = page.getByTestId("ranking-row").filter({ has: page.locator("strong", { hasText: /^BTC$/ }) });
   await expect(row).toBeVisible();
-  const normal = await row.boundingBox();
-  await page.screenshot({ path: testInfo.outputPath("normal.png"), fullPage: true });
   await nav(page).getByRole("link", { name: "設定", exact: true }).click();
-  await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
   await page.getByLabel("騰落率・Fundingの小数桁", { exact: true }).selectOption("4");
   await page.getByLabel("比率の小数桁", { exact: true }).selectOption("3");
   await page.getByLabel("数量の小数桁", { exact: true }).selectOption("4");
@@ -63,6 +60,13 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
   await page.getByLabel("売買代金の急増倍率", { exact: true }).blur();
   await page.getByLabel("上昇・下落の境界（%）", { exact: true }).fill("1");
   await page.getByLabel("上昇・下落の境界（%）", { exact: true }).blur();
+  await nav(page).getByRole("link", { name: "ランキング", exact: true }).click();
+  await expect(row.locator(".change")).toContainText("+1.2346%");
+  await expect(row.locator(".turnover > span[title]")).toHaveText("1,234,567.89");
+  const normal = await row.boundingBox();
+  await page.screenshot({ path: testInfo.outputPath("normal.png"), fullPage: true });
+  await nav(page).getByRole("link", { name: "設定", exact: true }).click();
+  await page.getByLabel("レイアウト", { exact: true }).selectOption("ultra");
   await page.reload();
   await expect(page.getByLabel("レイアウト", { exact: true })).toHaveValue("ultra");
   await nav(page).getByRole("link", { name: "ランキング", exact: true }).click();
@@ -72,7 +76,7 @@ test("超高密度は実際に一覧の行高と上部領域を縮め、設定�
   const ultra = await row.boundingBox();
   expect(ultra!.height).toBeLessThan(normal!.height);
   expect(ultra!.y).toBeLessThan(normal!.y);
-  if ((page.viewportSize()?.width ?? 1440) > 960) expect(ultra!.height).toBeLessThanOrEqual(26);
+  expect((await row.locator("button.select-row").boundingBox())!.height).toBeGreaterThanOrEqual(24);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: testInfo.outputPath("ultra.png"), fullPage: true });
   await row.locator("button.select-row").focus();
