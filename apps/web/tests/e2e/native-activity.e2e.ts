@@ -61,9 +61,19 @@ for (const density of ["normal", "ultra"] as const) {
     await expect(btc.getByTestId("bitget-turnover")).toContainText("12.3m USDT");
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(await page.locator('[data-testid="native-activity-signal"] .previous').evaluateAll(elements =>
-      elements.every(element => element.scrollWidth <= element.clientWidth &&
-        element.getBoundingClientRect().height < parseFloat(getComputedStyle(element).lineHeight) * 1.5)
+      elements.every(element => {
+        const style = getComputedStyle(element);
+        const bounded = element.scrollWidth <= element.clientWidth ||
+          (style.overflowX === "hidden" && style.textOverflow === "ellipsis");
+        return bounded && style.whiteSpace === "nowrap" &&
+          element.getBoundingClientRect().height < parseFloat(style.lineHeight) * 1.5;
+      })
     )).toBe(true);
+    await expect(signal).toHaveAccessibleName(/前区間比 -20\.00%/);
+    await expect(signal).toHaveAttribute("title", /前区間比 -20\.00%/);
+    const ethSignal = page.locator('[data-asset="ETH"]').getByTestId("native-activity-signal");
+    await expect(ethSignal).toHaveAccessibleName(/前区間比 -73\.33%/);
+    await expect(ethSignal).toHaveAttribute("title", /前区間比 -73\.33%/);
     await page.screenshot({ path: testInfo.outputPath(`bitget-activity-${density}.png`) });
     await signal.click();
     await expect(page.getByTestId("native-activity-details")).toBeVisible();
