@@ -867,7 +867,7 @@ def test_invalid_completed_file_blocks_strict_without_changing_ordinary_monitor(
     class Clock(datetime):
         @classmethod
         def now(cls, tz=None):
-            return NOW
+            return cls.fromisoformat(NOW.isoformat())
 
     monkeypatch.setitem(UTILITY["main"].__globals__, "datetime", Clock)
     monkeypatch.setitem(UTILITY["main"].__globals__, "get_health", lambda _url: data["ranking"])

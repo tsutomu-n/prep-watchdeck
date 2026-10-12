@@ -7,6 +7,7 @@ import subprocess
 import sys
 from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
+from typing import cast
 from urllib.parse import urlsplit
 from uuid import uuid4
 
@@ -25,6 +26,8 @@ from prep_watchdeck_market.candle_gap_audit import (
     write_evidence,
 )
 from prep_watchdeck_market.database import apply_migrations
+
+from .conftest import required_row
 
 START = datetime(2026, 10, 10, 8, 28, tzinfo=UTC)
 END = START + timedelta(minutes=5)
@@ -321,6 +324,7 @@ class DeadlineAuditConnection:
         self.statement_timeout = 15.0
         self.transfers = 0
         self.position = 0
+        self.result: tuple[object, ...] | list[tuple[object, ...]] = ()
 
     def transaction(self):
         return nullcontext()
@@ -386,7 +390,7 @@ def test_audit_stops_slow_fetches_within_shared_database_budget(monkeypatch):
     connection = DeadlineAuditConnection(fetch_seconds=14.9)
     monkeypatch.setattr(candle_gap_audit.time, "monotonic", lambda: connection.now)
     with pytest.raises((ValueError, psycopg.errors.QueryCanceled)):
-        audit_connection(connection, scope())
+        audit_connection(cast(psycopg.Connection, connection), scope())
     assert connection.now <= 60.0
     assert connection.position < 2000
 
@@ -395,7 +399,7 @@ def test_audit_stops_before_candle_fetch_when_catalog_transfer_exhausts_budget(m
     connection = DeadlineAuditConnection(transfer_seconds=60.0)
     monkeypatch.setattr(candle_gap_audit.time, "monotonic", lambda: connection.now)
     with pytest.raises(ValueError, match="time budget"):
-        audit_connection(connection, scope())
+        audit_connection(cast(psycopg.Connection, connection), scope())
     assert connection.transfers == 0
 
 
@@ -498,27 +502,32 @@ def test_postgres_audit_retains_old_gap_and_reconciles_same_snapshot_scope(tmp_p
         connection.execute(sql.SQL("SET search_path TO {}").format(sql.Identifier(schema)))
         try:
             apply_migrations(connection)
-            payload = connection.execute(
-                "INSERT INTO raw_catalog_payloads "
-                "(venue,endpoint,source_kind,documentation_url,payload_hash,"
-                "observed_at,last_observed_at,payload) "
-                "VALUES ('aster','/catalog','native_rest','https://example.invalid',%s,%s,%s,'{}') "
-                "RETURNING raw_catalog_payload_id",
-                ("d" * 64, START, START),
-            ).fetchone()[0]
+            payload = required_row(
+                connection.execute(
+                    "INSERT INTO raw_catalog_payloads "
+                    "(venue,endpoint,source_kind,documentation_url,payload_hash,"
+                    "observed_at,last_observed_at,payload) "
+                    "VALUES ('aster','/catalog','native_rest',"
+                    "'https://example.invalid',%s,%s,%s,'{}') "
+                    "RETURNING raw_catalog_payload_id",
+                    ("d" * 64, START, START),
+                )
+            )[0]
             version_ids = []
             for item in contracts():
                 version_ids.append(
-                    connection.execute(
-                        "INSERT INTO venue_instrument_versions "
-                        "(venue,source_symbol,definition_hash,valid_from,valid_to,active,asset_class,market_type,"
-                        "base_asset,quote_asset,settle_asset,quantity_unit,contract_multiplier,"
-                        "raw_definition,raw_catalog_payload_id) "
-                        "VALUES ('aster','PEARLUSDT',%s,%s,%s,true,'crypto','linear_perpetual',"
-                        "'PEARL','USDT','USDT','base',1,'{}',%s) "
-                        "RETURNING venue_instrument_version_id",
-                        (item.definition_hash, item.valid_from, item.valid_to, payload),
-                    ).fetchone()[0]
+                    required_row(
+                        connection.execute(
+                            "INSERT INTO venue_instrument_versions "
+                            "(venue,source_symbol,definition_hash,valid_from,valid_to,active,asset_class,market_type,"
+                            "base_asset,quote_asset,settle_asset,quantity_unit,contract_multiplier,"
+                            "raw_definition,raw_catalog_payload_id) "
+                            "VALUES ('aster','PEARLUSDT',%s,%s,%s,true,'crypto','linear_perpetual',"
+                            "'PEARL','USDT','USDT','base',1,'{}',%s) "
+                            "RETURNING venue_instrument_version_id",
+                            (item.definition_hash, item.valid_from, item.valid_to, payload),
+                        )
+                    )[0]
                 )
             insert = (
                 "INSERT INTO candle_1m (venue_instrument_version_id,bucket_at,open_price,"
@@ -531,7 +540,7 @@ def test_postgres_audit_retains_old_gap_and_reconciles_same_snapshot_scope(tmp_p
                 (version_ids[1], 4),
             ]:
                 connection.execute(insert, (version_id, START + minute * timedelta(minutes=1), END))
-            before = connection.execute("SELECT count(*) FROM candle_1m").fetchone()[0]
+            before = required_row(connection.execute("SELECT count(*) FROM candle_1m"))[0]
             first = audit_connection(connection, scope())
             assert first.session_read_only is True
             assert first.expected_minutes == 4
@@ -539,7 +548,7 @@ def test_postgres_audit_retains_old_gap_and_reconciles_same_snapshot_scope(tmp_p
                 (version_ids[0], START + timedelta(minutes=1))
             ]
             assert len(first.boundaries) == 1
-            assert connection.execute("SELECT count(*) FROM candle_1m").fetchone()[0] == before
+            assert required_row(connection.execute("SELECT count(*) FROM candle_1m"))[0] == before
             path = tmp_path / "first.json"
             write_evidence(path, first)
             connection.execute(insert, (version_ids[0], START + timedelta(minutes=1), END))

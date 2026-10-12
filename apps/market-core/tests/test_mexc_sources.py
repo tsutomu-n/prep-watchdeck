@@ -2,6 +2,7 @@ import copy
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 
@@ -85,7 +86,7 @@ def test_semantic_version_keeps_contract_change_unknown_fields_ignores_display_f
     assert unknown.semantic_definition_sha256() != item.semantic_definition_sha256()
 
 
-RISK_TIERS = [
+RISK_TIERS: list[dict[str, Any]] = [
     {"imr": 0.00333333, "mmr": 0.0023, "level": 1, "maxVol": 170000, "maxLeverage": 300},
     {"imr": 0.005, "mmr": 0.004, "level": 2, "maxVol": 360000, "maxLeverage": 200},
 ]
@@ -189,7 +190,7 @@ def test_mexc_risk_tier_projection_preserves_other_fields_and_structure(change):
     original = instrument()
     raw = {**original.raw_definition, "riskLimitCustom": copy.deepcopy(RISK_TIERS)}
     item = replace(original, raw_definition=copy.deepcopy(raw))
-    tiers = raw["riskLimitCustom"]
+    tiers = cast(list[dict[str, Any]], raw["riskLimitCustom"])
     if change == "unknown":
         tiers[1]["unknownProviderField"] = {"flag": True}
     elif change == "margin":

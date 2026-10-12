@@ -8,6 +8,7 @@ from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
+from typing import cast
 
 import psycopg
 import pytest
@@ -528,7 +529,7 @@ def test_implicit_publication_time_is_after_db_reads(monkeypatch, tmp_path):
     class Clock(datetime):
         @classmethod
         def now(cls, tz=None):
-            return wall_clock
+            return cls.fromisoformat(wall_clock.isoformat())
 
     def records(connection):
         nonlocal wall_clock
@@ -540,7 +541,7 @@ def test_implicit_publication_time_is_after_db_reads(monkeypatch, tmp_path):
     monkeypatch.setattr(module, "read_universe_records", records)
     monkeypatch.setattr(module, "read_chart_records", lambda *args, **kwargs: ())
     monkeypatch.setattr(module, "read_collector_runs", lambda *args, **kwargs: ())
-    publish_artifacts(None, tmp_path)
+    publish_artifacts(cast(psycopg.Connection, None), tmp_path)
     payload = json.loads((tmp_path / "universe-snapshot.json").read_text())
     assert payload["generatedAt"] == "2026-10-10T00:01:31Z"
     assert payload["items"][0]["fundingRateRaw"] is None

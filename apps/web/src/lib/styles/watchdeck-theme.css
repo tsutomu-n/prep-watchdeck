@@ -503,6 +503,7 @@ body {
   :root:is([data-layout="normal"], [data-layout="ultra"]) :is(.ranking-page, .universe-page) :is(td, th) { line-height: 1.1; }
   :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .indicator { line-height: 1.1; }
   :root[data-layout="ultra"] .ranking-page .change > .indicator { white-space: nowrap; }
+  :root[data-layout="ultra"] .ranking-page .select-row { flex-wrap: nowrap; }
 }
 @media (max-width: 960px) {
   :root:is([data-layout="normal"], [data-layout="ultra"]) .ranking-page .purpose-switcher { grid-template-columns: repeat(4, minmax(0, 1fr)); }

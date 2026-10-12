@@ -1,6 +1,7 @@
 """Acceptance decisions retain exact exceptions and the original run's terminal proof."""
 
 from copy import deepcopy
+from typing import Any
 
 import pytest
 
@@ -141,7 +142,7 @@ def completion_fixture():
         "rawSha256": raw,
         "summary": summary,
     }
-    receipt = {
+    receipt: dict[str, Any] = {
         "schemaVersion": 1,
         "scope": "mexc_stage50_reobservation",
         "phase": "completed",
@@ -285,7 +286,7 @@ def test_recovery_roster_hashes_must_match_independent_database_snapshot():
             "definitionHash": SHA,
         }
     ]
-    report = {
+    report: dict[str, Any] = {
         "recoveryAcceptanceEvidence": {
             name: {"evidence": {"roster": deepcopy(current)}}
             for name in ("candleRecovery", "endpointRecovery")

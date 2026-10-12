@@ -4,8 +4,10 @@ import asyncio
 import json
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import pytest
+from aiohttp import ClientSession
 
 from prep_watchdeck_market import candle_endpoint_recovery, candle_recovery
 from prep_watchdeck_market.candle_recovery_store import RecoveryStoreError, RecoveryTarget
@@ -57,8 +59,9 @@ def test_endpoint_completion_time_precedes_generation_and_matches_audit(monkeypa
         return now
 
     recovery = candle_endpoint_recovery.CandleEndpointRecovery("unused", tmp_path, utc_clock=clock)
-    result = asyncio.run(recovery.run(object()))
+    result = asyncio.run(recovery.run(cast(ClientSession, object())))
     assert result.execution == "succeeded"
+    assert result.finished_at is not None
     assert result.started_at <= result.finished_at <= result.generated_at
     completed = json.loads(
         (tmp_path / "artifacts/candle-endpoint-recovery-latest-completed.json").read_text()
@@ -82,12 +85,15 @@ def test_completed_recovery_proves_full_roster_and_rejects_version_drift(
         recovery = module.CandleRecovery("unused", tmp_path)
         result = asyncio.run(
             recovery.run(
-                object(), module.recovery_window(datetime.now(UTC)), apply=True, trigger="periodic"
+                cast(ClientSession, object()),
+                module.recovery_window(datetime.now(UTC)),
+                apply=True,
+                trigger="periodic",
             )
         )
     else:
         recovery = module.CandleEndpointRecovery("unused", tmp_path)
-        result = asyncio.run(recovery.run(object()))
+        result = asyncio.run(recovery.run(cast(ClientSession, object())))
     document = result.model_dump(mode="json", by_alias=True)
     assert document.get("evidence") is not None
     assert len(document["evidence"]["roster"]) == 129
@@ -109,9 +115,14 @@ def test_latest_completed_survives_running_and_is_replaced_by_failed_run(
     async def run():
         if module is candle_recovery:
             return await module.CandleRecovery("unused", tmp_path).run(
-                object(), module.recovery_window(datetime.now(UTC)), apply=True, trigger="periodic"
+                cast(ClientSession, object()),
+                module.recovery_window(datetime.now(UTC)),
+                apply=True,
+                trigger="periodic",
             )
-        return await module.CandleEndpointRecovery("unused", tmp_path).run(object())
+        return await module.CandleEndpointRecovery("unused", tmp_path).run(
+            cast(ClientSession, object())
+        )
 
     first = asyncio.run(run())
     assert first.execution == "succeeded"
@@ -144,9 +155,14 @@ def test_database_failure_invalidates_prior_success_even_when_audit_write_fails(
     async def run():
         if module is candle_recovery:
             return await module.CandleRecovery("unused", tmp_path).run(
-                object(), module.recovery_window(datetime.now(UTC)), apply=True, trigger="periodic"
+                cast(ClientSession, object()),
+                module.recovery_window(datetime.now(UTC)),
+                apply=True,
+                trigger="periodic",
             )
-        return await module.CandleEndpointRecovery("unused", tmp_path).run(object())
+        return await module.CandleEndpointRecovery("unused", tmp_path).run(
+            cast(ClientSession, object())
+        )
 
     first = asyncio.run(run())
 
@@ -176,7 +192,7 @@ def test_completed_file_failure_still_publishes_failed_current_state(monkeypatch
 
     _isolate(monkeypatch, candle_endpoint_recovery, (_target(),))
     recovery = candle_endpoint_recovery.CandleEndpointRecovery("unused", tmp_path)
-    first = asyncio.run(recovery.run(object()))
+    first = asyncio.run(recovery.run(cast(ClientSession, object())))
     original_write = recovery_evidence.write_artifact_atomic
 
     def failed_completed_write(path, state):
@@ -186,7 +202,7 @@ def test_completed_file_failure_still_publishes_failed_current_state(monkeypatch
 
     monkeypatch.setattr(recovery_evidence, "write_artifact_atomic", failed_completed_write)
     with pytest.raises(OSError):
-        asyncio.run(recovery.run(object()))
+        asyncio.run(recovery.run(cast(ClientSession, object())))
     state = json.loads((tmp_path / "artifacts/candle-endpoint-recovery-state.json").read_text())
     assert state["execution"] == "failed"
     assert state["runId"] != first.run_id
@@ -202,14 +218,18 @@ def test_candle_completion_timestamps_remain_ordered_if_wall_clock_moves_backwar
     class Clock(datetime):
         @classmethod
         def now(cls, tz=None):
-            return next(ticks)
+            return cls.fromisoformat(next(ticks).isoformat())
 
     monkeypatch.setattr(candle_recovery, "datetime", Clock)
     result = asyncio.run(
         candle_recovery.CandleRecovery("unused", tmp_path).run(
-            object(), candle_recovery.recovery_window(now), apply=True, trigger="periodic"
+            cast(ClientSession, object()),
+            candle_recovery.recovery_window(now),
+            apply=True,
+            trigger="periodic",
         )
     )
+    assert result.finished_at is not None
     assert result.started_at <= result.finished_at <= result.generated_at
 
 
@@ -223,7 +243,7 @@ def test_previous_completion_read_is_bounded_and_requires_regular_file(
 
     _isolate(monkeypatch, candle_endpoint_recovery, (_target(),))
     recovery = candle_endpoint_recovery.CandleEndpointRecovery("unused", tmp_path)
-    asyncio.run(recovery.run(object()))
+    asyncio.run(recovery.run(cast(ClientSession, object())))
     state_path = tmp_path / "artifacts/candle-endpoint-recovery-state.json"
     completed_path = tmp_path / "artifacts/candle-endpoint-recovery-latest-completed.json"
     if unsafe_kind == "fifo":
