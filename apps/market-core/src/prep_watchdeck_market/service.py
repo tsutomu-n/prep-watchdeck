@@ -36,6 +36,7 @@ from prep_watchdeck_market.market_metrics import (
 from prep_watchdeck_market.market_state import MarketBatch
 from prep_watchdeck_market.market_store import (
     DATABASE_TIMEOUT_OPTIONS,
+    MarketStoreError,
     MarketStoreResult,
     load_current_mexc_version_ids_url,
     persist_market_cycle_url,
@@ -396,7 +397,17 @@ class MarketService:
                 ids_task = asyncio.create_task(
                     asyncio.to_thread(load_current_mexc_version_ids_url, self._database_url)
                 )
-                self._mexc_version_ids = await _await_locked_thread(ids_task)
+                try:
+                    self._mexc_version_ids = await _await_locked_thread(ids_task)
+                except MarketStoreError as error:
+                    self._mexc_version_ids = {}
+                    self._catalogs.pop("mexc", None)
+                    persisted = tuple(venue for venue in persisted if venue != "mexc")
+                    logger.warning(
+                        "catalog versions unavailable venue={venue} errorType={error_type}",
+                        venue="mexc",
+                        error_type=type(error).__name__,
+                    )
             for venue in persisted:
                 self._catalogs[venue] = succeeded[venue]
             self._candle_version_starts = version_starts
