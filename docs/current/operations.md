@@ -1,9 +1,9 @@
 # prep-watchdeck 現行運用
 
-timestamp="2026-10-11(日)_19:47 JST"
+timestamp="2026-10-13(火)_22:14 JST"
 - 作成: `2026-07-16T23:06:46+09:00`
-- 更新: `2026-10-11T19:47:45+09:00`
-- 検証: `2026-10-11T19:47:45+09:00`
+- 更新: `2026-10-13T22:14:00+09:00`
+- 検証: `2026-10-13T22:14:00+09:00`
 - 状態: `現行`
 
 ---
@@ -32,6 +32,11 @@ P0 qualification時の個別commit SHA、row件数、backup hash等は当時の�
 - rollback確認前に旧checkout/stateを不可逆削除しない。
 
 Markets workspaceを配置する場合はMarket Core、Ranking Core、Webの契約を同じ検証済みsource組で切り替える。追加の`market-metrics.json`は任意laneで、旧4 artifactへ混ぜない。NoteFile v2を一度書いた後に旧Webへ戻す際は、対象stateを別場所へ退避して旧版用の状態を復元する必要がある。旧Webがv2を安全に読めると仮定して元ファイルへ上書きしない。稼働releaseへの反映はunitの実効WorkingDirectoryと配置sourceのcommitで照合する。実データの180秒lag/300秒上限の受入は配置・Web healthとは別に確認する。
+
+MEXCカタログ保存後の版ID読取りが`MarketStoreError`で失敗した場合は、旧版IDとMEXCのメモリ上のカタログを失効させる。
+他Venueの更新とserviceの稼働は継続し、MEXCは次の正常なカタログ更新で復帰する。
+失敗はVenueと例外型だけを警告logへ記録し、更新結果の`venues_failed`へMEXCを含める。
+DBへのカタログ保存は取り消さないため、保存処理の`collector_runs`成功と版ID読取りを含む更新結果は区別する。
 
 開発branchのmetrics投影は専用lockでwriterを排他し、JSON破損または既知schemaの検証破損に限って、正常なDB snapshotから再生成する。破損原本はartifact directoryの`market-metrics.json.corrupt-<id>`へbyte単位で退避・fsync・readbackし、元ファイルが変わっていないことを再確認してatomicに置き換える。未知schema/metricVersion、読取権限、保全失敗、並行変更、lock競合では更新を停止してworkerがerrorTypeを記録する。保全物は自動削除しない。これは派生metrics専用の復旧であり、メモの破損保護を緩めない。
 
